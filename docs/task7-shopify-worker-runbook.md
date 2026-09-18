@@ -3,7 +3,9 @@
 Repo: `DynamicVision2026/kodomo-ai` · Store: `https://soul-id-2.myshopify.com/`
 
 **What this session built:** the Cloudflare Worker at `worker/src/` — webhook receiver, code
-issuer, redemption endpoint — plus `wrangler.toml` and 27 tests (`tests/worker*.test.ts`).
+issuer, redemption endpoint — plus `wrangler.toml` and 27 tests (`tests/worker*.test.ts`); and,
+in a follow-up pass, the `/play/unlock` client screen (`src/parent/unlock/`) that actually
+calls it, plus 19 more tests. 46 tests total for this integration, all green.
 
 **What this session could not do, and why:** this is a code session with no Shopify Admin
 access to `soul-id-2.myshopify.com` and no Cloudflare account access — no such credentials or
@@ -122,19 +124,30 @@ best-effort failure, never blocking code issuance): the code still exists and is
 look it up via the Worker's KV (`wrangler kv key get --namespace-id=<id> "order:<order id>"`
 gives you the code(s) for that order) and resend manually.
 
-## 5. Wiring the app's redemption screen
+## 5. The app's redemption screen — built, but needs the Worker's real URL
 
-**Not built in this pass** — this runbook and the Worker cover issuance + redemption *on the
-server*; a `/play/unlock` UI screen (client-side: takes the buyer's typed code + a generated
-device id, POSTs to this Worker's `/unlock`, and on success adds `${moduleId}:full` to the
-existing `entitlements` array in `src/engine/storage.ts`'s `AppState`) is the natural next
-piece and reuses `hasAccess()` (`src/engine/entitlements.ts`) unchanged. Say if you want it
-built next — it's a small, self-contained addition.
+`/play/unlock` (`src/parent/unlock/`) is done: takes the buyer's typed code + a per-device id
+already generated into `AppState.deviceId` (`src/engine/storage.ts`, non-PII), POSTs to the
+Worker's `/unlock`, and on success grants `${moduleId}:full` via `applyRedemption()`
+(`src/engine/entitlements.ts`) — reusing `hasAccess()` unchanged. Lives under `src/parent`
+(same gate-exempt zone as `src/lp`/`src/legal`) since it's an adult-only action, never
+something a child operates.
+
+**One thing this still needs from you:** it reads the Worker's URL from
+`VITE_UNLOCK_API_URL` at *build* time (a Vite env var, not a Worker secret — set it wherever
+you run `npm run build`, e.g. in Cloudflare Pages' own project environment variables if that's
+what serves the static site). Until it's set, the page shows a "not live yet" message and
+never calls `fetch` at all — that's deliberate, not a bug, so a not-yet-deployed Worker can't
+produce a confusing network-error message instead of an honest one.
 
 ## 6. Testing before going live
 
-1. `npx vitest run tests/worker*.test.ts` — 27 tests, all pure/mocked, no live credentials
-   needed. Already green as of this commit.
+1. `npx vitest run tests/worker*.test.ts tests/redeemCode.test.ts tests/entitlements.test.ts
+   tests/UnlockPage.test.tsx` — 46 tests total (webhook/issue/unlock on the Worker side; the
+   client screen's not-configured/success/soft-cap-note/not-found states on the app side), all
+   pure/mocked, no live credentials needed. Already green as of this commit. The app-side
+   tests were also confirmed in a real Chromium render (not just jsdom) with a mocked Worker
+   response before this was called done.
 2. Shopify Admin → the webhook's detail page → **Send test notification** — sends a sample
    payload (a *fake* order with placeholder SKUs, not `kodomo-ai-m1`) so you can confirm the
    Worker responds `200` without erroring. It will NOT exercise the real code-issuance path
@@ -142,8 +155,8 @@ built next — it's a small, self-contained addition.
    crafted matching payload.
 3. A real ¥4,980 test purchase (spec v0.5's own DoD, work-order-w1.md's Sprint DoD: "test
    purchase completes with card and PayPay") is the actual end-to-end proof: buy → webhook
-   fires → KV has a new code → Flow email arrives with it → `/unlock` (once built, §5) accepts
-   it. Refund it after via the existing 30-day guarantee.
+   fires → KV has a new code → Flow email arrives with it → `/play/unlock` accepts it and
+   grants access. Refund it after via the existing 30-day guarantee.
 4. Confirm products A-D's own confirmation/shipping emails are byte-for-byte unchanged after
    all of the above — nothing in this integration should have touched their templates.
 
@@ -157,3 +170,4 @@ built next — it's a small, self-contained addition.
 | `ADMIN_TOKEN` | `wrangler secret put` | Bearer token guarding `POST /admin/issue` (founder codes) |
 | `SHOPIFY_ADMIN_API_TOKEN` | `wrangler secret put` | Lets the Worker write the `naze.family_code` order metafield |
 | `SHOPIFY_SHOP_DOMAIN` | `wrangler.toml` `[vars]` (not secret) | Which shop the Admin API calls target |
+| `VITE_UNLOCK_API_URL` | Wherever the static site is built (e.g. Cloudflare Pages project env vars) — NOT a Worker secret | The deployed Worker's base URL, read by `/play/unlock` at build time |

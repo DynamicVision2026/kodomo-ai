@@ -24,6 +24,7 @@ function seed(stage: 2 | 3) {
     entitlements: ['m1:free'],
     founder: false,
     abVariant: 'A',
+    deviceId: 'device-seed-1',
   };
   localStorage.setItem('m-app.v1', JSON.stringify(state));
 }

@@ -1,0 +1,85 @@
+.unlock {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 4rem;
+  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  line-height: 1.8;
+  color: #1c1c1c;
+}
+
+.unlock h1 {
+  font-size: 1.3rem;
+  margin-bottom: 0.75rem;
+}
+
+.unlock__lead {
+  color: #555;
+  font-size: 0.9rem;
+  margin-bottom: 1.75rem;
+}
+
+.unlock__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.unlock__label {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.unlock__input {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.unlock__submit {
+  padding: 0.75rem 1.2rem;
+  border-radius: 999px;
+  border: none;
+  background: #2f6fb0;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.unlock__submit:disabled {
+  background: #a9c3dc;
+  cursor: not-allowed;
+}
+
+.unlock__message {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+}
+.unlock__message--success {
+  background: #f0f7f2;
+  color: #2f6f4f;
+  border: 1px solid #d9ead9;
+}
+.unlock__message--error {
+  background: #fff3e0;
+  color: #b0632f;
+  border: 1px solid #f0d9c0;
+}
+.unlock__overcap-note {
+  color: #8a7350;
+}
+
+.unlock__cta {
+  display: block;
+  text-align: center;
+  margin-top: 1.25rem;
+  padding: 0.75rem 1.2rem;
+  border-radius: 999px;
+  background: #2f6fb0;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+}
