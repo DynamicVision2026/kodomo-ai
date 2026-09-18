@@ -30,9 +30,11 @@ Rules for the implementer:
 | `pipeline/05_entail.ts` — GPT-4o entailment check, flags only, non-zero only on "contradicts" | **Wired**, not yet run live |
 | `pipeline/tag_audit.ts` — GPT-4o blind tag classification, flags only | **Wired**, not yet run live |
 | `src/templates/dig`, `src/templates/slot-assembly` | **Done, tested** — mission 1-1 playable end to end (verified in a real browser) |
+| `src/engine/predictions.ts` — resolves a `PredictionPrompt` into display options | **Done, tested** (handles the slot-assembly wildcard-rule case by reusing `resolveArchetype`, not by re-deriving it) |
+| `src/templates/prediction-battle`, `src/templates/handoff` | **Done, tested** — child → handoff → parent → reveal, both skippable, solo auto-skip; verified in a real browser as part of the full mission 1-1 playthrough |
 | `src/modules/m1/**` — manifest + Mission 1-1 JSON + facts template | **Done** (facts are still placeholders — `bread` was never run through the live pipeline, `gate:claims` still correctly fails on it) |
-| Tests: 65 passing | **Done** |
-| UI templates (prediction-battle, handoff), mission shell, LP, print deck, Shopify, Worker | **Not started** |
+| Tests: 75 passing | **Done** |
+| Mission shell + profiles (Task 5), LP, print deck, Shopify, Worker | **Not started** |
 
 One gate still fails on purpose, and that's correct:
 - `gate:claims` fails because `bread/facts.yaml` claims are `status: pending`. **Green means Gate 1 really happened.** (`lint:content` itself now runs clean — the kanji table unblocked it.)

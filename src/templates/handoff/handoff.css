@@ -1,0 +1,35 @@
+.handoff {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.handoff__prompt {
+  font-size: 1.3rem;
+  line-height: 1.7;
+  font-weight: 700;
+}
+
+.handoff__continue {
+  padding: 0.7rem 1.8rem;
+  border-radius: 999px;
+  border: none;
+  background: #2f6fb0;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.handoff__skip {
+  border: none;
+  background: none;
+  color: #888;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
