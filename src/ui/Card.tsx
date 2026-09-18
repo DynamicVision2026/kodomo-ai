@@ -9,7 +9,11 @@ import './card.css';
 export type CardKind =
   | 'odai' | 'what' | 'why' | 'who' | 'format'
   | 'follow-naze' | 'follow-tatoeba' | 'follow-tsumari' | 'follow-hokaniwa'
-  | 'himitsu' | 'reaction' | 'rules' | 'blank' | 'dig';
+  | 'himitsu' | 'reaction' | 'rules' | 'blank' | 'dig'
+  // 'check': added for src/modules/m2-test (spec v0.5 §13 acceptance criterion — a new card
+  // type + a dummy s3.json must render without touching /engine). Only src/ui changes; the
+  // engine (resolver, digMachine, types) never needed to know this kind exists.
+  | 'check';
 
 const META: Record<CardKind, { icon: string; corner: 'round' | 'cut' | 'notch' | 'square' }> = {
   odai:              { icon: '\u25C6', corner: 'square' },
@@ -29,6 +33,7 @@ const META: Record<CardKind, { icon: string; corner: 'round' | 'cut' | 'notch' |
   // repeat/offtopic) that a card carries must never be visible to the player \u2014 that would
   // let them learn "always pick the star" instead of thinking. Spec v0.5 pillar 1.
   dig:               { icon: '\u2022', corner: 'round'  },
+  check:             { icon: '\u2713', corner: 'round'  },
 };
 
 export interface CardProps {

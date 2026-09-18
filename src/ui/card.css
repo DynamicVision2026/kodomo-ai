@@ -28,6 +28,7 @@
 .card--odai     { --card-accent: #444; }
 .card--himitsu  { --card-accent: #c02b2b; }
 .card--reaction { --card-accent: #888; }
+.card--check    { --card-accent: #0f8a8a; }
 .card[class*="card--follow-"] { --card-accent: #1f5d3a; }
 
 .card.is-selected { outline: 1mm solid var(--card-ink); outline-offset: 1mm; }

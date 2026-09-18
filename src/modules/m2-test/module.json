@@ -1,0 +1,30 @@
+{
+  "id": "m2-test",
+  "title": "M2 extensibility smoke test — not a real module, never shipped",
+  "sku": "m2-test-dummy",
+  "stages": [3],
+  "freeMissionIds": ["m2-test-dummy"],
+  "slotTypes": ["check"],
+  "followMoves": [],
+  "missionOrder": ["m2-test-dummy"],
+  "ui": {
+    "earlyOk": "これでOK",
+    "handoffPrompt": "おとなにわたしてね",
+    "handoffContinue": "つづける",
+    "handoffSkip": "あとでやる",
+    "predictionSkip": "あとでやる",
+    "profilePickTitle": "だれが あそぶ？",
+    "profileCreateLabel": "あたらしく つくる",
+    "profileMaxReached": "もう いっぱいだよ",
+    "profileConfirm": "これにする",
+    "coopQuestion": "おうちの人もいっしょ？",
+    "coopYes": "はい",
+    "coopSolo": "ひとりであそぶ",
+    "teachbackSkip": "あとでやる",
+    "parentScreenHeading": "おうちの方へ",
+    "lockedMessage": "このミッションは まだ あそべないよ"
+  },
+  "cardTypes": {
+    "check": { "label": "みなおし" }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "m2-test-dummy",
+  "stage": 3,
+  "title": "かくちょうせいの テスト",
+  "sources": ["d1"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["check"],
+      "cards": [
+        { "id": "chk1", "slot": "check", "text": "これで ただしいか みなおしてみよう", "tag": "clear" },
+        { "id": "chk2", "slot": "check", "text": "なんとなく みなおす", "tag": "vague" }
+      ],
+      "rules": [
+        { "when": { "check": "clear" }, "archetype": "CLEAR" },
+        { "when": { "check": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": { "robotSays": "みなおしが できたね。", "claims": ["d1"] },
+        "VAGUE": { "robotSays": "もう ちょっと はっきり みなおしてみよう。", "claims": ["nonfactual"] }
+      }
+    }
+  ],
+  "tip": "みなおすときは、ひとつずつ たしかめよう。",
+  "teachBack": "どこを みなおしたか、おうちの人に はなしてみよう。",
+  "ouchiTalk": "きょう、みなおして よかったことは あったかな？"
+}

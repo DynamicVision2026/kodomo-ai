@@ -37,11 +37,22 @@ Rules for the implementer:
 | `src/shell/ProfilePicker.tsx` + `presets.json` | **Done, tested** — preset avatars (emoji placeholders pending Task 0.5's real mascot art) + preset nicknames, max 6, no PII |
 | `SlotAssembly`/`Dig` own their phase/layer's own `predictions` internally | **Done, tested** — the mission shell no longer needs to know phase-internal round/layer timing |
 | Storage-blocked resilience | **Tested** — a session with `localStorage.setItem` throwing still completes the mission (component test + reasoning; real-device Safari private-mode check still pending) |
-| Tests: 89 passing | **Done** |
-| Landing page, print deck, Shopify, Worker | **Not started** |
+| `src/print/deck` — 9-card sampler, A4, cut lines | **Done, tested** — verified via Chromium print-media emulation + an actual PDF render |
+| `src/lp` — parent-voice landing page | **Done (structural), tested** — all 11 spec §10 sections; §1A alignment wording is verbatim from spec's own "draft, pending legal check" list, source links are placeholders (see caveat below); §3 deliberately has no fabricated survey stats |
+| Tests: 105 passing | **Done** |
+| Task 7 (Shopify/KOMOJU/PayPal checkout wiring) | **Deliberately not started** — no store/merchant credentials exist in this environment; founder said skip for now |
+| Task 9 (特商法, privacy pages) | **Deliberately not started** — needs real company/legal info (entity name, registration, address, rep) this session doesn't have; founder will send it later |
+| Worker (family-code entitlement redemption) | **Not started** |
 
 One gate still fails on purpose, and that's correct:
 - `gate:claims` fails because `bread/facts.yaml` claims are `status: pending`. **Green means Gate 1 really happened.** (`lint:content` itself now runs clean — the kanji table unblocked it.)
+
+**Caveat on the LP's §1A section:** the four sentences are copied verbatim from spec's own
+"Allowed (draft, pending native and legal check)" list — that check has not happened, and this
+section must not be treated as cleared for public launch. Its source-link `href`s are literal
+`"#"` placeholders: this session would not guess a specific MEXT URL to cite on a legal/policy
+page, since a wrong or unstable link would undermine exactly the trust the section exists to
+build. Confirm real, stable URLs before launch.
 
 **Caveat on the five pipeline scripts above:** none has been run against a live model in this
 environment — there is no `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` set here. What's verified
