@@ -17,8 +17,8 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parse, stringify } from 'yaml';
 import type { FactsFile } from './01_research.js';
+import { callOpenAiJson } from './lib/openai.js';
 
-const MODEL = 'gpt-4o';
 const FETCH_TIMEOUT_MS = 10_000;
 
 type Verdict = 'supported' | 'weak' | 'unsupported';
@@ -79,39 +79,12 @@ inferential leap.
 - "unsupported": the excerpt does not support the statement, or contradicts it.`;
 
 async function modelVerdict(statement: string, excerpt: string): Promise<{ verdict: Verdict; note: string }> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      '02_crosscheck requires OPENAI_API_KEY (it must use a different provider from 01\'s ' +
-      'Claude — a model checking itself is not a check). Set it in this environment and re-run.',
-    );
-  }
+  const parsed = (await callOpenAiJson(
+    SYSTEM_PROMPT,
+    `Statement: ${statement}\n\nExcerpt: ${excerpt}`,
+    { requiredBy: '02_crosscheck' },
+  )) as { verdict?: string; note?: string };
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      response_format: { type: 'json_object' },
-      temperature: 0,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: `Statement: ${statement}\n\nExcerpt: ${excerpt}` },
-      ],
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`OpenAI API error ${res.status}: ${await res.text()}`);
-  }
-  const body = (await res.json()) as { choices: { message: { content: string } }[] };
-  const content = body.choices[0]?.message.content;
-  if (!content) throw new Error('OpenAI response had no content.');
-
-  const parsed = JSON.parse(content) as { verdict?: string; note?: string };
   const verdict = parsed.verdict;
   if (verdict !== 'supported' && verdict !== 'weak' && verdict !== 'unsupported') {
     throw new Error(`Model returned an invalid verdict: ${JSON.stringify(parsed)}`);

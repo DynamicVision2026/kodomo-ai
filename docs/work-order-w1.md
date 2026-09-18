@@ -22,15 +22,28 @@ Rules for the implementer:
 | `src/engine/digMachine.ts` — pure dig state machine | **Done, tested** |
 | `src/engine/storage.ts`, `entitlements.ts`, `analytics.ts` | **Done** |
 | `src/ui/Card.tsx` + `card.css` | **Done** |
-| `pipeline/04_lint.ts` — deterministic content lint | **Done** (blocked on the grade table) |
-| `pipeline/01,02,03,05,tag_audit` | **Documented stubs**, rules encoded, model calls TODO |
-| `src/modules/m1/**` — manifest + Mission 1-1 JSON + facts template | **Done** (facts are placeholders) |
-| Tests: 9 passing | **Done** |
-| UI templates, LP, print deck, Shopify, Worker | **Not started** |
+| `data/kyoiku-kanji.json` — official MEXT grade table (1,026 chars) | **Done** — provenance + verification in `data/README.md` |
+| `pipeline/04_lint.ts` — deterministic content lint | **Done, running** (unblocked; refactored so `lintMission()` is reusable by 03) |
+| `pipeline/01_research.ts` — Claude + web search → facts.yaml | **Wired**, not yet run live (no `ANTHROPIC_API_KEY` in this sandbox) |
+| `pipeline/02_crosscheck.ts` — GPT-4o re-verifies 01's claims | **Wired**, not yet run live (no `OPENAI_API_KEY`) |
+| `pipeline/03_render.ts` — Claude renders approved claims → mission JSON | **Wired**, not yet run live. Deterministic shape assembly + mechanical validation (claim traceability, exactly one `deepen`, runs `lintMission()`) so the model only ever fills in text, never structure |
+| `pipeline/05_entail.ts` — GPT-4o entailment check, flags only, non-zero only on "contradicts" | **Wired**, not yet run live |
+| `pipeline/tag_audit.ts` — GPT-4o blind tag classification, flags only | **Wired**, not yet run live |
+| `src/templates/dig`, `src/templates/slot-assembly` | **Done, tested** — mission 1-1 playable end to end (verified in a real browser) |
+| `src/modules/m1/**` — manifest + Mission 1-1 JSON + facts template | **Done** (facts are still placeholders — `bread` was never run through the live pipeline, `gate:claims` still correctly fails on it) |
+| Tests: 65 passing | **Done** |
+| UI templates (prediction-battle, handoff), mission shell, LP, print deck, Shopify, Worker | **Not started** |
 
-Two gates fail on purpose right now, and both are correct:
-- `gate:claims` fails because `bread/facts.yaml` claims are `status: pending`. **Green means Gate 1 really happened.**
-- `lint:content` refuses to run because `data/kyoiku-kanji.json` is absent.
+One gate still fails on purpose, and that's correct:
+- `gate:claims` fails because `bread/facts.yaml` claims are `status: pending`. **Green means Gate 1 really happened.** (`lint:content` itself now runs clean — the kanji table unblocked it.)
+
+**Caveat on the five pipeline scripts above:** none has been run against a live model in this
+environment — there is no `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` set here. What's verified
+without live keys: full typecheck, unit tests on every pure function (validation, deterministic
+mission assembly, text-collection/traversal logic), and for 03 specifically, an end-to-end test
+proving a synthetic rendered mission passes the real `lintMission()` with zero issues. Treat
+"Wired" as "ready to run, not yet proven against the real API" until someone with keys runs the
+DoD commands.
 
 ---
 
