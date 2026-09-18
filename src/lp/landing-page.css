@@ -53,6 +53,30 @@
   border: 1px solid #2f6fb0;
 }
 
+.lp__trust {
+  margin: 0 0 1rem;
+  padding: 1.25rem 1.25rem 1.5rem;
+  border-radius: 0.9rem;
+  background: #f0f7f2;
+  border: 1px solid #d9ead9;
+}
+.lp__trust-badge {
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+  color: #2f6f4f;
+  margin: 0 0 0.9rem;
+}
+.lp__trust-list {
+  padding-left: 1.2rem;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+.lp__trust-list li {
+  margin-bottom: 0.4rem;
+}
+
 .lp__section {
   padding: 2.5rem 0;
   border-top: 1px solid #eee;

@@ -23,6 +23,14 @@ import './landing-page.css';
  * - Section 11's legal links point to this app's own /legal/tokushoho and /legal/privacy pages
  *   (src/legal), built from real company data the founder confirmed from soul-id.jp — still
  *   drafts pending the founder's own legal review, not a substitute for one.
+ * - The trust banner (lp__trust, right after the hero) states the founder's own three-part
+ *   privacy slogan verbatim, then elaborates each clause precisely against what this repo
+ *   actually does — not a blanket "works fully offline" claim (there is no service worker/PWA
+ *   caching in this repo, so a fresh page load still needs a network fetch for the app itself);
+ *   "ローカル完結" here is scoped to what it factually means: mission content and progress are
+ *   processed and stored on-device, never sent to an external server during play. Distinct from
+ *   §7's 安心設計 list below, which covers the simulator/no-text-input/no-ads claims instead —
+ *   not a duplicate of it.
  */
 
 const HEADLINES: Record<'A' | 'B', string> = {
@@ -32,6 +40,13 @@ const HEADLINES: Record<'A' | 'B', string> = {
 const SUBHEAD =
   '3・4年生の「なぜ？」が深くなる時期に。保護者も一緒に学べる思考トレーニング。' +
   '子どもにとっては、ただ楽しいゲームです。';
+
+const TRUST_SLOGAN = '登録不要・子ども情報のクラウド保存なし・完全ローカル完結';
+const TRUST_POINTS = [
+  'アプリの利用にアカウント登録は不要です。',
+  'お子さまのプロフィールや遊びの記録は、すべてお使いの端末（ブラウザ）の中だけに保存されます。外部のクラウドサーバーに送信されることはありません。',
+  'ミッションの進行やお子さまの記録の処理は、すべて端末内で行われます。',
+];
 
 const GRADE_BANDS = ['1・2年', '3・4年', '5・6年'] as const;
 type GradeBand = (typeof GRADE_BANDS)[number];
@@ -103,6 +118,15 @@ export function LandingPage() {
             創設ファミリーとして申し込む ¥4,980
           </a>
         </div>
+      </section>
+
+      <section className="lp__trust" aria-label="プライバシーへの取り組み">
+        <p className="lp__trust-badge">「{TRUST_SLOGAN}」</p>
+        <ul className="lp__trust-list">
+          {TRUST_POINTS.map((point) => (
+            <li key={point}>{point}</li>
+          ))}
+        </ul>
       </section>
 
       <section className="lp__section lp__grade-pick">

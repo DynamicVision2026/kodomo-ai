@@ -81,4 +81,23 @@ describe('LandingPage', () => {
     expect(screen.getByText('特定商取引法に基づく表記').closest('a')).toHaveAttribute('href', '/legal/tokushoho');
     expect(screen.getByText('プライバシーポリシー').closest('a')).toHaveAttribute('href', '/legal/privacy');
   });
+
+  it('prominently features the privacy slogan right after the hero, before any other section', () => {
+    render(<LandingPage />);
+    expect(screen.getByText('「登録不要・子ども情報のクラウド保存なし・完全ローカル完結」')).toBeInTheDocument();
+
+    const main = document.querySelector('main.lp')!;
+    const children = Array.from(main.children);
+    const heroIndex = children.findIndex((el) => el.classList.contains('lp__hero'));
+    const trustIndex = children.findIndex((el) => el.classList.contains('lp__trust'));
+    expect(trustIndex).toBe(heroIndex + 1);
+  });
+
+  it('elaborates each clause of the privacy slogan without overclaiming full offline use', () => {
+    render(<LandingPage />);
+    const trust = document.querySelector('.lp__trust')!;
+    expect(trust.textContent).toContain('アカウント登録は不要');
+    expect(trust.textContent).toContain('端末');
+    expect(trust.textContent).not.toMatch(/オフライン|インターネット接続なし/);
+  });
 });
