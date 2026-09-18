@@ -1,0 +1,64 @@
+.profile-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
+
+.profile-picker__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.profile-picker__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.profile-picker__profile,
+.profile-picker__choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.profile-picker__choice[aria-pressed='true'] {
+  border-color: #2f6fb0;
+  background: #eaf2fa;
+}
+.profile-picker__nickname {
+  font-size: 0.8rem;
+  color: #444;
+}
+
+.profile-picker__create,
+.profile-picker__confirm {
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  border: none;
+  background: #2f6fb0;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.profile-picker__confirm:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.profile-picker__max {
+  color: #888;
+  font-size: 0.9rem;
+}

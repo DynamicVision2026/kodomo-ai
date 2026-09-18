@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import type { Archetype, SlotAssemblyPhase, SlotId } from '../../engine/types';
+import type { Archetype, ModuleUiStrings, SlotAssemblyPhase, SlotId } from '../../engine/types';
 import { resolveArchetype } from '../../engine/resolver';
+import { resolveSlotAssemblyPredictionOptions } from '../../engine/predictions';
 import { Card, type CardKind } from '../../ui/Card';
 import { Ruby } from '../../engine/ruby';
 import { track } from '../../engine/analytics';
+import { PredictionBattle } from '../prediction-battle';
 import './slot-assembly.css';
 
 export interface SlotAssemblyResult {
@@ -13,6 +15,9 @@ export interface SlotAssemblyResult {
 
 export interface SlotAssemblyProps {
   phase: SlotAssemblyPhase;
+  ui: ModuleUiStrings;
+  /** Solo play: every prediction battle in this phase auto-skips. Spec v0.5 pillar 5. */
+  solo: boolean;
   onComplete: (result: SlotAssemblyResult) => void;
 }
 
@@ -26,13 +31,16 @@ function isTerminal(archetype: Archetype): boolean {
   return archetype.claims.some((c) => c !== 'nonfactual');
 }
 
-export function SlotAssembly({ phase, onComplete }: SlotAssemblyProps) {
+export function SlotAssembly({ phase, ui, solo, onComplete }: SlotAssemblyProps) {
   const [chosen, setChosen] = useState<Record<SlotId, string | undefined>>({});
   const [resolved, setResolved] = useState<{ key: string; archetype: Archetype } | null>(null);
   const [changed, setChanged] = useState<Set<SlotId>>(new Set());
   const [retries, setRetries] = useState(0);
   const [done, setDone] = useState(false);
   const [lastChosen, setLastChosen] = useState<Record<SlotId, string | undefined>>({});
+  // 1-indexed: which attempt is about to be made. Matches PredictionPrompt.beforeRound.
+  const [attemptNumber, setAttemptNumber] = useState(1);
+  const [battledRounds, setBattledRounds] = useState<ReadonlySet<number>>(new Set());
 
   function pick(slot: SlotId, cardId: string) {
     if (done) return;
@@ -46,12 +54,33 @@ export function SlotAssembly({ phase, onComplete }: SlotAssemblyProps) {
     setResolved(result);
     setChanged(round === 0 ? new Set() : new Set(phase.slots.filter((s) => next[s] !== lastChosen[s])));
     setLastChosen(next);
+    setAttemptNumber((n) => n + 1);
     track('round_complete', { archetype: result.key, retries: round });
 
     if (isTerminal(result.archetype)) {
       setDone(true);
       onComplete({ archetypeKey: result.key, retries: round });
     }
+  }
+
+  const pendingBattle = phase.predictions?.find(
+    (p) => p.beforeRound === attemptNumber && !battledRounds.has(attemptNumber),
+  );
+
+  if (pendingBattle) {
+    return (
+      <div className="slot-assembly">
+        <PredictionBattle
+          options={resolveSlotAssemblyPredictionOptions(phase, pendingBattle)}
+          solo={solo}
+          skipLabel={ui.predictionSkip}
+          handoffPrompt={ui.handoffPrompt}
+          handoffContinueLabel={ui.handoffContinue}
+          handoffSkipLabel={ui.handoffSkip}
+          onComplete={() => setBattledRounds((s) => new Set(s).add(attemptNumber))}
+        />
+      </div>
+    );
   }
 
   return (

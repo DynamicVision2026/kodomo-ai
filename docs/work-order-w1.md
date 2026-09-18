@@ -33,8 +33,12 @@ Rules for the implementer:
 | `src/engine/predictions.ts` — resolves a `PredictionPrompt` into display options | **Done, tested** (handles the slot-assembly wildcard-rule case by reusing `resolveArchetype`, not by re-deriving it) |
 | `src/templates/prediction-battle`, `src/templates/handoff` | **Done, tested** — child → handoff → parent → reveal, both skippable, solo auto-skip; verified in a real browser as part of the full mission 1-1 playthrough |
 | `src/modules/m1/**` — manifest + Mission 1-1 JSON + facts template | **Done** (facts are still placeholders — `bread` was never run through the live pipeline, `gate:claims` still correctly fails on it) |
-| Tests: 75 passing | **Done** |
-| Mission shell + profiles (Task 5), LP, print deck, Shopify, Worker | **Not started** |
+| `src/shell/MissionShell.tsx` — phase sequencer + wrapper screens + hasAccess gate | **Done, tested** — profile → coop question → phases → きょうのコツ → teach-back (skippable) → おうちトーク → handoff → parent screen, all in one real-browser playthrough |
+| `src/shell/ProfilePicker.tsx` + `presets.json` | **Done, tested** — preset avatars (emoji placeholders pending Task 0.5's real mascot art) + preset nicknames, max 6, no PII |
+| `SlotAssembly`/`Dig` own their phase/layer's own `predictions` internally | **Done, tested** — the mission shell no longer needs to know phase-internal round/layer timing |
+| Storage-blocked resilience | **Tested** — a session with `localStorage.setItem` throwing still completes the mission (component test + reasoning; real-device Safari private-mode check still pending) |
+| Tests: 89 passing | **Done** |
+| Landing page, print deck, Shopify, Worker | **Not started** |
 
 One gate still fails on purpose, and that's correct:
 - `gate:claims` fails because `bread/facts.yaml` claims are `status: pending`. **Green means Gate 1 really happened.** (`lint:content` itself now runs clean — the kanji table unblocked it.)

@@ -1,0 +1,20 @@
+{
+  "avatars": [
+    { "id": "a1", "emoji": "🦊" },
+    { "id": "a2", "emoji": "🐰" },
+    { "id": "a3", "emoji": "🐼" },
+    { "id": "a4", "emoji": "🐯" },
+    { "id": "a5", "emoji": "🐸" },
+    { "id": "a6", "emoji": "🐵" }
+  ],
+  "nicknames": [
+    { "id": "n1", "label": "たぬき" },
+    { "id": "n2", "label": "うさぎ" },
+    { "id": "n3", "label": "きつね" },
+    { "id": "n4", "label": "ぱんだ" },
+    { "id": "n5", "label": "とら" },
+    { "id": "n6", "label": "らいおん" },
+    { "id": "n7", "label": "ひつじ" },
+    { "id": "n8", "label": "くま" }
+  ]
+}

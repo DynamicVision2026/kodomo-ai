@@ -1,0 +1,49 @@
+.mission-shell__locked,
+.mission-shell__wrapper,
+.mission-shell__coop,
+.mission-shell__parent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.mission-shell__wrapper p,
+.mission-shell__coop-question {
+  font-size: 1.15rem;
+  line-height: 1.7;
+}
+
+.mission-shell__wrapper button,
+.mission-shell__coop-choices button {
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  border: none;
+  background: #2f6fb0;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mission-shell__coop-choices {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.mission-shell__skip {
+  border: none;
+  background: none;
+  color: #888;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.mission-shell__parent-heading {
+  font-size: 1.2rem;
+  font-weight: 700;
+}

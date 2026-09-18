@@ -35,7 +35,17 @@
     "handoffPrompt": "おとなにわたしてね",
     "handoffContinue": "つづける",
     "handoffSkip": "あとでやる",
-    "predictionSkip": "あとでやる"
+    "predictionSkip": "あとでやる",
+    "profilePickTitle": "だれが あそぶ？",
+    "profileCreateLabel": "あたらしく つくる",
+    "profileMaxReached": "もう いっぱいだよ",
+    "profileConfirm": "これにする",
+    "coopQuestion": "おうちの人もいっしょ？",
+    "coopYes": "はい",
+    "coopSolo": "ひとりであそぶ",
+    "teachbackSkip": "あとでやる",
+    "parentScreenHeading": "おうちの方へ",
+    "lockedMessage": "このミッションは まだ あそべないよ"
   },
   "cardTypes": {
     "odai": {

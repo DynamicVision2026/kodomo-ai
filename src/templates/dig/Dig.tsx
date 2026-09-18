@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import type { DigPhase } from '../../engine/types';
+import type { DigPhase, ModuleUiStrings } from '../../engine/types';
 import { initDig, playCard, tapEarlyOk, depth, currentAnswer, type DigState } from '../../engine/digMachine';
+import { resolveDigLayerPredictionOptions } from '../../engine/predictions';
 import { Card } from '../../ui/Card';
 import { Ruby } from '../../engine/ruby';
 import { track } from '../../engine/analytics';
+import { PredictionBattle } from '../prediction-battle';
 import './dig.css';
 
 export interface DigResult {
@@ -12,8 +14,9 @@ export interface DigResult {
 
 export interface DigProps {
   phase: DigPhase;
-  /** Fixed UI copy from module.json — templates never hard-code child-facing text (CI gate 3). */
-  earlyOkLabel: string;
+  ui: ModuleUiStrings;
+  /** Solo play: every prediction battle in this phase auto-skips. Spec v0.5 pillar 5. */
+  solo: boolean;
   onComplete: (result: DigResult) => void;
 }
 
@@ -22,9 +25,14 @@ export interface DigProps {
  * Hand cards render via <Card kind="dig">, which never reveals a card's deepen/sideways/repeat/
  * offtopic tag — only playing it does. 「これでOK」 stays visible and enabled at every layer,
  * including the ねっこ screen, where tapping it is what hands control to the next phase.
+ *
+ * A layer's own `prediction` (よそうバトル, §4.2) runs here rather than being sequenced by a
+ * host: it is that layer's data, the same way `earlyOk` already is, and gating it externally
+ * would need Dig to expose layer-transition timing it otherwise keeps entirely internal.
  */
-export function Dig({ phase, earlyOkLabel, onComplete }: DigProps) {
+export function Dig({ phase, ui, solo, onComplete }: DigProps) {
   const [state, setState] = useState<DigState>(() => initDig(phase));
+  const [battledLayers, setBattledLayers] = useState<ReadonlySet<number>>(new Set());
 
   function playHandCard(cardId: string) {
     if (state.finished) return;
@@ -60,6 +68,8 @@ export function Dig({ phase, earlyOkLabel, onComplete }: DigProps) {
   }
 
   const { current, total } = depth(phase, state);
+  const currentLayer = state.atRoot ? undefined : phase.layers[state.layer];
+  const pendingBattle = currentLayer?.prediction && !battledLayers.has(state.layer) ? currentLayer.prediction : null;
 
   return (
     <div className="dig">
@@ -91,11 +101,23 @@ export function Dig({ phase, earlyOkLabel, onComplete }: DigProps) {
             </p>
           )}
           {!state.atRoot && (
-            <div className="dig__hand">
-              {phase.layers[state.layer]!.hand.map((c) => (
-                <Card key={c.id} kind="dig" text={c.text} onClick={() => playHandCard(c.id)} />
-              ))}
-            </div>
+            pendingBattle ? (
+              <PredictionBattle
+                options={resolveDigLayerPredictionOptions(currentLayer!, pendingBattle)}
+                solo={solo}
+                skipLabel={ui.predictionSkip}
+                handoffPrompt={ui.handoffPrompt}
+                handoffContinueLabel={ui.handoffContinue}
+                handoffSkipLabel={ui.handoffSkip}
+                onComplete={() => setBattledLayers((s) => new Set(s).add(state.layer))}
+              />
+            ) : (
+              <div className="dig__hand">
+                {phase.layers[state.layer]!.hand.map((c) => (
+                  <Card key={c.id} kind="dig" text={c.text} onClick={() => playHandCard(c.id)} />
+                ))}
+              </div>
+            )
           )}
         </>
       )}
@@ -104,9 +126,9 @@ export function Dig({ phase, earlyOkLabel, onComplete }: DigProps) {
         type="button"
         className="dig__early-ok"
         onClick={tapOk}
-        disabled={!!state.challenge}
+        disabled={!!state.challenge || !!pendingBattle}
       >
-        {earlyOkLabel}
+        {ui.earlyOk}
       </button>
     </div>
   );

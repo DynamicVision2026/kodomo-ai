@@ -72,6 +72,29 @@ export interface DigPhase {
 
 export type Phase = SlotAssemblyPhase | DigPhase;
 
+/**
+ * Fixed, module-wide UI chrome (never mission-specific). Matches module.json's "ui" block.
+ * Templates take this instead of individual string props so a new fixed string never means
+ * touching every template's prop list — spec v0.5 §7: child-facing strings only in module JSON.
+ */
+export interface ModuleUiStrings {
+  earlyOk: string;
+  handoffPrompt: string;
+  handoffContinue: string;
+  handoffSkip: string;
+  predictionSkip: string;
+  profilePickTitle: string;
+  profileCreateLabel: string;
+  profileMaxReached: string;
+  profileConfirm: string;
+  coopQuestion: string;
+  coopYes: string;
+  coopSolo: string;
+  teachbackSkip: string;
+  parentScreenHeading: string;
+  lockedMessage: string;
+}
+
 export interface Mission {
   id: string;
   stage: Stage;
