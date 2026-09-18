@@ -1,0 +1,83 @@
+{
+  "id": "m1-s2-1-1",
+  "stage": 2,
+  "title": "パンは なぜ ふくらむ？",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["what"],
+      "cards": [
+        { "id": "w1", "slot": "what", "text": "パンの こと おしえて", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "パンが ふくらむ りゆうを おしえて", "tag": "clear" },
+        { "id": "w3", "slot": "what", "text": "おいしい パンって なに", "tag": "offtopic" }
+      ],
+      "rules": [
+        { "when": { "what": "clear" }, "archetype": "CLEAR" },
+        { "when": { "what": "offtopic" }, "archetype": "OFFTOPIC" },
+        { "when": { "what": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": {
+          "robotSays": "イーストが はたらくからだよ。",
+          "animation": "proud",
+          "claims": ["c1"]
+        },
+        "VAGUE": {
+          "robotSays": "パンの はなしを ぜんぶ するね！ ながいよ！",
+          "animation": "confused",
+          "tip": "なにを ききたいか、はっきり させよう。",
+          "claims": ["nonfactual"]
+        },
+        "OFFTOPIC": {
+          "robotSays": "うーん、それは ひとによって ちがうなあ。",
+          "animation": "thinking",
+          "claims": ["nonfactual"]
+        }
+      },
+      "predictions": [{ "beforeRound": 1, "options": ["CLEAR", "VAGUE", "OFFTOPIC"] }]
+    },
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "イーストが はたらくからだよ。",
+          "claims": ["c1"],
+          "hand": [
+            { "id": "f1", "text": "なぜ イーストで ふくらむの？", "tag": "deepen" },
+            { "id": "f2", "text": "パンは すきですか？", "tag": "offtopic" },
+            { "id": "f3", "text": "もう いちど いって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "ぼくは たべられないんだ。",
+            "repeat": "うーん、さっきと おなじ こたえに なっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "イーストって なにを してるの？" }
+        },
+        {
+          "robotSays": "イーストが さとうを たべて、ガスを 出すんだ。",
+          "claims": ["c2"],
+          "hand": [
+            { "id": "f4", "text": "そのガスは どこへ いくの？", "tag": "deepen" },
+            { "id": "f5", "text": "さとうは あまいの？", "tag": "sideways" },
+            { "id": "f6", "text": "もう いちど いって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "あまいよ。でも パンの はなしから はなれちゃった。",
+            "repeat": "うーん、さっきと おなじ こたえに なっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "ガスが 出たら、どうして ふくらむの？" },
+          "prediction": { "beforeRound": 2, "options": ["f4", "f5", "f6"] }
+        }
+      ],
+      "root": {
+        "robotSays": "よく のびる きじの 中に ガスが とじこめられて、ふくらむんだ。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "さいしょの こたえで とまらない。もう一問。",
+  "teachBack": "ポン太の パンが ぺちゃんこだった りゆうを、おうちの人に おしえてあげよう。",
+  "ouchiTalk": "きょう「なんで？」って もう一回 きけば よかったこと、あった？"
+}

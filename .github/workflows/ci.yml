@@ -1,0 +1,27 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+
+      # --- build-breaking gates, spec v0.5 §7 ---
+      - name: Gate — no free-text input in the child flow
+        run: npm run gate:no-input
+      - name: Gate — no hard-coded child-facing copy
+        run: npm run gate:no-hardcoded
+      - name: Gate — every mission's claims approved (+ review stamp on release)
+        run: npm run gate:claims
+      - name: Content lint (kanji grade, ruby, length, tags, banned words, PII)
+        run: npm run lint:content
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Gate — no LLM/API hosts in the shipped bundle
+        run: npm run gate:no-llm

@@ -1,0 +1,74 @@
+{
+  "id": "m1",
+  "title": "しつもん・ふかぼり編",
+  "sku": "kodomo-ai-m1",
+  "stages": [
+    2
+  ],
+  "freeMissionIds": [
+    "m1-s2-1-1"
+  ],
+  "slotTypes": [
+    "what",
+    "why",
+    "who",
+    "format"
+  ],
+  "followMoves": [
+    "follow-naze",
+    "follow-tatoeba",
+    "follow-tsumari",
+    "follow-hokaniwa"
+  ],
+  "missionOrder": [
+    "m1-s2-1-1",
+    "m1-s2-1-2",
+    "m1-s2-1-3",
+    "m1-s2-1-4",
+    "m1-s2-1-5",
+    "m1-s2-1-6",
+    "m1-s2-1-7",
+    "m1-s2-1-8"
+  ],
+  "cardTypes": {
+    "odai": {
+      "label": "おだい"
+    },
+    "what": {
+      "label": "なにを"
+    },
+    "why": {
+      "label": "なぜ"
+    },
+    "who": {
+      "label": "だれに"
+    },
+    "format": {
+      "label": "どんな形で"
+    },
+    "follow-naze": {
+      "label": "なぜ？"
+    },
+    "follow-tatoeba": {
+      "label": "たとえば？"
+    },
+    "follow-tsumari": {
+      "label": "つまり？"
+    },
+    "follow-hokaniwa": {
+      "label": "ほかには？"
+    },
+    "himitsu": {
+      "label": "ひみつ"
+    },
+    "reaction": {
+      "label": "ロボ"
+    },
+    "rules": {
+      "label": "あそびかた"
+    },
+    "blank": {
+      "label": ""
+    }
+  }
+}

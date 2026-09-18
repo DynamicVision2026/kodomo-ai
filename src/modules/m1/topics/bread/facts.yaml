@@ -1,0 +1,24 @@
+# TEMPLATE ONLY — status is "pending" for every claim, so gate:claims will REJECT this build.
+# That is intentional: it proves the gate works. Replace with output from pipeline/01 + 02,
+# then approve each claim at Gate 1 (spec v0.5 §6).
+topic: bread
+question: パンは なぜ ふくらむ？
+claims:
+  - id: c1
+    statement: "PLACEHOLDER — yeast is a living microorganism"
+    sourceUrl: ""
+    excerpt: ""
+    adultLevelSource: false
+    status: pending
+  - id: c2
+    statement: "PLACEHOLDER — yeast consumes sugars and releases carbon dioxide"
+    sourceUrl: ""
+    excerpt: ""
+    adultLevelSource: false
+    status: pending
+  - id: c3
+    statement: "PLACEHOLDER — gluten forms an elastic network that traps the gas"
+    sourceUrl: ""
+    excerpt: ""
+    adultLevelSource: false
+    status: pending

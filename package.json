@@ -1,0 +1,35 @@
+{
+  "name": "kodomo-ai",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "lint:content": "tsx pipeline/04_lint.ts",
+    "gate:no-llm": "tsx scripts/gate-no-llm.ts",
+    "gate:no-input": "tsx scripts/gate-no-free-text.ts",
+    "gate:no-hardcoded": "tsx scripts/gate-no-hardcoded-copy.ts",
+    "gate:claims": "tsx scripts/gate-claims-approved.ts",
+    "gates": "npm run gate:no-input && npm run gate:no-hardcoded && npm run gate:claims && npm run lint:content && npm run build && npm run gate:no-llm",
+    "pipeline:lint": "tsx pipeline/04_lint.ts"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4",
+    "tsx": "^4.19.2",
+    "yaml": "^2.6.0"
+  }
+}
