@@ -1,0 +1,148 @@
+.lp {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0 1.25rem 3rem;
+  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  line-height: 1.8;
+  color: #1c1c1c;
+}
+
+.lp__hero {
+  text-align: center;
+  padding: 3rem 0 2rem;
+}
+.lp__door {
+  display: inline-block;
+  padding: 0.3rem 1rem;
+  border-radius: 999px;
+  background: #eaf2fa;
+  color: #2f6fb0;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+.lp__hero h1 {
+  font-size: 1.6rem;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+.lp__subhead {
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.lp__cta-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+.lp__cta {
+  display: inline-block;
+  padding: 0.75rem 1.6rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+}
+.lp__cta--primary {
+  background: #2f6fb0;
+  color: #fff;
+}
+.lp__cta--secondary {
+  background: #fff;
+  color: #2f6fb0;
+  border: 1px solid #2f6fb0;
+}
+
+.lp__section {
+  padding: 2.5rem 0;
+  border-top: 1px solid #eee;
+}
+.lp__section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+.lp__section ul {
+  padding-left: 1.2rem;
+}
+.lp__section li {
+  margin-bottom: 0.4rem;
+}
+
+.lp__grade-row {
+  display: flex;
+  gap: 0.6rem;
+}
+.lp__grade-row button {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: 0.6rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+}
+.lp__grade-row button.is-selected {
+  border-color: #2f6fb0;
+  background: #eaf2fa;
+}
+.lp__grade-note {
+  margin-top: 0.75rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.lp__skill-flow {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  color: #2f6fb0;
+}
+
+.lp__alignment-caveat {
+  font-size: 0.8rem;
+  color: #b0632f;
+  margin-bottom: 1rem;
+}
+.lp__alignment-row {
+  padding: 0.9rem 0;
+  border-bottom: 1px dashed #ddd;
+}
+.lp__alignment-direction {
+  font-size: 0.85rem;
+  color: #888;
+}
+.lp__alignment-source {
+  font-size: 0.8rem;
+}
+
+.lp__price {
+  text-align: center;
+}
+.lp__price-anchor {
+  color: #555;
+}
+.lp__price-amount {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0.5rem 0 1rem;
+}
+.lp__price ul {
+  display: inline-block;
+  text-align: left;
+}
+
+.lp__faq dt {
+  font-weight: 700;
+  margin-top: 1rem;
+}
+.lp__faq dd {
+  margin: 0.3rem 0 0;
+  color: #444;
+}
+
+.lp__footer {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2rem 0;
+  font-size: 0.85rem;
+}

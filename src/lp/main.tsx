@@ -1,2 +1,5 @@
-// Landing page entry (/). Built last, with real screenshots — see docs/work-order-w1.md Task 8.
-export {};
+// Landing page entry (/).
+import { createRoot } from 'react-dom/client';
+import { LandingPage } from './LandingPage';
+
+createRoot(document.getElementById('root')!).render(<LandingPage />);
