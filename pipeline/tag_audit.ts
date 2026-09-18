@@ -5,8 +5,8 @@
  *
  * Usage: npx tsx pipeline/tag_audit.ts <topic-slug> --stage 2
  *
- * Model: OpenAI gpt-4o — a different provider from 03's Claude, which authored the tags.
- * Requires OPENAI_API_KEY.
+ * Model: a different provider from 03's Claude, which authored the tags — see
+ * pipeline/lib/secondOpinion.ts for the active provider and which env var it needs.
  *
  * Flags only — never rewrites a tag. Writes src/modules/m1/topics/<topic>/tag-audit-report.json
  * and always exits 0 on a successful run (the report is for Gate 2, not a build gate); only a
@@ -14,7 +14,7 @@
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { callOpenAiJson } from './lib/openai.js';
+import { callSecondOpinionJson } from './lib/secondOpinion.js';
 
 const VALID_TAGS = ['deepen', 'sideways', 'repeat', 'offtopic'] as const;
 type DigTag = (typeof VALID_TAGS)[number];
@@ -73,7 +73,7 @@ one entry per card, in the order given.`;
 async function classifyLayer(cards: AuditCard[]): Promise<Map<string, string>> {
   const context = cards[0]!.context;
   const cardList = cards.map((c) => `- id ${c.cardId}: "${c.text}"`).join('\n');
-  const parsed = (await callOpenAiJson(
+  const parsed = (await callSecondOpinionJson(
     SYSTEM_PROMPT,
     `ロボ just said: ${context}\n\nCandidate follow-ups:\n${cardList}`,
     { requiredBy: 'tag_audit' },

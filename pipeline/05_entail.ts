@@ -7,8 +7,8 @@
  *
  * Usage: npx tsx pipeline/05_entail.ts <topic-slug> --stage 2
  *
- * Model: OpenAI gpt-4o — a different provider from 03's Claude, same reasoning as 02
- * (spec v0.5 §6: "a model checking itself is not a check"). Requires OPENAI_API_KEY.
+ * Model: a different provider from 03's Claude, same reasoning as 02 (spec v0.5 §6: "a model
+ * checking itself is not a check") — see pipeline/lib/secondOpinion.ts for the active provider.
  *
  * Writes src/modules/m1/topics/<topic>/entail-report.json (every check + verdict, for Gate 2).
  * Exits non-zero ONLY when a verdict is "contradicts" — "drift" and "ok" are informational.
@@ -17,7 +17,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parse } from 'yaml';
 import type { FactsFile, Claim } from './01_research.js';
-import { callOpenAiJson } from './lib/openai.js';
+import { callSecondOpinionJson } from './lib/secondOpinion.js';
 
 type Verdict = 'ok' | 'drift' | 'contradicts';
 
@@ -80,7 +80,7 @@ does not contradict them (simplification drift).
 
 async function judge(text: string, claims: Claim[]): Promise<{ verdict: Verdict; note: string }> {
   const claimList = claims.map((c) => `- ${c.id}: "${c.statement}" (excerpt: "${c.excerpt}")`).join('\n');
-  const parsed = (await callOpenAiJson(
+  const parsed = (await callSecondOpinionJson(
     SYSTEM_PROMPT,
     `Claim(s):\n${claimList}\n\nSentence to check: ${text}`,
     { requiredBy: '05_entail' },

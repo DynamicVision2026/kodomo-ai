@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 
 const DIST = resolve(process.cwd(), 'dist');
 const FORBIDDEN = [
-  'api.anthropic.com', 'api.openai.com', 'generativelanguage.googleapis.com',
+  'api.anthropic.com', 'api.openai.com', 'api.deepseek.com', 'generativelanguage.googleapis.com',
   'api.cohere', 'api.mistral', 'openrouter.ai', 'huggingface.co/api',
   'claude.ai/api', 'chatgpt.com/backend',
 ];

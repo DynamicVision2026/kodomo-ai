@@ -4,20 +4,21 @@
  *
  * Usage: npx tsx pipeline/02_crosscheck.ts <topic-slug>
  *
- * Model: OpenAI gpt-4o — deliberately not Claude (01 already used Claude; a model checking
- * itself is not a check). Requires OPENAI_API_KEY.
+ * Model: a different provider from Claude, never Claude itself (01 already used Claude; a
+ * model checking itself is not a check) — see pipeline/lib/secondOpinion.ts for which provider
+ * is active and which env var it needs (default: DeepSeek).
  *
  * Two checks run per claim, and the mechanical one wins ties:
  *   1. Mechanical (no model): best-effort fetch of the claim's sourceUrl, checking that the
  *      recorded excerpt actually appears on the page verbatim. Catches a fabricated or
  *      misquoted source outright, which an LLM re-reading only the excerpt cannot.
- *   2. Model (gpt-4o): does the excerpt actually entail the statement?
+ *   2. Model (second-opinion provider): does the excerpt actually entail the statement?
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parse, stringify } from 'yaml';
 import type { FactsFile } from './01_research.js';
-import { callOpenAiJson } from './lib/openai.js';
+import { callSecondOpinionJson } from './lib/secondOpinion.js';
 
 const FETCH_TIMEOUT_MS = 10_000;
 
@@ -79,7 +80,7 @@ inferential leap.
 - "unsupported": the excerpt does not support the statement, or contradicts it.`;
 
 async function modelVerdict(statement: string, excerpt: string): Promise<{ verdict: Verdict; note: string }> {
-  const parsed = (await callOpenAiJson(
+  const parsed = (await callSecondOpinionJson(
     SYSTEM_PROMPT,
     `Statement: ${statement}\n\nExcerpt: ${excerpt}`,
     { requiredBy: '02_crosscheck' },
