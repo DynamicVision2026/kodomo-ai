@@ -133,23 +133,45 @@ the rendering logic. `pipeline/04_lint.ts`'s `DECK_FILENAME` regex already match
 
 ### 2.6 Sprint 1-A acceptance criteria
 
-- [ ] `pipeline/03_render.ts` renders a mission at claim count ≠ 3 (e.g. a fixture with 5
+- [x] `pipeline/03_render.ts` renders a mission at claim count ≠ 3 (e.g. a fixture with 5
       claims) and the resulting mission passes `lintMission()` at that stage, matching
       `tests/pipeline03Render.test.ts`'s existing "passes the deterministic content lint" test
-      but for a non-Stage-2 shape.
-- [ ] The render prompt's style-rule text is generated from `STAGE_LIMITS[stage]`, verified by
+      but for a non-Stage-2 shape. — `STAGE_CLAIM_COUNT = { 1: 2, 2: 3, 3: 5 }`; see the new
+      "assembleMission at a non-Stage-2 claim count (Stage 3, 5 claims)" describe block.
+- [x] The render prompt's style-rule text is generated from `STAGE_LIMITS[stage]`, verified by
       a test asserting the prompt string changes when `stage` changes (a snapshot-style check
-      is enough — this doesn't need a live model call).
-- [ ] A new profile's `stage` comes from a prop, not a literal, and a unit test constructs a
+      is enough — this doesn't need a live model call). — `buildSystemPrompt` exported + tested
+      for all three stages.
+- [x] A new profile's `stage` comes from a prop, not a literal, and a unit test constructs a
       `ProfilePicker` with `defaultStage: 3` and asserts the created profile carries it.
-- [ ] `pickNextMission()` is unit-tested against a fake two-stage module + a profile that has
-      completed the Stage 2 mission, and returns the Stage 3 one.
-- [ ] `m2-test`-style fixture repeated at Stage 1 and Stage 3 (two more dummy missions, same
+      `MissionShell` passes `defaultStage={mission.stage}` (kept stage-blind at creation, per
+      §2.2's recommendation — a family never picks a stage in the picker itself).
+- [x] `pickNextMission()` is unit-tested against a fake two-stage module + a profile that has
+      completed the Stage 2 mission, and returns the Stage 3 one. Wired into `MissionShell` via
+      an optional `missionLibrary` prop (backward compatible — omitting it behaves exactly as
+      before) and into `src/main.tsx`.
+- [x] `m2-test`-style fixture repeated at Stage 1 and Stage 3 (two more dummy missions, same
       pattern as `src/modules/m2-test`) renders through the real, unmodified `MissionShell` —
       re-confirming spec §13's "no `/engine` changes" promise now holds across all three
-      stages, not just Stage 2.
-- [ ] All existing 115 tests plus the new ones green; all gates still pass/fail exactly as
-      before (this sprint changes no content-approval state).
+      stages, not just Stage 2. — Stage 3 was already covered by `m2-test`; added
+      `src/modules/stage1-test` for Stage 1 (bareUpTo:0/maxSentence:20, the tightest limits).
+- [x] All existing 115 tests plus the new ones green; all gates still pass/fail exactly as
+      before (this sprint changes no content-approval state). — 143 tests green; `gate:claims`
+      fails on exactly the same pre-existing reason (`bread/facts.yaml` still pending Gate 1),
+      nothing else changed.
+
+**Also fixed while making this stage-generic, not in the original audit:**
+`scripts/gate-claims-approved.ts` excluded deck files by the literal filename `deck.s2.json` —
+the same class of bug as §1's gaps A–D, just missed there. Generalized to a
+`/deck\.s\d+\.json$/` regex (matching `pipeline/04_lint.ts`'s own `DECK_FILENAME`), otherwise a
+future `deck.s1.json`/`deck.s3.json` would have wrongly been treated as a mission file needing
+its own `facts.yaml`.
+
+**PrintDeck (§2.5):** implemented as a props-driven component (`deck`, `cardTypes`) rather than
+scaffolding placeholder `print/deck-s1`/`print/deck-s3` Vite entries — those would import
+`deck.s1.json`/`deck.s3.json`, which don't exist yet (that's the Stage 3 work order's §3 Task 6
+and a Stage 1 follow-on). Adding either is now exactly "one thin entry + a content file", not a
+`PrintDeck.tsx` change.
 
 ---
 

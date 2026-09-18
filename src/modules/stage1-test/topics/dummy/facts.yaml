@@ -1,0 +1,14 @@
+# DUMMY FIXTURE — Sprint 1-A acceptance criterion (docs/work-order-w2-stage-expansion.md §2.6):
+# a Stage 1 mission must render through the real, unmodified MissionShell too, same as m2-test
+# already proved for Stage 3. Not real product content, never rendered to a real player.
+# Approved here directly because it is a test fixture with no factual claim about the world,
+# not because Gate 1 was skipped for real content.
+topic: dummy
+question: これは ステージ１の テストです
+claims:
+  - id: d1
+    statement: "This is a dummy claim for a Stage 1 extensibility smoke test, not real content."
+    sourceUrl: "https://example.com/test-fixture"
+    excerpt: "This is a test fixture, not a real source."
+    adultLevelSource: true
+    status: approved

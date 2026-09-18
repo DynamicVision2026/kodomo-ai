@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Profile } from '../engine/storage';
 import { MAX_PROFILES } from '../engine/storage';
+import type { Stage } from '../engine/types';
 import presets from './presets.json';
 import './profile-picker.css';
 
@@ -19,6 +20,11 @@ export interface ProfilePickerUi {
 export interface ProfilePickerProps {
   profiles: Profile[];
   ui: ProfilePickerUi;
+  /** Stage a newly-created profile starts at. Spec v0.5 §5 step 0: "stage (default 2)" — this
+   *  is always a default, never a per-family choice at creation time (docs/work-order-w2 §2.2):
+   *  the mission library picks stage-appropriate content for whatever stage a profile ends up
+   *  at, so profile creation itself stays stage-blind. */
+  defaultStage: Stage;
   onSelect: (profile: Profile) => void;
   onCreate: (profile: Profile) => void;
 }
@@ -36,10 +42,10 @@ function newProfileId(): string {
 
 /**
  * Preset avatar + preset nickname + a stage number — never a name, birthday, school, or free
- * text. Spec v0.5 §7, §5 step 0. Max 6 profiles (storage.MAX_PROFILES). Stage always starts at
- * 2: it's the only stage this module ships (module.json), so there is nothing yet to pick.
+ * text. Spec v0.5 §7, §5 step 0. Max 6 profiles (storage.MAX_PROFILES). `defaultStage` is a
+ * default, not a choice offered here — see ProfilePickerProps.defaultStage.
  */
-export function ProfilePicker({ profiles, ui, onSelect, onCreate }: ProfilePickerProps) {
+export function ProfilePicker({ profiles, ui, defaultStage, onSelect, onCreate }: ProfilePickerProps) {
   const [creating, setCreating] = useState(false);
   const [avatarId, setAvatarId] = useState<string | null>(null);
   const [nicknameId, setNicknameId] = useState<string | null>(null);
@@ -47,7 +53,7 @@ export function ProfilePicker({ profiles, ui, onSelect, onCreate }: ProfilePicke
   if (creating) {
     const confirm = () => {
       if (!avatarId || !nicknameId) return;
-      onCreate({ id: newProfileId(), avatarId, nicknameId, stage: 2, progress: {} });
+      onCreate({ id: newProfileId(), avatarId, nicknameId, stage: defaultStage, progress: {} });
     };
 
     return (

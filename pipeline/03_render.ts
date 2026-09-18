@@ -20,12 +20,12 @@
  * mechanically checkable rather than a hope: every piece of generated text is traceable to
  * exactly the claim(s) it was allowed to see.
  *
- * Claim budget (spec v0.5 §6: "Stage 2 uses claims 1-3 of ~5"): stage 2 always renders the
- * FIRST 3 approved claims (shallow -> deep) into a slot-assembly "what" round (grounded in
- * claim 1) + a dig phase of 2 layers (claims 1, 2) + a root (claim 3) — matching the shape of
- * the one hand-authored example (bread/s2.json) exactly. Claims past the third are reserved
- * for a future Stage 3 render of the same topic. Only stage 2 is implemented; module.json only
- * declares stage 2 as shipped this sprint.
+ * Claim budget (spec v0.5 §6: "Stage 2 uses claims 1-3 of ~5"; §3's Stage 1/3 rows): each stage
+ * renders the FIRST N approved claims (shallow -> deep) into a slot-assembly "what" round
+ * (grounded in claim 1) + a dig phase of N-1 layers + a root (claim N) — matching the shape of
+ * the one hand-authored example (bread/s2.json) exactly, just at a different N. A topic's claims
+ * past a given stage's N are reserved for a deeper stage's render of the SAME topic (the
+ * topic-spine reuse model — 01/02 never re-run for a stage bump, see docs/work-order-w2).
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -33,7 +33,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { parse } from 'yaml';
 import type { FactsFile, Claim } from './01_research.js';
 import { lintMission } from './04_lint.js';
-import { loadGradeMap } from './lib/kanji.js';
+import { loadGradeMap, STAGE_LIMITS } from './lib/kanji.js';
 import type { DigTag, Mission, DigLayer, DigCard } from '../src/engine/types.js';
 
 export function assertAllApproved(facts: FactsFile): void {
@@ -51,7 +51,14 @@ export function loadFacts(path: string): FactsFile {
 }
 
 const MODEL = 'claude-opus-5';
-const STAGE_CLAIM_COUNT: Record<number, number> = { 2: 3 };
+/**
+ * How many of a topic's approved claims (shallow -> deep) each stage renders. Stage 1's value
+ * is a Sprint 1-A plumbing placeholder, not a Stage 1 design decision — see
+ * docs/work-order-w2-stage-expansion.md §4/§6, the real number is the spike's to set.
+ */
+const STAGE_CLAIM_COUNT: Record<number, number> = { 1: 2, 2: 3, 3: 5 };
+/** Elementary grade band each stage writes for — prompt wording only, not a lint rule. */
+const STAGE_GRADE_LABEL: Record<number, string> = { 1: 'Grade 1-2', 2: 'Grade 3-4', 3: 'Grade 5-6' };
 const ROOT_LABEL = 'ねっこ';
 const DISTRACTOR_TAGS: Exclude<DigTag, 'deepen'>[] = ['sideways', 'repeat', 'offtopic'];
 
@@ -79,14 +86,33 @@ interface DraftContent {
   ouchiTalk: string;
 }
 
-function buildSystemPrompt(claims: Claim[], stage: number): string {
+/** Prose rendering of pipeline/lib/kanji.ts's STAGE_LIMITS[stage] for the model prompt — the
+ *  actual limits stay defined in exactly one place, never re-typed as literals here. */
+function buildKanjiRule(stage: number): string {
+  const limits = STAGE_LIMITS[stage];
+  if (!limits) throw new Error(`No STAGE_LIMITS entry for stage ${stage} (pipeline/lib/kanji.ts).`);
+  const bareLine =
+    limits.bareUpTo === 0
+      ? 'No kanji may appear bare.'
+      : `Kanji at Grade ${limits.bareUpTo} or below may appear bare.`;
+  return (
+    `${bareLine} Kanji above Grade ${limits.bareUpTo} up to Grade ${limits.allowedUpTo} MUST be ` +
+    `written as ruby markup {漢字|かんじ} (base kanji, then its reading). NEVER use kanji above ` +
+    `Grade ${limits.allowedUpTo}.`
+  );
+}
+
+export function buildSystemPrompt(claims: Claim[], stage: number): string {
   const claimList = claims
     .map((c, i) => `  claim ${i + 1} (id ${c.id}): "${c.statement}"\n    excerpt: "${c.excerpt}"`)
     .join('\n');
   const layerCount = claims.length - 1;
+  const limits = STAGE_LIMITS[stage];
+  if (!limits) throw new Error(`No STAGE_LIMITS entry for stage ${stage} (pipeline/lib/kanji.ts).`);
+  const gradeLabel = STAGE_GRADE_LABEL[stage] ?? `Stage ${stage}`;
 
   return `You are the render step of a children's education content pipeline, writing for \
-Japanese elementary school Grade 3-4 (Stage ${stage}). You write ONLY the child-facing Japanese \
+Japanese elementary school ${gradeLabel} (Stage ${stage}). You write ONLY the child-facing Japanese \
 text for a fixed set of named slots below — the JSON structure itself is assembled by code, not \
 you. Never add a slot, never rename one, never add commentary outside the JSON object.
 
@@ -95,9 +121,8 @@ layer to a root cause. No 正解/不正解, no scores, no right/wrong language a
 reply is ロボ being unhelpful, not the player being wrong.
 
 Style rules (spec v0.5 §3, enforced by a deterministic lint after you respond — get them right):
-- Every sentence <= 35 characters.
-- Kanji at Grade 1-2 may appear bare. Kanji at Grade 3-4 MUST be written as ruby markup
-  {漢字|かんじ} (base kanji, then its reading). NEVER use kanji above Grade 4.
+- Every sentence <= ${limits.maxSentence} characters.
+- ${buildKanjiRule(stage)}
 - Never use these words anywhere: 正解, 不正解, まちがい, バカ, テスト, 点数, 追問, 第一性原理,
   文部科学省推奨, 文科省推奨, 認定, 公認, 準拠, 監修.
 - Never ask for a name, address, school name, email, or phone number.
@@ -286,9 +311,10 @@ export function assembleMission(
 export async function render(topic: string, stage: number, missionId: string): Promise<Mission> {
   const claimCount = STAGE_CLAIM_COUNT[stage];
   if (!claimCount) {
+    const supported = Object.keys(STAGE_CLAIM_COUNT).sort().join(', ');
     throw new Error(
-      `Stage ${stage} is not yet supported by 03_render — only Stage 2 is implemented this ` +
-      'sprint (module.json only declares stage 2). Escalate before adding another stage.',
+      `Stage ${stage} is not yet supported by 03_render — only stage(s) ${supported} have a ` +
+      'STAGE_CLAIM_COUNT entry. Escalate before adding another stage.',
     );
   }
 

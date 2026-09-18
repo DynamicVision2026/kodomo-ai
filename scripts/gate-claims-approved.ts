@@ -15,7 +15,7 @@ const files: string[] = [];
   for (const n of readdirSync(d)) {
     const p = join(d, n);
     if (statSync(p).isDirectory()) walk(p);
-    else if (p.endsWith('.json') && !p.endsWith('module.json') && !p.endsWith('deck.s2.json')) files.push(p);
+    else if (p.endsWith('.json') && !p.endsWith('module.json') && !/deck\.s\d+\.json$/.test(p)) files.push(p);
   }
 })(MODULES);
 

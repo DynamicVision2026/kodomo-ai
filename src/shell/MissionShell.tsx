@@ -4,17 +4,29 @@ import { load, save, MAX_PROFILES, type AppState, type Profile } from '../engine
 import { hasAccess } from '../engine/entitlements';
 import { track } from '../engine/analytics';
 import { ProfilePicker } from './ProfilePicker';
+import { pickNextMission } from './missionLibrary';
 import { SlotAssembly } from '../templates/slot-assembly';
 import { Dig } from '../templates/dig';
 import { Handoff } from '../templates/handoff';
 import { Ruby } from '../engine/ruby';
 import './mission-shell.css';
 
+/** Every mission a module ships (any stage) + the order `pickNextMission` walks. Optional: a
+ *  caller with only one mission (today's reality for most modules) can omit this and `mission`
+ *  is used as-is, exactly as before Sprint 1-A. */
+export interface MissionLibrary {
+  missionOrder: string[];
+  missions: Record<string, Mission>;
+}
+
 export interface MissionShellProps {
   moduleId: string;
   freeMissionIds: string[];
+  /** Default/fallback mission — used as-is when `missionLibrary` is absent, or when it has no
+   *  undone mission at the chosen profile's stage. */
   mission: Mission;
   ui: ModuleUiStrings;
+  missionLibrary?: MissionLibrary;
 }
 
 type Screen =
@@ -38,20 +50,32 @@ type Screen =
  * failure (src/engine/storage.ts), so this component just uses them normally — the current
  * session keeps working either way, it just won't be remembered after a reload.
  */
-export function MissionShell({ moduleId, freeMissionIds, mission, ui }: MissionShellProps) {
+export function MissionShell({ moduleId, freeMissionIds, mission: defaultMission, ui, missionLibrary }: MissionShellProps) {
   const [appState, setAppState] = useState<AppState>(() => load());
   const [profile, setProfile] = useState<Profile | null>(null);
   const [solo, setSolo] = useState(false);
   const [screen, setScreen] = useState<Screen>({ kind: 'profile' });
+  const [mission, setMission] = useState<Mission>(defaultMission);
 
   function persist(next: AppState) {
     setAppState(next);
     save(next);
   }
 
+  /** Resolves which mission a just-chosen profile should actually play, via the mission
+   *  library when one was supplied — falling back to `defaultMission` otherwise (or if the
+   *  library has nothing undone at this profile's stage). Sprint 1-A gap E. */
+  function resolveMission(p: Profile): Mission {
+    if (!missionLibrary) return defaultMission;
+    const pickedId = pickNextMission(missionLibrary.missionOrder, missionLibrary.missions, p);
+    return (pickedId && missionLibrary.missions[pickedId]) || defaultMission;
+  }
+
   function afterProfileChosen(p: Profile) {
+    const resolved = resolveMission(p);
+    setMission(resolved);
     setProfile(p);
-    if (!hasAccess(appState.entitlements, moduleId, mission.id, freeMissionIds)) {
+    if (!hasAccess(appState.entitlements, moduleId, resolved.id, freeMissionIds)) {
       setScreen({ kind: 'locked' });
       return;
     }
@@ -109,6 +133,7 @@ export function MissionShell({ moduleId, freeMissionIds, mission, ui }: MissionS
       <ProfilePicker
         profiles={appState.profiles}
         ui={ui}
+        defaultStage={defaultMission.stage}
         onSelect={afterProfileChosen}
         onCreate={createProfile}
       />

@@ -1,0 +1,27 @@
+{
+  "id": "stage1-test-dummy",
+  "stage": 1,
+  "title": "ステージ１の テスト",
+  "sources": ["d1"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["what"],
+      "cards": [
+        { "id": "s1c1", "slot": "what", "text": "おしえて ほしいな", "tag": "clear" },
+        { "id": "s1c2", "slot": "what", "text": "なんか いって", "tag": "vague" }
+      ],
+      "rules": [
+        { "when": { "what": "clear" }, "archetype": "CLEAR" },
+        { "when": { "what": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": { "robotSays": "わかったよ、こたえるね。", "claims": ["d1"] },
+        "VAGUE": { "robotSays": "もう ちょっと おしえてね。", "claims": ["nonfactual"] }
+      }
+    }
+  ],
+  "tip": "すこしずつ きいてみよう。",
+  "teachBack": "きょう きいたこと、はなしてみよう。",
+  "ouchiTalk": "たのしかった こと あった？"
+}

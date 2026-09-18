@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { extractJsonObject, assembleMission, assertAllApproved, loadFacts, validateDraftContent } from '../pipeline/03_render';
+import { extractJsonObject, assembleMission, assertAllApproved, loadFacts, validateDraftContent, buildSystemPrompt } from '../pipeline/03_render';
 import { lintMission } from '../pipeline/04_lint';
-import { loadGradeMap } from '../pipeline/lib/kanji';
+import { loadGradeMap, STAGE_LIMITS } from '../pipeline/lib/kanji';
 import type { Claim } from '../pipeline/01_research';
 import type { FactsFile } from '../pipeline/01_research';
 import { writeFileSync, mkdtempSync, rmSync } from 'node:fs';
@@ -160,5 +160,64 @@ describe('03_render: assembleMission', () => {
     const gradeOf = loadGradeMap();
     const issues = lintMission(mission, 2, gradeOf, new Set(['c1', 'c2', 'c3']));
     expect(issues).toEqual([]);
+  });
+});
+
+// Sprint 1-A: 03_render is no longer Stage-2-only. Same fixture shape, one more claim, proving
+// assembleMission's layer/root math (claims.length - 1 layers, last claim is the root) holds at
+// a different N — this is a test-only addition, not a logic change (docs/work-order-w2 §2.1).
+describe('03_render: assembleMission at a non-Stage-2 claim count (Stage 3, 5 claims)', () => {
+  const claims5: Claim[] = [
+    claim('c1', 'いちばん あさい じじつ'),
+    claim('c2', 'つぎに ふかい じじつ'),
+    claim('c3', 'さらに ふかい じじつ'),
+    claim('c4', 'もっと ふかい じじつ'),
+    claim('c5', 'いちばん ふかい じじつ'),
+  ];
+  const draft5 = {
+    ...draft,
+    layers: [
+      draft.layers[0]!,
+      draft.layers[1]!,
+      { ...draft.layers[1]!, robotSays: 'それはね、さらに ふかい じじつだよ' },
+      { ...draft.layers[1]!, robotSays: 'それはね、もっと ふかい じじつだよ' },
+    ],
+    rootRobotSays: 'それはね、いちばん ふかい じじつだよ',
+  };
+  const mission5 = assembleMission('m1-s3-test', 3, 'test', claims5, draft5);
+
+  it('builds one dig layer per claim except the last (4 layers for 5 claims)', () => {
+    const dig = mission5.phases[1] as import('../src/engine/types').DigPhase;
+    expect(dig.layers).toHaveLength(4);
+    expect(dig.root.claims).toEqual(['c5']);
+  });
+
+  it('passes the deterministic content lint at stage 3', () => {
+    const gradeOf = loadGradeMap();
+    const issues = lintMission(mission5, 3, gradeOf, new Set(['c1', 'c2', 'c3', 'c4', 'c5']));
+    expect(issues).toEqual([]);
+  });
+});
+
+describe('03_render: buildSystemPrompt is parametrized by stage, not hardcoded to Stage 2', () => {
+  it('interpolates each stage\'s own STAGE_LIMITS instead of a fixed Stage-2 literal', () => {
+    for (const stage of [1, 2, 3] as const) {
+      const prompt = buildSystemPrompt(claims, stage);
+      const limits = STAGE_LIMITS[stage]!;
+      expect(prompt).toContain(`Every sentence <= ${limits.maxSentence} characters.`);
+      expect(prompt).toContain(`NEVER use kanji above Grade ${limits.allowedUpTo}.`);
+    }
+  });
+
+  it('produces a different prompt string for each stage', () => {
+    const p1 = buildSystemPrompt(claims, 1);
+    const p2 = buildSystemPrompt(claims, 2);
+    const p3 = buildSystemPrompt(claims, 3);
+    expect(p1).not.toBe(p2);
+    expect(p2).not.toBe(p3);
+  });
+
+  it('says "no kanji may appear bare" at stage 1, where bareUpTo is 0', () => {
+    expect(buildSystemPrompt(claims, 1)).toContain('No kanji may appear bare.');
   });
 });
