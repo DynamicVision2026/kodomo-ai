@@ -30,6 +30,9 @@
     "m1-s2-1-7",
     "m1-s2-1-8"
   ],
+  "ui": {
+    "earlyOk": "これでOK"
+  },
   "cardTypes": {
     "odai": {
       "label": "おだい"

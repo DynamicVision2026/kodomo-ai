@@ -9,7 +9,7 @@ import './card.css';
 export type CardKind =
   | 'odai' | 'what' | 'why' | 'who' | 'format'
   | 'follow-naze' | 'follow-tatoeba' | 'follow-tsumari' | 'follow-hokaniwa'
-  | 'himitsu' | 'reaction' | 'rules' | 'blank';
+  | 'himitsu' | 'reaction' | 'rules' | 'blank' | 'dig';
 
 const META: Record<CardKind, { icon: string; corner: 'round' | 'cut' | 'notch' | 'square' }> = {
   odai:              { icon: '\u25C6', corner: 'square' },
@@ -25,6 +25,10 @@ const META: Record<CardKind, { icon: string; corner: 'round' | 'cut' | 'notch' |
   reaction:          { icon: '\uFF01', corner: 'notch'  },
   rules:             { icon: '\u2630', corner: 'square' },
   blank:             { icon: '\uFF0B', corner: 'square' },
+  // Dig-phase hand cards: deliberately UNDIFFERENTIATED. The dig tag (deepen/sideways/
+  // repeat/offtopic) that a card carries must never be visible to the player \u2014 that would
+  // let them learn "always pick the star" instead of thinking. Spec v0.5 pillar 1.
+  dig:               { icon: '\u2022', corner: 'round'  },
 };
 
 export interface CardProps {

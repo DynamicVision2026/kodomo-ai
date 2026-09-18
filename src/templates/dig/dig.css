@@ -1,0 +1,78 @@
+.dig {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.dig__meter {
+  display: flex;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  justify-content: center;
+}
+.dig__meter-dot {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: #ddd;
+}
+.dig__meter-dot.is-filled {
+  background: #2f8f6b;
+}
+
+.dig__answer {
+  font-size: 1.2rem;
+  line-height: 1.7;
+  text-align: center;
+}
+.dig__root-label {
+  display: block;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  color: #b0632f;
+  margin-bottom: 0.25rem;
+}
+
+.dig__flat-reply {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+}
+
+.dig__hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.dig__challenge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+.dig__challenge-from {
+  font-weight: 700;
+}
+
+.dig__early-ok {
+  align-self: center;
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid #2f6fb0;
+  background: #fff;
+  color: #2f6fb0;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dig__early-ok:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
