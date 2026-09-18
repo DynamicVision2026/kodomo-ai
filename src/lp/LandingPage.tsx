@@ -20,10 +20,9 @@ import './landing-page.css';
  *   them "draft, pending native and legal check" — that check has not happened. Do not treat
  *   this section as cleared for public launch; its source links are placeholders pending a
  *   confirmed, stable MEXT URL (this session would not guess one).
- * - Section 11's legal links point to the company's confirmed legal domain (soul-id.jp) rather
- *   than an in-app 特商法/privacy page — Task 9 still needs the actual required fields (entity
- *   name, representative, address, phone) before those could be written here, if that's even
- *   the right architecture rather than just linking out as done now.
+ * - Section 11's legal links point to this app's own /legal/tokushoho and /legal/privacy pages
+ *   (src/legal), built from real company data the founder confirmed from soul-id.jp — still
+ *   drafts pending the founder's own legal review, not a substitute for one.
  */
 
 const HEADLINES: Record<'A' | 'B', string> = {
@@ -231,14 +230,10 @@ export function LandingPage() {
       </section>
 
       <footer className="lp__footer">
-        {/* Task 9 (docs/work-order-w1.md): the founder confirmed the company's legal domain
-            is soul-id.jp, but not yet the exact page paths for these two disclosures, and
-            not yet the 特商法-required fields (entity name, rep, address, phone) themselves.
-            Linking to the domain root rather than guessing a subpath — update to the exact
-            URLs once known, and reconsider whether these belong as in-app pages at all vs.
-            simply linking straight to the existing corporate legal pages, as done here. */}
-        <a href="https://soul-id.jp/">特定商取引法に基づく表記</a>
-        <a href="https://soul-id.jp/">プライバシーポリシー</a>
+        {/* src/legal — real company data confirmed from soul-id.jp, still drafts pending the
+            founder's own legal review (Task 9, docs/work-order-w1.md). */}
+        <a href="/legal/tokushoho">特定商取引法に基づく表記</a>
+        <a href="/legal/privacy">プライバシーポリシー</a>
       </footer>
     </main>
   );

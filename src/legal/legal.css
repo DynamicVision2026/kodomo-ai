@@ -1,0 +1,46 @@
+.legal {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  line-height: 1.8;
+  color: #1c1c1c;
+}
+
+.legal__draft-banner {
+  background: #fff3e0;
+  color: #b0632f;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.legal h1 {
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+}
+
+.legal h2 {
+  font-size: 1.05rem;
+  margin: 1.75rem 0 0.5rem;
+}
+
+.legal__table {
+  border-top: 1px solid #ddd;
+}
+.legal__row {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #ddd;
+}
+.legal__row dt {
+  flex: 0 0 9rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+.legal__row dd {
+  margin: 0;
+  flex: 1;
+}

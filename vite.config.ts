@@ -12,6 +12,8 @@ export default defineConfig({
         lp: resolve(__dirname, 'index.html'),
         play: resolve(__dirname, 'play/index.html'),
         deck: resolve(__dirname, 'print/deck/index.html'),
+        tokushoho: resolve(__dirname, 'legal/tokushoho/index.html'),
+        privacy: resolve(__dirname, 'legal/privacy/index.html'),
       },
     },
   },

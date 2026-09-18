@@ -76,9 +76,9 @@ describe('LandingPage', () => {
     expect(text).not.toMatch(/次の学習指導要領では.*決定/);
   });
 
-  it('links to the company\'s real legal domain rather than fabricating legal content here', () => {
+  it('links to this app\'s own legal pages, built from the company\'s real confirmed data', () => {
     render(<LandingPage />);
-    expect(screen.getByText('特定商取引法に基づく表記').closest('a')).toHaveAttribute('href', 'https://soul-id.jp/');
-    expect(screen.getByText('プライバシーポリシー').closest('a')).toHaveAttribute('href', 'https://soul-id.jp/');
+    expect(screen.getByText('特定商取引法に基づく表記').closest('a')).toHaveAttribute('href', '/legal/tokushoho');
+    expect(screen.getByText('プライバシーポリシー').closest('a')).toHaveAttribute('href', '/legal/privacy');
   });
 });

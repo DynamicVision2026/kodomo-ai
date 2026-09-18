@@ -6,7 +6,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(process.cwd(), 'src');
-const EXCLUDE = ['src/lp', 'src/parent', 'src/modules'];
+const EXCLUDE = ['src/lp', 'src/parent', 'src/modules', 'src/legal'];
 const JA = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/;
 
 const files: string[] = [];

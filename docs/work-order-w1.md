@@ -41,7 +41,7 @@ Rules for the implementer:
 | `src/lp` — parent-voice landing page | **Done (structural), tested** — all 11 spec §10 sections; §1A alignment wording is verbatim from spec's own "draft, pending legal check" list, source links are placeholders (see caveat below); §3 deliberately has no fabricated survey stats |
 | Tests: 105 passing | **Done** |
 | Task 7 (Shopify/KOMOJU/PayPal checkout wiring) | **Deliberately not started** — no store/merchant credentials exist in this environment; founder said skip for now |
-| Task 9 (特商法, privacy pages) | **Deliberately not started** — needs real company/legal info (entity name, registration, address, rep) this session doesn't have; founder will send it later |
+| Task 9 (特商法, privacy pages) | **Done (draft)** — `src/legal/tokushoho`, `src/legal/privacy`, real company data confirmed by the founder from soul-id.jp (see `src/legal/company.ts`); still needs the founder's own legal sign-off before publishing, and a real phone number or confirmation that "disclosed on request" is acceptable for this business |
 | Worker (family-code entitlement redemption) | **Not started** |
 
 One gate still fails on purpose, and that's correct:
