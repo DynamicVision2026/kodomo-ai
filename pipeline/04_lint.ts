@@ -94,6 +94,25 @@ export function lintMission(mission: unknown, stage: number, gradeOf: GradeMap, 
   return issues;
 }
 
+/** Lints a deck file (src/modules/<mod>/deck.s<stage>.json) — an array of print cards, not a
+ *  mission. Same child-facing text rules apply (kanji grade, ruby, length, banned/PII words). */
+export function lintDeck(deck: unknown, stage: number, gradeOf: GradeMap): MissionLintIssue[] {
+  const d = deck as { cards?: unknown[] };
+  if (!Array.isArray(d.cards) || d.cards.length === 0) {
+    return [{ rule: 'schema', message: 'deck file has no "cards" array' }];
+  }
+  const issues: MissionLintIssue[] = [];
+  for (const raw of d.cards) {
+    const c = raw as { id?: string; kind?: string; text?: string };
+    if (!c.id || !c.kind) { issues.push({ rule: 'schema', message: `card missing id or kind: ${JSON.stringify(c)}` }); continue; }
+    if (typeof c.text !== 'string' || !c.text.trim()) { issues.push({ rule: 'schema', message: `card ${c.id} has no text` }); continue; }
+    for (const i of lintText(c.text, stage, gradeOf)) issues.push({ ...i });
+  }
+  return issues;
+}
+
+const DECK_FILENAME = /deck\.s(\d+)\.json$/;
+
 function walk(dir: string, out: string[] = []): string[] {
   if (!existsSync(dir)) return out;
   for (const name of readdirSync(dir)) {
@@ -111,17 +130,24 @@ function main(): void {
   if (files.length === 0) console.warn('lint: no mission files found yet.');
 
   for (const file of files) {
-    const mission = JSON.parse(readFileSync(file, 'utf8'));
+    const parsed = JSON.parse(readFileSync(file, 'utf8'));
+    const deckMatch = file.match(DECK_FILENAME);
 
-    const factsPath = join(file, '..', 'facts.yaml');
-    let claimIds = new Set<string>();
-    if (existsSync(factsPath)) {
-      const facts = parse(readFileSync(factsPath, 'utf8')) as { claims?: { id: string }[] };
-      claimIds = new Set((facts.claims ?? []).map((c) => c.id));
+    let issues: MissionLintIssue[];
+    if (deckMatch) {
+      issues = lintDeck(parsed, Number(deckMatch[1]), gradeOf);
+    } else {
+      const factsPath = join(file, '..', 'facts.yaml');
+      let claimIds = new Set<string>();
+      if (existsSync(factsPath)) {
+        const facts = parse(readFileSync(factsPath, 'utf8')) as { claims?: { id: string }[] };
+        claimIds = new Set((facts.claims ?? []).map((c) => c.id));
+      }
+      const stage = (parsed as { stage?: number }).stage ?? 0;
+      issues = lintMission(parsed, stage, gradeOf, claimIds);
     }
 
-    const stage = (mission as { stage?: number }).stage ?? 0;
-    for (const issue of lintMission(mission, stage, gradeOf, claimIds)) {
+    for (const issue of issues) {
       failures++;
       console.error(`FAIL ${file}\n  [${issue.rule}] ${issue.message}${issue.text ? `\n  in: ${issue.text}` : ''}`);
     }

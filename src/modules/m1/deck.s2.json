@@ -1,0 +1,14 @@
+{
+  "stage": 2,
+  "cards": [
+    { "id": "c1", "kind": "odai", "text": "そらは なぜ あおいの？" },
+    { "id": "c2", "kind": "odai", "text": "むしは なぜ そらを とぶの？" },
+    { "id": "c3", "kind": "what", "text": "たべものに ついて おしえて" },
+    { "id": "c4", "kind": "why", "text": "なぜ そうなるのか おしえて" },
+    { "id": "c5", "kind": "follow-naze", "text": "なぜ そうなるの？" },
+    { "id": "c6", "kind": "follow-tatoeba", "text": "たとえば どんなとき？" },
+    { "id": "c7", "kind": "follow-tsumari", "text": "つまり どういうこと？" },
+    { "id": "c8", "kind": "reaction", "text": "うーん、それは わからないなあ。" },
+    { "id": "c9", "kind": "rules", "text": "カードを つかって、もっと ふかく きいてみよう！" }
+  ]
+}

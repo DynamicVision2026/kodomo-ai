@@ -1,0 +1,31 @@
+@page {
+  size: A4;
+  margin: 10mm;
+}
+
+.print-deck__sheet {
+  display: grid;
+  grid-template-columns: repeat(3, 63mm);
+  grid-template-rows: repeat(3, 88mm);
+  gap: 3mm;
+  justify-content: center;
+  align-content: start;
+  page-break-after: always;
+}
+
+/* On screen (not printing), give sheets breathing room so more than one is visible at once. */
+@media screen {
+  .print-deck {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem 0;
+    background: #eee;
+  }
+  .print-deck__sheet {
+    background: #fff;
+    padding: 10mm;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+}

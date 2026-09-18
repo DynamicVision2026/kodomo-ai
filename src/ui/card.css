@@ -37,3 +37,9 @@
 @media print {
   .card { break-inside: avoid; box-shadow: none; }
 }
+.card--print {
+  /* Cut guide distinct from the card's own colour border, so it survives grayscale printing
+     even where the accent colour prints as a light gray. */
+  outline: 0.3mm dashed #999;
+  outline-offset: 1.2mm;
+}
