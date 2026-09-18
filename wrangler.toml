@@ -1,0 +1,17 @@
+# Cloudflare Worker config for the family-code issuer/redeemer (Task 7, spec v0.5 §7).
+# Deploy with: npx wrangler deploy
+# Secrets (SHOPIFY_WEBHOOK_SECRET, ADMIN_TOKEN, SHOPIFY_ADMIN_API_TOKEN) are NEVER set here —
+# they go in with `wrangler secret put <NAME>`. See docs/task7-shopify-worker-runbook.md.
+name = "naze-family-code-worker"
+main = "worker/src/index.ts"
+compatibility_date = "2024-11-01"
+
+# Replace `id` with the real namespace id after running:
+#   npx wrangler kv namespace create NAZE_CODES
+kv_namespaces = [
+  { binding = "NAZE_CODES", id = "REPLACE_WITH_REAL_KV_NAMESPACE_ID" },
+]
+
+[vars]
+# Not secret — just which shop the Admin API calls target.
+SHOPIFY_SHOP_DOMAIN = "soul-id-2.myshopify.com"
