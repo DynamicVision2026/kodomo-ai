@@ -2,6 +2,10 @@
 
 Repo: `DynamicVision2026/kodomo-ai` · Store: `https://soul-id-2.myshopify.com/`
 
+For the full ordered start-to-finish sequence (Worker deploy → Pages deploy → this document's
+steps → content pipeline), see `docs/launch-runbook.md`. This document is the deep-dive on the
+Shopify/Worker piece specifically — the *why* behind each design choice.
+
 **What this session built:** the Cloudflare Worker at `worker/src/` — webhook receiver, code
 issuer, redemption endpoint — plus `wrangler.toml` and 27 tests (`tests/worker*.test.ts`); and,
 in a follow-up pass, the `/play/unlock` client screen (`src/parent/unlock/`) that actually

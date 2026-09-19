@@ -3,6 +3,9 @@
 Repo: `DynamicVision2026/kodomo-ai` · Spec: `docs/spec-v0.5.md` (source of truth)
 Goal: **Mission 1-1 playable, gates green, cohort opens 19 Oct.**
 
+Code is done as of this document's latest entries below. For the ordered deploy/go-live
+checklist (Worker, Pages, Shopify, content pipeline keys), see `docs/launch-runbook.md`.
+
 Rules for the implementer:
 - Spec ambiguities are **escalated to the architect**, never resolved in code.
 - A gate that fails is a signal to fix the source, not the gate.
