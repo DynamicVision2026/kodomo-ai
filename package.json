@@ -20,7 +20,8 @@
     "pipeline:lint": "tsx pipeline/04_lint.ts",
     "dev:server": "tsx watch backend/server/index.ts",
     "build:server": "tsc -p tsconfig.server.json",
-    "start:server": "node dist-server/backend/server/index.js"
+    "start:server": "node dist-server/backend/server/index.js",
+    "start": "node dist-server/backend/server/index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",
