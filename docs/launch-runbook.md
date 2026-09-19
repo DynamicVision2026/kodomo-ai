@@ -8,14 +8,19 @@ Google Cloud, Shopify Admin, Anthropic, DeepSeek. Nothing here has been run live
 written so whoever has that access can follow it top to bottom with no further decisions to
 make.
 
+**Architecture, standardized on one console:** Firebase Hosting (frontend — the LP, `/play`
+app, print deck, legal pages) + Cloud Run (backend — the Shopify webhook, code issuance,
+redemption API) + Firestore (persistent family-code store) + Secret Manager (backend secrets),
+all in the same Google Cloud/Firebase project.
+
 Do the four parts **in this order** — 2 depends on 1's output, 3 depends on 1 and 2, and 4 is
 independent (do it whenever, including in parallel with 1-3).
 
 ```
-1. Deploy the Cloud Run backend  ──┐
-                                    ├──> 3. Shopify webhook + Flow + test order
-2. Deploy the static site  ────────┘
-                                    (needs 1's URL as an env var, and 2 deployed to receive it)
+1. Deploy the Cloud Run backend         ──┐
+                                           ├──> 3. Shopify webhook + Flow + test order
+2. Deploy to Firebase Hosting  ───────────┘
+                                           (needs 1's URL as an env var, and 2 deployed to receive it)
 
 4. Content pipeline keys ──> real Mission content (independent of 1-3)
 ```
@@ -97,52 +102,101 @@ either way.
 
 ---
 
-## Part 2 — Deploy the static site (LP, app, print deck, legal pages)
+## Part 2 — Deploy the static site to Firebase Hosting
 
 Not built or configured anywhere yet — there is no existing hosting project for it, and the
 GitHub Actions workflow (`.github/workflows/ci.yml`) only runs the test/gate suite, it does
-not deploy. Unlike the backend, this piece is unaffected by the Cloud Run migration — it's a
-static Vite build and can be hosted anywhere that serves static files with the right routing;
-Cloudflare Pages is used below as one concrete, low-effort option, not a requirement.
+not deploy. Standardized on Firebase Hosting (not Cloudflare Pages) so the whole stack —
+Hosting + Cloud Run + Firestore + Secret Manager — lives in one Google Cloud/Firebase project,
+one console, one `gcloud`/`firebase` auth session.
 
-1. Cloudflare dashboard → **Workers & Pages** → **Create application** → **Pages** → **Connect
-   to Git** → select this repo (`DynamicVision2026/kodomo-ai`), branch
-   `claude/sprint-1-setup-ok4oym` (or `main` once this branch is merged — your call).
-2. Build settings:
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-   - **Root directory:** `/` (repo root)
-3. **Environment variables** (Pages project settings — these are baked in at *build* time, not
-   runtime secrets):
+`firebase.json` and `.firebaserc` already exist at the repo root — **verified against this
+repo's actual build** (not just written from memory): ran a real `npm run build`, served the
+resulting `dist/` through the Firebase Hosting emulator, and confirmed every route this app
+has resolves correctly:
 
-   | Variable | Value |
-   |---|---|
-   | `VITE_UNLOCK_API_URL` | The Cloud Run URL from Part 1 step 3, e.g. `https://naze-family-code-backend-<hash>-an.a.run.app` |
+```json
+// firebase.json
+{
+  "hosting": {
+    "public": "dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "headers": [
+      {
+        "source": "/assets/**",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      }
+    ]
+  }
+}
+```
 
-   This is the **only** env var the client build reads (`src/parent/unlock/UnlockPage.tsx`).
-   Without it, `/play/unlock` shows "この機能はまだ準備中です" and never calls the backend —
-   deploy Part 1 first, or this step is pointless.
-4. Save and deploy. Cloudflare builds and gives you a `*.pages.dev` URL (route your own domain
-   afterward if you want one — separate Cloudflare dashboard step, not covered here).
+**Why there's no `rewrites` block** — the one thing almost every Firebase Hosting tutorial
+tells you to add, and the one thing that would break this specific app: this is a **multi-page**
+static build, not a client-side-routed single-page app. Vite already emits a real
+`index.html` at every route this app has (`dist/index.html`, `dist/play/index.html`,
+`dist/play/unlock/index.html`, `dist/print/deck/index.html`,
+`dist/legal/tokushoho/index.html`, `dist/legal/privacy/index.html` — confirmed by listing the
+actual build output). Firebase Hosting's own default file resolution (try the exact path, then
+`path + ".html"`, then `path + "/index.html"`) already serves every one of those correctly with
+zero configuration. Adding the usual SPA catch-all (`"source": "**", "destination": "/index.html"`)
+would instead serve the *landing page* for every route — `/play`, `/legal/privacy`, all of it —
+which is exactly backwards. `cleanUrls: true` is what makes `/play/unlock` (no `.html`, no
+trailing slash) resolve at all; without it you'd need the literal `/play/unlock/index.html`
+URL, which nothing in this app links to.
 
-If you'd rather host this piece on GCP too (Firebase Hosting is the natural pairing with
-Cloud Run/Firestore, and gives you one console for both): `firebase init hosting` pointed at
-`dist/`, set `VITE_UNLOCK_API_URL` in whatever CI builds it before `firebase deploy`, same env
-var, same effect — the app itself has zero framework-level dependency on which one you pick.
+```json
+// .firebaserc — replace the placeholder with your real Firebase project id
+{
+  "projects": {
+    "default": "REPLACE_WITH_REAL_FIREBASE_PROJECT_ID"
+  }
+}
+```
 
-**Sanity check:**
+Use the **same GCP project** Part 1 deployed the Cloud Run backend into if you want the
+one-console setup the whole point of this migration was for — `firebase projects:addfirebase
+<PROJECT_ID>` turns an existing GCP project into a Firebase one in place, no new project needed.
+
+```sh
+# 1. One-time: log in and confirm the CLI sees your project.
+npx firebase-tools login
+npx firebase-tools projects:list
+
+# 2. Build with the backend's real URL baked in (from Part 1 step 3).
+VITE_UNLOCK_API_URL=https://<your-cloud-run-url> npm run build
+
+# 3. Deploy.
+npx firebase-tools deploy --only hosting
+```
+
+`firebase deploy` prints the hosting URL — `https://<project-id>.web.app` and
+`https://<project-id>.firebaseapp.com` both work out of the box; map a custom domain afterward
+with `firebase hosting:sites` / the Firebase console if you want one (separate step, not
+covered here).
+
+**Sanity check** (the exact six routes this repo actually builds — verified locally against
+the emulator before this runbook was written, confirm the same against the real deployment):
 - `https://<your-site-url>/` — the LP loads, headline + trust banner visible.
 - `https://<your-site-url>/play` — Mission 1-1 (bread) is playable end to end.
 - `https://<your-site-url>/play/unlock` — paste the test code from Part 1's last step, submit,
   confirm it shows "登録が完了しました" (not the "not live yet" message — if you see that,
-  `VITE_UNLOCK_API_URL` didn't take; re-check step 3 and redeploy).
+  `VITE_UNLOCK_API_URL` wasn't set before the build in step 2; rebuild and redeploy).
 - `https://<your-site-url>/print/deck` and `/legal/tokushoho` / `/legal/privacy` all load.
+- An unrelated path (e.g. `/nonsense`) returns Firebase's own 404, not the LP — confirms there's
+  no accidental catch-all rewrite silently swallowing bad links.
 
 **Before this URL goes anywhere public:** `gate:no-llm` (already green in CI) only checks the
 build output has no LLM/API hostnames baked in — it does not check for the two content
 caveats already flagged in `docs/work-order-w1.md`: no native-speaker review stamp on Mission
 1-1 or the LP copy yet, and the LP's §1A alignment claims + legal pages are still founder-review
 drafts. Don't route real traffic here until those are cleared.
+
+**Continuous deploy (optional):** `firebase init hosting:github` wires a GitHub Actions
+workflow that runs `npm run build` + `firebase deploy` on every push to a chosen branch —
+worth doing once this branch is merged and stable, not required for a first manual deploy.
 
 ---
 
@@ -289,9 +343,9 @@ reports. Once they sign off, add the review stamp directly to that JSON file (ma
 Each new topic/mission needs `main.tsx`'s and/or `module.json`'s `missionOrder` updated to
 include it (see `src/shell/missionLibrary.ts#pickNextMission` — Sprint 1-A already made mission
 selection stage-generic, so wiring in a second real mission is a content change, not a code
-change). Once you have real content ready, re-deploy Part 2 (the static site) to publish it —
-most static hosts (Cloudflare Pages, Firebase Hosting) redeploy automatically on a push to the
-connected branch if you used their Git integration.
+change). Once you have real content ready, re-deploy Part 2 (`npm run build` +
+`firebase deploy --only hosting`, or automatically if you set up the GitHub Actions integration
+mentioned there) to publish it.
 
 ---
 
@@ -322,5 +376,7 @@ as the deploy steps:
 Parts 1 and 3 originally targeted Cloudflare Workers + KV; the founder later moved the backend
 and webhook deployment target to Google Cloud Run (`backend/` was `worker/` before that — see
 `docs/task7-shopify-backend-runbook.md`'s own "Platform history" note for what did and didn't
-change in the code itself). Part 2 (the static site) was never Cloudflare-Workers-specific and
-is unaffected either way.
+change in the code itself). Part 2 first documented Cloudflare Pages as a low-effort option,
+never a requirement, then was standardized on Firebase Hosting for one-console consistency with
+the rest of the stack — this only ever changed documentation and the two Firebase config files
+(`firebase.json`, `.firebaserc`); the built app itself (`dist/`) is identical either way.
