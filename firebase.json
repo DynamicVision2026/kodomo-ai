@@ -1,13 +1,52 @@
 {
   "hosting": {
     "public": "dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "cleanUrls": true,
     "trailingSlash": false,
+    "rewrites": [
+      {
+        "source": "/healthz",
+        "run": {
+          "serviceId": "kodomo-ai-backend",
+          "region": "asia-northeast1"
+        }
+      },
+      {
+        "source": "/unlock",
+        "run": {
+          "serviceId": "kodomo-ai-backend",
+          "region": "asia-northeast1"
+        }
+      },
+      {
+        "source": "/admin/**",
+        "run": {
+          "serviceId": "kodomo-ai-backend",
+          "region": "asia-northeast1"
+        }
+      },
+      {
+        "source": "/webhooks/**",
+        "run": {
+          "serviceId": "kodomo-ai-backend",
+          "region": "asia-northeast1"
+        }
+      }
+    ],
     "headers": [
       {
         "source": "/assets/**",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
       }
     ]
   }

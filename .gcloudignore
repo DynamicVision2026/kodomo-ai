@@ -1,0 +1,16 @@
+# Explicit upload manifest for `gcloud run deploy --source .`.
+# Without this file gcloud derives exclusions from .gitignore, which risks omitting a file the
+# Dockerfile needs (and silently falling back to buildpacks if the Dockerfile itself is missing
+# from the upload — that produces a container that starts but serves 404 on every route).
+# Keep the Dockerfile and everything it COPYs uploadable; .dockerignore still trims the
+# build context inside Cloud Build.
+.git
+.gitignore
+node_modules
+dist
+dist-server
+*.tsbuildinfo
+.env
+.env.*
+*.local
+.DS_Store

@@ -80,7 +80,7 @@ Full command sequence: `docs/launch-runbook.md` Part 1. Summary of what you end 
   without a redeploy — see its own doc comment).
 
 `gcloud run deploy` prints the service's URL, e.g.
-`https://naze-family-code-backend-<hash>-an.a.run.app` — **save it**, you need it for step 3
+`https://kodomo-ai-backend-<hash>-an.a.run.app` — **save it**, you need it for step 3
 below and for `docs/launch-runbook.md` Part 2 (`VITE_UNLOCK_API_URL`).
 
 ## 3. Shopify: webhook subscription
@@ -97,7 +97,7 @@ Admin → **Settings → Notifications** → scroll to **Webhooks** → **Create
 Saving it shows a **signing secret once** — that's the value for `SHOPIFY_WEBHOOK_SECRET`.
 If you deployed before creating the webhook, update it with:
 ```sh
-gcloud run services update naze-family-code-backend \
+gcloud run services update kodomo-ai-backend \
   --update-secrets=SHOPIFY_WEBHOOK_SECRET=shopify-webhook-secret:latest
 ```
 (assuming you stored it in Secret Manager under that name — see `docs/launch-runbook.md` Part 1

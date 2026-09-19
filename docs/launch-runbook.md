@@ -57,7 +57,7 @@ echo -n "<a custom app Admin API token, scope: write_orders>" | \
 
 # 3. Build and deploy directly from source — gcloud builds the Dockerfile in Cloud Build and
 #    deploys the result, no separate docker build/push needed.
-gcloud run deploy naze-family-code-backend \
+gcloud run deploy kodomo-ai-backend \
   --source . \
   --region asia-northeast1 \
   --allow-unauthenticated \
@@ -71,7 +71,7 @@ route checks Shopify's HMAC signature, and `/admin/issue` checks `ADMIN_TOKEN` �
 `docs/task7-shopify-backend-runbook.md` section 0 for the actual security model.
 
 `gcloud run deploy` prints the service's URL — something like
-`https://naze-family-code-backend-<hash>-an.a.run.app`, or your own domain if you map one
+`https://kodomo-ai-backend-<hash>-an.a.run.app`, or your own domain if you map one
 afterward (`gcloud run domain-mappings create`). **Save this URL** — Part 2 needs it.
 
 **Sanity check before moving on:**
@@ -95,8 +95,8 @@ Returns `{"code":"NAZE-XXXX-XXXX"}` — keep this one for Part 2's end-to-end ch
 
 **If you'd rather build/push the image yourself** instead of `--source .` (e.g. to inspect it
 first, or wire it into your own CI):
-`docker build -t <region>-docker.pkg.dev/<project>/<repo>/naze-family-code-backend .`,
-`docker push` that tag, then `gcloud run deploy naze-family-code-backend --image <that tag> ...`
+`docker build -t <region>-docker.pkg.dev/<project>/<repo>/kodomo-ai-backend .`,
+`docker push` that tag, then `gcloud run deploy kodomo-ai-backend --image <that tag> ...`
 with the same `--set-env-vars`/`--set-secrets` flags. The Dockerfile itself doesn't change
 either way.
 
@@ -220,7 +220,7 @@ Full detail (why SKU over tag, why Flow over a template edit):
        gcloud secrets versions add shopify-webhook-secret --data-file=-
      ```
      Cloud Run picks up the new secret version on its next revision — redeploy (even a no-op
-     `gcloud run services update naze-family-code-backend --region asia-northeast1`) to pick
+     `gcloud run services update kodomo-ai-backend --region asia-northeast1`) to pick
      it up immediately rather than waiting for a natural restart.
 3. **Buyer email — Shopify Flow.** Admin → **Apps → Flow** → **Create workflow**:
    - Trigger: **Order metafield updated**, namespace `naze`, key `family_code`.
@@ -234,7 +234,7 @@ Full detail (why SKU over tag, why Flow over a template edit):
    the allowlist, which is correct behavior, not a bug).
 5. **Test with a real order** (the actual proof, and spec v0.5's own DoD): buy the product for
    real (¥4,980, real card or PayPay) → confirm the webhook fired (Cloud Run console → your
-   service → **Logs**, or `gcloud run services logs read naze-family-code-backend`) → confirm
+   service → **Logs**, or `gcloud run services logs read kodomo-ai-backend`) → confirm
    the Flow email arrived with a code → paste that code into `/play/unlock` on the site from
    Part 2 → confirm it unlocks. Refund the order after, via the existing 30-day guarantee — no
    special-cased refund logic exists in code, it's an ordinary Shopify refund.
