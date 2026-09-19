@@ -5,10 +5,10 @@ import { track } from '../../engine/analytics';
 import { redeemFamilyCode, type RedeemFailure, type RedeemResult } from './redeemCode';
 import './unlock.css';
 
-/** Set once the Worker (worker/src/, Task 7) is actually deployed. Undefined in every
- *  environment until then — this repo has never had a live Cloudflare/Shopify deployment
- *  (docs/task7-shopify-worker-runbook.md). */
-const WORKER_URL: string | undefined = import.meta.env.VITE_UNLOCK_API_URL;
+/** Set once the backend (backend/src/ + backend/server/, deployed to Cloud Run) is actually
+ *  live. Undefined in every environment until then — this repo has never had a live
+ *  deployment (docs/launch-runbook.md). */
+const API_BASE_URL: string | undefined = import.meta.env.VITE_UNLOCK_API_URL;
 
 type Status = { kind: 'idle' } | { kind: 'loading' } | { kind: 'done'; result: RedeemResult };
 
@@ -22,7 +22,7 @@ const REASON_MESSAGE: Record<RedeemFailure['reason'], string> = {
 /**
  * /play/unlock — parent-only redemption screen (src/parent, exempt from gate:no-free-text and
  * gate:no-hardcoded-copy the same way src/lp/src/legal are: this is never something a child
- * operates). Spec v0.5 §7: family code -> Worker + KV -> module entitlement.
+ * operates). Spec v0.5 §7: family code -> backend + persistent store -> module entitlement.
  */
 export function UnlockPage() {
   const [code, setCode] = useState('');
@@ -34,7 +34,7 @@ export function UnlockPage() {
     setStatus({ kind: 'loading' });
 
     const state = load();
-    const result = await redeemFamilyCode(WORKER_URL, code, state.deviceId);
+    const result = await redeemFamilyCode(API_BASE_URL, code, state.deviceId);
     setStatus({ kind: 'done', result });
     track('code_redeemed', { success: result.ok });
 

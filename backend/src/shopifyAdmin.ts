@@ -1,9 +1,9 @@
-import type { Env } from './types';
+import type { Env } from './types.js';
 
 /**
  * Best-effort Shopify Admin API side effect: writes the issued code(s) onto the order as a
  * metafield, so a Shopify Flow workflow (not this Worker) can email the buyer. Deliberately
- * NOT the source of truth — redemption (worker/src/handlers/unlock.ts) only ever reads KV.
+ * NOT the source of truth — redemption (backend/src/handlers/unlock.ts) only ever reads KV.
  * If this call fails, the code still exists and is still redeemable; only the automated email
  * would need a manual resend, which the runbook (docs/task7-shopify-worker-runbook.md) covers.
  *

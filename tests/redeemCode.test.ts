@@ -12,7 +12,7 @@ describe('redeemFamilyCode', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('posts the code and deviceId to <workerUrl>/unlock', async () => {
+  it('posts the code and deviceId to <apiBaseUrl>/unlock', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,

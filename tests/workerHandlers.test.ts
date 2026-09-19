@@ -1,9 +1,9 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { handleShopifyOrderWebhook } from '../worker/src/handlers/webhook';
-import { handleAdminIssue } from '../worker/src/handlers/adminIssue';
-import { handleUnlock } from '../worker/src/handlers/unlock';
-import type { Env, KVNamespaceLike } from '../worker/src/types';
+import { handleShopifyOrderWebhook } from '../backend/src/handlers/webhook';
+import { handleAdminIssue } from '../backend/src/handlers/adminIssue';
+import { handleUnlock } from '../backend/src/handlers/unlock';
+import type { Env, KVNamespaceLike } from '../backend/src/types';
 
 function makeFakeKv(): KVNamespaceLike {
   const data = new Map<string, string>();

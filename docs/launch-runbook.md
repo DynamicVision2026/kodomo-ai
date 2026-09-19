@@ -4,16 +4,17 @@ Repo: `DynamicVision2026/kodomo-ai` · Branch: `claude/sprint-1-setup-ok4oym` ·
 
 This is the single, ordered checklist from "code merged" to "a real family can buy, get a
 code, and play." Every step below needs an account or credential this session does not have —
-Cloudflare, Shopify Admin, Anthropic, DeepSeek. Nothing here has been run live; this is written
-so whoever has that access can follow it top to bottom with no further decisions to make.
+Google Cloud, Shopify Admin, Anthropic, DeepSeek. Nothing here has been run live; this is
+written so whoever has that access can follow it top to bottom with no further decisions to
+make.
 
 Do the four parts **in this order** — 2 depends on 1's output, 3 depends on 1 and 2, and 4 is
 independent (do it whenever, including in parallel with 1-3).
 
 ```
-1. Deploy the Worker + KV  ──┐
-                              ├──> 3. Shopify webhook + Flow + test order
-2. Deploy the Pages app  ────┘
+1. Deploy the Cloud Run backend  ──┐
+                                    ├──> 3. Shopify webhook + Flow + test order
+2. Deploy the static site  ────────┘
                                     (needs 1's URL as an env var, and 2 deployed to receive it)
 
 4. Content pipeline keys ──> real Mission content (independent of 1-3)
@@ -21,68 +22,88 @@ independent (do it whenever, including in parallel with 1-3).
 
 ---
 
-## Part 1 — Deploy the Unlock Worker + KV
+## Part 1 — Deploy the backend to Cloud Run
 
-Full detail and the *why* behind each design choice: `docs/task7-shopify-worker-runbook.md`.
-This section is the condensed, ordered command sequence.
+Full detail and the *why* behind each design choice: `docs/task7-shopify-backend-runbook.md`.
+This section is the condensed, ordered command sequence. Backend source: `backend/src/` (the
+platform-neutral logic — webhook/HMAC/isolation/redemption, unchanged from its original
+design) + `backend/server/` (Express + Firestore + Secret Manager, the Cloud-Run-specific
+glue). Builds via the repo-root `Dockerfile`.
 
-**Prerequisite:** a Cloudflare account with Workers + KV enabled, and `wrangler` (Cloudflare's
-CLI) available — `npx wrangler` fetches it on demand, nothing to install ahead of time.
+**Prerequisite:** a Google Cloud project with the Cloud Run, Artifact Registry, Firestore, and
+(if you want the optional runtime-fetch path in `backend/server/secrets.ts`) Secret Manager
+APIs enabled, and the `gcloud` CLI authenticated (`gcloud auth login`,
+`gcloud config set project <PROJECT_ID>`).
 
 ```sh
-# 1. Authenticate wrangler against your Cloudflare account (opens a browser once).
-npx wrangler login
+# 1. Create the Firestore database, once per project (Native mode — not Datastore mode).
+gcloud firestore databases create --location=asia-northeast1
+# Pick whatever region you'll also deploy Cloud Run into — same-region keeps latency low.
 
-# 2. Create the KV namespace the Worker stores codes in.
-npx wrangler kv namespace create NAZE_CODES
-# Copy the "id" it prints into wrangler.toml's kv_namespaces[0].id (currently the placeholder
-# "REPLACE_WITH_REAL_KV_NAMESPACE_ID") and commit that change.
+# 2. Create the three secrets in Secret Manager (values, not names, are what's private here).
+echo -n "<a long random string YOU generate>" | \
+  gcloud secrets create admin-token --data-file=-
+echo -n "<placeholder for now>" | \
+  gcloud secrets create shopify-webhook-secret --data-file=-
+# real value comes from Part 3 step 2 below — update it after with:
+#   echo -n "<real value>" | gcloud secrets versions add shopify-webhook-secret --data-file=-
+echo -n "<a custom app Admin API token, scope: write_orders>" | \
+  gcloud secrets create shopify-admin-api-token --data-file=-
 
-# 3. Set the three secrets (never in wrangler.toml — these are asked for interactively).
-npx wrangler secret put SHOPIFY_WEBHOOK_SECRET   # value comes from Part 3, step 2 below —
-                                                   # if you haven't done Part 3 yet, use any
-                                                   # placeholder now and re-run this after.
-npx wrangler secret put ADMIN_TOKEN               # any long random string YOU generate —
-                                                   # save it somewhere; you'll need it to issue
-                                                   # founder codes via POST /admin/issue.
-npx wrangler secret put SHOPIFY_ADMIN_API_TOKEN    # a custom app Admin API token, scope:
-                                                   # write_orders (Shopify Admin -> Settings ->
-                                                   # Apps and sales channels -> Develop apps).
-
-# 4. Deploy.
-npx wrangler deploy
+# 3. Build and deploy directly from source — gcloud builds the Dockerfile in Cloud Build and
+#    deploys the result, no separate docker build/push needed.
+gcloud run deploy naze-family-code-backend \
+  --source . \
+  --region asia-northeast1 \
+  --allow-unauthenticated \
+  --set-env-vars=SHOPIFY_SHOP_DOMAIN=soul-id-2.myshopify.com \
+  --set-secrets=ADMIN_TOKEN=admin-token:latest,SHOPIFY_WEBHOOK_SECRET=shopify-webhook-secret:latest,SHOPIFY_ADMIN_API_TOKEN=shopify-admin-api-token:latest
 ```
 
-`wrangler deploy` prints the Worker's URL — by default
-`https://naze-family-code-worker.<your-subdomain>.workers.dev`, or your own domain if you route
-one in the Cloudflare dashboard afterward. **Save this URL** — Part 2 needs it.
+`--allow-unauthenticated` is required — Shopify's webhook and a buyer's browser both need to
+reach this service without a Google-issued auth token. The service is still safe: the webhook
+route checks Shopify's HMAC signature, and `/admin/issue` checks `ADMIN_TOKEN` — see
+`docs/task7-shopify-backend-runbook.md` section 0 for the actual security model.
+
+`gcloud run deploy` prints the service's URL — something like
+`https://naze-family-code-backend-<hash>-an.a.run.app`, or your own domain if you map one
+afterward (`gcloud run domain-mappings create`). **Save this URL** — Part 2 needs it.
 
 **Sanity check before moving on:**
 ```sh
-curl -i -X POST https://<your-worker-url>/unlock \
+curl -i -X POST https://<your-cloud-run-url>/unlock \
   -H 'content-type: application/json' \
   -d '{"code":"NAZE-0000-0000","deviceId":"smoke-test"}'
 ```
 Expect `404` with `{"error":"not_found"}` — that's correct (no such code exists yet), and it
-proves the Worker is actually deployed and routing requests rather than erroring or timing out.
+proves the service is actually deployed and routing requests rather than erroring or timing
+out. Also try `curl https://<your-cloud-run-url>/healthz` — expect a bare `200 ok`.
 
-**Issue yourself a real test code** (needs the `ADMIN_TOKEN` from step 3):
+**Issue yourself a real test code** (needs the `ADMIN_TOKEN` from step 2):
 ```sh
-curl -s -X POST https://<your-worker-url>/admin/issue \
+curl -s -X POST https://<your-cloud-run-url>/admin/issue \
   -H "authorization: Bearer <ADMIN_TOKEN>" \
   -H 'content-type: application/json' \
   -d '{"moduleIds":["m1"],"founder":true,"note":"deploy smoke test"}'
 ```
 Returns `{"code":"NAZE-XXXX-XXXX"}` — keep this one for Part 2's end-to-end check.
 
+**If you'd rather build/push the image yourself** instead of `--source .` (e.g. to inspect it
+first, or wire it into your own CI):
+`docker build -t <region>-docker.pkg.dev/<project>/<repo>/naze-family-code-backend .`,
+`docker push` that tag, then `gcloud run deploy naze-family-code-backend --image <that tag> ...`
+with the same `--set-env-vars`/`--set-secrets` flags. The Dockerfile itself doesn't change
+either way.
+
 ---
 
-## Part 2 — Deploy the Cloudflare Pages app
+## Part 2 — Deploy the static site (LP, app, print deck, legal pages)
 
-Not built or configured anywhere yet — there is no existing Pages project, and the GitHub
-Actions workflow (`.github/workflows/ci.yml`) only runs the test/gate suite, it does not
-deploy. This is the simplest path (Cloudflare's Git-integration dashboard, no new GitHub
-secrets needed):
+Not built or configured anywhere yet — there is no existing hosting project for it, and the
+GitHub Actions workflow (`.github/workflows/ci.yml`) only runs the test/gate suite, it does
+not deploy. Unlike the backend, this piece is unaffected by the Cloud Run migration — it's a
+static Vite build and can be hosted anywhere that serves static files with the right routing;
+Cloudflare Pages is used below as one concrete, low-effort option, not a requirement.
 
 1. Cloudflare dashboard → **Workers & Pages** → **Create application** → **Pages** → **Connect
    to Git** → select this repo (`DynamicVision2026/kodomo-ai`), branch
@@ -91,26 +112,31 @@ secrets needed):
    - **Build command:** `npm run build`
    - **Build output directory:** `dist`
    - **Root directory:** `/` (repo root)
-3. **Environment variables** (Pages project settings, not `wrangler.toml` — these are baked in
-   at *build* time, not runtime secrets):
+3. **Environment variables** (Pages project settings — these are baked in at *build* time, not
+   runtime secrets):
 
    | Variable | Value |
    |---|---|
-   | `VITE_UNLOCK_API_URL` | The Worker URL from Part 1 step 4, e.g. `https://naze-family-code-worker.<subdomain>.workers.dev` |
+   | `VITE_UNLOCK_API_URL` | The Cloud Run URL from Part 1 step 3, e.g. `https://naze-family-code-backend-<hash>-an.a.run.app` |
 
    This is the **only** env var the client build reads (`src/parent/unlock/UnlockPage.tsx`).
-   Without it, `/play/unlock` shows "この機能はまだ準備中です" and never calls the Worker —
+   Without it, `/play/unlock` shows "この機能はまだ準備中です" and never calls the backend —
    deploy Part 1 first, or this step is pointless.
 4. Save and deploy. Cloudflare builds and gives you a `*.pages.dev` URL (route your own domain
    afterward if you want one — separate Cloudflare dashboard step, not covered here).
 
+If you'd rather host this piece on GCP too (Firebase Hosting is the natural pairing with
+Cloud Run/Firestore, and gives you one console for both): `firebase init hosting` pointed at
+`dist/`, set `VITE_UNLOCK_API_URL` in whatever CI builds it before `firebase deploy`, same env
+var, same effect — the app itself has zero framework-level dependency on which one you pick.
+
 **Sanity check:**
-- `https://<your-pages-url>/` — the LP loads, headline + trust banner visible.
-- `https://<your-pages-url>/play` — Mission 1-1 (bread) is playable end to end.
-- `https://<your-pages-url>/play/unlock` — paste the test code from Part 1's last step, submit,
+- `https://<your-site-url>/` — the LP loads, headline + trust banner visible.
+- `https://<your-site-url>/play` — Mission 1-1 (bread) is playable end to end.
+- `https://<your-site-url>/play/unlock` — paste the test code from Part 1's last step, submit,
   confirm it shows "登録が完了しました" (not the "not live yet" message — if you see that,
   `VITE_UNLOCK_API_URL` didn't take; re-check step 3 and redeploy).
-- `https://<your-pages-url>/print/deck` and `/legal/tokushoho` / `/legal/privacy` all load.
+- `https://<your-site-url>/print/deck` and `/legal/tokushoho` / `/legal/privacy` all load.
 
 **Before this URL goes anywhere public:** `gate:no-llm` (already green in CI) only checks the
 build output has no LLM/API hostnames baked in — it does not check for the two content
@@ -122,21 +148,26 @@ drafts. Don't route real traffic here until those are cleared.
 
 ## Part 3 — Shopify: webhook, Flow automation, real order test
 
-Full detail (why SKU over tag, why Flow over a template edit): `docs/task7-shopify-worker-runbook.md`
-§0, §1, §4. Condensed sequence:
+Full detail (why SKU over tag, why Flow over a template edit):
+`docs/task7-shopify-backend-runbook.md` sections 0, 1, 4. Condensed sequence:
 
 1. **Product listing.** Create (or confirm) the product with **SKU `kodomo-ai-m1`** — must
-   match `worker/src/shopify.ts`'s `SKU_TO_MODULE_IDS` key exactly, this is the entire
+   match `backend/src/shopify.ts`'s `SKU_TO_MODULE_IDS` key exactly, this is the entire
    isolation mechanism. ¥4,980, household licence, 30-day guarantee wording per spec v0.5 §9.
    Products A-D need zero changes.
 2. **Webhook.** Admin → **Settings → Notifications** → **Webhooks** → **Create webhook**:
    - Event: **Order payment** (`orders/paid`) — not `orders/create`.
    - Format: JSON.
-   - URL: `https://<your-worker-url>/webhooks/shopify/orders-paid` (from Part 1).
+   - URL: `https://<your-cloud-run-url>/webhooks/shopify/orders-paid` (from Part 1).
    - Save — Shopify shows a **signing secret once**. That's the real value for
-     `SHOPIFY_WEBHOOK_SECRET` — go back to Part 1 step 3 and re-run
-     `npx wrangler secret put SHOPIFY_WEBHOOK_SECRET` with it (secrets apply immediately, no
-     redeploy needed).
+     `SHOPIFY_WEBHOOK_SECRET` — go back and run:
+     ```sh
+     echo -n "<the real signing secret>" | \
+       gcloud secrets versions add shopify-webhook-secret --data-file=-
+     ```
+     Cloud Run picks up the new secret version on its next revision — redeploy (even a no-op
+     `gcloud run services update naze-family-code-backend --region asia-northeast1`) to pick
+     it up immediately rather than waiting for a natural restart.
 3. **Buyer email — Shopify Flow.** Admin → **Apps → Flow** → **Create workflow**:
    - Trigger: **Order metafield updated**, namespace `naze`, key `family_code`.
    - Action: **Send custom email** → to `{{order.customer.email}}`, body includes
@@ -145,18 +176,18 @@ Full detail (why SKU over tag, why Flow over a template edit): `docs/task7-shopi
      confirmation/shipping emails are untouched by construction.
 4. **Test the webhook without a real order.** Shopify Admin → the webhook's detail page →
    **Send test notification**. This uses placeholder SKUs (not `kodomo-ai-m1`), so it proves
-   the Worker responds `200` and doesn't error — it will NOT issue a code (the SKU won't match
+   the backend responds `200` and doesn't error — it will NOT issue a code (the SKU won't match
    the allowlist, which is correct behavior, not a bug).
 5. **Test with a real order** (the actual proof, and spec v0.5's own DoD): buy the product for
-   real (¥4,980, real card or PayPay) → confirm the webhook fired (Cloudflare dashboard → your
-   Worker → **Logs**, or check `wrangler tail`) → confirm the Flow email arrived with a code →
-   paste that code into `/play/unlock` on the Pages site from Part 2 → confirm it unlocks.
-   Refund the order after, via the existing 30-day guarantee — no special-cased refund logic
-   exists in code, it's an ordinary Shopify refund.
+   real (¥4,980, real card or PayPay) → confirm the webhook fired (Cloud Run console → your
+   service → **Logs**, or `gcloud run services logs read naze-family-code-backend`) → confirm
+   the Flow email arrived with a code → paste that code into `/play/unlock` on the site from
+   Part 2 → confirm it unlocks. Refund the order after, via the existing 30-day guarantee — no
+   special-cased refund logic exists in code, it's an ordinary Shopify refund.
 6. **Confirm isolation held.** Check products A-D's own confirmation/shipping emails are
    byte-for-byte unchanged, and that nothing about their orders looks different. (They should
    be — nothing in this integration ever calls the Admin API for a non-`kodomo-ai-m1` order —
-   but this is the step that actually proves it against your real store, not just the 46 tests
+   but this is the step that actually proves it against your real store, not just the 65+ tests
    that prove it against fakes.)
 
 ---
@@ -165,7 +196,8 @@ Full detail (why SKU over tag, why Flow over a template edit): `docs/task7-shopi
 
 **Independent of Parts 1-3** — do this whenever, in parallel if you like. This produces real
 Mission content (replacing/joining the one hand-authored `bread` topic); it has no dependency
-on the Worker or Shopify.
+on the backend or Shopify. It also does not run inside the Cloud Run service — the pipeline is
+a separate CLI tool (`pipeline/`), never bundled into the backend's Docker image.
 
 ### 4.1 — Keys
 
@@ -182,6 +214,13 @@ directly):
 `DEEPSEEK_API_KEY` is the default now (`pipeline/lib/secondOpinion.ts`); set
 `CROSSCHECK_PROVIDER=openai` and `OPENAI_API_KEY` instead if you'd rather use GPT-4o for that
 role — both are supported, nothing else in the pipeline changes either way.
+
+If you'd rather run the pipeline from a GCP-hosted environment (a Cloud Build job, a Cloud Run
+Job, a Compute Engine box) instead of a laptop, you can store these two keys in Secret Manager
+the same way Part 1 stores the backend's secrets and load them into that environment's own
+process — `backend/server/secrets.ts`'s `loadMissingSecrets()` helper is generic (it takes a
+list of secret names) and would work for this too, though nothing currently calls it from the
+pipeline scripts; that's a small addition if you want it, not something this pass built.
 
 ### 4.2 — Run the pipeline, one topic at a time
 
@@ -250,8 +289,9 @@ reports. Once they sign off, add the review stamp directly to that JSON file (ma
 Each new topic/mission needs `main.tsx`'s and/or `module.json`'s `missionOrder` updated to
 include it (see `src/shell/missionLibrary.ts#pickNextMission` — Sprint 1-A already made mission
 selection stage-generic, so wiring in a second real mission is a content change, not a code
-change). Once you have real content ready, re-deploy Part 2 (Cloudflare Pages) to publish it —
-Pages redeploys automatically on a push to the connected branch if you used Git integration.
+change). Once you have real content ready, re-deploy Part 2 (the static site) to publish it —
+most static hosts (Cloudflare Pages, Firebase Hosting) redeploy automatically on a push to the
+connected branch if you used their Git integration.
 
 ---
 
@@ -274,3 +314,13 @@ as the deploy steps:
 - [ ] `docs/spec-v0.5.md` §1A's four "Allowed" alignment sentences get real, stable MEXT source
       URLs (currently literal `#` placeholders in `src/lp/LandingPage.tsx` — this session
       would not guess a specific government URL to cite on a trust-sensitive section).
+
+---
+
+## Platform history
+
+Parts 1 and 3 originally targeted Cloudflare Workers + KV; the founder later moved the backend
+and webhook deployment target to Google Cloud Run (`backend/` was `worker/` before that — see
+`docs/task7-shopify-backend-runbook.md`'s own "Platform history" note for what did and didn't
+change in the code itself). Part 2 (the static site) was never Cloudflare-Workers-specific and
+is unaffected either way.

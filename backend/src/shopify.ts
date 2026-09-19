@@ -10,7 +10,7 @@
  * as relevant in the first place. Extend this table when a new module ships; never widen it
  * to a prefix/wildcard match.
  */
-import { timingSafeEqual } from './util';
+import { timingSafeEqual } from './util.js';
 
 export const SKU_TO_MODULE_IDS: Record<string, string[]> = {
   'kodomo-ai-m1': ['m1'],

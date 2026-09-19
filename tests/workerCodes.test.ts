@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import { describe, it, expect } from 'vitest';
-import { generateFamilyCode, isWellFormedCode, normalizeCode } from '../worker/src/codes';
+import { generateFamilyCode, isWellFormedCode, normalizeCode } from '../backend/src/codes';
 
 describe('generateFamilyCode', () => {
   it('produces NAZE-XXXX-XXXX using only the unambiguous alphabet', () => {

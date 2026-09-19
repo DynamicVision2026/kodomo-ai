@@ -1,8 +1,8 @@
-import type { Env, IssuedCode } from '../types';
-import { generateFamilyCode } from '../codes';
-import { matchLineItems, verifyShopifyWebhook, type ShopifyOrderPayload } from '../shopify';
-import { addCodeToOrderIndex, getCodesForOrder, putIssuedCode } from '../store';
-import { attachCodesToOrderMetafield } from '../shopifyAdmin';
+import type { Env, IssuedCode } from '../types.js';
+import { generateFamilyCode } from '../codes.js';
+import { matchLineItems, verifyShopifyWebhook, type ShopifyOrderPayload } from '../shopify.js';
+import { addCodeToOrderIndex, getCodesForOrder, putIssuedCode } from '../store.js';
+import { attachCodesToOrderMetafield } from '../shopifyAdmin.js';
 
 const MAX_DEVICES = 5;
 

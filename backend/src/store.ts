@@ -1,4 +1,4 @@
-import type { Env, IssuedCode } from './types';
+import type { Env, IssuedCode } from './types.js';
 
 const codeKey = (code: string) => `code:${code}`;
 const orderKey = (orderId: number | string) => `order:${orderId}`;

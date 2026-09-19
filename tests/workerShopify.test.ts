@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import { describe, it, expect } from 'vitest';
-import { matchLineItems, verifyShopifyWebhook, type ShopifyOrderPayload } from '../worker/src/shopify';
+import { matchLineItems, verifyShopifyWebhook, type ShopifyOrderPayload } from '../backend/src/shopify';
 
 async function sign(body: string, secret: string): Promise<string> {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);

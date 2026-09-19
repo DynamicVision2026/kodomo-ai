@@ -1,6 +1,7 @@
 /**
- * Client side of the Worker's POST /unlock (worker/src/handlers/unlock.ts). Spec v0.5 §7:
- * "Shopify order -> email with a family code -> /play/unlock -> Worker + KV."
+ * Client side of the backend's POST /unlock (backend/src/handlers/unlock.ts, deployed to
+ * Cloud Run). Spec v0.5 §7: "Shopify order -> email with a family code -> /play/unlock ->
+ * backend + persistent store."
  */
 export interface RedeemSuccess {
   ok: true;
@@ -15,21 +16,21 @@ export interface RedeemFailure {
 export type RedeemResult = RedeemSuccess | RedeemFailure;
 
 /**
- * `workerUrl` is undefined until the Worker is actually deployed and its URL configured
+ * `apiBaseUrl` is undefined until the backend is actually deployed and its URL configured
  * (import.meta.env.VITE_UNLOCK_API_URL) — `not_configured` is a distinct, honest failure
  * mode from `network`, so the UI can say "this isn't live yet" rather than "check your
  * connection".
  */
 export async function redeemFamilyCode(
-  workerUrl: string | undefined,
+  apiBaseUrl: string | undefined,
   code: string,
   deviceId: string,
 ): Promise<RedeemResult> {
-  if (!workerUrl) return { ok: false, reason: 'not_configured' };
+  if (!apiBaseUrl) return { ok: false, reason: 'not_configured' };
 
   let res: Response;
   try {
-    res = await fetch(`${workerUrl}/unlock`, {
+    res = await fetch(`${apiBaseUrl}/unlock`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ code, deviceId }),

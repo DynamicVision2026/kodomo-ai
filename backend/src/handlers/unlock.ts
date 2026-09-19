@@ -1,6 +1,6 @@
-import type { Env } from '../types';
-import { isWellFormedCode, normalizeCode } from '../codes';
-import { getIssuedCode, putIssuedCode } from '../store';
+import type { Env } from '../types.js';
+import { isWellFormedCode, normalizeCode } from '../codes.js';
+import { getIssuedCode, putIssuedCode } from '../store.js';
 
 export interface UnlockRequestBody {
   code: string;

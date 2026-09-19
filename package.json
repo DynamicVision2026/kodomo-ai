@@ -17,10 +17,16 @@
     "gate:no-hardcoded": "tsx scripts/gate-no-hardcoded-copy.ts",
     "gate:claims": "tsx scripts/gate-claims-approved.ts",
     "gates": "npm run gate:no-input && npm run gate:no-hardcoded && npm run gate:claims && npm run lint:content && npm run build && npm run gate:no-llm",
-    "pipeline:lint": "tsx pipeline/04_lint.ts"
+    "pipeline:lint": "tsx pipeline/04_lint.ts",
+    "dev:server": "tsx watch backend/server/index.ts",
+    "build:server": "tsc -p tsconfig.server.json",
+    "start:server": "node dist-server/backend/server/index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",
+    "@google-cloud/firestore": "^9.2.0",
+    "@google-cloud/secret-manager": "^7.1.0",
+    "express": "^5.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -28,6 +34,7 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
+    "@types/express": "^5.0.6",
     "@types/node": "^20.17.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

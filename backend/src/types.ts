@@ -1,7 +1,9 @@
 /**
- * Minimal structural KV interface — not @cloudflare/workers-types. Cloudflare's real
- * KVNamespace satisfies this shape at runtime; keeping it hand-rolled means tests can use a
- * plain in-memory fake with no extra dependency, and the type-checker still catches misuse.
+ * Minimal structural KV interface. Originally written to match Cloudflare KV's shape without
+ * depending on @cloudflare/workers-types; now implemented for Cloud Run by
+ * backend/server/firestoreKv.ts (Firestore-backed) and backend/server/memoryKv.ts (in-process,
+ * dev only). Any of the three can be dropped in here — nothing in backend/src/ needs to know
+ * which one is running, and tests use a fourth, in-memory fake with no extra dependency at all.
  */
 export interface KVNamespaceLike {
   get(key: string): Promise<string | null>;

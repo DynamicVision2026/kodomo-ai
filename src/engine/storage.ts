@@ -20,7 +20,7 @@ export interface AppState {
   founder: boolean;
   abVariant: 'A' | 'B';
   /** Opaque, non-PII, per-device id — never a person's identity. Only used to count
-   *  activations against a family code's soft device cap (worker/src/handlers/unlock.ts);
+   *  activations against a family code's soft device cap (backend/src/handlers/unlock.ts);
    *  never sent anywhere except that one redemption call. */
   deviceId: string;
 }

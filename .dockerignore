@@ -1,0 +1,32 @@
+# Only backend/, package.json, package-lock.json, and tsconfig.server.json are needed to
+# build the Cloud Run image (see Dockerfile) — everything else here is either irrelevant to
+# the backend service or actively shouldn't ship in it.
+node_modules
+dist
+dist-server
+.git
+.github
+
+# Client app + build tooling — not part of this image.
+src
+play
+print
+legal
+index.html
+vite.config.ts
+tsconfig.json
+
+# Content pipeline — a separate CLI tool, never runs inside this service.
+pipeline
+data
+scripts
+
+tests
+docs
+*.md
+
+.env
+.env.*
+*.local
+.DS_Store
+*.tsbuildinfo

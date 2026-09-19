@@ -1,7 +1,7 @@
-import type { Env, IssuedCode } from '../types';
-import { generateFamilyCode } from '../codes';
-import { putIssuedCode } from '../store';
-import { timingSafeEqual } from '../util';
+import type { Env, IssuedCode } from '../types.js';
+import { generateFamilyCode } from '../codes.js';
+import { putIssuedCode } from '../store.js';
+import { timingSafeEqual } from '../util.js';
 
 const MAX_DEVICES = 5;
 
