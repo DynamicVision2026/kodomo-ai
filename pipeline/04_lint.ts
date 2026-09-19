@@ -18,6 +18,9 @@ import { lintText, type LintIssue } from './lib/lintText.js';
 const MODULES = resolve(process.cwd(), 'src/modules');
 const VALID_DIG_TAGS = new Set(['deepen', 'sideways', 'repeat', 'offtopic']);
 
+/** Approved Stage-2 domains (v0.6 content contract, WO-01). Fixed — not module-declared. */
+const APPROVED_DOMAINS = new Set(['日常', 'しぜん・かがく', 'ことば', '社会とひと']);
+
 export interface MissionLintIssue {
   rule: string;
   message: string;
@@ -67,14 +70,27 @@ export function lintMission(mission: unknown, stage: number, gradeOf: GradeMap, 
       for (const [n, layer] of ((phase.layers as Record<string, unknown>[]) ?? []).entries()) {
         texts.push(layer.robotSays as string);
         checkClaims(layer.claims, `layer ${n}`);
-        const hand = (layer.hand as { tag: string; text: string }[]) ?? [];
+        const hand = (layer.hand as { tag: string; text: string; move?: string; domain?: string }[]) ?? [];
         const deepen = hand.filter((c) => c.tag === 'deepen');
         if (deepen.length !== 1) {
           issues.push({ rule: 'hand', message: `layer ${n} has ${deepen.length} deepen cards, need exactly 1` });
         }
+        // v0.6 content contract (WO-01): every shipping Stage-2 Dig layer needs a `gap`, and its
+        // `deepen` card needs a `move` + approved `domain`. Scoped to stage 2 — earlier/later
+        // stage fixtures aren't real Stage-2 shipping content and predate this contract.
+        if (stage === 2 && !(layer as { gap?: string }).gap) {
+          issues.push({ rule: 'gap', message: `layer ${n} is missing gap (v0.6 content contract)` });
+        }
         for (const c of hand) {
           texts.push(c.text);
           if (!VALID_DIG_TAGS.has(c.tag)) issues.push({ rule: 'tag', message: `invalid dig tag ${c.tag}` });
+          if (c.tag === 'deepen' && stage === 2) {
+            if (!c.move) issues.push({ rule: 'move', message: `layer ${n} deepen card is missing move (v0.6 content contract)` });
+            if (!c.domain) issues.push({ rule: 'domain', message: `layer ${n} deepen card is missing domain (v0.6 content contract)` });
+          }
+          if (c.domain && !APPROVED_DOMAINS.has(c.domain)) {
+            issues.push({ rule: 'domain', message: `layer ${n} card has unapproved domain "${c.domain}"` });
+          }
         }
         for (const r of Object.values((layer.replies as Record<string, string>) ?? {})) texts.push(r);
         const earlyOk = layer.earlyOk as { asks?: string } | undefined;

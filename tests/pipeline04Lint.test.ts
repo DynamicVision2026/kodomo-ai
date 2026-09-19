@@ -8,8 +8,15 @@ const gradeOf = loadGradeMap();
 const claimIds = new Set(['c1', 'c2', 'c3']);
 
 describe('lintMission', () => {
-  it('passes the real, already-fixed bread mission', () => {
-    expect(lintMission(mission, 2, gradeOf, claimIds)).toEqual([]);
+  it('passes the real, already-fixed bread mission except for pending v0.6 gap/move metadata', () => {
+    // WO-01: bread's move/domain were migrated where unambiguous (both deepen cards' domain,
+    // layer 0's move). `gap` (both layers) and layer 1's move are pedagogical decisions not yet
+    // made — see docs/work-order-w1.md — so they're honestly flagged rather than guessed.
+    expect(lintMission(mission, 2, gradeOf, claimIds)).toEqual([
+      { rule: 'gap', message: 'layer 0 is missing gap (v0.6 content contract)' },
+      { rule: 'gap', message: 'layer 1 is missing gap (v0.6 content contract)' },
+      { rule: 'move', message: 'layer 1 deepen card is missing move (v0.6 content contract)' },
+    ]);
   });
 
   it('flags a missing schema field', () => {
@@ -62,6 +69,66 @@ describe('lintMission', () => {
     const issues = lintMission(bad, 2, gradeOf, claimIds);
     expect(issues.some((i) => i.rule === 'banned-word')).toBe(true);
     expect(issues.some((i) => i.rule === 'ruby-required')).toBe(true);
+  });
+
+  // WO-01: v0.6 content contract — gap per Dig layer, move+domain per deepen card, scoped to
+  // Stage 2 (real shipping Stage-2 content). See docs/work-order-w1.md.
+  describe('v0.6 content contract (gap / move / domain / props)', () => {
+    const validMission = {
+      id: 'x', stage: 2,
+      phases: [{
+        template: 'dig',
+        layers: [{
+          robotSays: 'そう', claims: ['nonfactual'], gap: 'テストの ギャップ',
+          hand: [{ id: 'a', text: 'なぜ そうなるの', tag: 'deepen', move: 'follow-naze', domain: '日常' }],
+          replies: {},
+        }],
+        root: { robotSays: 'そう', claims: ['nonfactual'] },
+      }],
+      tip: 'そう', teachBack: 'そう', ouchiTalk: 'そう',
+    };
+
+    it('accepts valid Stage-2 content carrying the full new contract', () => {
+      expect(lintMission(validMission, 2, gradeOf, claimIds)).toEqual([]);
+    });
+
+    it('rejects a shipping Stage-2 Dig layer missing gap', () => {
+      const { gap, ...layerWithoutGap } = validMission.phases[0]!.layers[0]!;
+      const bad = { ...validMission, phases: [{ ...validMission.phases[0]!, layers: [layerWithoutGap] }] };
+      const issues = lintMission(bad, 2, gradeOf, claimIds);
+      expect(issues).toContainEqual({ rule: 'gap', message: 'layer 0 is missing gap (v0.6 content contract)' });
+    });
+
+    it('rejects a deepen card missing move', () => {
+      const card = { id: 'a', text: 'なぜ そうなるの', tag: 'deepen', domain: '日常' };
+      const bad = { ...validMission, phases: [{ ...validMission.phases[0]!, layers: [{ ...validMission.phases[0]!.layers[0]!, hand: [card] }] }] };
+      const issues = lintMission(bad, 2, gradeOf, claimIds);
+      expect(issues).toContainEqual({ rule: 'move', message: 'layer 0 deepen card is missing move (v0.6 content contract)' });
+    });
+
+    it('rejects a deepen card missing domain', () => {
+      const card = { id: 'a', text: 'なぜ そうなるの', tag: 'deepen', move: 'follow-naze' };
+      const bad = { ...validMission, phases: [{ ...validMission.phases[0]!, layers: [{ ...validMission.phases[0]!.layers[0]!, hand: [card] }] }] };
+      const issues = lintMission(bad, 2, gradeOf, claimIds);
+      expect(issues).toContainEqual({ rule: 'domain', message: 'layer 0 deepen card is missing domain (v0.6 content contract)' });
+    });
+
+    it('rejects a domain outside the approved four values', () => {
+      const card = { id: 'a', text: 'なぜ そうなるの', tag: 'deepen', move: 'follow-naze', domain: 'うちゅう' };
+      const bad = { ...validMission, phases: [{ ...validMission.phases[0]!, layers: [{ ...validMission.phases[0]!.layers[0]!, hand: [card] }] }] };
+      const issues = lintMission(bad, 2, gradeOf, claimIds);
+      expect(issues).toContainEqual({ rule: 'domain', message: 'layer 0 card has unapproved domain "うちゅう"' });
+    });
+
+    it('leaves omission of the optional Mission-level props valid', () => {
+      expect((validMission as { props?: string[] }).props).toBeUndefined();
+      expect(lintMission(validMission, 2, gradeOf, claimIds)).toEqual([]);
+    });
+
+    it('does not require gap/move/domain outside Stage 2', () => {
+      const stage3 = { ...validMission, stage: 3, phases: [{ ...validMission.phases[0]!, layers: [{ robotSays: 'そう', claims: ['nonfactual'], hand: [{ id: 'a', text: 'なぜ そうなるの', tag: 'deepen' }], replies: {} }] }] };
+      expect(lintMission(stage3, 3, gradeOf, claimIds)).toEqual([]);
+    });
   });
 
   it('flags an invalid dig tag and an unknown phase template', () => {

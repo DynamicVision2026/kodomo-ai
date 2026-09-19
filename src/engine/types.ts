@@ -9,6 +9,13 @@ export type DigTag = 'deepen' | 'sideways' | 'repeat' | 'offtopic';
 /** Slot ids are declared per module in module.json, not hard-coded in the engine. */
 export type SlotId = string;
 
+/**
+ * A v0.6 content domain. Kept as plain `string` (not a literal union) so the engine's own source
+ * never embeds the approved Japanese domain vocabulary — gate:no-hardcoded-copy reserves that for
+ * module JSON. The approved four-value enum is enforced at lint time; see pipeline/04_lint.ts.
+ */
+export type Domain = string;
+
 export interface SlotCard {
   id: string;
   slot: SlotId;
@@ -50,6 +57,14 @@ export interface DigCard {
   id: string;
   text: string;
   tag: DigTag;
+  /**
+   * Which follow-up move this card exercises (v0.6). Required on `deepen` cards in Stage-2
+   * content — see `lintMission`. Free-form string: module.json's `followMoves` is the current
+   * vocabulary, but this field isn't restricted to it by the schema.
+   */
+  move?: string;
+  /** Content domain this card belongs to (v0.6). Required on `deepen` cards in Stage-2 content. */
+  domain?: Domain;
 }
 
 export interface DigLayer {
@@ -62,6 +77,11 @@ export interface DigLayer {
   /** Challenge shown if the player taps 「これでOK」 here. */
   earlyOk?: { challenger: string; asks: string };
   prediction?: PredictionPrompt;
+  /**
+   * The gap this layer is meant to open in the child (v0.6 content contract). Required on every
+   * shipping Stage-2 Dig layer — see `lintMission`.
+   */
+  gap?: string;
 }
 
 export interface DigPhase {
@@ -108,4 +128,6 @@ export interface Mission {
   tip: string;
   teachBack: string;
   ouchiTalk: string;
+  /** Optional physical/household props referenced by this mission (v0.6). */
+  props?: string[];
 }

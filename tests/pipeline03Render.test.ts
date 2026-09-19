@@ -156,10 +156,20 @@ describe('03_render: assembleMission', () => {
     expect(slotAssembly.archetypes.OFFTOPIC!.claims).toEqual(['nonfactual']);
   });
 
-  it('produces content that passes the deterministic content lint', () => {
+  it('produces content that passes the deterministic content lint aside from v0.6 gap/move/domain metadata', () => {
+    // WO-01: assembleMission() doesn't populate gap/move/domain — that's pipeline/content-
+    // generation work, out of scope for the schema+validation-only ticket that added these
+    // checks. The honest result is that generated Stage-2 content flags all three per layer.
     const gradeOf = loadGradeMap();
     const issues = lintMission(mission, 2, gradeOf, new Set(['c1', 'c2', 'c3']));
-    expect(issues).toEqual([]);
+    expect(issues).toEqual([
+      { rule: 'gap', message: 'layer 0 is missing gap (v0.6 content contract)' },
+      { rule: 'move', message: 'layer 0 deepen card is missing move (v0.6 content contract)' },
+      { rule: 'domain', message: 'layer 0 deepen card is missing domain (v0.6 content contract)' },
+      { rule: 'gap', message: 'layer 1 is missing gap (v0.6 content contract)' },
+      { rule: 'move', message: 'layer 1 deepen card is missing move (v0.6 content contract)' },
+      { rule: 'domain', message: 'layer 1 deepen card is missing domain (v0.6 content contract)' },
+    ]);
   });
 });
 
