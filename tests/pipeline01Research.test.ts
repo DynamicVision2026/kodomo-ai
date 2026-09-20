@@ -78,3 +78,50 @@ describe('01_research: validateDraftClaims', () => {
     expect(() => validateDraftClaims(bad)).toThrow(/missing statement/);
   });
 });
+
+const validPracticeClaim = () => ({
+  statement: 'Families commonly rinse rice before cooking it, even though few can say why.',
+  type: 'practice' as const,
+});
+
+describe('01_research: validateDraftClaims — fact/practice (WO-11 decision 6, reconciled WO-11C)', () => {
+  it('accepts a practice claim with no sourceUrl, excerpt, or adultLevelSource at all', () => {
+    const claims = [...Array.from({ length: 3 }, validClaim), validPracticeClaim()];
+    const result = validateDraftClaims(claims);
+    expect(result).toHaveLength(4);
+    expect(result[3]).toMatchObject({ type: 'practice', sourceUrl: '', excerpt: '' });
+  });
+
+  it('a claim with no type at all still defaults to "fact" and still requires the full evidentiary path', () => {
+    // validClaim() carries no `type` field — confirms the default branch, not just an explicit "fact".
+    const bad = [...Array.from({ length: 3 }, validClaim), { statement: 'Untyped claim.', sourceUrl: '', excerpt: '', adultLevelSource: false }];
+    expect(() => validateDraftClaims(bad)).toThrow(/missing sourceUrl/);
+  });
+
+  it('an explicit "fact" claim is not relaxed by the practice branch — still requires sourceUrl/excerpt/adultLevelSource', () => {
+    const bad = [
+      ...Array.from({ length: 3 }, validClaim),
+      { statement: 'A fact with no evidence.', type: 'fact' as const, sourceUrl: '', excerpt: '', adultLevelSource: false },
+    ];
+    expect(() => validateDraftClaims(bad)).toThrow(/missing sourceUrl/);
+  });
+
+  it('rejects an unrecognised type value', () => {
+    const bad = [...Array.from({ length: 3 }, validClaim), { ...validPracticeClaim(), type: 'opinion' as unknown as 'practice' }];
+    expect(() => validateDraftClaims(bad)).toThrow(/type must be "fact" or "practice"/);
+  });
+
+  it('a practice claim that DOES name a sourceUrl still has to be on the real whitelist — not exempt, just not mandatory', () => {
+    const bad = [...Array.from({ length: 3 }, validClaim), { ...validPracticeClaim(), sourceUrl: 'https://random-blog.example/x' }];
+    expect(() => validateDraftClaims(bad)).toThrow(/not on the source whitelist/);
+  });
+
+  it('a mixed fact+practice batch still enforces the fact claim\'s evidence even though a practice claim in the same batch has none', () => {
+    const bad = [
+      ...Array.from({ length: 2 }, validClaim),
+      { ...validClaim(), sourceUrl: '' }, // a fact claim missing its source
+      validPracticeClaim(),
+    ];
+    expect(() => validateDraftClaims(bad)).toThrow(/missing sourceUrl/);
+  });
+});

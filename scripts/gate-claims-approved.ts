@@ -3,11 +3,12 @@
  * This is the fact gate from spec v0.5 §6, made mechanical.
  *
  * Since the release-content classification decision (WO-9, migrated to per-mission granularity
- * by WO-11 / AD-02): every mission must declare its own contentClass "release", "synthetic" or
+ * by WO-11): every mission must declare its own contentClass "release", "synthetic" or
  * "archived" (on the mission JSON itself, not module.json — see scripts/lib/
  * moduleClassification.ts for why), and each class is gated differently — see that file for the
- * authoritative rules. This file is filesystem/CLI plumbing only; the actual checks are pure and
- * unit-tested there.
+ * authoritative rules. A mission's optional `rootType` field, when present, is checked against
+ * the closed set in scripts/lib/rootType.ts (WO-11C). This file is filesystem/CLI plumbing only;
+ * the actual checks are pure and unit-tested there.
  */
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -47,12 +48,16 @@ function loadMissions(moduleDir: string, moduleId: string): MissionEntry[] {
   })(moduleDir);
 
   return missionFiles.map((f) => {
-    const mission = JSON.parse(readFileSync(f, 'utf8')) as MissionRecord & { contentClass?: unknown };
+    const mission = JSON.parse(readFileSync(f, 'utf8')) as
+      MissionRecord & { contentClass?: unknown; rootType?: unknown };
     const factsPath = join(f, '..', 'facts.yaml');
     const facts = existsSync(factsPath)
       ? (parse(readFileSync(factsPath, 'utf8')) as FactsFile)
       : null;
-    return { moduleId, relPath: relPath(f), contentClassRaw: mission.contentClass, mission, facts };
+    return {
+      moduleId, relPath: relPath(f), contentClassRaw: mission.contentClass,
+      rootTypeRaw: mission.rootType, mission, facts,
+    };
   });
 }
 

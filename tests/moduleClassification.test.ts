@@ -167,7 +167,7 @@ describe('checkMissions — synthetic missions never require, and must never car
   });
 });
 
-describe('checkMissions — archived missions (AD-02 §5): preserve real approval history, need no ongoing approval', () => {
+describe('checkMissions — archived missions (WO-11 decision 5): preserve real approval history, need no ongoing approval', () => {
   it('passes an archived mission that still carries its real, historical approved claims and review stamp — nothing here flags or touches them', () => {
     const { issues } = checkMissions([archivedMission()], { strict: false, productionImportedTopicKeys: new Set() });
     expect(issues).toEqual([]);
@@ -245,6 +245,49 @@ describe('checkMissions — topic counts are reported (Acceptance Proof: truthfu
     expect(result.syntheticTopicCount).toBe(1);
     expect(result.archivedTopicCount).toBe(2);
     expect(result.issues).toEqual([]);
+  });
+});
+
+describe('checkMissions — rootType enforcement (WO-11C: closed set, deterministic rejection)', () => {
+  it('passes a mission with no rootType at all — the field is optional', () => {
+    const { issues } = checkMissions([releaseMission()], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toEqual([]);
+  });
+
+  it.each(['しくみ', 'めあて', 'わかれ'])('passes a mission whose rootType is the accepted value %s', (rootType) => {
+    const m = releaseMission({ rootTypeRaw: rootType });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toEqual([]);
+  });
+
+  it('FAILS a mission whose rootType is an arbitrary fourth value — adversarial proof', () => {
+    const m = releaseMission({ rootTypeRaw: 'よそく' });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/unsupported rootType/);
+    expect(issues[0]).toContain('よそく');
+  });
+
+  it('FAILS on a romanized or near-miss rootType — no normalization or coercion', () => {
+    const m = releaseMission({ rootTypeRaw: 'shikumi' });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/unsupported rootType/);
+  });
+
+  it('rejects an invalid rootType regardless of contentClass — synthetic and archived missions are checked too', () => {
+    const synth = syntheticMission({ rootTypeRaw: 'other' });
+    const archived = archivedMission({ rootTypeRaw: 'other' });
+    expect(checkMissions([synth], { strict: false, productionImportedTopicKeys: new Set() }).issues).toHaveLength(1);
+    expect(checkMissions([archived], { strict: false, productionImportedTopicKeys: new Set() }).issues).toHaveLength(1);
+  });
+
+  it('an invalid rootType is reported even when contentClass is ALSO invalid — both are independent structural errors', () => {
+    const m = releaseMission({ contentClassRaw: 'nonsense', rootTypeRaw: 'other' });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toHaveLength(2);
+    expect(issues.some((i) => /unsupported rootType/.test(i))).toBe(true);
+    expect(issues.some((i) => /missing or unrecognised contentClass/.test(i))).toBe(true);
   });
 });
 

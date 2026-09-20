@@ -23,16 +23,22 @@ This document replaces v0.4 and folds in both research reports. It is the single
 
 ---
 
-> ⚠ **Superseded by AD-02 / AD-02A (WO-11, 20 Sep 2026).** This spec's topic universe — "everyday
-> science, how things work, simple 社会" (§3's Topics row) and the mission table built on it (§4.2,
-> §4.3) — is no longer authoritative for what new content is commissioned. It remains an accurate
-> historical record of what was actually built (mission 1-1「パンは なぜ ふくらむ？」and the ice
-> bank topic), both of which are now `contentClass: "archived"` and excluded from production
-> reachability — see `docs/AD-02-content-classification-and-commissioning.md`. The Adult Trap
-> concept (§4.2 mission 1-4, §10) is likewise redefined — see
-> `docs/AD-02A-questioning-pillar-and-adult-trap.md`. Passages this affects carry an inline marker
-> below; everything else in this spec (pillars, pipeline, engine architecture, pricing, roadmap,
-> timeline) remains in force and is not touched by AD-02/AD-02A.
+> ⚠ **Superseded by the Founder's WO-11 decisions (20 Sep 2026).** This spec's topic universe —
+> "everyday science, how things work, simple 社会" (§3's Topics row) and the mission table built
+> on it (§4.2, §4.3) — is no longer authoritative for what new content is commissioned. It remains
+> an accurate historical record of what was actually built (mission 1-1「パンは なぜ ふくらむ？」
+> and the ice bank topic), both of which are now `contentClass: "archived"` and excluded from
+> production reachability. The Adult Trap concept (§4.2 mission 1-4, §10) is likewise redefined.
+> Passages this affects carry an inline marker below; everything else in this spec (pillars,
+> pipeline, engine architecture, pricing, roadmap, timeline) remains in force and is not touched
+> by these decisions.
+>
+> **Note on sourcing (added at WO-11C):** the Architect's own AD-02 / AD-02A architecture
+> documents are not present in this repository. `docs/WO-11-implementation-notes-content-
+> classification.md` and `docs/WO-11-implementation-notes-questioning-adult-trap.md` are Builder's
+> own implementation notes describing what WO-11's code changes implement against the Founder's
+> numbered decision list — they are explicitly marked as not authoritative and should not be
+> confused with the Architect's AD-02/AD-02A source, which this repository still lacks.
 
 ---
 
@@ -110,7 +116,7 @@ Stages inside each module: **Stage 1** (G1–2) · **Stage 2** (G3–4, launch) 
 | 追問 moves | 4: なぜ？ / たとえば？ / つまり？ / ほかには？ |
 | Dig depth | 3 layers + ねっこ (boss: 4) |
 | Hand size | 3–4 cards, exactly one `deepen`, one plausible `sideways` |
-| Topics | ~~Everyday science, how things work, simple 社会.~~ **Superseded by AD-02 — see `docs/AD-02-content-classification-and-commissioning.md` §6.** No health advice, body image, disasters, religion, politics, contested science (this exclusion list still holds) |
+| Topics | ~~Everyday science, how things work, simple 社会.~~ **Superseded by the Founder's WO-11 decisions — see the note at the top of this document.** No health advice, body image, disasters, religion, politics, contested science (this exclusion list still holds) |
 | Session | 10–12 min |
 | ひみつカード traps | from mission 1-5 |
 
@@ -132,16 +138,18 @@ The kanji and ruby rules are enforced by lint, driven by the validated 1,026-cha
 
 > ⚠ **Historical.** This table describes the mission set built under the superseded science-topic
 > framing (see the banner at the top of this document). Only 1-1 (bread) was actually authored,
-> and it is now `contentClass: "archived"` — see `docs/AD-02-content-classification-and-commissioning.md`.
-> Missions 1-2 through 1-8 were never built; do not treat this table as a backlog or grandfather
-> any of its topics into future commissioning without passing AD-02's T1–T6 gates.
+> and it is now `contentClass: "archived"`. Missions 1-2 through 1-8 were never built; do not
+> treat this table as a backlog or grandfather any of its topics into future commissioning
+> without passing the Founder's mandatory T1–T6 commissioning gates (WO-11 decision 1 — their
+> individual criteria are not yet in this repository; see
+> `docs/WO-11-implementation-notes-content-classification.md`).
 
 | # | たのむ | ほる | Co-play |
 |---|---|---|---|
 | 1-1 **FREE** | なにを | なぜ？ · 2 layers | よそうバトル ×2, teach-back |
 | 1-2 | なぜ (goal) | たとえば？ · 2–3 layers | よそうバトル |
 | 1-3 | だれに (role) | なぜ？ + たとえば？ mixed · 3 layers | Teach-back |
-| 1-4 **Mid-boss** | どんな形で · full 4-slot build | Free choice of moves · 3 layers · ~~**adult-trap topic** (なぜ冬は寒い？)~~ — old Adult Trap definition, superseded by AD-02A §2, see `docs/AD-02A-questioning-pillar-and-adult-trap.md` | ふたりミッション |
+| 1-4 **Mid-boss** | どんな形で · full 4-slot build | Free choice of moves · 3 layers · ~~**adult-trap topic** (なぜ冬は寒い？)~~ — old Adult Trap definition, superseded by the Founder's WO-11 decision 7, see `docs/WO-11-implementation-notes-questioning-adult-trap.md` | ふたりミッション |
 | 1-5 | 4 slots, harder scene · ひみつ traps begin | つまり？ · 3 layers | よそうバトル |
 | 1-6 | 4 slots | ほかには？ · 3 layers | おうちトーク |
 | 1-7 | 4 slots | 「どのカードで掘る？」 choose the right move for the situation · 3 layers | よそうバトル |
@@ -150,10 +158,9 @@ The kanji and ruby rules are enforced by lint, driven by the validated 1,026-cha
 ### 4.3 ナゼホリ bank (free-dig topics)
 
 > ⚠ **Historical.** Only one bank topic (ice) was ever authored, under the superseded science-topic
-> framing — it is now `contentClass: "archived"` (see the banner at the top of this document and
-> `docs/AD-02-content-classification-and-commissioning.md`). The 12-at-launch/24-by-February plan
-> below was never executed and is not a live commitment; any future bank content must be
-> commissioned under AD-02.
+> framing — it is now `contentClass: "archived"` (see the banner at the top of this document). The
+> 12-at-launch/24-by-February plan below was never executed and is not a live commitment; any
+> future bank content must pass the Founder's WO-11 commissioning gates (decision 1) first.
 
 Short digs the family picks in any order; dig phase only. **12 at launch, 24 by end of February** as a free update. Total launch content: 20 digs, ~70 factual claims.
 
@@ -320,7 +327,7 @@ Headlines A/B (random, persisted, sent with every event):
 
 Sub-head (both, carries the other motive): 3・4年生の「なぜ？」が深くなる時期に。保護者も一緒に学べる思考トレーニング。子どもにとっては、ただ楽しいゲームです。
 
-Sections: 1 Hero (CTA 無料でミッション1を体験する; secondary 創設ファミリーとして申し込む ¥4,980) · 2 **Grade-band picker** (1・2年 / 3・4年 / 5・6年 — everyone may play; the pick is logged as demand data for later stages) · 3 現状 — children already use AI for schoolwork; parents' top worry is thinking ability; most parents say they cannot teach it (cite surveys) · 4 身につく力 — one picture: 問う → 浅い答え → もう一問 → ねっこ · 5 親子で — よそうバトル, teach-back, ほりさげゲーム, ~~the winter adult-trap~~ (old Adult Trap definition, superseded by AD-02A §2 — a future LP pass needs an example under the new definition instead) · 6 届くもの — the kit, itemised · 7 安心設計 — 本物のAIには接続しません (a simulator; say so) · 文字入力なし · 個人情報の入力なし · 広告なし · 7A 学びの方向性との対応 — alignment map per section 1A, with source links and the allowed wording only · 8 これから — modules and stages, 「予定」 only · 9 価格 — price box per section 9 + 創設ファミリー特典 · 10 FAQ · 11 Footer — 特商法, privacy, company.
+Sections: 1 Hero (CTA 無料でミッション1を体験する; secondary 創設ファミリーとして申し込む ¥4,980) · 2 **Grade-band picker** (1・2年 / 3・4年 / 5・6年 — everyone may play; the pick is logged as demand data for later stages) · 3 現状 — children already use AI for schoolwork; parents' top worry is thinking ability; most parents say they cannot teach it (cite surveys) · 4 身につく力 — one picture: 問う → 浅い答え → もう一問 → ねっこ · 5 親子で — よそうバトル, teach-back, ほりさげゲーム, ~~the winter adult-trap~~ (old Adult Trap definition, superseded by the Founder's WO-11 decision 7 — a future LP pass needs an example under the new definition instead) · 6 届くもの — the kit, itemised · 7 安心設計 — 本物のAIには接続しません (a simulator; say so) · 文字入力なし · 個人情報の入力なし · 広告なし · 7A 学びの方向性との対応 — alignment map per section 1A, with source links and the allowed wording only · 8 これから — modules and stages, 「予定」 only · 9 価格 — price box per section 9 + 創設ファミリー特典 · 10 FAQ · 11 Footer — 特商法, privacy, company.
 
 Wording rule: 深掘り / 「なぜ？」を重ねる / 本質にたどりつく. Never 追問 or 第一性原理. Tone: a supportive companion to school learning — never "schools can't teach this" or "disrupting education". All policy claims follow section 1A.
 

@@ -153,17 +153,23 @@ export interface ModuleUiStrings {
 }
 
 /**
- * AD-02 §2 (WO-11): the three accepted root types a commissioned topic's ねっこ resolves into —
- * しくみ / めあて / わかれ. No quotas across them — a topic is whichever one fits, not filled to a
- * ratio. Kept as plain `string` (not a literal union), matching `Domain` above and for the same
+ * WO-11 decision 2 (the Founder's numbered ticket decision — not a section of any AD-02 document
+ * present in this repository, see docs/WO-11-implementation-notes-content-classification.md):
+ * the three accepted root types a commissioned topic's ねっこ resolves into — しくみ / めあて /
+ * わかれ. No quotas across them — a topic is whichever one fits, not filled to a ratio.
+ *
+ * Kept as plain `string` here (not a literal union), matching `Domain` above and for the same
  * reason: gate:no-hardcoded-copy reserves child-facing/content-vocabulary Japanese string
- * literals for module JSON, never engine source. Not yet read or branched on anywhere in the
+ * literals for module JSON, never engine source. The closed three-value set is declared and
+ * enforced instead in scripts/lib/rootType.ts (outside that gate's scan root) and checked by
+ * scripts/lib/moduleClassification.ts's checkMissions() — see tests/rootType.test.ts for the
+ * adversarial proof that a fourth value is rejected. Not yet read or branched on anywhere in the
  * engine; recorded here so the next content ticket (C-03) has one typed contract instead of
  * inventing its own.
  */
 export type RootType = string;
 
-/** AD-02 §4/§5 (WO-11): the same three-way release-content classification scripts/lib/
+/** WO-11 decisions 4-5: the same three-way release-content classification scripts/lib/
  *  moduleClassification.ts enforces at the gate level, duplicated here (not imported — pipeline/
  *  scripts tooling and the Vite-bundled engine are deliberately independent layers) purely so
  *  Mission's own shape matches what every mission JSON actually carries. The engine itself never
@@ -176,7 +182,7 @@ export interface Mission {
    *  this type); optional here only because engine-side consumers must not depend on its
    *  presence at runtime — this field governs release/CI concerns, not gameplay. */
   contentClass?: ContentClass;
-  /** AD-02 §2 (WO-11) — see RootType. Not yet authored on any existing mission; optional until
+  /** WO-11 decision 2 — see RootType. Not yet authored on any existing mission; optional until
    *  C-03 (or a later ticket) actually sets it. */
   rootType?: RootType;
   stage: Stage;

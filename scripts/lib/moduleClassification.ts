@@ -1,6 +1,8 @@
+import { ROOT_TYPES, parseRootType } from './rootType.js';
+
 /**
  * Release-content classification (Architect decision, post-bd92ec7; migrated to per-mission
- * granularity by WO-11 / AD-02). Every mission file under src/modules must explicitly declare
+ * granularity by WO-11). Every mission file under src/modules must explicitly declare
  * exactly one `contentClass`, on the mission JSON itself (not the module manifest — see "Why
  * mission-level, not module-level" below):
  *   - "release"   — reachable by real families; every content gate applies; genuine Gate 1
@@ -12,7 +14,7 @@
  *                    (an "approved" claim status, or a mission `review` stamp) — those would
  *                    misrepresent test content as having passed real human review.
  *   - "archived"  — genuine historical release content that once passed real Gate 1/Gate 2
- *                    human approval but is no longer current release curriculum (AD-02 §5).
+ *                    human approval but is no longer current release curriculum (WO-11 decision 5).
  *                    Preserves that approval/review history as-is (the opposite of synthetic's
  *                    rule: archived content is EXPECTED to carry real approval metadata, and
  *                    nothing here erases or invalidates it) but is excluded from ongoing
@@ -25,14 +27,14 @@
  * unconditionally (in both normal and RELEASE=1 gate:claims), not just release-mode checks —
  * this is a structural manifest error, not a release-readiness gap.
  *
- * Why mission-level, not module-level (AD-02 migration note): the previous (WO-9) design put
+ * Why mission-level, not module-level (WO-11 migration note): the previous (WO-9) design put
  * `contentClass` on module.json, one value for every mission a module ships. That broke the
  * moment a single module (m1) needed to hold missions in different lifecycle states at once —
  * archiving bread and ice must not also silently archive m1's other assets (its cardTypes/ui
  * catalog, its printable deck) that a future release topic under the same module will still
  * need. Moving the field onto each mission's own JSON — the same file that already carries
  * `review` — makes "is THIS topic release-worthy" answerable per topic, which is what "0 release
- * topics" (AD-02) actually means. module.json no longer carries or requires a contentClass field.
+ * topics" (WO-11) actually means. module.json no longer carries or requires a contentClass field.
  *
  * Pure and framework-free (mirrors pipeline/04_lint.ts's own lintMission/lintDeck split) so the
  * classification and reachability rules can be unit-tested without touching the filesystem;
@@ -63,6 +65,13 @@ export interface MissionEntry {
   /** Read straight off the mission JSON's own `contentClass` field, unvalidated —
    *  checkMissions() is what validates it. */
   contentClassRaw: unknown;
+  /** Read straight off the mission JSON's own `rootType` field, unvalidated — checkMissions() is
+   *  what validates it. Optional (`undefined`): no existing mission sets this yet, and its
+   *  absence is not itself an error (WO-11 decision 2 records the contract for the next content
+   *  ticket, it does not require every mission to carry it today). When a mission DOES set it,
+   *  the value must be one of scripts/lib/rootType.ts's three accepted values — see WO-11C's
+   *  adversarial coverage in tests/rootType.test.ts and this file's own test suite. */
+  rootTypeRaw?: unknown;
   mission: MissionRecord;
   /** null when no facts.yaml sits beside this mission file. */
   facts: FactsFile | null;
@@ -143,6 +152,20 @@ export function checkMissions(missions: MissionEntry[], opts: CheckOptions): Che
 
   for (const entry of missions) {
     const { moduleId, relPath, mission, facts } = entry;
+
+    // WO-11C: closed-set rootType enforcement, independent of contentClass — a mission with an
+    // invalid rootType is a structural manifest error regardless of whether it's release,
+    // synthetic or archived, so this runs even for a mission whose contentClass itself is broken.
+    if (entry.rootTypeRaw !== undefined) {
+      const rootType = parseRootType(entry.rootTypeRaw);
+      if (!rootType) {
+        issues.push(
+          `${relPath} has an unsupported rootType (got ${JSON.stringify(entry.rootTypeRaw)}) — ` +
+          `only ${ROOT_TYPES.join(', ')} are accepted`,
+        );
+      }
+    }
+
     const contentClass = parseContentClass(entry.contentClassRaw);
     if (!contentClass) {
       issues.push(
