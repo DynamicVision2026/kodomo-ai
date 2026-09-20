@@ -3,6 +3,8 @@ import { lintMission } from '../pipeline/04_lint';
 import { lintText } from '../pipeline/lib/lintText';
 import { loadGradeMap } from '../pipeline/lib/kanji';
 import mission from '../src/modules/m1/topics/bread/s2.json';
+import chantoMission from '../src/modules/m1/topics/chanto/s2.json';
+import genkanMission from '../src/modules/m1/topics/genkan/s2.json';
 
 const gradeOf = loadGradeMap();
 const claimIds = new Set(['c1', 'c2', 'c3']);
@@ -86,7 +88,10 @@ describe('lintMission', () => {
           hand: [{ id: 'a', text: 'なぜ そうなるの', tag: 'deepen', move: 'follow-naze', domain: '日常' }],
           replies: {},
         }],
-        root: { robotSays: 'そう', claims: ['nonfactual'] },
+        // Deliberately distinct from the layer's own 'そう' — AD-05 §7's epistemic-leak rule
+        // (WO-14) flags a layer/root sharing the same robotSays, so this fixture's root must not
+        // collide with placeholder layer text it isn't testing.
+        root: { robotSays: 'ねっこだよ', claims: ['nonfactual'] },
       }],
       tip: 'そう', teachBack: 'そう', ouchiTalk: 'そう',
     };
@@ -234,6 +239,104 @@ describe('lintMission', () => {
     const issues = lintMission(bad, 2, gradeOf, claimIds);
     expect(issues).toContainEqual({ rule: 'tag', message: 'invalid dig tag wrong' });
     expect(issues).toContainEqual({ rule: 'schema', message: 'unknown template mystery' });
+  });
+
+  // AD-05 §4 (WO-14): the kanji floor is enforced only for missions that are themselves
+  // contentClass: "release" — a go-forward register policy, not retroactively applied to
+  // archived/synthetic content or content with no contentClass at all.
+  describe('kanji-floor gating (AD-05 §4 — release-only, not retroactive)', () => {
+    const kanaViolation = {
+      id: 'x', stage: 2,
+      phases: [{
+        template: 'dig', layers: [],
+        root: { robotSays: 'いま なにが きこえる？', claims: ['nonfactual'] },
+      }],
+      tip: 'そう', teachBack: 'そう', ouchiTalk: 'そう',
+    };
+
+    it('flags a kanji-floor violation on a contentClass: "release" mission', () => {
+      const issues = lintMission({ ...kanaViolation, contentClass: 'release' }, 2, gradeOf, claimIds);
+      expect(issues.some((i) => i.rule === 'kanji-floor')).toBe(true);
+    });
+
+    it('does NOT flag the identical text on a contentClass: "archived" mission', () => {
+      const issues = lintMission({ ...kanaViolation, contentClass: 'archived' }, 2, gradeOf, claimIds);
+      expect(issues.some((i) => i.rule === 'kanji-floor')).toBe(false);
+    });
+
+    it('does NOT flag the identical text on a contentClass: "synthetic" mission', () => {
+      const issues = lintMission({ ...kanaViolation, contentClass: 'synthetic' }, 2, gradeOf, claimIds);
+      expect(issues.some((i) => i.rule === 'kanji-floor')).toBe(false);
+    });
+
+    it('does NOT flag the identical text on a mission with no contentClass at all', () => {
+      const issues = lintMission(kanaViolation, 2, gradeOf, claimIds);
+      expect(issues.some((i) => i.rule === 'kanji-floor')).toBe(false);
+    });
+  });
+
+  // AD-05 §7 (WO-14): only the root/tip may state the mission's conclusion — a dig layer's
+  // robotSays must never already contain it, or "digging" for it is theatre.
+  describe('epistemic-root guardrail (AD-05 §7)', () => {
+    const chainWithLeak = {
+      id: 'x', stage: 2,
+      phases: [{
+        template: 'dig',
+        layers: [{
+          robotSays: 'その理由は、外と中がべつだからだよ。', claims: ['nonfactual'],
+          gap: 'なぜか わからない',
+          gapDistractors: [
+            { text: 'すでに わかっている こと', kind: 'answered' },
+            { text: 'べつの ところで わかる こと', kind: 'other-layer' },
+          ],
+          hand: [{ id: 'a', text: 'なぜ そうなるの', tag: 'deepen', move: 'follow-naze', domain: '日常' }],
+          replies: {},
+        }],
+        root: { robotSays: 'その理由は、外と中がべつだからだよ。', claims: ['nonfactual'] },
+      }],
+      tip: 'そう', teachBack: 'そう', ouchiTalk: 'そう',
+    };
+
+    it('flags a layer whose robotSays is identical to the root\'s conclusion', () => {
+      const issues = lintMission(chainWithLeak, 2, gradeOf, claimIds);
+      expect(issues.some((i) => i.rule === 'epistemic-leak')).toBe(true);
+    });
+
+    it('flags a layer whose robotSays merely CONTAINS the root\'s conclusion as a substring', () => {
+      const bad = {
+        ...chainWithLeak,
+        phases: [{
+          ...chainWithLeak.phases[0]!,
+          layers: [{
+            ...chainWithLeak.phases[0]!.layers[0]!,
+            robotSays: 'まず、その理由は、外と中がべつだからだよ。 と ロボは いった。',
+          }],
+        }],
+      };
+      const issues = lintMission(bad, 2, gradeOf, claimIds);
+      expect(issues.some((i) => i.rule === 'epistemic-leak')).toBe(true);
+    });
+
+    it('passes a chain where every layer\'s robotSays is genuinely distinct from the root', () => {
+      // The real accepted pattern (chanto/genkan): each layer's answer is a distinct, shallower
+      // step; only the root states the mission's actual conclusion.
+      const validChain = {
+        ...chainWithLeak,
+        phases: [{
+          ...chainWithLeak.phases[0]!,
+          layers: [{ ...chainWithLeak.phases[0]!.layers[0]!, robotSays: 'まず、そとの ものだからだよ。' }],
+        }],
+      };
+      expect(lintMission(validChain, 2, gradeOf, claimIds).some((i) => i.rule === 'epistemic-leak')).toBe(false);
+    });
+
+    it('the real, migrated chanto and genkan missions both pass — proof against real content, not just a fixture', () => {
+      const gradeOfReal = loadGradeMap();
+      const chantoIssues = lintMission(chantoMission, 2, gradeOfReal, new Set(['c1', 'c2', 'c3']));
+      const genkanIssues = lintMission(genkanMission, 2, gradeOfReal, new Set(['c1', 'c2', 'c3']));
+      expect(chantoIssues.filter((i) => i.rule === 'epistemic-leak')).toEqual([]);
+      expect(genkanIssues.filter((i) => i.rule === 'epistemic-leak')).toEqual([]);
+    });
   });
 });
 

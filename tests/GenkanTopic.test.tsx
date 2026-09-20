@@ -80,23 +80,25 @@ describe('genkan (1-2) — structure (AD-01 gap/distractor contract, accepted mo
 describe('genkan (1-2) — the counterexample is child-owned and structurally necessary, not decorative', () => {
   it('layer 0\'s shallow "dirty" answer opens the gap that new/clean shoes create ("え？"), and たとえば is literally what surfaces it', () => {
     expect(digPhase.layers[0]!.robotSays).toContain('よごれている');
-    expect(digPhase.layers[0]!.gap).toContain('あたらしい');
+    expect(digPhase.layers[0]!.gap).toContain('新しい'); // AD-05: あたらしい -> 新しい (kanji floor)
     const deepen = digPhase.layers[0]!.hand.find((c) => c.tag === 'deepen')!;
-    expect(deepen.text).toContain('あたらしい'); // たとえば？ asks specifically about the counterexample
+    expect(deepen.text).toContain('新しい'); // たとえば？ asks specifically about the counterexample
   });
 
   it('layer 1 confirms the counterexample is real (new shoes ARE removed too), which is what makes "dirty alone" insufficient', () => {
-    expect(digPhase.layers[1]!.robotSays).toContain('あたらしいくつも');
+    expect(digPhase.layers[1]!.robotSays).toContain('新しいくつも');
     expect(digPhase.layers[1]!.gap).toContain('よごれてない'); // the gap only exists because the counterexample was confirmed
   });
 
   it('the root deepens the そと／うち boundary — categorized by where a shoe is used, not by how clean it looks — and never lands on rule-obedience ("きまり"/"きめて") or moralizes into 「だから、くつをぬごう」', () => {
     // Gate 1 correction: the root must answer "why are even clean/new shoes removed?" with a
     // boundary insight (shoes used outside belong to a separate category from the inside),
-    // explicitly ties back to the counterexample ("あたらしくても"), and must NOT terminate the
+    // explicitly ties back to the counterexample ("新しくても"), and must NOT terminate the
     // inquiry with rule-authority language ("it's the rule") — that was the exact defect flagged.
-    expect(digPhase.root.robotSays).toContain('あたらしくても'); // ties back to the counterexample
-    expect(digPhase.root.robotSays).toContain('そとで'); // the categorization is about where it's used...
+    // AD-05 (WO-14) migration: あたらしい/そと are now written with their kanji floor forms
+    // (新しい/外) — the underlying claim is unchanged, only the register/orthography moved.
+    expect(digPhase.root.robotSays).toContain('新しくても'); // ties back to the counterexample
+    expect(digPhase.root.robotSays).toContain('外で'); // the categorization is about where it's used...
     expect(digPhase.root.robotSays).toContain('べつ'); // ...kept separate from the inside (a boundary, not a verdict)
     expect(digPhase.root.robotSays).not.toContain('きまり');
     expect(digPhase.root.robotSays).not.toContain('きめて');

@@ -10,8 +10,8 @@
       "template": "slot-assembly",
       "slots": ["what"],
       "cards": [
-        { "id": "w1", "slot": "what", "text": "くつのはなし、きいて", "tag": "vague" },
-        { "id": "w2", "slot": "what", "text": "げんかんで、くつをぬぐのはなぜ？", "tag": "clear" },
+        { "id": "w1", "slot": "what", "text": "くつの話、きいて", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "げんかんで、くつをぬぐのはなんで？", "tag": "clear" },
         { "id": "w3", "slot": "what", "text": "ロボはくつすき？", "tag": "offtopic" }
       ],
       "rules": [
@@ -21,18 +21,18 @@
       ],
       "archetypes": {
         "CLEAR": {
-          "robotSays": "そとのくつは、よごれているから、ぬぐんだよ。",
+          "robotSays": "外のくつは、よごれているから、ぬぐんだよ。",
           "animation": "proud",
           "claims": ["c1"]
         },
         "VAGUE": {
-          "robotSays": "くつのはなし、いろいろあるよ！",
+          "robotSays": "くつの話、いろいろあるよ！",
           "animation": "confused",
-          "tip": "なにがききたいか、はっきりさせよう。",
+          "tip": "何がききたいか、はっきりさせよう。",
           "claims": ["nonfactual"]
         },
         "OFFTOPIC": {
-          "robotSays": "うーん、いまはべつのはなしだよ。",
+          "robotSays": "うーん、今はべつの話だよ。",
           "animation": "thinking",
           "claims": ["nonfactual"]
         }
@@ -43,53 +43,53 @@
       "template": "dig",
       "layers": [
         {
-          "robotSays": "そとのくつは、よごれているから、ぬぐんだよ。",
+          "robotSays": "外のくつは、よごれているから、ぬぐんだよ。",
           "claims": ["c1"],
-          "gap": "あたらしいくつもぬぐのか、わからない",
+          "gap": "新しいくつもぬぐのか、わからない",
           "gapDistractors": [
-            { "text": "そとのくつをぬぐのか、わからない", "kind": "answered" },
-            { "text": "よごれてないのに、なぜぬぐのかわからない", "kind": "other-layer" }
+            { "text": "外のくつをぬぐのか、わからない", "kind": "answered" },
+            { "text": "よごれてないのに、なんでぬぐのかわからない", "kind": "other-layer" }
           ],
           "hand": [
-            { "id": "g1card", "text": "たとえば、あたらしいくつは？", "tag": "deepen", "move": "follow-tatoeba", "domain": "日常" },
-            { "id": "g2card", "text": "くつはどこでかうの？", "tag": "offtopic" },
+            { "id": "g1card", "text": "たとえば、新しいくつは？", "tag": "deepen", "move": "follow-tatoeba", "domain": "日常" },
+            { "id": "g2card", "text": "くつはどこで買うの？", "tag": "offtopic" },
             { "id": "g3card", "text": "もういちどいって", "tag": "repeat" }
           ],
           "replies": {
-            "offtopic": "うーん、それはいまのはなしじゃないね。",
-            "repeat": "うーん、さっきとおなじこたえになっちゃった。"
+            "offtopic": "うーん、それは今の話じゃないね。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
           },
-          "earlyOk": { "challenger": "ポン太", "asks": "あたらしいくつも、ぬぐのかな？" }
+          "earlyOk": { "challenger": "ポン太", "asks": "新しいくつも、ぬぐのかな？" }
         },
         {
-          "robotSays": "あたらしいくつも、げんかんでぬぐよ。",
+          "robotSays": "新しいくつも、げんかんでぬぐよ。",
           "claims": ["c2"],
-          "gap": "よごれてないのに、なぜぬぐのかわからない",
+          "gap": "よごれてないのに、なんでぬぐのかわからない",
           "gapDistractors": [
             { "text": "どこでくつをぬぐのか、わからない", "kind": "answered" },
-            { "text": "あたらしいくつもぬぐのか、わからない", "kind": "other-layer" }
+            { "text": "新しいくつもぬぐのか、わからない", "kind": "other-layer" }
           ],
           "hand": [
-            { "id": "g4card", "text": "つまり、よごれだけがりゆうじゃない？", "tag": "deepen", "move": "follow-tsumari", "domain": "日常" },
+            { "id": "g4card", "text": "どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "日常" },
             { "id": "g5card", "text": "くつって、いくらするの？", "tag": "sideways" },
             { "id": "g6card", "text": "もういちどいって", "tag": "repeat" }
           ],
           "replies": {
-            "sideways": "さあ、いろいろだね。でも、いまのはなしとはべつだよ。",
-            "repeat": "うーん、さっきとおなじこたえになっちゃった。"
+            "sideways": "さあ、いろいろだね。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
           },
-          "earlyOk": { "challenger": "ポン太", "asks": "よごれてなくても、なぜぬぐのかな？" },
+          "earlyOk": { "challenger": "ポン太", "asks": "よごれてなくても、なんでぬぐのかな？" },
           "prediction": { "beforeRound": 2, "options": ["g4card", "g5card", "g6card"] }
         }
       ],
       "root": {
-        "robotSays": "あたらしくても、そとでつかうくつは、うちとべつなんだね。",
+        "robotSays": "新しくても、外でつかうくつは、うちとべつなんだね。",
         "claims": ["c3"],
         "label": "ねっこ"
       }
     }
   ],
-  "tip": "「たとえば？」ときくと、こたえがぜんぶにあうか、わかるよ。",
-  "teachBack": "「たとえば」ときいてたしかめるほうほうを、おしえてあげよう。",
+  "tip": "「たとえば？」ときくと、答えがぜんぶにあうか、わかるよ。",
+  "teachBack": "「たとえば」ときいてたしかめるほうほうを教えてあげよう。",
   "ouchiTalk": "ほかの『いつものこと』も、たとえば？でたしかめてみよう。"
 }

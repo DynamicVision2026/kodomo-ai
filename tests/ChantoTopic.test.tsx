@@ -24,9 +24,15 @@ const APPROVED_STAGE2_MOVES = new Set(moduleJson.followMoves);
  * the 2 primary moves AD-04 marks for this topic, not 3).
  */
 describe('chanto (1-1) — release classification and rootType contract', () => {
-  it('is classified release, and carries the real Gate 2 native-speaker review stamp recorded after WO-12 closure', () => {
+  it('is classified release; its prior Gate 2 stamp was removed by the AD-05 (WO-14) register migration and not fabricated back', () => {
+    // WO-12 closure recorded a real 酒井先生 review stamp here, but AD-05 (WO-14) rewrote the
+    // child-visible Japanese this mission renders (hub strings, move realizations, kanji floor,
+    // the tsumari question itself) — that stamp reviewed the OLD wording, so it would misrepresent
+    // the CURRENT text as reviewed if left in place. Gate 1 (facts.yaml's approved claims) is
+    // untouched and still valid; only Gate 2 (native-speaker review of the Japanese) is pending
+    // re-stamp.
     expect(chantoMission.contentClass).toBe('release');
-    expect(chantoMission.review).toEqual({ by: '酒井先生', date: '2026-09-20' });
+    expect(chantoMission.review).toBeUndefined();
   });
 
   it('declares a rootType from the closed WO-11C set (めあて), not an invented fourth value', () => {
@@ -79,8 +85,8 @@ describe('chanto (1-1) — structure (AD-01 gap/distractor contract, accepted mo
     expect(digPhase.layers[0]!.gap).toContain('きちんと');
     expect(digPhase.layers[1]!.robotSays).toContain('もどすこと'); // the tidying-room example
     expect(digPhase.layers[1]!.robotSays).toContain('かな'); // hedged as one example, not asserted as the definition
-    expect(digPhase.layers[1]!.gap).toContain('たべるとき'); // whether the same meaning holds elsewhere
-    expect(digPhase.root.robotSays).toContain('たべるとき');
+    expect(digPhase.layers[1]!.gap).toContain('食べるとき'); // AD-05: たべる -> 食べる (kanji floor); whether the same meaning holds elsewhere
+    expect(digPhase.root.robotSays).toContain('食べるとき');
     expect(digPhase.root.robotSays).toContain('とか'); // the eating example is hedged too, not asserted as final truth
     // The root's own landing point — what the mission is FOR — is that the concrete meaning
     // changes with the situation, not "eating means not spilling." This is the Founder Gate 1

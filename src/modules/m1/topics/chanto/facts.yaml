@@ -1,15 +1,21 @@
 # Gate 1: PASSED for c1/c2/c3 — the Founder approved all three, against the corrected content at
 # commit 4394bc7 (the Gate 1 correction that reworded c2/c3 and the ねっこ so the room/eating
 # examples read as situational examples, not fixed sub-definitions of 「ちゃんと」). See
-# approvedBy/approvedAt per claim below.
+# approvedBy/approvedAt per claim below. AD-05 (WO-14) confirms this migration does not alter
+# these factual/practice claims, so Gate 1 REMAINS VALID and is untouched here.
+#
+# Gate 2: PENDING RE-STAMP. s2.json's prior native-speaker review stamp (酒井先生) was removed by
+# the AD-05 (WO-14) register migration — it reviewed the pre-migration Japanese wording, not the
+# corrected child-voice/kanji-floor text now in s2.json, so keeping it would misrepresent
+# unreviewed text as reviewed. No new stamp is fabricated here; a human must re-review the
+# migrated wording before it is added back.
 #
 # type: practice (WO-11 decision 6 / docs/WO-11-implementation-notes-content-classification.md):
 # every claim here is a stated everyday-language observation, not an assertion about the physical
 # or natural world — there is no research paper to cite for "parents use 「ちゃんと」 as a general
 # instruction word." Per the fact/practice contract, a practice claim has no inherent external-
 # source requirement; sourceUrl/excerpt/adultLevelSource are correctly absent here, same as
-# before this approval. Gate 1 approval does not imply Gate 2 on its own, but Gate 2 has also
-# separately passed for this mission — see s2.json's own `review` stamp (酒井先生).
+# before this approval.
 topic: chanto
 question: 「ちゃんと しなさい」の「ちゃんと」って、なに？
 claims:

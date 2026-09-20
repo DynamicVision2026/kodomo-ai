@@ -35,12 +35,18 @@ export function lintMission(mission: unknown, stage: number, gradeOf: GradeMap, 
   const issues: MissionLintIssue[] = [];
   const m = mission as {
     id?: string; stage?: number; phases?: unknown[];
-    tip?: string; teachBack?: string; ouchiTalk?: string;
+    tip?: string; teachBack?: string; ouchiTalk?: string; contentClass?: unknown;
   };
 
   if (!m.id || !m.stage || !Array.isArray(m.phases)) {
     return [{ rule: 'schema', message: 'missing id, stage or phases' }];
   }
+
+  // AD-05 §4 (WO-14): the kanji floor is a go-forward register policy, not retroactive —
+  // enforced only for missions actively asserting release-content status. archived missions
+  // (bread/ice) were authored before AD-05 existed and keep their historical wording untouched;
+  // synthetic fixtures aren't child-facing content at all. See lintText's own LintTextOptions doc.
+  const kanjiFloor = m.contentClass === 'release';
 
   const checkClaims = (claims: unknown, where: string) => {
     if (!Array.isArray(claims) || claims.length === 0) {
@@ -67,8 +73,17 @@ export function lintMission(mission: unknown, stage: number, gradeOf: GradeMap, 
         checkClaims(arch.claims, `archetype ${key}`);
       }
     } else if (phase.template === 'dig') {
+      // AD-05 §7 (WO-14): the epistemic-root guardrail. Only the root (ねっこ) and the mission's
+      // own tip (きょうのコツ) may state the mission's conclusion — an earlier dig layer's
+      // robotSays must never already contain it, or the "digging" is theatre: the child would
+      // have been told the answer before doing any of the work. Collected here, checked once
+      // `root` is known below. Lightest-implementation exact/substring check, not semantic
+      // paraphrase detection — see the `epistemic-leak` message for what it does and doesn't
+      // catch.
+      const layerRobotSays: { n: number; text: string }[] = [];
       for (const [n, layer] of ((phase.layers as Record<string, unknown>[]) ?? []).entries()) {
         texts.push(layer.robotSays as string);
+        layerRobotSays.push({ n, text: layer.robotSays as string });
         checkClaims(layer.claims, `layer ${n}`);
         const hand = (layer.hand as { tag: string; text: string; move?: string; domain?: string }[]) ?? [];
         const deepen = hand.filter((c) => c.tag === 'deepen');
@@ -129,14 +144,29 @@ export function lintMission(mission: unknown, stage: number, gradeOf: GradeMap, 
         if (earlyOk?.asks) texts.push(earlyOk.asks);
       }
       const root = phase.root as { robotSays: string; claims?: string[] } | undefined;
-      if (root) { texts.push(root.robotSays); checkClaims(root.claims, 'root'); }
+      if (root) {
+        texts.push(root.robotSays);
+        checkClaims(root.claims, 'root');
+        const rootText = (root.robotSays ?? '').trim();
+        if (rootText) {
+          for (const { n, text } of layerRobotSays) {
+            const layerText = (text ?? '').trim();
+            if (layerText && (layerText === rootText || layerText.includes(rootText) || rootText.includes(layerText))) {
+              issues.push({
+                rule: 'epistemic-leak',
+                message: `layer ${n}'s robotSays overlaps verbatim with the root's conclusion (AD-05 §7) — only the root/tip may state the mission's conclusion`,
+              });
+            }
+          }
+        }
+      }
     } else {
       issues.push({ rule: 'schema', message: `unknown template ${phase.template}` });
     }
   }
 
   for (const t of texts) {
-    for (const i of lintText(t, stage, gradeOf)) issues.push({ ...i });
+    for (const i of lintText(t, stage, gradeOf, { kanjiFloor })) issues.push({ ...i });
   }
 
   return issues;

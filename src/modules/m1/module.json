@@ -20,6 +20,12 @@
     "follow-tsumari",
     "follow-hokaniwa"
   ],
+  "moveRealizations": {
+    "follow-tsumari": "どういうこと？",
+    "follow-tatoeba": "たとえば？",
+    "follow-naze": "なんで？",
+    "follow-hokaniwa": "ほかにもある？"
+  },
   "missionOrder": [
     "m1-s2-1-1",
     "m1-s2-1-2",
@@ -31,7 +37,7 @@
     "m1-s2-1-8"
   ],
   "ui": {
-    "earlyOk": "これでOK？",
+    "earlyOk": "わかった！",
     "handoffPrompt": "おとなにわたしてね",
     "handoffContinue": "つづける",
     "handoffSkip": "あとでやる",
@@ -46,7 +52,7 @@
     "teachbackSkip": "あとでやる",
     "parentScreenHeading": "おうちの方へ",
     "lockedMessage": "このミッションは まだ あそべないよ",
-    "judgeNotEnough": "まだ たりない",
+    "judgeNotEnough": "もうちょっと聞く",
     "toolboxHeading": "といの どうぐばこ",
     "blindCommit": "いえた",
     "blindSelfReportSame": "おなじだった",
