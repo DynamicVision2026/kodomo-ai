@@ -132,6 +132,10 @@
   gap: 0.5rem;
 }
 
+.mission-shell__perspective-voice {
+  font-weight: 700;
+}
+
 .mission-shell__m5-moves button {
   padding: 0.5rem 1rem;
   border-radius: 999px;

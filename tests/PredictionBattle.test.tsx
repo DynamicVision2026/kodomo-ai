@@ -15,6 +15,7 @@ const labels = {
   handoffPrompt: 'おとなにわたしてね',
   handoffContinueLabel: 'つづける',
   handoffSkipLabel: 'あとでやる',
+  parentPrompt: 'わからなくても だいじょうぶ。いっしょに よそうしてみよう。',
 };
 
 let plausible: ReturnType<typeof vi.fn>;
@@ -70,6 +71,19 @@ describe('PredictionBattle', () => {
     await user.click(screen.getByText('おいしい パンって なに'));
     await user.click(screen.getByText('あとでやる')); // handoff's own skip
     expect(onComplete).toHaveBeenCalledWith({ skipped: true });
+  });
+
+  it('WO-19 Phase 3B ("Parent Unknown" pattern): the reassurance prompt appears only at the parent\'s own turn, never during the child\'s turn', async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    render(<PredictionBattle options={options} onComplete={onComplete} {...labels} />);
+
+    expect(screen.queryByText(labels.parentPrompt)).not.toBeInTheDocument(); // child's turn
+
+    await user.click(screen.getByText('パンの こと おしえて')); // child predicts
+    await user.click(screen.getByText('つづける')); // past handoff
+
+    expect(screen.getByText(labels.parentPrompt)).toBeInTheDocument(); // parent's turn
   });
 
   it('solo play renders nothing and completes as skipped immediately', () => {

@@ -248,6 +248,7 @@ export function Dig({
                 handoffPrompt={ui.handoffPrompt}
                 handoffContinueLabel={ui.handoffContinue}
                 handoffSkipLabel={ui.handoffSkip}
+                parentPrompt={ui.predictionParentPrompt}
                 onComplete={() => setBattledLayers((s) => new Set(s).add(state.layer))}
               />
             ) : state.gate === 'gate' ? (

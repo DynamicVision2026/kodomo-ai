@@ -28,6 +28,13 @@
   border-color: #2f6fb0;
 }
 
+.prediction-battle__parent-prompt {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #555;
+  text-align: center;
+}
+
 .prediction-battle__skip {
   border: none;
   background: none;

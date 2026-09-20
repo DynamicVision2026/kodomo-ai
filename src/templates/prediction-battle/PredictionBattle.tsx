@@ -20,6 +20,10 @@ export interface PredictionBattleProps {
   handoffPrompt: string;
   handoffContinueLabel: string;
   handoffSkipLabel: string;
+  /** WO-19 Phase 3B — the "Parent Unknown" pattern: shown only during the parent's own turn,
+   *  reassuring them they don't need to know the right answer. Fixed UI chrome (module.json's
+   *  `ui.predictionParentPrompt`), never mission content. */
+  parentPrompt: string;
   onComplete: (result: PredictionResult) => void;
 }
 
@@ -37,6 +41,7 @@ export function PredictionBattle({
   handoffPrompt,
   handoffContinueLabel,
   handoffSkipLabel,
+  parentPrompt,
   onComplete,
 }: PredictionBattleProps) {
   const [stage, setStage] = useState<Stage>('child');
@@ -79,6 +84,11 @@ export function PredictionBattle({
 
   return (
     <div className="prediction-battle">
+      {stage === 'parent' && (
+        <p className="prediction-battle__parent-prompt">
+          <Ruby text={parentPrompt} />
+        </p>
+      )}
       <div className="prediction-battle__options">
         {options.map((o) => (
           <button

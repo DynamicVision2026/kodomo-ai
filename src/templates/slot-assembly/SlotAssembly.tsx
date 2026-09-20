@@ -77,6 +77,7 @@ export function SlotAssembly({ phase, ui, solo, onComplete }: SlotAssemblyProps)
           handoffPrompt={ui.handoffPrompt}
           handoffContinueLabel={ui.handoffContinue}
           handoffSkipLabel={ui.handoffSkip}
+          parentPrompt={ui.predictionParentPrompt}
           onComplete={() => setBattledRounds((s) => new Set(s).add(attemptNumber))}
         />
       </div>

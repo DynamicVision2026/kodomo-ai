@@ -47,6 +47,7 @@ type Screen =
   | { kind: 'tip' }
   | { kind: 'teachback' }
   | { kind: 'ouchi' }
+  | { kind: 'perspective' }
   | { kind: 'handoff' }
   | { kind: 'parent' };
 
@@ -407,6 +408,23 @@ export function MissionShell({
     return (
       <div className="mission-shell__wrapper">
         <p><Ruby text={mission.ouchiTalk} /></p>
+        <button
+          type="button"
+          onClick={() => setScreen({ kind: mission.perspective ? 'perspective' : 'handoff' })}
+        >
+          {ui.handoffContinue}
+        </button>
+      </div>
+    );
+  }
+
+  // WO-19 Phase 3C: the perspective-shift moment, shown only when this mission declares one.
+  // Reuses the exact tip/teachBack/おうちトーク wrapper-screen idiom — no new architecture.
+  if (screen.kind === 'perspective' && mission.perspective) {
+    return (
+      <div className="mission-shell__wrapper">
+        <p className="mission-shell__perspective-voice">{mission.perspective.voice}</p>
+        <p><Ruby text={mission.perspective.text} /></p>
         <button type="button" onClick={() => setScreen({ kind: 'handoff' })}>
           {ui.handoffContinue}
         </button>

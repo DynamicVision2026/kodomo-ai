@@ -163,6 +163,13 @@ export interface ModuleUiStrings {
    *  mission — never a judgment of correctness. Always shown (not gated on M5 achievement),
    *  since a parent may record outside use for more than one move over multiple visits. */
   m5Prompt: string;
+  /** WO-19 Phase 3B — the "Parent Unknown" pattern: shown only at the parent's own turn inside
+   *  every よそうバトル (Prediction Battle), reassuring them explicitly that they do not need to
+   *  know the right answer — a co-learner making a guess alongside the child, not the authority
+   *  checking one. One fixed UI-chrome string, reused by every prediction battle in every
+   *  mission (never mission-specific content), so this capability is automatically complete for
+   *  every current and future mission without per-mission authoring. */
+  predictionParentPrompt: string;
 }
 
 /**
@@ -214,4 +221,14 @@ export interface Mission {
   ouchiTalk: string;
   /** Optional physical/household props referenced by this mission (v0.6). */
   props?: string[];
+  /**
+   * WO-19 Phase 3C — one optional perspective-shift moment: a second character's plausible,
+   * different way of seeing the SAME situation the mission just explored, offered for the child
+   * to notice — never a debate, never scored, never "who is right". Shown (when present) as its
+   * own wrapper screen after おうちトーク and before handoff, using the exact same rendering
+   * idiom as tip/teachBack/ouchiTalk. Absent on every mission that hasn't been authored with one
+   * yet (all current release missions) — MissionShell skips straight past it when absent, so
+   * this is purely additive and changes no existing mission's flow.
+   */
+  perspective?: { voice: string; text: string };
 }
