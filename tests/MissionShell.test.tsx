@@ -573,6 +573,229 @@ describe('MissionShell', () => {
     expect(saved.profiles[1].m2Evidence ?? { proxyMissionIds: [] }).toEqual({ proxyMissionIds: [] });
   });
 
+  // --- WO-14: Parent Screen + M2b confirmation --------------------------------------------
+
+  /** Walks a solo bread playthrough from the coop question to the parent screen. Callers select
+   *  or create the profile first (createAndSelectProfile, or clicking a seeded profile's
+   *  nickname directly), since M2b only appears on the parent screen at the end. */
+  async function playThroughToParentScreen(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
+    await passGate(user);
+    await user.click(screen.getByText('イーストは なにを してるの？'));
+    await passGate(user);
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
+    await user.click(screen.getByText(ui.earlyOk));
+    await user.click(screen.getByText(ui.handoffContinue)); // past tip
+    await user.click(screen.getByText(ui.teachbackSkip)); // skip teach-back
+    await user.click(screen.getByText(ui.handoffContinue)); // past ouchi
+    await user.click(screen.getByText(ui.handoffContinue)); // past handoff prompt -> parent
+  }
+
+  it('WO-14: the parent screen shows the real Toolbox and an unconfirmed M2b prompt — not a placeholder', async () => {
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await createAndSelectProfile(user);
+    await playThroughToParentScreen(user);
+
+    expect(screen.getByText(ui.parentScreenHeading)).toBeInTheDocument();
+    expect(screen.getByText(ui.toolboxHeading)).toBeInTheDocument();
+    const naze = screen.getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
+    expect(naze.className).toContain('toolbox__tool--obtained'); // real persisted progression, not a placeholder
+    expect(screen.getByText(ui.m2ConfirmPrompt)).toBeInTheDocument();
+    expect(screen.getByText(ui.m2ConfirmAction)).toBeInTheDocument();
+    expect(screen.queryByText(ui.m2ConfirmedMessage)).not.toBeInTheDocument();
+  });
+
+  it('WO-14: M2a proxy evidence alone never awards M2 — the parent screen still shows the unconfirmed prompt', async () => {
+    localStorage.setItem('m-app.v1', JSON.stringify({
+      profiles: [{
+        id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
+        m2Evidence: { proxyMissionIds: ['other-mission-a', 'other-mission-b'] }, // hasM2Proxy() true
+      }],
+      entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
+    }));
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await user.click(screen.getByText('たぬき'));
+    await playThroughToParentScreen(user);
+
+    expect(screen.getByText(ui.m2ConfirmPrompt)).toBeInTheDocument(); // still unconfirmed
+    expect(screen.queryByText(ui.m2ConfirmedMessage)).not.toBeInTheDocument();
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones?.M2).toBeUndefined();
+  });
+
+  it('WO-14: focused interaction — unconfirmed -> parent taps M2b confirmation -> persisted M2 achieved', async () => {
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await createAndSelectProfile(user);
+    await playThroughToParentScreen(user);
+
+    // Unconfirmed state first.
+    expect(screen.getByText(ui.m2ConfirmPrompt)).toBeInTheDocument();
+    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones?.M2).toBeUndefined();
+
+    // The parent's one binary action.
+    await user.click(screen.getByText(ui.m2ConfirmAction));
+
+    expect(screen.getByText(ui.m2ConfirmedMessage)).toBeInTheDocument();
+    expect(screen.queryByText(ui.m2ConfirmPrompt)).not.toBeInTheDocument();
+    expect(screen.queryByText(ui.m2ConfirmAction)).not.toBeInTheDocument();
+    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: expect.any(Number) });
+  });
+
+  it('WO-14: M2b confirmation is idempotent and survives a reload', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await createAndSelectProfile(user);
+    await playThroughToParentScreen(user);
+    await user.click(screen.getByText(ui.m2ConfirmAction));
+    const firstAchievedAt = JSON.parse(localStorage.getItem('m-app.v1')!).profiles[0].milestones.M2.achievedAt;
+
+    // Reload: a fresh MissionShell instance reading the same localStorage from scratch.
+    unmount();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await user.click(screen.getByText('たぬき')); // the same, now-existing profile
+    await playThroughToParentScreen(user);
+
+    // Already confirmed: the button never reappears, so a second tap isn't even reachable
+    // through the UI — confirmation can't be repeated by a parent, which is idempotency by
+    // construction. (applyM2Confirmed's own no-op-once-achieved behavior is unit-tested in
+    // tests/milestones.test.ts.)
+    expect(screen.getByText(ui.m2ConfirmedMessage)).toBeInTheDocument();
+    expect(screen.queryByText(ui.m2ConfirmAction)).not.toBeInTheDocument();
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // unchanged
+  });
+
+  it('WO-14: M2b confirmation for one profile never touches another profile', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+
+    // Profile A: plays through and confirms M2b.
+    await createAndSelectProfile(user); // 🦊 たぬき
+    await playThroughToParentScreen(user);
+    await user.click(screen.getByText(ui.m2ConfirmAction));
+
+    // Reload, then create profile B fresh — never plays, never confirms anything.
+    unmount();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await user.click(screen.getByText(ui.profileCreateLabel));
+    await user.click(screen.getByText('🐰'));
+    await user.click(screen.getByText('うさぎ'));
+    await user.click(screen.getByText(ui.profileConfirm));
+
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles).toHaveLength(2);
+    expect(saved.profiles[0].milestones.M2.achieved).toBe(true); // profile A, unaffected by the reload
+    expect(saved.profiles[1].milestones ?? {}).toEqual({}); // profile B, fully independent — never confirmed
+  });
+
+  it('WO-14: M2b coexists with M1/M4 without changing their own behavior', async () => {
+    // Seed at tsukaeru so blind_commit (M4) fires during play, same setup as the WO-07 tests.
+    localStorage.setItem('m-app.v1', JSON.stringify({
+      profiles: [{
+        id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
+        moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
+      }],
+      entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
+    }));
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
+    await user.click(screen.getByText(ui.judgeNotEnough)); // layer 0, Blind-first eligible
+    const [choice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(choice as HTMLElement);
+    await user.click(screen.getByText(ui.blindCommit)); // M4 fires here
+    await user.click(screen.getByText(ui.blindSelfReportSame));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
+    // follow-naze is now at hitoride (>= tsukaeru), so layer 1 is also Blind-first eligible —
+    // same as the WO-07 test for this exact seeded profile.
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [secondChoice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(secondChoice as HTMLElement);
+    await user.click(screen.getByText(ui.blindCommit));
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
+    await user.click(screen.getByText(ui.earlyOk));
+    await user.click(screen.getByText(ui.handoffContinue));
+    await user.click(screen.getByText(ui.teachbackSkip));
+    await user.click(screen.getByText(ui.handoffContinue));
+    await user.click(screen.getByText(ui.handoffContinue));
+
+    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones.M1.achieved).toBe(true); // unaffected
+    expect(saved.profiles[0].milestones.M4.achieved).toBe(true); // unaffected
+    expect(saved.profiles[0].milestones.M2).toBeUndefined(); // not confirmed yet
+
+    await user.click(screen.getByText(ui.m2ConfirmAction));
+    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones.M1.achieved).toBe(true); // still unaffected
+    expect(saved.profiles[0].milestones.M4.achieved).toBe(true); // still unaffected
+    expect(saved.profiles[0].milestones.M2.achieved).toBe(true); // now also confirmed
+  });
+
+  it('WO-14: introduces no score, percentage, ranking, or free-text/audio surface on the parent screen', async () => {
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await createAndSelectProfile(user);
+    await playThroughToParentScreen(user);
+    await user.click(screen.getByText(ui.m2ConfirmAction));
+
+    const parent = document.querySelector('.mission-shell__parent')!;
+    expect(parent.textContent ?? '').not.toMatch(/\d/); // no numbers anywhere: no score, no percent, no count
+    expect(parent.querySelectorAll('input, textarea, [contenteditable="true"], audio')).toHaveLength(0);
+  });
+
   it('keeps working for the session when storage throws (blocked storage)', async () => {
     const user = userEvent.setup();
     const original = Storage.prototype.setItem;

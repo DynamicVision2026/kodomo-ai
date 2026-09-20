@@ -29,7 +29,10 @@
     "blindCommit": "いえた",
     "blindSelfReportSame": "おなじだった",
     "blindSelfReportBetter": "もっといいのを きいた",
-    "blindSelfReportDifferent": "ちがった"
+    "blindSelfReportDifferent": "ちがった",
+    "m2ConfirmPrompt": "お子さんが、ロボの さいしょの こたえだけでは たりないと、じぶんで 気づいて 言えていたら、下のボタンを おしてください。",
+    "m2ConfirmAction": "はい、そう 言えていました",
+    "m2ConfirmedMessage": "かくにんしました。"
   },
   "cardTypes": {
     "check": { "label": "みなおし" }

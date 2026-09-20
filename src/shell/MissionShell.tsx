@@ -4,7 +4,7 @@ import { load, save, MAX_PROFILES, type AppState, type Profile } from '../engine
 import { hasAccess } from '../engine/entitlements';
 import { applyMoveRendered, applyAptUse, applyBlindCommit } from '../engine/scaffold';
 import {
-  evaluateM1, evaluateM3, evaluateM4, addM2ProxyMission,
+  evaluateM1, evaluateM3, evaluateM4, addM2ProxyMission, applyM2Confirmed,
   recordFirstThreeChain, recordFirstBlindCommit,
 } from '../engine/milestones';
 import { track } from '../engine/analytics';
@@ -248,6 +248,21 @@ export function MissionShell({
     });
   }
 
+  /** WO-14: M2b — the authoritative trigger for milestones.M2. Fires only from the parent's own
+   *  explicit tap on the parent screen, confirming from their own observation that the child
+   *  independently said why the robot's first answer wasn't enough. This is a parent attestation,
+   *  not something the software measures or verifies itself — the button's own label says so.
+   *  M2a (gapNamed, above) is system-observable proxy evidence only and never reaches this
+   *  function or milestones.M2 by any other path; reuses the existing applyM2Confirmed seam
+   *  (src/engine/milestones.ts) unchanged — monotonic and idempotent by construction, same as
+   *  every other milestone here. */
+  function confirmM2b() {
+    persistProfile((current) => ({
+      ...current,
+      milestones: applyM2Confirmed(current.milestones ?? {}, Date.now()),
+    }));
+  }
+
   function completePhase(digResult?: DigResult) {
     if (digResult) digPhaseCompleted(digResult);
     const nextIndex = (screen.kind === 'phase' ? screen.index : 0) + 1;
@@ -386,8 +401,10 @@ export function MissionShell({
   }
 
   // screen.kind === 'parent'. Parent-voice kit/price/guarantee copy is Task 7/8's own, still
-  // pending the legal wording check (spec v0.5 §16) — the Toolbox (WO-05) is this screen's own,
-  // separate concern: a read-only growth surface over the active profile's own moveProgress.
+  // pending the legal wording check (spec v0.5 §16) — the Toolbox (WO-05) and the M2b
+  // confirmation (WO-14) are this screen's own, separate concerns: read-only growth over the
+  // active profile's own moveProgress, and one binary parent attestation over its milestones.
+  const m2Achieved = profile?.milestones?.M2?.achieved ?? false;
   return (
     <div className="mission-shell__parent">
       <p className="mission-shell__parent-heading">{ui.parentScreenHeading}</p>
@@ -397,6 +414,14 @@ export function MissionShell({
         moveProgress={profile?.moveProgress ?? {}}
         heading={ui.toolboxHeading}
       />
+      {m2Achieved ? (
+        <p className="mission-shell__m2-confirmed">{ui.m2ConfirmedMessage}</p>
+      ) : (
+        <div className="mission-shell__m2">
+          <p>{ui.m2ConfirmPrompt}</p>
+          <button type="button" onClick={confirmM2b}>{ui.m2ConfirmAction}</button>
+        </div>
+      )}
     </div>
   );
 }

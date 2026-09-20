@@ -140,6 +140,16 @@ export interface ModuleUiStrings {
   blindSelfReportBetter: string;
   /** WO-07: blind_selfreport option — the child's own question differed from the authored cards. */
   blindSelfReportDifferent: string;
+  /** WO-14: the parent screen's M2b prompt — asks the parent to confirm, from their own
+   *  observation, that the child independently said why the robot's first answer wasn't enough.
+   *  This is the only thing that can award milestones.M2; M2a proxy evidence never can. */
+  m2ConfirmPrompt: string;
+  /** WO-14: the M2b confirmation button. Its label is the parent's own attestation ("yes, they
+   *  could say that"), never a claim that the software measured or verified anything. */
+  m2ConfirmAction: string;
+  /** WO-14: shown in place of the prompt/button once M2b has been confirmed — monotonic, no
+   *  "undo". Plain confirmation text, not a badge or score. */
+  m2ConfirmedMessage: string;
 }
 
 export interface Mission {
