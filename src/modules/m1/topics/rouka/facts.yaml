@@ -1,0 +1,33 @@
+# Gate 1: PENDING. No Founder approval has been granted for c1-c4 yet. status is left "pending"
+# below and must not be changed to "approved" until that approval genuinely occurs (WO-16
+# boundary: do not fabricate Founder Gate 1 approval).
+#
+# Gate 2: PENDING. No native-speaker (酒井先生) review has occurred for this mission's Japanese
+# wording yet. s2.json's `review` field is correctly absent (WO-16 boundary: do not fabricate
+# Gate 2).
+#
+# type: practice (WO-11 decision 6, WO-13 guardrail applied the same way as chanto/genkan): every
+# claim below is framed as a commonly-given explanation or a commonly-observed feature of school
+# hallways, never as the single universal or authoritative reason the "don't run in the hallway"
+# rule exists — c4 in particular deliberately frames the hallway's shared-space purpose as a
+# "commonly framed purpose," not an asserted historical/institutional fact, matching the same
+# guardrail genkan's c3 applies to the そと／うち boundary.
+topic: rouka
+question: ろうかで走らないのは、なぜ？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common, familiar first explanation children hear for the rule against running in school hallways is that running there is dangerous."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A common, more specific version of this danger explanation is that a running child might bump into another person."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A common elaboration people give for the hallway-running rule is that hallways often have corners or blind spots, so a person coming from another direction may not be seen until they are close by."
+    status: pending
+  - id: c4
+    type: practice
+    statement: "A commonly framed purpose for the hallway-running rule is that hallways are a shared space used by many people, some of whom cannot always be seen coming (for example, around a corner), so moving carefully protects people other than just the person running."
+    status: pending

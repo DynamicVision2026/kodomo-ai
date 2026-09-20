@@ -17,19 +17,29 @@
 // until a human actually approves it, exactly the same honest-pending pattern chanto went
 // through under WO-12 before its own Gate 1/Gate 2 passes (see git history on topics/chanto).
 // Mission 1-1 itself is untouched by this change — same file, same content, same review stamp.
+//
+// WO-16 adds topics/rouka/s2.json — Mission 1-3「ろうかは 走らない」, the first genuine 3-layer
+// Stage-2 mission. Same honest-pending pattern as genkan before it: facts.yaml's c1-c4 are all
+// status: pending and s2.json carries no `review` field — WO-16 explicitly forbids fabricating
+// either human gate, so gate:claims correctly fails on rouka until a human actually approves it.
+// Wiring it in here (rather than leaving it unreachable) matches how genkan itself was wired in
+// before its own gates passed — reachability is gated by contentClass, not by gate:claims state.
 import { createRoot } from 'react-dom/client';
 import type { Mission, ModuleUiStrings } from './engine/types';
 import { MissionShell } from './shell';
 import chantoMissionJson from './modules/m1/topics/chanto/s2.json';
 import genkanMissionJson from './modules/m1/topics/genkan/s2.json';
+import roukaMissionJson from './modules/m1/topics/rouka/s2.json';
 import moduleJson from './modules/m1/module.json';
 
 const chantoMission = chantoMissionJson as unknown as Mission;
 const genkanMission = genkanMissionJson as unknown as Mission;
+const roukaMission = roukaMissionJson as unknown as Mission;
 const ui = moduleJson.ui as ModuleUiStrings;
 const missions: Record<string, Mission> = {
   [chantoMission.id]: chantoMission,
   [genkanMission.id]: genkanMission,
+  [roukaMission.id]: roukaMission,
 };
 
 createRoot(document.getElementById('root')!).render(

@@ -1,0 +1,114 @@
+{
+  "id": "m1-s2-1-3",
+  "contentClass": "release",
+  "rootType": "めあて",
+  "stage": 2,
+  "title": "ろうかは 走らない",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3", "facts.yaml#c4"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["what"],
+      "cards": [
+        { "id": "w1", "slot": "what", "text": "ろうかの話、きいて", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "ろうかで走っちゃダメなのは、なんで？", "tag": "clear" },
+        { "id": "w3", "slot": "what", "text": "ロボは走るのすき？", "tag": "offtopic" }
+      ],
+      "rules": [
+        { "when": { "what": "clear" }, "archetype": "CLEAR" },
+        { "when": { "what": "offtopic" }, "archetype": "OFFTOPIC" },
+        { "when": { "what": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": {
+          "robotSays": "走るとあぶないから、走っちゃダメなんだよ。",
+          "animation": "proud",
+          "claims": ["c1"]
+        },
+        "VAGUE": {
+          "robotSays": "ろうかの話、いろいろあるよ！",
+          "animation": "confused",
+          "tip": "何がききたいか、はっきりさせよう。",
+          "claims": ["nonfactual"]
+        },
+        "OFFTOPIC": {
+          "robotSays": "うーん、今はべつの話だよ。",
+          "animation": "thinking",
+          "claims": ["nonfactual"]
+        }
+      },
+      "predictions": [{ "beforeRound": 1, "options": ["CLEAR", "VAGUE", "OFFTOPIC"] }]
+    },
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "走るとあぶないから、走っちゃダメなんだよ。",
+          "claims": ["c1"],
+          "gap": "あぶないわけが、わからない",
+          "gapDistractors": [
+            { "text": "走ったらダメなことは、わかった", "kind": "answered" },
+            { "text": "ほかにも、りゆうがあるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "r1card", "text": "なんで、あぶないの？", "tag": "deepen", "move": "follow-naze", "domain": "社会とひと" },
+            { "id": "r2card", "text": "きゅうしょくは、何を食べるの？", "tag": "offtopic" },
+            { "id": "r3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、あぶないのかな？" }
+        },
+        {
+          "robotSays": "人にぶつかるかもしれないからだよ。",
+          "claims": ["c2"],
+          "gap": "ほかにも、りゆうがあるのか、わからない",
+          "gapDistractors": [
+            { "text": "人にぶつかるとあぶないことは、わかった", "kind": "answered" },
+            { "text": "なんのために、気をつけるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "r4card", "text": "ほかにもある？", "tag": "deepen", "move": "follow-hokaniwa", "domain": "社会とひと" },
+            { "id": "r5card", "text": "ろうかは、なんでまっすぐなの？", "tag": "sideways" },
+            { "id": "r6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、りゆうはないのかな？" }
+        },
+        {
+          "robotSays": "まがりかどでは、むこうから来る人が見えないこともあるんだよ。",
+          "claims": ["c3"],
+          "gap": "なんのために、気をつけるのか、わからない",
+          "gapDistractors": [
+            { "text": "まがりかどが見えないことは、わかった", "kind": "answered" },
+            { "text": "あぶないわけが、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "r7card", "text": "つまり、どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "社会とひと" },
+            { "id": "r8card", "text": "ろうかは、だれがそうじするの？", "tag": "sideways" },
+            { "id": "r9card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "気をつけるのは、なんのためかな？" },
+          "prediction": { "beforeRound": 3, "options": ["r7card", "r8card", "r9card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！ろうかは、みんなのところだから、見えない人も考えて歩くんだね。",
+        "claims": ["c4"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「ほかにもある？」ってきくと、りゆうがもっとわかるよ。",
+  "teachBack": "「ほかにもある？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちのルールも、「ほかにもある？」できいてみよう。"
+}
