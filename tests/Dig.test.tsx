@@ -14,7 +14,7 @@ const ui = moduleJson.ui as ModuleUiStrings;
  *  these tests are about Dig's own dig-phase behaviour. */
 const baseDigProps = {
   missionId: mission.id, moveProgress: {}, onMoveRendered: () => {}, onUse: () => {},
-  onBlindCommit: () => {}, onBlindSelfReport: () => {},
+  onBlindCommit: () => {}, onBlindSelfReport: () => {}, onGapNamed: () => {},
 };
 
 beforeEach(() => cleanup());
@@ -155,7 +155,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
   it('fires onMoveRendered with the layer\'s deepen move as soon as its hand is revealed', async () => {
     const user = userEvent.setup();
     const onMoveRendered = vi.fn();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={() => {}} onMoveRendered={onMoveRendered} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={() => {}} onMoveRendered={onMoveRendered} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={() => {}} solo onComplete={() => {}} />);
 
     expect(onMoveRendered).not.toHaveBeenCalled(); // not yet — still at the judgment gate
     await passGate(user);
@@ -165,7 +165,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
   it('fires onUse with the full required record when a card carrying a move is played, qualifying as apt_use on the first play', async () => {
     const user = userEvent.setup();
     const onUse = vi.fn();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={() => {}} solo onComplete={() => {}} />);
 
     await passGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // f1: layer 0's deepen, first play
@@ -180,7 +180,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
   it('Correction 01: an offtopic play is still use evidence (no move), and the deepen after it does not qualify as apt_use', async () => {
     const user = userEvent.setup();
     const onUse = vi.fn();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={() => {}} solo onComplete={() => {}} />);
 
     await passGate(user);
     await user.click(screen.getByText('パンは すきですか？')); // f2: offtopic — still recorded as a play
@@ -195,7 +195,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
   it('Correction 01: a repeat play before the deepen also disqualifies it from apt_use', async () => {
     const user = userEvent.setup();
     const onUse = vi.fn();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={() => {}} solo onComplete={() => {}} />);
 
     await passGate(user);
     await user.click(screen.getByText('もう いちど いって')); // f3: repeat — still recorded as a play
@@ -210,7 +210,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
   it('Correction 01: a sideways play before the deepen also disqualifies it from apt_use', async () => {
     const user = userEvent.setup();
     const onUse = vi.fn();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo={false} onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={() => {}} solo={false} onComplete={() => {}} />);
 
     // Reach layer 1 (its own prediction battle auto-skips in solo... this render is co-play, so
     // walk the battle instead — same path tests/Dig.test.tsx's co-play describe block uses).
@@ -235,14 +235,14 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     const targetUse = vi.fn();
     const distractorUse = vi.fn();
     const userA = userEvent.setup();
-    const { unmount } = render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={targetUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
+    const { unmount } = render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={targetUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={() => {}} solo onComplete={() => {}} />);
     await userA.click(screen.getByText(ui.judgeNotEnough));
     await userA.click(screen.getByText('イーストが はたらく しくみが わからない')); // the target
     await userA.click(screen.getByText('なぜ イーストで ふくらむの？'));
     unmount();
 
     const userB = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={distractorUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={distractorUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={() => {}} solo onComplete={() => {}} />);
     await userB.click(screen.getByText(ui.judgeNotEnough));
     await userB.click(screen.getByText('なにが パンを ふくらませるのか わからない')); // an answered distractor
     await userB.click(screen.getByText('なぜ イーストで ふくらむの？'));
@@ -250,6 +250,91 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     const [targetEvidence] = targetUse.mock.calls[0]!;
     const [distractorEvidence] = distractorUse.mock.calls[0]!;
     expect({ ...targetEvidence, timestamp: 0 }).toEqual({ ...distractorEvidence, timestamp: 0 });
+  });
+});
+
+describe('Dig template (WO-08 milestone/memory evidence taps)', () => {
+  it('fires onGapNamed with the missionId as soon as Gap Naming resolves via the target', async () => {
+    const user = userEvent.setup();
+    const onGapNamed = vi.fn();
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} onGapNamed={onGapNamed} solo onComplete={() => {}} />);
+
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    expect(onGapNamed).not.toHaveBeenCalled(); // not yet — only the three choices are up
+    await user.click(screen.getByText('イーストが はたらく しくみが わからない')); // the target
+    expect(onGapNamed).toHaveBeenCalledTimes(1);
+    expect(onGapNamed).toHaveBeenCalledWith({ missionId: mission.id });
+  });
+
+  it('fires onGapNamed identically when a distractor is chosen instead of the target', async () => {
+    const user = userEvent.setup();
+    const onGapNamed = vi.fn();
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} onGapNamed={onGapNamed} solo onComplete={() => {}} />);
+
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    await user.click(screen.getByText('なにが パンを ふくらませるのか わからない')); // an answered distractor
+    expect(onGapNamed).toHaveBeenCalledTimes(1);
+    expect(onGapNamed).toHaveBeenCalledWith({ missionId: mission.id });
+  });
+
+  it('fires onGapNamed once per layer\'s own Gap Naming resolution', async () => {
+    const user = userEvent.setup();
+    const onGapNamed = vi.fn();
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} onGapNamed={onGapNamed} solo onComplete={() => {}} />);
+
+    await passGate(user); // layer 0's Gap Naming
+    expect(onGapNamed).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // layer 0's deepen -> layer 1
+    await passGate(user); // layer 1's Gap Naming
+    expect(onGapNamed).toHaveBeenCalledTimes(2);
+  });
+
+  it('onComplete\'s DigResult carries the phase\'s own authored layer count on the normal root-then-これでOK path', async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={onComplete} />);
+
+    await passGate(user);
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await passGate(user);
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText(ui.earlyOk));
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete.mock.calls[0]![0]).toMatchObject({ layerCount: phase.layers.length });
+  });
+
+  // bread's s2.json authors an earlyOk challenge on every layer, so tapping これでOK before the
+  // root never finishes the phase directly there — Dig.tsx's second onComplete call site
+  // (tapOk's `if (next.finished) onComplete(...)` after tapEarlyOk) only fires for a layer with
+  // no authored earlyOk. A minimal synthetic single-layer phase exercises that path directly.
+  const noEarlyOkPhase: DigPhase = {
+    template: 'dig',
+    layers: [
+      {
+        robotSays: 'ロボの こたえ',
+        claims: [],
+        hand: [{ id: 'd1', text: 'なぜ？', tag: 'deepen', move: 'follow-naze', domain: '日常' }],
+        replies: {},
+        gap: 'わからない こと',
+        gapDistractors: [
+          { text: 'べつの こたえ', kind: 'answered' },
+          { text: 'べつの そう', kind: 'other-layer' },
+        ],
+      },
+    ],
+    root: { robotSays: 'ねっこの こたえ', claims: [], label: 'ねっこ' },
+  };
+
+  it('onComplete\'s DigResult also carries the layer count on the early-ok-triggers-finish edge case (a layer with no authored earlyOk)', async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    render(<Dig phase={noEarlyOkPhase} ui={ui} {...baseDigProps} solo onComplete={onComplete} />);
+
+    await user.click(screen.getByText(ui.earlyOk));
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete.mock.calls[0]![0]).toMatchObject({ layerCount: 1 });
   });
 });
 

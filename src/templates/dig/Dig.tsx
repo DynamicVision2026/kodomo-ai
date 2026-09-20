@@ -14,6 +14,10 @@ import './dig.css';
 
 export interface DigResult {
   misses: number[];
+  /** WO-08: this phase's authored dig-layer count, at the moment its root was reached — the
+   *  deterministic signal M3/"first 3-chain" is built on (see src/engine/milestones.ts). Not a
+   *  score: it's a structural fact about the content, already what digMachine's depth() counts. */
+  layerCount: number;
 }
 
 /**
@@ -65,6 +69,10 @@ export interface DigProps {
   onBlindCommit: (move: string) => void;
   /** WO-07: the child gave one of the three accepted blind_selfreport choices after reveal. */
   onBlindSelfReport: (evidence: BlindSelfReportEvidence) => void;
+  /** WO-08: a gap was named (any of the three) — the M2a system-proxy evidence: the child judged
+   *  an answer "not enough" and named a gap before playing the next follow-up. Mission-scoped,
+   *  not move-scoped; see src/engine/milestones.ts's M2Evidence. */
+  onGapNamed: (evidence: { missionId: string }) => void;
 }
 
 /**
@@ -95,10 +103,15 @@ export interface DigProps {
  * which gap was named. Everything else about the hand (complete, unfiltered, same cards) is
  * unchanged; blind_selfreport afterwards is a non-blocking reflection prompt that never gates
  * card play and never touches progression.
+ *
+ * WO-08: two more evidence taps, both raw and unread by Dig itself. `onGapNamed` fires whenever
+ * Gap Naming resolves — the M2a system-proxy event. `onComplete`'s `DigResult.layerCount` is
+ * this phase's own authored layer count, the deterministic signal M3/"first 3-chain" needs;
+ * Dig doesn't award milestones, it just hands over the one structural fact they're built on.
  */
 export function Dig({
   phase, ui, solo, missionId, moveProgress, onComplete, onMoveRendered, onUse,
-  onBlindCommit, onBlindSelfReport,
+  onBlindCommit, onBlindSelfReport, onGapNamed,
 }: DigProps) {
   const [state, setState] = useState<DigState>(() => initDig(phase));
   const [battledLayers, setBattledLayers] = useState<ReadonlySet<number>>(new Set());
@@ -143,12 +156,12 @@ export function Dig({
     if (state.challenge) return;
     track('early_ok_tapped');
     if (state.atRoot) {
-      onComplete({ misses: state.misses });
+      onComplete({ misses: state.misses, layerCount: phase.layers.length });
       return;
     }
     const next = tapEarlyOk(phase, state);
     setState(next);
-    if (next.finished) onComplete({ misses: next.misses });
+    if (next.finished) onComplete({ misses: next.misses, layerCount: phase.layers.length });
   }
 
   function dismissChallenge() {
@@ -172,6 +185,9 @@ export function Dig({
     // — target vs distractor is never read here. The hand this choice reveals is what makes the
     // layer's move みはっけん.
     track('gap_named', { classification: choice.kind });
+    // WO-08: this resolution IS the M2a system-proxy event — judged "not enough," named a gap,
+    // before the next follow-up is played. Mission-scoped evidence, independent of the choice.
+    onGapNamed({ missionId });
     const move = currentLayerDeepenMove();
     if (move) onMoveRendered(move);
     const eligible = !!move && isAtLeast(moveProgress[move]?.rung ?? 'mihakken', 'tsukaeru');

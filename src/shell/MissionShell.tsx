@@ -3,12 +3,16 @@ import type { Mission, ModuleUiStrings } from '../engine/types';
 import { load, save, MAX_PROFILES, type AppState, type Profile } from '../engine/storage';
 import { hasAccess } from '../engine/entitlements';
 import { applyMoveRendered, applyAptUse, applyBlindCommit } from '../engine/scaffold';
+import {
+  evaluateM1, evaluateM3, evaluateM4, addM2ProxyMission,
+  recordFirstThreeChain, recordFirstBlindCommit,
+} from '../engine/milestones';
 import { track } from '../engine/analytics';
 import { ProfilePicker } from './ProfilePicker';
 import { pickNextMission } from './missionLibrary';
 import { Toolbox } from './Toolbox';
 import { SlotAssembly } from '../templates/slot-assembly';
-import { Dig, type UseEvidence, type BlindSelfReportEvidence } from '../templates/dig';
+import { Dig, type UseEvidence, type BlindSelfReportEvidence, type DigResult } from '../templates/dig';
 import { Handoff } from '../templates/handoff';
 import { Ruby } from '../engine/ruby';
 import './mission-shell.css';
@@ -71,6 +75,31 @@ export function MissionShell({
     save(next);
   }
 
+  /**
+   * Common update path for every profile-scoped evidence handler below. Takes an UPDATER, not a
+   * precomputed object, and applies it via React's functional setState form on both `profile`
+   * and `appState` — necessary because a single Dig event can synchronously trigger more than
+   * one of these handlers (e.g. resolving Gap Naming fires both onGapNamed and onMoveRendered),
+   * and `profile`/`appState` don't reflect an earlier call's update until the next render. The
+   * functional form guarantees each call composes onto the previous one's result instead of a
+   * stale closure value, however many handlers fire in the same tick.
+   */
+  function persistProfile(update: (current: Profile) => Profile) {
+    setProfile((prev) => {
+      if (!prev) return prev;
+      const next = update(prev);
+      setAppState((prevAppState) => {
+        const nextAppState: AppState = {
+          ...prevAppState,
+          profiles: prevAppState.profiles.map((p) => (p.id === next.id ? next : p)),
+        };
+        save(nextAppState);
+        return nextAppState;
+      });
+      return next;
+    });
+  }
+
   /** Resolves which mission a just-chosen profile should actually play, via the mission
    *  library when one was supplied — falling back to `defaultMission` otherwise (or if the
    *  library has nothing undone at this profile's stage). Sprint 1-A gap E. */
@@ -105,41 +134,41 @@ export function MissionShell({
   }
 
   function markDone() {
-    if (!profile) return;
-    const prior = profile.progress[mission.id];
-    const nextProfile: Profile = {
-      ...profile,
-      progress: { ...profile.progress, [mission.id]: { done: true, stamps: prior?.stamps ?? 0, coop: !solo } },
-    };
-    setProfile(nextProfile);
-    persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
+    persistProfile((current) => {
+      const prior = current.progress[mission.id];
+      return {
+        ...current,
+        progress: { ...current.progress, [mission.id]: { done: true, stamps: prior?.stamps ?? 0, coop: !solo } },
+      };
+    });
     track('m1_complete');
   }
 
   function addStamp() {
-    if (!profile) return;
-    const prior = profile.progress[mission.id];
-    const nextProfile: Profile = {
-      ...profile,
-      progress: { ...profile.progress, [mission.id]: { done: prior?.done ?? false, stamps: (prior?.stamps ?? 0) + 1, coop: !solo } },
-    };
-    setProfile(nextProfile);
-    persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
+    persistProfile((current) => {
+      const prior = current.progress[mission.id];
+      return {
+        ...current,
+        progress: { ...current.progress, [mission.id]: { done: prior?.done ?? false, stamps: (prior?.stamps ?? 0) + 1, coop: !solo } },
+      };
+    });
   }
 
-  /** WO-04: a move's follow-up card was shown (みはっけん -> もらった, once). */
+  /** WO-04: a move's follow-up card was shown (みはっけん -> もらった, once). WO-08: also
+   *  re-evaluates M1 (どうぐが 手に入った) from the resulting moveProgress — purely derived,
+   *  no separate evidence needed. */
   function moveRendered(move: string) {
-    if (!profile) return;
-    const nextProfile: Profile = { ...profile, moveProgress: applyMoveRendered(profile.moveProgress ?? {}, move) };
-    setProfile(nextProfile);
-    persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
+    persistProfile((current) => {
+      const moveProgress = applyMoveRendered(current.moveProgress ?? {}, move);
+      return { ...current, moveProgress, milestones: evaluateM1(current.milestones ?? {}, moveProgress, Date.now()) };
+    });
   }
 
   /** WO-04 (Correction 01): a follow-up card was played — every tag, including sideways/repeat/
    *  offtopic, which establish play order (so a later deepen at the same layer correctly fails
    *  apt_use) but carry no move of their own. Only evidence with an attributable move is
    *  reported here or can advance that move's scaffold progression — no move identity is
-   *  invented for the rest. */
+   *  invented for the rest. WO-08: apt_use also re-evaluates M1 from the resulting moveProgress. */
   function moveUsed(evidence: UseEvidence) {
     if (!evidence.move || !evidence.domain) return;
     const props = {
@@ -149,29 +178,40 @@ export function MissionShell({
     track('use', props);
     if (!evidence.aptUse) return;
     track('apt_use', props);
-    if (!profile) return;
-    const nextProfile: Profile = {
-      ...profile,
-      moveProgress: applyAptUse(profile.moveProgress ?? {}, evidence.move, evidence.domain),
-    };
-    setProfile(nextProfile);
-    persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
+    const move = evidence.move;
+    const domain = evidence.domain;
+    persistProfile((current) => {
+      const moveProgress = applyAptUse(current.moveProgress ?? {}, move, domain);
+      return { ...current, moveProgress, milestones: evaluateM1(current.milestones ?? {}, moveProgress, Date.now()) };
+    });
   }
 
   /** WO-07: the child committed 「いえた」 for `move` while its hand was still hidden. Means only
    *  that the commitment happened before the reveal — never a judgment of what was said.
    *  applyBlindCommit itself guards against advancing a move that isn't already at tsukaeru, so
-   *  this can never affect any other move's progression. */
+   *  this can never affect any other move's progression.
+   *
+   *  WO-08: this same event is M4's (カードなしで きけた) foundation and the first-without-card
+   *  memory moment — both fully authoritative from blind_commit alone, no semantic evaluation of
+   *  what the child said. Recorded here, not on merely rendering Blind-first. */
   function blindCommitted(move: string) {
     track('blind_commit', { move, missionId: mission.id });
-    if (!profile) return;
-    const nextProfile: Profile = { ...profile, moveProgress: applyBlindCommit(profile.moveProgress ?? {}, move) };
-    setProfile(nextProfile);
-    persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
+    const missionId = mission.id;
+    persistProfile((current) => {
+      const now = Date.now();
+      return {
+        ...current,
+        moveProgress: applyBlindCommit(current.moveProgress ?? {}, move),
+        milestones: evaluateM4(current.milestones ?? {}, now),
+        memories: recordFirstBlindCommit(current.memories ?? {}, now, missionId),
+      };
+    });
   }
 
   /** WO-07: blind_selfreport — display/reflection evidence only. Tracked for observability;
-   *  deliberately never touches moveProgress, whichever of the three choices was given. */
+   *  deliberately never touches moveProgress, milestones or memories, whichever of the three
+   *  choices was given (WO-08's non-evaluation rule applies here just as it does to blind_commit
+   *  itself). */
   function selfReported(evidence: BlindSelfReportEvidence) {
     track('blind_selfreport', {
       move: evidence.move, missionId: evidence.missionId,
@@ -179,7 +219,37 @@ export function MissionShell({
     });
   }
 
-  function completePhase() {
+  /** WO-08: M2a — the system-observable proxy (Critical M2 distinction). Recorded whenever Gap
+   *  Naming resolves: the child judged an answer "not enough" and named a gap before the next
+   *  follow-up. Accumulates distinct mission ids only; never sets milestones.M2 itself — only an
+   *  actual (not-yet-built) parent confirmation can do that. See src/engine/milestones.ts. */
+  function gapNamed(evidence: { missionId: string }) {
+    persistProfile((current) => ({
+      ...current,
+      m2Evidence: addM2ProxyMission(current.m2Evidence ?? { proxyMissionIds: [] }, evidence.missionId),
+    }));
+  }
+
+  /** WO-08: a Dig phase just completed with `layerCount` authored layers — the deterministic
+   *  signal for M3 (3れん ホリ) and the first-3-chain memory moment. Bread's shipped mission has
+   *  only 2 layers, so this is correctly a no-op for it today; the mechanism itself doesn't wait
+   *  on that content. */
+  function digPhaseCompleted(result: DigResult) {
+    const missionId = mission.id;
+    persistProfile((current) => {
+      const now = Date.now();
+      return {
+        ...current,
+        milestones: evaluateM3(current.milestones ?? {}, result.layerCount, now),
+        memories: result.layerCount >= 3
+          ? recordFirstThreeChain(current.memories ?? {}, now, missionId)
+          : (current.memories ?? {}),
+      };
+    });
+  }
+
+  function completePhase(digResult?: DigResult) {
+    if (digResult) digPhaseCompleted(digResult);
     const nextIndex = (screen.kind === 'phase' ? screen.index : 0) + 1;
     if (nextIndex >= mission.phases.length) {
       markDone();
@@ -230,7 +300,7 @@ export function MissionShell({
   if (screen.kind === 'phase') {
     const phase = mission.phases[screen.index]!;
     if (phase.template === 'slot-assembly') {
-      return <SlotAssembly phase={phase} ui={ui} solo={solo} onComplete={completePhase} />;
+      return <SlotAssembly phase={phase} ui={ui} solo={solo} onComplete={() => completePhase()} />;
     }
     return (
       <Dig
@@ -239,11 +309,12 @@ export function MissionShell({
         solo={solo}
         missionId={mission.id}
         moveProgress={profile?.moveProgress ?? {}}
-        onComplete={completePhase}
+        onComplete={(result) => completePhase(result)}
         onMoveRendered={moveRendered}
         onUse={moveUsed}
         onBlindCommit={blindCommitted}
         onBlindSelfReport={selfReported}
+        onGapNamed={gapNamed}
       />
     );
   }

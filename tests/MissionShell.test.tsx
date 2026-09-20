@@ -360,6 +360,219 @@ describe('MissionShell', () => {
     expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument();
   });
 
+  // --- WO-08: milestones & memory moments -------------------------------------------------
+
+  /** A minimal second, distinct dig mission (single layer, reaches root on its one deepen) —
+   *  needed because bread is the only shipped Stage-2 mission and WO-08's M2a proxy needs
+   *  evidence from two DISTINCT missions to prove cross-mission accumulation. */
+  const missionB: Mission = {
+    id: 'synthetic-b', stage: 2, title: 'B', sources: [],
+    phases: [{
+      template: 'dig',
+      layers: [{
+        robotSays: 'こたえB', claims: [],
+        hand: [{ id: 'bd1', text: 'なぜB？', tag: 'deepen', move: 'follow-naze', domain: '日常' }],
+        replies: {},
+        gap: 'わからないことB',
+        gapDistractors: [{ text: 'こたえちがいB', kind: 'answered' }, { text: 'べつのそうB', kind: 'other-layer' }],
+      }],
+      root: { robotSays: 'ねっこB', claims: [], label: 'ねっこB' },
+    }],
+    tip: 'tipB', teachBack: 'teachBackB', ouchiTalk: 'ouchiB',
+  };
+
+  /** A minimal synthetic 3-layer dig mission — needed because bread only ever authors 2 layers,
+   *  so M3 (3れん ホリ) and the first-3-chain memory moment are otherwise unreachable in this
+   *  codebase's real content. Proves the mechanism independently of that content gap. */
+  const missionC: Mission = {
+    id: 'synthetic-c', stage: 2, title: 'C', sources: [],
+    phases: [{
+      template: 'dig',
+      layers: [1, 2, 3].map((n) => ({
+        robotSays: `こたえC${n}`, claims: [],
+        hand: [{ id: `cd${n}`, text: `なぜC${n}？`, tag: 'deepen' as const, move: 'follow-naze', domain: '日常' }],
+        replies: {},
+        gap: `わからないことC${n}`,
+        gapDistractors: [
+          { text: `こたえちがいC${n}`, kind: 'answered' as const },
+          { text: `べつのそうC${n}`, kind: 'other-layer' as const },
+        ],
+      })),
+      root: { robotSays: 'ねっこC', claims: [], label: 'ねっこC' },
+    }],
+    tip: 'tipC', teachBack: 'teachBackC', ouchiTalk: 'ouchiC',
+  };
+
+  it('achieves M1 as soon as a layer\'s hand is rendered, before any card is played', async () => {
+    const user = userEvent.setup();
+    render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
+    await createAndSelectProfile(user);
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+
+    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones?.M1).toBeUndefined(); // hand not revealed yet
+
+    await passGate(user); // reveals layer 0's hand -> onMoveRendered -> M1 derivation
+    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones.M1.achieved).toBe(true);
+    expect(typeof saved.profiles[0].milestones.M1.achievedAt).toBe('number');
+  });
+
+  it('the same Gap Naming resolution persists BOTH m2Evidence AND moveProgress/M1 from one tick (the persistProfile race-condition fix)', async () => {
+    // gapChosen() in Dig.tsx fires onGapNamed then onMoveRendered synchronously in one call —
+    // exactly the scenario that broke the original stale-closure persistProfile.
+    const user = userEvent.setup();
+    render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
+    await createAndSelectProfile(user);
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await passGate(user);
+
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].m2Evidence.proxyMissionIds).toEqual([mission.id]);
+    expect(saved.profiles[0].moveProgress['follow-naze'].rung).toBe('moratta');
+    expect(saved.profiles[0].milestones.M1.achieved).toBe(true);
+  });
+
+  it('M2a accumulates only DISTINCT mission ids — repeated Gap Naming within the same mission does not double-count', async () => {
+    const user = userEvent.setup();
+    render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
+    await createAndSelectProfile(user);
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await passGate(user); // layer 0's Gap Naming — mission.id
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await passGate(user); // layer 1's Gap Naming — same mission.id again
+
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].m2Evidence.proxyMissionIds).toEqual([mission.id]);
+    expect(saved.profiles[0].milestones?.M2).toBeUndefined(); // M2a alone never sets M2
+  });
+
+  it('M2a accumulates across two DISTINCT missions, but still never sets milestones.M2 by itself', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />,
+    );
+    await createAndSelectProfile(user);
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await passGate(user); // mission A's Gap Naming
+    unmount();
+
+    render(<MissionShell moduleId="m1" freeMissionIds={[missionB.id]} mission={missionB} ui={ui} />);
+    await user.click(screen.getByText('たぬき')); // same seeded profile
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText(ui.judgeNotEnough)); // missionB's single dig phase, no slot-assembly
+    const [choice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(choice as HTMLElement); // mission B's Gap Naming
+
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].m2Evidence.proxyMissionIds.sort()).toEqual([mission.id, missionB.id].sort());
+    expect(saved.profiles[0].milestones?.M2).toBeUndefined();
+  });
+
+  it('achieves M3 and records first_three_chain on a genuine 3-layer chain (synthetic content — bread itself never reaches this)', async () => {
+    const user = userEvent.setup();
+    render(<MissionShell moduleId="m1" freeMissionIds={[missionC.id]} mission={missionC} ui={ui} />);
+    await createAndSelectProfile(user);
+    await user.click(screen.getByText(ui.coopSolo));
+
+    await passGate(user);
+    await user.click(screen.getByText('なぜC1？'));
+    await passGate(user);
+    await user.click(screen.getByText('なぜC2？'));
+    await passGate(user);
+    await user.click(screen.getByText('なぜC3？')); // 3rd deepen reaches root directly
+
+    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones?.M3).toBeUndefined(); // not yet — onComplete hasn't fired
+
+    await user.click(screen.getByText(ui.earlyOk)); // acknowledge ねっこ -> onComplete fires
+    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones.M3.achieved).toBe(true);
+    expect(saved.profiles[0].memories.first_three_chain).toEqual({
+      kind: 'first_three_chain',
+      recordedAt: expect.any(Number),
+      missionId: missionC.id,
+    });
+  });
+
+  it('bread\'s own (2-layer) mission never achieves M3 or records first_three_chain', async () => {
+    const user = userEvent.setup();
+    render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
+    await createAndSelectProfile(user);
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await passGate(user);
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await passGate(user);
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText(ui.earlyOk));
+
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones?.M3).toBeUndefined();
+    expect(saved.profiles[0].memories?.first_three_chain).toBeUndefined();
+  });
+
+  it('achieves M4 and records first_blind_commit through the existing blind_commit flow', async () => {
+    localStorage.setItem('m-app.v1', JSON.stringify({
+      profiles: [{
+        id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
+        moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
+      }],
+      entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
+    }));
+
+    const user = userEvent.setup();
+    render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
+    await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [choice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(choice as HTMLElement);
+
+    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones?.M4).toBeUndefined(); // Blind-first shown, not yet committed
+
+    await user.click(screen.getByText(ui.blindCommit));
+    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones.M4.achieved).toBe(true);
+    expect(saved.profiles[0].memories.first_blind_commit).toEqual({
+      kind: 'first_blind_commit',
+      recordedAt: expect.any(Number),
+      missionId: mission.id,
+    });
+  });
+
+  it('milestones and memories are independent per profile, and survive a reload', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
+
+    // Profile A: plays enough to achieve M1.
+    await createAndSelectProfile(user);
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await passGate(user);
+
+    unmount();
+    render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
+
+    // Profile B: brand new, untouched.
+    await user.click(screen.getByText(ui.profileCreateLabel));
+    await user.click(screen.getByText('🐰'));
+    await user.click(screen.getByText('うさぎ'));
+    await user.click(screen.getByText(ui.profileConfirm));
+
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles).toHaveLength(2);
+    expect(saved.profiles[0].milestones.M1.achieved).toBe(true); // profile A, survived the reload
+    expect(saved.profiles[1].milestones ?? {}).toEqual({}); // profile B, fully independent
+    expect(saved.profiles[1].m2Evidence ?? { proxyMissionIds: [] }).toEqual({ proxyMissionIds: [] });
+  });
+
   it('keeps working for the session when storage throws (blocked storage)', async () => {
     const user = userEvent.setup();
     const original = Storage.prototype.setItem;

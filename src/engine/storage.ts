@@ -1,5 +1,6 @@
 import type { Stage } from './types';
 import type { MoveProgressMap } from './scaffold';
+import type { MilestoneMap, M2Evidence, MemoryMomentMap } from './milestones';
 
 /**
  * Local, per-device state. NO PII: preset avatar + preset nickname id + a stage number.
@@ -17,6 +18,13 @@ export interface Profile {
   /** WO-04: per-move scaffold progression for this profile. Absent on profiles created before
    *  WO-04 — callers treat that the same as `{}`, never as an error. */
   moveProgress?: MoveProgressMap;
+  /** WO-08: M0-M5 milestone state. Absent on pre-WO-08 profiles — treated the same as `{}`. */
+  milestones?: MilestoneMap;
+  /** WO-08: M2a system-proxy evidence, separate from `milestones.M2` — see src/engine/
+   *  milestones.ts. Only an actual (not-yet-built) parent confirmation can ever set M2 itself. */
+  m2Evidence?: M2Evidence;
+  /** WO-08: durable, first-occurrence memory moments. */
+  memories?: MemoryMomentMap;
 }
 export interface AppState {
   profiles: Profile[];
