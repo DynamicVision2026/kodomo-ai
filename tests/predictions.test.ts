@@ -11,8 +11,8 @@ describe('resolveSlotAssemblyPredictionOptions', () => {
     const prompt = slotPhase.predictions![0]!;
     const options = resolveSlotAssemblyPredictionOptions(slotPhase, prompt);
     expect(options).toEqual([
-      { key: 'CLEAR', label: 'パンが ふくらむ りゆうを おしえて' },
-      { key: 'VAGUE', label: 'パンの こと おしえて' },
+      { key: 'CLEAR', label: 'パンが ふくらむのは なぜ？' },
+      { key: 'VAGUE', label: 'パンのこと おしえて' },
       { key: 'OFFTOPIC', label: 'おいしい パンって なに' },
     ]);
   });
@@ -30,7 +30,7 @@ describe('resolveDigLayerPredictionOptions', () => {
     const prompt = layer1.prediction!;
     const options = resolveDigLayerPredictionOptions(layer1, prompt);
     expect(options).toEqual([
-      { key: 'f4', label: 'なぜ ガスが 出ると ふくらむの？' },
+      { key: 'f4', label: 'ガスが 出ると、どうして ふくらむの？' },
       { key: 'f5', label: 'さとうは あまいの？' },
       { key: 'f6', label: 'もう いちど いって' },
     ]);

@@ -17,7 +17,7 @@ describe('SlotAssembly template (solo — no prediction battle)', () => {
     const onComplete = vi.fn();
     render(<SlotAssembly phase={phase} ui={ui} solo onComplete={onComplete} />);
 
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
 
     expect(screen.getByText('イーストが はたらくからだよ。')).toBeInTheDocument();
     expect(onComplete).toHaveBeenCalledWith({ archetypeKey: 'CLEAR', retries: 0 });
@@ -28,15 +28,15 @@ describe('SlotAssembly template (solo — no prediction battle)', () => {
     const onComplete = vi.fn();
     render(<SlotAssembly phase={phase} ui={ui} solo onComplete={onComplete} />);
 
-    await user.click(screen.getByText('パンの こと おしえて'));
-    expect(screen.getByText('パンの はなしを ぜんぶ するね！ ながいよ！')).toBeInTheDocument();
+    await user.click(screen.getByText('パンのこと おしえて'));
+    expect(screen.getByText('パンのこと、ぜんぶ はなすね！ ながいよ！')).toBeInTheDocument();
     expect(onComplete).not.toHaveBeenCalled();
 
     await user.click(screen.getByText('おいしい パンって なに'));
     expect(screen.getByText('うーん、それは ひとによって ちがうなあ。')).toBeInTheDocument();
     expect(onComplete).not.toHaveBeenCalled();
 
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     expect(onComplete).toHaveBeenCalledWith({ archetypeKey: 'CLEAR', retries: 2 });
   });
 
@@ -53,7 +53,7 @@ describe('SlotAssembly template (co-play — prediction battle gates round 1)', 
 
     // The battle's options ARE the slot cards' own text — same string, but no card is
     // clickable as a slot-assembly pick yet (there is exactly one match: the battle's button).
-    expect(screen.getAllByText('パンが ふくらむ りゆうを おしえて')).toHaveLength(1);
+    expect(screen.getAllByText('パンが ふくらむのは なぜ？')).toHaveLength(1);
     expect(screen.getByText(ui.predictionSkip)).toBeInTheDocument(); // the battle's own skip label
   });
 
@@ -62,12 +62,12 @@ describe('SlotAssembly template (co-play — prediction battle gates round 1)', 
     const onComplete = vi.fn();
     render(<SlotAssembly phase={phase} ui={ui} solo={false} onComplete={onComplete} />);
 
-    await user.click(screen.getByText('パンの こと おしえて')); // child predicts VAGUE
+    await user.click(screen.getByText('パンのこと おしえて')); // child predicts VAGUE
     await user.click(screen.getByText(ui.handoffContinue));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて')); // parent predicts CLEAR
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？')); // parent predicts CLEAR
 
     // Battle is done; the real slot-assembly cards are now up, and only one round's worth.
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて')); // actually play the round
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？')); // actually play the round
     expect(onComplete).toHaveBeenCalledWith({ archetypeKey: 'CLEAR', retries: 0 });
   });
 
@@ -76,7 +76,7 @@ describe('SlotAssembly template (co-play — prediction battle gates round 1)', 
     render(<SlotAssembly phase={phase} ui={ui} solo={false} onComplete={() => {}} />);
 
     await user.click(screen.getByText(ui.predictionSkip));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     expect(screen.getByText('イーストが はたらくからだよ。')).toBeInTheDocument();
   });
 });

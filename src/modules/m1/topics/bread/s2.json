@@ -8,8 +8,8 @@
       "template": "slot-assembly",
       "slots": ["what"],
       "cards": [
-        { "id": "w1", "slot": "what", "text": "パンの こと おしえて", "tag": "vague" },
-        { "id": "w2", "slot": "what", "text": "パンが ふくらむ りゆうを おしえて", "tag": "clear" },
+        { "id": "w1", "slot": "what", "text": "パンのこと おしえて", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "パンが ふくらむのは なぜ？", "tag": "clear" },
         { "id": "w3", "slot": "what", "text": "おいしい パンって なに", "tag": "offtopic" }
       ],
       "rules": [
@@ -24,9 +24,9 @@
           "claims": ["c1"]
         },
         "VAGUE": {
-          "robotSays": "パンの はなしを ぜんぶ するね！ ながいよ！",
+          "robotSays": "パンのこと、ぜんぶ はなすね！ ながいよ！",
           "animation": "confused",
-          "tip": "なにを ききたいか、はっきり させよう。",
+          "tip": "なにが ききたいか、はっきり させよう。",
           "claims": ["nonfactual"]
         },
         "OFFTOPIC": {
@@ -43,13 +43,13 @@
         {
           "robotSays": "イーストが はたらくからだよ。",
           "claims": ["c1"],
-          "gap": "イーストが はたらく しくみが わからない",
+          "gap": "イーストが どう はたらくのか わからない",
           "gapDistractors": [
             { "text": "なにが パンを ふくらませるのか わからない", "kind": "answered" },
-            { "text": "ポン太の パンが ぺちゃんこだった りゆうが わからない", "kind": "other-layer" }
+            { "text": "ポン太の パンが ぺちゃんこだったのは なぜ？", "kind": "other-layer" }
           ],
           "hand": [
-            { "id": "f1", "text": "なぜ イーストで ふくらむの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
+            { "id": "f1", "text": "イーストは なにを してるの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
             { "id": "f2", "text": "パンは すきですか？", "tag": "offtopic" },
             { "id": "f3", "text": "もう いちど いって", "tag": "repeat" }
           ],
@@ -62,13 +62,13 @@
         {
           "robotSays": "イーストが さとうを たべて、ガスを 出すんだ。",
           "claims": ["c2"],
-          "gap": "出た ガスが パンを ふくらませる しくみが わからない",
+          "gap": "出た ガスで、どうして パンが ふくらむのか わからない",
           "gapDistractors": [
             { "text": "イーストが なにを たべるのか わからない", "kind": "answered" },
-            { "text": "イーストが はたらく しくみが わからない", "kind": "other-layer" }
+            { "text": "イーストが どう はたらくのか わからない", "kind": "other-layer" }
           ],
           "hand": [
-            { "id": "f4", "text": "なぜ ガスが 出ると ふくらむの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
+            { "id": "f4", "text": "ガスが 出ると、どうして ふくらむの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
             { "id": "f5", "text": "さとうは あまいの？", "tag": "sideways" },
             { "id": "f6", "text": "もう いちど いって", "tag": "repeat" }
           ],

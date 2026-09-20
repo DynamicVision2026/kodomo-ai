@@ -34,12 +34,12 @@ describe('Dig template (solo — no prediction battle)', () => {
     render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={onComplete} />);
 
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     expect(screen.getByText('イーストが さとうを たべて、ガスを 出すんだ。')).toBeInTheDocument();
     expect(onComplete).not.toHaveBeenCalled();
 
     await passGate(user);
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     // The ねっこ screen renders and stays up — onComplete doesn't fire until the player
     // acknowledges it, so they actually get to read it (not an instant hand-off).
     expect(screen.getByText(phase.root.robotSays)).toBeInTheDocument();
@@ -54,7 +54,7 @@ describe('Dig template (solo — no prediction battle)', () => {
     render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
 
     // Fresh layer 0: only the judgment gate is up, not the hand.
-    expect(screen.queryByText('なぜ イーストで ふくらむの？')).not.toBeInTheDocument();
+    expect(screen.queryByText('イーストは なにを してるの？')).not.toBeInTheDocument();
     expect(document.querySelector('.dig__hand')).not.toBeInTheDocument();
     expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument();
   });
@@ -64,12 +64,12 @@ describe('Dig template (solo — no prediction battle)', () => {
     render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
 
     await user.click(screen.getByText(ui.judgeNotEnough));
-    expect(screen.getByText('イーストが はたらく しくみが わからない')).toBeInTheDocument(); // target
+    expect(screen.getByText('イーストが どう はたらくのか わからない')).toBeInTheDocument(); // target
     expect(screen.getByText('なにが パンを ふくらませるのか わからない')).toBeInTheDocument(); // answered
-    expect(screen.getByText('ポン太の パンが ぺちゃんこだった りゆうが わからない')).toBeInTheDocument(); // other-layer
+    expect(screen.getByText('ポン太の パンが ぺちゃんこだったのは なぜ？')).toBeInTheDocument(); // other-layer
     expect(document.querySelectorAll('.dig__gap-naming-option')).toHaveLength(3);
     expect(document.querySelector('.dig__hand')).not.toBeInTheDocument();
-    expect(screen.queryByText('なぜ イーストで ふくらむの？')).not.toBeInTheDocument();
+    expect(screen.queryByText('イーストは なにを してるの？')).not.toBeInTheDocument();
   });
 
   it('choosing a distractor gap reveals the same complete, unfiltered hand as choosing the target', async () => {
@@ -81,7 +81,7 @@ describe('Dig template (solo — no prediction battle)', () => {
     await user.click(screen.getByText('なにが パンを ふくらませるのか わからない'));
 
     expect(document.querySelectorAll('.dig__gap-naming-option')).toHaveLength(0);
-    expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
+    expect(screen.getByText('イーストは なにを してるの？')).toBeInTheDocument();
     expect(screen.getByText('パンは すきですか？')).toBeInTheDocument();
     expect(screen.getByText('もう いちど いって')).toBeInTheDocument();
   });
@@ -105,7 +105,7 @@ describe('Dig template (solo — no prediction battle)', () => {
       const user = userEvent.setup();
       render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
       await user.click(screen.getByText(ui.judgeNotEnough));
-      await user.click(screen.getByText('イーストが はたらく しくみが わからない')); // the target
+      await user.click(screen.getByText('イーストが どう はたらくのか わからない')); // the target
       expect(plausible).toHaveBeenCalledWith(
         'gap_named',
         expect.objectContaining({ props: expect.objectContaining({ classification: 'target' }) }),
@@ -132,7 +132,7 @@ describe('Dig template (solo — no prediction battle)', () => {
     await user.click(screen.getByText('パンは すきですか？'));
     expect(screen.getByText('ぼくは たべられないんだ。')).toBeInTheDocument();
     // Still on layer 0: the deepen card for this layer is still on screen.
-    expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
+    expect(screen.getByText('イーストは なにを してるの？')).toBeInTheDocument();
   });
 
   it('tapping the early-ok button always shows the challenge, never blocks play', async () => {
@@ -168,7 +168,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={() => {}} solo onComplete={() => {}} />);
 
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // f1: layer 0's deepen, first play
+    await user.click(screen.getByText('イーストは なにを してるの？')); // f1: layer 0's deepen, first play
     expect(onUse).toHaveBeenCalledTimes(1);
     const [evidence] = onUse.mock.calls[0]!;
     expect(evidence).toMatchObject({
@@ -187,7 +187,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     expect(onUse).toHaveBeenCalledTimes(1);
     expect(onUse.mock.calls[0]![0]).toMatchObject({ move: undefined, domain: undefined, aptUse: false });
 
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // f1: deepen, but NOT the first play anymore
+    await user.click(screen.getByText('イーストは なにを してるの？')); // f1: deepen, but NOT the first play anymore
     expect(onUse).toHaveBeenCalledTimes(2);
     expect(onUse.mock.calls[1]![0]).toMatchObject({ move: 'follow-naze', aptUse: false });
   });
@@ -202,7 +202,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     expect(onUse).toHaveBeenCalledTimes(1);
     expect(onUse.mock.calls[0]![0]).toMatchObject({ move: undefined, domain: undefined, aptUse: false });
 
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // f1: deepen, but NOT the first play anymore
+    await user.click(screen.getByText('イーストは なにを してるの？')); // f1: deepen, but NOT the first play anymore
     expect(onUse).toHaveBeenCalledTimes(2);
     expect(onUse.mock.calls[1]![0]).toMatchObject({ move: 'follow-naze', aptUse: false });
   });
@@ -215,10 +215,10 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     // Reach layer 1 (its own prediction battle auto-skips in solo... this render is co-play, so
     // walk the battle instead — same path tests/Dig.test.tsx's co-play describe block uses).
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // layer 0's deepen -> enters layer 1
+    await user.click(screen.getByText('イーストは なにを してるの？')); // layer 0's deepen -> enters layer 1
     await user.click(screen.getByText('さとうは あまいの？')); // child predicts f5
     await user.click(screen.getByText(ui.handoffContinue));
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？')); // parent predicts f4
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？')); // parent predicts f4
     onUse.mockClear(); // discard layer 0's evidence — this test is about layer 1 only
     await passGate(user);
 
@@ -226,7 +226,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     expect(onUse).toHaveBeenCalledTimes(1);
     expect(onUse.mock.calls[0]![0]).toMatchObject({ move: undefined, domain: undefined, aptUse: false });
 
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？')); // f4: deepen, but NOT the first play anymore
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？')); // f4: deepen, but NOT the first play anymore
     expect(onUse).toHaveBeenCalledTimes(2);
     expect(onUse.mock.calls[1]![0]).toMatchObject({ move: 'follow-naze', aptUse: false });
   });
@@ -237,15 +237,15 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     const userA = userEvent.setup();
     const { unmount } = render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={targetUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={() => {}} solo onComplete={() => {}} />);
     await userA.click(screen.getByText(ui.judgeNotEnough));
-    await userA.click(screen.getByText('イーストが はたらく しくみが わからない')); // the target
-    await userA.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await userA.click(screen.getByText('イーストが どう はたらくのか わからない')); // the target
+    await userA.click(screen.getByText('イーストは なにを してるの？'));
     unmount();
 
     const userB = userEvent.setup();
     render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={distractorUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={() => {}} solo onComplete={() => {}} />);
     await userB.click(screen.getByText(ui.judgeNotEnough));
     await userB.click(screen.getByText('なにが パンを ふくらませるのか わからない')); // an answered distractor
-    await userB.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await userB.click(screen.getByText('イーストは なにを してるの？'));
 
     const [targetEvidence] = targetUse.mock.calls[0]!;
     const [distractorEvidence] = distractorUse.mock.calls[0]!;
@@ -261,7 +261,7 @@ describe('Dig template (WO-08 milestone/memory evidence taps)', () => {
 
     await user.click(screen.getByText(ui.judgeNotEnough));
     expect(onGapNamed).not.toHaveBeenCalled(); // not yet — only the three choices are up
-    await user.click(screen.getByText('イーストが はたらく しくみが わからない')); // the target
+    await user.click(screen.getByText('イーストが どう はたらくのか わからない')); // the target
     expect(onGapNamed).toHaveBeenCalledTimes(1);
     expect(onGapNamed).toHaveBeenCalledWith({ missionId: mission.id });
   });
@@ -284,7 +284,7 @@ describe('Dig template (WO-08 milestone/memory evidence taps)', () => {
 
     await passGate(user); // layer 0's Gap Naming
     expect(onGapNamed).toHaveBeenCalledTimes(1);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // layer 0's deepen -> layer 1
+    await user.click(screen.getByText('イーストは なにを してるの？')); // layer 0's deepen -> layer 1
     await passGate(user); // layer 1's Gap Naming
     expect(onGapNamed).toHaveBeenCalledTimes(2);
   });
@@ -295,9 +295,9 @@ describe('Dig template (WO-08 milestone/memory evidence taps)', () => {
     render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={onComplete} />);
 
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     await passGate(user);
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
     expect(onComplete).toHaveBeenCalledTimes(1);
@@ -348,7 +348,7 @@ describe('Dig template (WO-07 Blind-first)', () => {
     await user.click(screen.getByText(ui.judgeNotEnough));
     const [choice] = document.querySelectorAll('.dig__gap-naming-option');
     await user.click(choice as HTMLElement);
-    expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
+    expect(screen.getByText('イーストは なにを してるの？')).toBeInTheDocument();
     expect(document.querySelector('.dig__blind-commit')).not.toBeInTheDocument();
   });
 
@@ -360,7 +360,7 @@ describe('Dig template (WO-07 Blind-first)', () => {
     await user.click(choice as HTMLElement);
 
     expect(document.querySelector('.dig__hand')).not.toBeInTheDocument();
-    expect(screen.queryByText('なぜ イーストで ふくらむの？')).not.toBeInTheDocument();
+    expect(screen.queryByText('イーストは なにを してるの？')).not.toBeInTheDocument();
     expect(screen.getByText(ui.blindCommit)).toBeInTheDocument();
   });
 
@@ -390,7 +390,7 @@ describe('Dig template (WO-07 Blind-first)', () => {
 
     expect(onBlindCommit).toHaveBeenCalledTimes(1);
     expect(onBlindCommit).toHaveBeenCalledWith('follow-naze');
-    expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
+    expect(screen.getByText('イーストは なにを してるの？')).toBeInTheDocument();
     expect(screen.getByText('パンは すきですか？')).toBeInTheDocument();
     expect(screen.getByText('もう いちど いって')).toBeInTheDocument();
   });
@@ -405,7 +405,7 @@ describe('Dig template (WO-07 Blind-first)', () => {
 
     // Self-report is showing, but playing a card works right away regardless.
     expect(screen.getByText(ui.blindSelfReportSame)).toBeInTheDocument();
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     expect(screen.getByText('イーストが さとうを たべて、ガスを 出すんだ。')).toBeInTheDocument();
   });
 
@@ -432,7 +432,7 @@ describe('Dig template (WO-07 Blind-first)', () => {
       );
       // The self-report row disappears once answered; the hand remains, unfiltered.
       expect(screen.queryByText(ui.blindSelfReportSame)).not.toBeInTheDocument();
-      expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
+      expect(screen.getByText('イーストは なにを してるの？')).toBeInTheDocument();
       unmount();
     }
   });
@@ -456,7 +456,7 @@ describe('Dig template (WO-07 Blind-first)', () => {
       <Dig phase={phase} ui={ui} {...baseDigProps} moveProgress={eligibleProgress} onBlindCommit={targetCommit} solo onComplete={() => {}} />,
     );
     await userA.click(screen.getByText(ui.judgeNotEnough));
-    await userA.click(screen.getByText('イーストが はたらく しくみが わからない')); // the target
+    await userA.click(screen.getByText('イーストが どう はたらくのか わからない')); // the target
     expect(screen.getByText(ui.blindCommit)).toBeInTheDocument();
     await userA.click(screen.getByText(ui.blindCommit));
     unmount();
@@ -481,14 +481,14 @@ describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)
     render(<Dig phase={phase} ui={ui} {...baseDigProps} solo={false} onComplete={() => {}} />);
 
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // layer 0's deepen -> enters layer 1
+    await user.click(screen.getByText('イーストは なにを してるの？')); // layer 0's deepen -> enters layer 1
     // Layer 1's robotSays is visible immediately, but its hand is replaced by the battle: the
     // same card text appears (the battle's options ARE the hand's own cards), just as a
     // prediction-battle option rather than a playable dig hand card.
     expect(screen.getByText('イーストが さとうを たべて、ガスを 出すんだ。')).toBeInTheDocument();
     expect(screen.getByText(ui.predictionSkip)).toBeInTheDocument();
     expect(document.querySelector('.dig__hand')).not.toBeInTheDocument();
-    expect(screen.getByText('なぜ ガスが 出ると ふくらむの？').className).toBe('prediction-battle__option');
+    expect(screen.getByText('ガスが 出ると、どうして ふくらむの？').className).toBe('prediction-battle__option');
   });
 
   it('completing the battle still requires the judgment gate before the hand appears', async () => {
@@ -496,10 +496,10 @@ describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)
     render(<Dig phase={phase} ui={ui} {...baseDigProps} solo={false} onComplete={() => {}} />);
 
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     await user.click(screen.getByText('さとうは あまいの？')); // child predicts f5
     await user.click(screen.getByText(ui.handoffContinue));
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？')); // parent predicts f4 (the real deepen)
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？')); // parent predicts f4 (the real deepen)
 
     // Battle resolved, but layer 1 is a fresh robot answer: the gate is up, not the hand.
     expect(document.querySelector('.dig__hand')).not.toBeInTheDocument();
@@ -512,14 +512,14 @@ describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)
     render(<Dig phase={phase} ui={ui} {...baseDigProps} solo={false} onComplete={onComplete} />);
 
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     await user.click(screen.getByText('さとうは あまいの？')); // child predicts f5
     await user.click(screen.getByText(ui.handoffContinue));
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？')); // parent predicts f4 (the real deepen)
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？')); // parent predicts f4 (the real deepen)
 
     // Battle resolved; pass layer 1's own judgment gate, then the real hand is up.
     await passGate(user);
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     expect(screen.getByText(phase.root.robotSays)).toBeInTheDocument();
 
     await user.click(screen.getByText(ui.earlyOk));
@@ -534,7 +534,7 @@ describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)
     expect(screen.getByText(ui.earlyOk)).toBeEnabled();
 
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     expect(screen.getByText(ui.earlyOk)).toBeDisabled();
   });
 });

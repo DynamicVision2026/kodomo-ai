@@ -69,13 +69,13 @@ describe('MissionShell', () => {
     expect(plausible).toHaveBeenCalledWith('m1_start', expect.anything());
 
     // Phase 1: slot-assembly. Solo means no prediction battle blocks the cards.
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
 
     // Phase 2: dig, straight through to the root (solo, no battle on layer 1 either).
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     await passGate(user);
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     expect(screen.getByText(digPhase.root.robotSays)).toBeInTheDocument();
     await user.click(screen.getByText(ui.earlyOk));
 
@@ -115,11 +115,11 @@ describe('MissionShell', () => {
     render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
     await createAndSelectProfile(user);
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     await passGate(user);
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
     await user.click(screen.getByText(ui.handoffContinue)); // past tip
@@ -136,20 +136,20 @@ describe('MissionShell', () => {
     await user.click(screen.getByText(ui.coopYes)); // co-play this time
 
     // Co-play means the slot-assembly round-1 battle is up first: walk through it.
-    await user.click(screen.getByText('パンの こと おしえて')); // child predicts
+    await user.click(screen.getByText('パンのこと おしえて')); // child predicts
     await user.click(screen.getByText(ui.handoffContinue));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて')); // parent predicts
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？')); // parent predicts
     // Battle resolved; now the real slot-assembly cards are up.
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
 
     // Prediction battle now gates the dig phase's layer 1 too, but layer 0 has none —
     // pass layer 0's judgment gate and play it, then skip the layer-1 battle and pass
     // layer 1's own gate to get to the root quickly.
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     await user.click(screen.getByText(ui.predictionSkip));
     await passGate(user);
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
@@ -170,7 +170,7 @@ describe('MissionShell', () => {
     render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
     await createAndSelectProfile(user);
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await passGate(user);
     await user.click(screen.getByText('パンは すきですか？')); // f2: offtopic — a play, but no move to attribute
 
@@ -195,11 +195,11 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     await passGate(user);
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
     await user.click(screen.getByText(ui.handoffContinue)); // past tip
     await user.click(screen.getByText(ui.teachbackSkip));
@@ -251,7 +251,7 @@ describe('MissionShell', () => {
     );
     await user.click(screen.getByText('たぬき')); // selects the seeded (already-existing) profile directly
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await user.click(screen.getByText(ui.judgeNotEnough));
 
     // Gap Naming still shows all three authored choices, unaffected by eligibility.
@@ -265,7 +265,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText(ui.blindCommit));
 
     // After commit, the complete authored hand is revealed, unchanged and unfiltered.
-    expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
+    expect(screen.getByText('イーストは なにを してるの？')).toBeInTheDocument();
     expect(screen.getByText('パンは すきですか？')).toBeInTheDocument();
     expect(screen.getByText('もう いちど いって')).toBeInTheDocument();
 
@@ -291,7 +291,7 @@ describe('MissionShell', () => {
     );
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await user.click(screen.getByText(ui.judgeNotEnough));
     const [firstChoice] = document.querySelectorAll('.dig__gap-naming-option');
     await user.click(firstChoice as HTMLElement);
@@ -326,18 +326,18 @@ describe('MissionShell', () => {
     );
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await user.click(screen.getByText(ui.judgeNotEnough));
     const [firstChoice] = document.querySelectorAll('.dig__gap-naming-option');
     await user.click(firstChoice as HTMLElement);
     await user.click(screen.getByText(ui.blindCommit));
     await user.click(screen.getByText(ui.blindSelfReportSame));
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     await user.click(screen.getByText(ui.judgeNotEnough)); // layer 1's own gate (still hitoride)
     const [secondChoice] = document.querySelectorAll('.dig__gap-naming-option');
     await user.click(secondChoice as HTMLElement);
     await user.click(screen.getByText(ui.blindCommit)); // layer 1 is also Blind-first eligible
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
     await user.click(screen.getByText(ui.handoffContinue));
     await user.click(screen.getByText(ui.teachbackSkip));
@@ -408,7 +408,7 @@ describe('MissionShell', () => {
     render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
     await createAndSelectProfile(user);
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
 
     let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
     expect(saved.profiles[0].milestones?.M1).toBeUndefined(); // hand not revealed yet
@@ -426,7 +426,7 @@ describe('MissionShell', () => {
     render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
     await createAndSelectProfile(user);
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await passGate(user);
 
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
@@ -440,9 +440,9 @@ describe('MissionShell', () => {
     render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
     await createAndSelectProfile(user);
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await passGate(user); // layer 0's Gap Naming — mission.id
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     await passGate(user); // layer 1's Gap Naming — same mission.id again
 
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
@@ -457,7 +457,7 @@ describe('MissionShell', () => {
     );
     await createAndSelectProfile(user);
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await passGate(user); // mission A's Gap Naming
     unmount();
 
@@ -504,11 +504,11 @@ describe('MissionShell', () => {
     render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
     await createAndSelectProfile(user);
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await passGate(user);
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText('イーストは なにを してるの？'));
     await passGate(user);
-    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
@@ -529,7 +529,7 @@ describe('MissionShell', () => {
     render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await user.click(screen.getByText(ui.judgeNotEnough));
     const [choice] = document.querySelectorAll('.dig__gap-naming-option');
     await user.click(choice as HTMLElement);
@@ -554,7 +554,7 @@ describe('MissionShell', () => {
     // Profile A: plays enough to achieve M1.
     await createAndSelectProfile(user);
     await user.click(screen.getByText(ui.coopSolo));
-    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await passGate(user);
 
     unmount();
@@ -583,7 +583,7 @@ describe('MissionShell', () => {
       await user.click(screen.getByText(ui.coopSolo));
       // Reaching the first phase at all proves profile creation + persistence attempts
       // didn't crash the app despite storage being blocked.
-      expect(screen.getByText('パンが ふくらむ りゆうを おしえて')).toBeInTheDocument();
+      expect(screen.getByText('パンが ふくらむのは なぜ？')).toBeInTheDocument();
     } finally {
       Storage.prototype.setItem = original;
     }

@@ -74,7 +74,7 @@ describe('MissionShell + missionLibrary: mission selection follows the profile\'
 
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.coopSolo));
-    expect(screen.getByText('パンが ふくらむ りゆうを おしえて')).toBeInTheDocument();
+    expect(screen.getByText('パンが ふくらむのは なぜ？')).toBeInTheDocument();
   });
 
   it('falls back to the default mission when no missionLibrary is supplied at all', async () => {
@@ -84,6 +84,6 @@ describe('MissionShell + missionLibrary: mission selection follows the profile\'
 
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.coopSolo));
-    expect(screen.getByText('パンが ふくらむ りゆうを おしえて')).toBeInTheDocument();
+    expect(screen.getByText('パンが ふくらむのは なぜ？')).toBeInTheDocument();
   });
 });
