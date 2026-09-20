@@ -8,70 +8,79 @@
       "renderPath": "PrintDeck (src/print/deck/PrintDeck.tsx), fed by src/print/kit/deriveFullDeck.ts — same component the existing 9-card sampler already uses",
       "dataPath": "src/print/kit-data/full-deck.json",
       "schemaPath": "pipeline/lib/kitDeckComposition.ts (FULL_DECK_COMPOSITION, checkDeckComposition)",
-      "note": "WO-20 Phase 7: live-derived from real Story Mission/Bank content (deriveFullDeck.ts) — 10/10 おだい, 4/12 追問カード (1 of 3 phrasings per move), 2/2 blank populated; 0/12 core slots, 0/4 ひみつ, 0/3 ロボのリアクション, 0/2 あそびかた remain (no genuine source exists for those yet). The existing src/modules/m1/deck.s2.json remains the separate, already-COMPLETE 9-card free sampler — not a partial version of this item. status is 'candidate', not 'ready': composition is incomplete AND every source topic except chanto/genkan/rouka has not passed Gate 1/Gate 2."
+      "note": "WO-21 Phase 2: live-derived from real Story Mission/Bank content (deriveFullDeck.ts), all 45/45 slots real, non-placeholder content (10 おだい, 12 追問カード, 12 core slots, 4 ひみつ, 3 ロボのリアクション, 2 あそびかた, 2 blank), checkDeckComposition returns zero issues against the real 20-topic library. The existing src/modules/m1/deck.s2.json remains the separate, already-COMPLETE 9-card free sampler — not a partial version of this item. status is 'candidate', not 'ready': the deck itself as a printable artifact has not had its own separate print/layout sign-off, distinct from its source content's own Gate 1/Gate 2(-waiver) status."
     },
     {
       "id": "rules-a4x5",
       "label": "Rules A4 x5",
-      "status": "pending",
+      "status": "candidate",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/rules.json",
       "schemaPath": "src/print/sheet/schema.ts",
-      "note": "Title quotes spec §8's own 「ほりさげゲーム」 naming; instructional body text not yet drafted."
+      "note": "WO-21 Phase 3: 5 real sections (what ナゼホリ is, the 4 といのどうぐ, わかった！/もうちょっと きく, how ほる works + parent/child roles + Blind-first, how to stop without homework-ifying) — expressed as 5 `sections` on one PrintSheetFile (intendedCount corrected from 5 to 1: intendedCount repeats IDENTICAL content per copy, which cannot express 5 DIFFERENT pages; print-sheet.css now page-breaks after each section instead, achieving the same 5-physical-pages outcome without an engine change)."
     },
     {
       "id": "parent-handbook",
       "label": "Parent Handbook",
-      "status": "pending",
+      "status": "candidate",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/parent-handbook.json",
       "schemaPath": "src/print/sheet/schema.ts",
-      "note": "Spec §4.4: three rules, one question per mission, no answer keys, one page linking the game to school learning per §1A. Content depends on enough missions existing to summarize."
+      "note": "WO-21 Phase 3: parent-as-co-learner framing (may be wrong, teach-back, unknown ok, wait ~3s, never score), the core invariant quote, the real 8 Story Mission titles/questions (never fabricated — copied from each topic's own s2.json), and spec §1A's own alignment points (探究的な学習, the AI guidelines) linking to school learning, per spec §4.4's own required content list."
     },
     {
       "id": "adult-memo",
       "label": "Adult Memo x3",
-      "status": "pending",
+      "status": "candidate",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/adult-memo.json",
       "schemaPath": "src/print/sheet/schema.ts",
-      "note": "Spec §4.4 names this item singular (おとな版1分メモ); WO-19 Phase 4 lists it 'x3'. Whether that means 3 copies of one memo or 3 distinct memos is unresolved — flagged in the Human Decision Queue rather than assumed."
+      "note": "WO-21 Phase 3 resolves the previously-open Human Decision Queue question: 3 DISTINCT memos (Memo 1 答えを教えない, Memo 2 3秒待つ, Memo 3 親も「わからない」でいい), not 3 copies of one memo — expressed as 3 `sections`, each its own printed page."
     },
     {
       "id": "certificate",
       "label": "Parent/child certificate",
-      "status": "pending",
+      "status": "candidate",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/certificate.json",
       "schemaPath": "src/print/sheet/schema.ts",
-      "note": "Title quotes spec §4.4's own 親子認定証 naming. 質問レシピシート (also named in spec §4.4 alongside the certificate) is not separately itemized in WO-19 Phase 4's 8-item list — flagged in the Human Decision Queue."
+      "note": "WO-21 Phase 3: real content, framed around the 6-week course and the ability to keep questioning — explicitly not a test score or qualification. 質問レシピシート is now its own separate item (see question-recipe-sheet below), resolving the ambiguity this note previously flagged."
+    },
+    {
+      "id": "question-recipe-sheet",
+      "label": "Question Recipe Sheet (質問レシピシート)",
+      "status": "candidate",
+      "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
+      "dataPath": "src/print/kit-data/question-recipe-sheet.json",
+      "schemaPath": "src/print/sheet/schema.ts",
+      "note": "WO-21 Phase 3: newly itemized (spec v0.5 §4.4 names it, but WO-19 Phase 4's 8-item list omitted it — flagged in the Human Decision Queue, now resolved by this work order). A compact, permanent household reference answering 「AIの答えを見たあと、次に何を聞けばいい？」, derived directly from the 4 already-accepted moves — no new competency framework. Counted inside Package 6's existing weight, not a new DoD package (docs/v0.6-definition-of-done.md's own Critical Rule)."
     },
     {
       "id": "real-ai-guide",
       "label": "Real-AI family session guide",
-      "status": "pending",
+      "status": "candidate",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/real-ai-guide.json",
       "schemaPath": "src/print/sheet/schema.ts",
-      "note": "No exact Japanese title exists in the spec text for this item — the title in real-ai-guide.json is a working title, not spec-quoted, and should be confirmed rather than assumed final."
+      "note": "WO-21 Phase 3: the 7-step bridge (ask → read AI's first answer → decide if enough → name what's missing → choose/use a move → continue → stop and reflect), explicit that AI can be wrong, and explicit that this session happens outside the app on the parent's own account — no live AI call added to the product (gate:no-llm unaffected)."
     },
     {
       "id": "envelope-sheet",
       "label": "First-question / envelope sheet",
-      "status": "pending",
+      "status": "candidate",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/envelope-sheet.json",
       "schemaPath": "src/print/sheet/schema.ts",
-      "note": "Pairs with the digital M0 milestone (src/engine/milestones.ts applyM0Sealed, WO-19 Phase 2) — the physical envelope a family can use alongside the app's own Day-1 seal moment. No exact spec-quoted title; working title only."
+      "note": "WO-21 Phase 3: reuses the real in-app M0 prompt (ui.m0Prompt, src/modules/m1/module.json — the same words the digital Day-1 seal moment already shows) rather than inventing separate wording, framed as an adventure, never a test."
     },
     {
       "id": "founders-bonus-deck",
       "label": "Founders' winter bonus x9",
-      "status": "pending",
+      "status": "candidate",
       "renderPath": "PrintDeck (src/print/deck/PrintDeck.tsx) — same component the existing 9-card sampler already uses",
       "dataPath": "src/print/kit-data/bonus-deck.json",
       "schemaPath": "pipeline/lib/kitDeckComposition.ts (BONUS_SHEET_COMPOSITION, checkDeckComposition)",
-      "note": "Spec §8: 9 「冬休みスペシャル」 おだい cards, all kind: \"odai\". Content not yet authored."
+      "note": "WO-21 Phase 3: 9 real 「冬休みスペシャル」 おだい cards (all kind: \"odai\"), same inquiry philosophy and safe-topic exclusions as every other odai card, explicitly lightweight/optional — never mandatory course content."
     }
   ]
 }

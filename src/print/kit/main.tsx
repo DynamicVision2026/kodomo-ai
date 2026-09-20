@@ -3,13 +3,20 @@
 // content exists, with no other code change needed here). Mirrors src/print/deck/main.tsx's own
 // thin wiring, reusing PrintSheet/PrintDeck unmodified.
 //
-// WO-20 Phase 7: the full 45-card deck is now derived LIVE from real accepted/candidate course
-// content (deriveFullDeck) rather than read from a static stub — see that module's own doc
-// comment for exactly which of the 45 slots are populated and why the rest deliberately are not
-// (no fabricated content). Every Story Mission and Bank topic imported here is CANDIDATE content
-// (none has passed Gate 1/Gate 2 yet, except chanto/genkan/rouka) — this deck is correspondingly
-// never marked release-ready; see kit-data/manifest.json's own status for the full-45-card-deck
-// entry.
+// WO-20 Phase 7 / WO-21 Phase 2: the full 45-card deck is derived LIVE from real accepted/
+// candidate course content (deriveFullDeck) rather than read from a static stub — see that
+// module's own doc comment for exactly which of the 45 slots are populated and how (WO-21 Phase 2
+// completed all 45; none is a placeholder). WO-21 Phase 0 recorded Founder Gate 1 + a Gate 2
+// waiver for every Story Mission and Bank topic imported here except chanto/genkan/rouka (already
+// fully release-clear before WO-21) — see kit-data/manifest.json's own status for the
+// full-45-card-deck entry, still "candidate" (not "ready") since the DECK ITSELF as a printable
+// artifact has not had its own separate print/layout sign-off.
+//
+// WO-21 Phase 3: the other 7 PrintSheet-based kit items, plus the newly-added Question Recipe
+// Sheet (質問レシピシート, spec v0.5 §4.4 — previously flagged in the Human Decision Queue as
+// unresolved, resolved by this same work order) and the Founders' Winter Bonus deck, now carry
+// real authored content, status "candidate" (drafted, not yet human-reviewed) rather than
+// "pending".
 import { createRoot } from 'react-dom/client';
 import { PrintSheet } from '../sheet/PrintSheet';
 import { PrintDeck } from '../deck/PrintDeck';
@@ -24,6 +31,7 @@ import adultMemo from '../kit-data/adult-memo.json';
 import certificate from '../kit-data/certificate.json';
 import realAiGuide from '../kit-data/real-ai-guide.json';
 import envelopeSheet from '../kit-data/envelope-sheet.json';
+import questionRecipeSheet from '../kit-data/question-recipe-sheet.json';
 import bonusDeck from '../kit-data/bonus-deck.json';
 import moduleJson from '../../modules/m1/module.json';
 import chantoMissionJson from '../../modules/m1/topics/chanto/s2.json';
@@ -47,7 +55,9 @@ import bankItadakimasu from '../../modules/m1/topics/bank-itadakimasu/s2.json';
 import bankArigatou from '../../modules/m1/topics/bank-arigatou/s2.json';
 import bank100yen from '../../modules/m1/topics/bank-100yen/s2.json';
 
-const sheets = [rules, parentHandbook, adultMemo, certificate, realAiGuide, envelopeSheet] as PrintSheetFile[];
+const sheets = [
+  rules, parentHandbook, adultMemo, certificate, realAiGuide, envelopeSheet, questionRecipeSheet,
+] as PrintSheetFile[];
 
 const storyMissions = [
   chantoMissionJson, genkanMissionJson, roukaMissionJson, oyatsuMissionJson,

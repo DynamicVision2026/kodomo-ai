@@ -4,11 +4,16 @@
  * envelope sheet (spec v0.5 §4.4's kit list). The certificate reuses this same shape with a
  * lighter decorative render (see PrintSheet.tsx).
  *
- * `status` is the honest completion signal WO-19 requires: 'pending' means the schema/template
- * exists but real, human-reviewed content does not yet — PrintSheet renders a clearly-marked
- * placeholder for it, never fabricated copy. Do not set 'ready' without real sections AND (per
- * every other content-approval precedent in this repository) the appropriate human review for
- * that content having actually happened.
+ * `status` is the honest completion signal WO-19 requires, now a 3-state progression matching
+ * the same content-then-review pattern every Mission already uses (contentClass "release" +
+ * Gate 1 + Gate 2, `src/engine/types.ts`):
+ *  - 'pending': the schema/template exists but real content does not yet — PrintSheet renders a
+ *    clearly-marked placeholder, never fabricated copy.
+ *  - 'candidate' (WO-21 Phase 3): real, drafted content exists and renders for real, but no human
+ *    (Founder or otherwise) has reviewed/approved it as final yet — the print-kit equivalent of a
+ *    Mission with `contentClass: "release"` and no `review`/Gate 1 stamp.
+ *  - 'ready': real sections AND the appropriate human review for that content having actually
+ *    happened. Never set this without that review genuinely having occurred.
  */
 
 export interface PrintSheetSection {
@@ -19,7 +24,7 @@ export interface PrintSheetSection {
   body: string[];
 }
 
-export type PrintSheetStatus = 'pending' | 'ready';
+export type PrintSheetStatus = 'pending' | 'candidate' | 'ready';
 
 export interface PrintSheetFile {
   /** Which spec v0.5 §4.4 kit item this is — for reporting/manifest purposes only, never
@@ -46,14 +51,14 @@ export function validatePrintSheet(file: PrintSheetFile): SheetValidationIssue[]
   const issues: SheetValidationIssue[] = [];
   if (!file.kitItem) issues.push({ rule: 'schema', message: 'missing kitItem' });
   if (!file.title) issues.push({ rule: 'schema', message: 'missing title' });
-  if (file.status !== 'pending' && file.status !== 'ready') {
-    issues.push({ rule: 'schema', message: `status must be "pending" or "ready", got ${JSON.stringify(file.status)}` });
+  if (file.status !== 'pending' && file.status !== 'candidate' && file.status !== 'ready') {
+    issues.push({ rule: 'schema', message: `status must be "pending", "candidate" or "ready", got ${JSON.stringify(file.status)}` });
   }
-  if (file.status === 'ready' && file.sections.length === 0) {
-    issues.push({ rule: 'ready-without-content', message: 'status is "ready" but sections is empty — cannot claim ready with no content' });
+  if ((file.status === 'ready' || file.status === 'candidate') && file.sections.length === 0) {
+    issues.push({ rule: 'ready-without-content', message: `status is ${JSON.stringify(file.status)} but sections is empty — cannot claim content exists with none` });
   }
   if (file.status === 'pending' && file.sections.length > 0) {
-    issues.push({ rule: 'pending-with-content', message: 'status is "pending" but sections already has content — either the content is real (mark ready) or it should not be here yet' });
+    issues.push({ rule: 'pending-with-content', message: 'status is "pending" but sections already has content — either the content is real (mark candidate or ready) or it should not be here yet' });
   }
   return issues;
 }

@@ -1,7 +1,17 @@
 {
   "kitItem": "founders-bonus-deck",
-  "status": "pending",
+  "status": "candidate",
   "stage": 2,
   "intendedCount": 9,
-  "cards": []
+  "cards": [
+    { "id": "bonus-1", "kind": "odai", "text": "おしょうがつって、なんで「あけましておめでとう」って いうの？" },
+    { "id": "bonus-2", "kind": "odai", "text": "ふゆは なんで てぶくろを するの？" },
+    { "id": "bonus-3", "kind": "odai", "text": "クリスマスは なんで プレゼントを あげるの？" },
+    { "id": "bonus-4", "kind": "odai", "text": "おとしだまは なんで おとなから もらえるの？" },
+    { "id": "bonus-5", "kind": "odai", "text": "ゆきは なんで しろいの？" },
+    { "id": "bonus-6", "kind": "odai", "text": "ふゆは なんで ひが みじかいの？" },
+    { "id": "bonus-7", "kind": "odai", "text": "あったかい ものを たべると、なんで ほっとするの？" },
+    { "id": "bonus-8", "kind": "odai", "text": "おもちは なんで のびるの？" },
+    { "id": "bonus-9", "kind": "odai", "text": "ふゆやすみは なんで なつやすみより みじかいの？" }
+  ]
 }

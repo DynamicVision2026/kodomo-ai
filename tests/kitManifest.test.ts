@@ -7,29 +7,30 @@ import manifest from '../src/print/kit-data/manifest.json';
 
 const ROOT = resolve(__dirname, '..');
 
-/** spec v0.5 §4.4's kit list, as WO-19 Phase 4 itemizes it — the fixed 8-item source of truth
- *  for this sprint's Printable/Home Kit audit. */
+/** spec v0.5 §4.4's kit list, as WO-19 Phase 4 itemizes it, plus the Question Recipe Sheet
+ *  (質問レシピシート — spec v0.5 §4.4 names it, but WO-19 Phase 4's own 8-item list omitted it;
+ *  WO-21 Phase 3 resolves that Human Decision Queue item by adding it as its own manifest item,
+ *  counted inside Package 6's existing DoD weight, never a new package). */
 const EXPECTED_ITEM_IDS = [
   'full-45-card-deck', 'rules-a4x5', 'parent-handbook', 'adult-memo',
-  'certificate', 'real-ai-guide', 'envelope-sheet', 'founders-bonus-deck',
+  'certificate', 'question-recipe-sheet', 'real-ai-guide', 'envelope-sheet', 'founders-bonus-deck',
 ];
 
-describe('WO-19 Phase 4 kit manifest', () => {
-  it('lists exactly the 8 required production containers, no more and no fewer (no invented Package 9)', () => {
+describe('WO-19 Phase 4 kit manifest (WO-21 Phase 3: real content added)', () => {
+  it('lists exactly the 9 required production containers (8 + the newly-resolved Question Recipe Sheet), no more and no fewer', () => {
     expect(manifest.items.map((i) => i.id).sort()).toEqual([...EXPECTED_ITEM_IDS].sort());
   });
 
-  it('every item is honestly marked "pending" or "candidate" — none claims "ready" merely because a renderer exists or content is candidate-derived', () => {
+  it('every item is honestly marked "pending", "candidate" or "ready" — none claims "ready" without real human review having actually happened', () => {
     for (const item of manifest.items) {
-      expect(['pending', 'candidate']).toContain(item.status);
+      expect(['pending', 'candidate', 'ready']).toContain(item.status);
       expect(item.status).not.toBe('ready');
     }
   });
 
-  it('only the full-45-card-deck is "candidate" (WO-20 Phase 7 live derivation) — every other item remains genuinely "pending"', () => {
+  it('WO-21 Phase 3: every item is now "candidate" — real, drafted content exists for all 9, none is still genuinely "pending"', () => {
     for (const item of manifest.items) {
-      if (item.id === 'full-45-card-deck') expect(item.status).toBe('candidate');
-      else expect(item.status).toBe('pending');
+      expect(item.status, item.id).toBe('candidate');
     }
   });
 
@@ -39,12 +40,20 @@ describe('WO-19 Phase 4 kit manifest', () => {
     }
   });
 
-  it('every PrintSheet-schema data file (rules/handbook/memo/certificate/guide/envelope) is schema-valid and honestly pending', () => {
-    const sheetItemIds = ['rules-a4x5', 'parent-handbook', 'adult-memo', 'certificate', 'real-ai-guide', 'envelope-sheet'];
+  it('every PrintSheet-schema data file (rules/handbook/memo/certificate/question-recipe/guide/envelope) is schema-valid, candidate, and has real non-empty content', () => {
+    const sheetItemIds = [
+      'rules-a4x5', 'parent-handbook', 'adult-memo', 'certificate',
+      'question-recipe-sheet', 'real-ai-guide', 'envelope-sheet',
+    ];
     for (const item of manifest.items.filter((i) => sheetItemIds.includes(i.id))) {
       const file = JSON.parse(readFileSync(resolve(ROOT, item.dataPath), 'utf8')) as PrintSheetFile;
-      expect(validatePrintSheet(file)).toEqual([]);
-      expect(file.status).toBe('pending');
+      expect(validatePrintSheet(file), item.id).toEqual([]);
+      expect(file.status, item.id).toBe('candidate');
+      expect(file.sections.length, item.id).toBeGreaterThan(0);
+      for (const section of file.sections) {
+        expect(section.body.length, item.id).toBeGreaterThan(0);
+        for (const line of section.body) expect(line.trim().length, item.id).toBeGreaterThan(0);
+      }
     }
   });
 
@@ -58,11 +67,15 @@ describe('WO-19 Phase 4 kit manifest', () => {
     expect(issues.length).toBe(Object.keys(FULL_DECK_COMPOSITION).length);
   });
 
-  it('the founders-bonus-deck data file is pending, empty, and would validate against BONUS_SHEET_COMPOSITION once real content is inserted', () => {
-    const raw = JSON.parse(readFileSync(resolve(ROOT, 'src/print/kit-data/bonus-deck.json'), 'utf8'));
-    expect(raw.status).toBe('pending');
-    expect(raw.cards).toEqual([]);
-    const issues = checkDeckComposition(raw as DeckFile, BONUS_SHEET_COMPOSITION);
-    expect(issues).toEqual([{ kind: 'odai', expected: 9, actual: 0 }]);
+  it('WO-21 Phase 3: the founders-bonus-deck data file has real content matching BONUS_SHEET_COMPOSITION exactly (9 odai cards, unique ids, no placeholder text)', () => {
+    const raw = JSON.parse(readFileSync(resolve(ROOT, 'src/print/kit-data/bonus-deck.json'), 'utf8')) as DeckFile & { status: string };
+    expect(raw.status).toBe('candidate');
+    const issues = checkDeckComposition(raw, BONUS_SHEET_COMPOSITION);
+    expect(issues).toEqual([]);
+    expect(new Set(raw.cards.map((c) => c.id)).size).toBe(raw.cards.length);
+    for (const c of raw.cards) {
+      expect(c.text.trim().length).toBeGreaterThan(0);
+      expect(c.text).not.toMatch(/TODO|TBD|placeholder|xxx/i);
+    }
   });
 });

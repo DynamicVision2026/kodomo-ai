@@ -26,6 +26,19 @@ describe('validatePrintSheet', () => {
     expect(issues).toContainEqual({ rule: 'ready-without-content', message: expect.any(String) });
   });
 
+  it('WO-21 Phase 3: accepts a well-formed candidate sheet with real sections — drafted content, not yet human-reviewed, distinct from "ready"', () => {
+    const file: PrintSheetFile = {
+      kitItem: 'x', status: 'candidate', title: 'T', sections: [{ heading: 'H', body: ['line'] }],
+    };
+    expect(validatePrintSheet(file)).toEqual([]);
+  });
+
+  it('WO-21 Phase 3: rejects a sheet claiming candidate with no content, same as ready', () => {
+    const file: PrintSheetFile = { kitItem: 'x', status: 'candidate', title: 'T', sections: [] };
+    const issues = validatePrintSheet(file);
+    expect(issues).toContainEqual({ rule: 'ready-without-content', message: expect.any(String) });
+  });
+
   it('rejects a sheet marked pending that already carries content (should be "ready" instead)', () => {
     const file: PrintSheetFile = {
       kitItem: 'x', status: 'pending', title: 'T', sections: [{ body: ['line'] }],
@@ -72,6 +85,17 @@ describe('PrintSheet — ready state (proving the render path works, via clearly
     expect(container.textContent).toContain('line one');
     expect(container.textContent).toContain('Section B');
     expect(container.textContent).toContain('line three');
+    expect(container.textContent).not.toContain(PENDING_LABEL);
+  });
+
+  it('WO-21 Phase 3: a candidate sheet renders its real sections exactly like ready does — the distinction is review status, never what gets shown', () => {
+    const sheet: PrintSheetFile = {
+      kitItem: 'demo', status: 'candidate', title: 'DEMO TITLE — not real kit content',
+      sections: [{ heading: 'Section A', body: ['line one'] }],
+    };
+    const { container } = render(<PrintSheet sheet={sheet} pendingLabel={PENDING_LABEL} />);
+    expect(container.textContent).toContain('Section A');
+    expect(container.textContent).toContain('line one');
     expect(container.textContent).not.toContain(PENDING_LABEL);
   });
 });

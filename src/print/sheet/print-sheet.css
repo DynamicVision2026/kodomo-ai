@@ -22,6 +22,14 @@
   margin-top: 1rem;
 }
 
+/* WO-21 Phase 3: a multi-section sheet (Rules A4x5's 5 distinct pages, Adult Memo's 3 distinct
+   memos on one cuttable sheet) prints each section as its own physical page, since a single
+   PrintSheetFile's `sections` — not `intendedCount`, which repeats identical content — is how
+   distinct per-page content is expressed (see schema.ts's own doc comment). */
+.print-sheet__section:not(:last-child) {
+  page-break-after: always;
+}
+
 .print-sheet__body {
   line-height: 1.7;
 }
