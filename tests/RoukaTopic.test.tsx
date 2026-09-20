@@ -17,6 +17,19 @@ const ui = moduleJson.ui as ModuleUiStrings;
 const digPhase = roukaMission.phases[1] as DigPhase;
 const APPROVED_STAGE2_MOVES = new Set(moduleJson.followMoves);
 
+/** WO-16 correction: layer 2's and the root's robotSays now carry ruby markup ({曲|ま}がり角,
+ *  {向|む}こう) — getByText can't match the raw JSON string (with its literal `{}` syntax)
+ *  against what actually renders. See ChantoTopic.test.tsx's own byDigAnswerText for the full
+ *  rationale (a ruby element's textContent is base+reading concatenated, not just the base).
+ *  Matches on the .dig__answer paragraph's own rendered text using the longest plain (non-ruby)
+ *  segment of the original string as the needle. */
+function byDigAnswerText(rawMissionText: string) {
+  const plainSegments = rawMissionText.split(/\{[^{}|]+\|[^{}|]+\}/);
+  const needle = plainSegments.reduce((a, b) => (b.length > a.length ? b : a), '');
+  return (_content: string, element: Element | null) =>
+    element?.className === 'dig__answer' && needle.length > 0 && (element.textContent ?? '').includes(needle);
+}
+
 /**
  * WO-16: Mission 1-3「ろうかは 走らない」 — the first genuine 3-layer Stage-2 mission (occupying
  * "m1-s2-1-3"). Mission 1-1 (chanto) exercises つまり/たとえば and Mission 1-2 (genkan) exercises
@@ -118,15 +131,44 @@ describe('rouka (1-3) — each intermediate answer stops short of the root; the 
     expect(digPhase.layers[2]!.gap).toContain('なんのために');
   });
 
-  it('the root alone lands the purpose — a shared space, cared for on behalf of people you cannot see — and no dig-layer robotSays states it first (AD-05 §7 epistemic-root guardrail)', () => {
-    expect(digPhase.root.robotSays).toContain('みんな');
-    expect(digPhase.root.robotSays).toContain('見えない人');
+  it('the root alone lands the purpose — considering a person in a place you cannot see — without invoking an unearned "shared space" premise, and no dig-layer robotSays states it first (AD-05 §7 epistemic-root guardrail)', () => {
+    // WO-16 correction: 酒井先生 found the original root's jump to 「ろうかはみんなのところ」
+    // unearned by the prior chain. The repaired root drops the shared-space premise entirely and
+    // synthesizes directly from what layer 2 already established (someone in a place you can't
+    // see might be coming) — no "みんなの場所"/"みんながつかう場所" language anywhere.
+    expect(digPhase.root.robotSays).toContain('見えないところにいる人');
     expect(digPhase.root.robotSays).toContain('考えて');
+    for (const forbidden of ['みんなの場所', 'みんながつかう場所', 'みんなのところ']) {
+      expect(digPhase.root.robotSays).not.toContain(forbidden);
+    }
     for (const layer of digPhase.layers) {
       const layerText = layer.robotSays.trim();
       const rootText = digPhase.root.robotSays.trim();
       expect(layerText === rootText || layerText.includes(rootText) || rootText.includes(layerText)).toBe(false);
     }
+  });
+
+  it('WO-16 correction 1: never uses the ambiguous 「見えない人」 compound anywhere (酒井先生: readable as "visually impaired person" or "invisible person") — uses 「見えないところにいる人」instead', () => {
+    const allRobotSays = [
+      ...digPhase.layers.map((l) => l.robotSays),
+      digPhase.root.robotSays,
+      ...digPhase.layers.flatMap((l) => l.gapDistractors!.map((d) => d.text)),
+    ];
+    for (const text of allRobotSays) expect(text).not.toContain('見えない人');
+  });
+
+  it('WO-16 correction 2: R1 tsumari never surfaces as 「つまり」 in Mission 1-3\'s child-visible text (AD-05) — layer 2\'s deepen card asks 「それって、どういうこと？」, and the internal move id is unchanged', () => {
+    const layer2Deepen = digPhase.layers[2]!.hand.find((c) => c.tag === 'deepen')!;
+    expect(layer2Deepen.text).toBe('それって、どういうこと？');
+    expect(layer2Deepen.text).not.toContain('つまり');
+    expect(layer2Deepen.move).toBe('follow-tsumari'); // internal R1 id, unchanged
+  });
+
+  it('WO-16 correction 4: applies 酒井先生\'s native wording — 「曲がり角」and「向こう」(ruby per Stage-2 rules), 「あぶない」stays in kana', () => {
+    expect(digPhase.layers[2]!.robotSays).toContain('{曲|ま}がり角');
+    expect(digPhase.layers[2]!.robotSays).toContain('{向|む}こう');
+    expect(digPhase.layers[0]!.robotSays).toContain('あぶない');
+    expect(digPhase.layers[0]!.robotSays).not.toContain('危');
   });
 
   it('never frames the rule as mere obedience ("きまり"/"きめて"), never says adults/teachers are right or wrong, and never turns into traffic-safety statistics or legal/moral instruction', () => {
@@ -226,12 +268,12 @@ describe('rouka (1-3) — playable end to end (たのむ -> ほる x3 -> wrapper
     await user.click(screen.getByText(digPhase.layers[1]!.hand.find((c) => c.tag === 'deepen')!.text));
 
     // Layer 2 (つまり)
-    expect(screen.getByText(digPhase.layers[2]!.robotSays)).toBeInTheDocument();
+    expect(screen.getByText(byDigAnswerText(digPhase.layers[2]!.robotSays))).toBeInTheDocument();
     await passGate(user);
     await user.click(screen.getByText(digPhase.layers[2]!.hand.find((c) => c.tag === 'deepen')!.text));
 
     // ねっこ reached — genuine depth 3.
-    expect(screen.getByText(digPhase.root.robotSays)).toBeInTheDocument();
+    expect(screen.getByText(byDigAnswerText(digPhase.root.robotSays))).toBeInTheDocument();
     await user.click(screen.getByText(ui.earlyOk));
     expect(plausible).toHaveBeenCalledWith('m1_complete', expect.anything());
 

@@ -81,15 +81,15 @@
           "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、りゆうはないのかな？" }
         },
         {
-          "robotSays": "まがりかどでは、むこうから来る人が見えないこともあるんだよ。",
+          "robotSays": "{曲|ま}がり角では、{向|む}こうから来る人が見えないこともあるんだよ。",
           "claims": ["c3"],
           "gap": "なんのために、気をつけるのか、わからない",
           "gapDistractors": [
-            { "text": "まがりかどが見えないことは、わかった", "kind": "answered" },
+            { "text": "{曲|ま}がり角が見えないことは、わかった", "kind": "answered" },
             { "text": "あぶないわけが、わからない", "kind": "other-layer" }
           ],
           "hand": [
-            { "id": "r7card", "text": "つまり、どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "社会とひと" },
+            { "id": "r7card", "text": "それって、どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "社会とひと" },
             { "id": "r8card", "text": "ろうかは、だれがそうじするの？", "tag": "sideways" },
             { "id": "r9card", "text": "もういちどいって", "tag": "repeat" }
           ],
@@ -102,7 +102,7 @@
         }
       ],
       "root": {
-        "robotSays": "そっか！ろうかは、みんなのところだから、見えない人も考えて歩くんだね。",
+        "robotSays": "そっか！見えないところにいる人のことも考えて、歩くんだね。",
         "claims": ["c4"],
         "label": "ねっこ"
       }

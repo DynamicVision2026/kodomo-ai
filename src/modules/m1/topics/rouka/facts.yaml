@@ -2,16 +2,30 @@
 # below and must not be changed to "approved" until that approval genuinely occurs (WO-16
 # boundary: do not fabricate Founder Gate 1 approval).
 #
-# Gate 2: PENDING. No native-speaker (酒井先生) review has occurred for this mission's Japanese
-# wording yet. s2.json's `review` field is correctly absent (WO-16 boundary: do not fabricate
-# Gate 2).
+# Gate 2: CORRECTION REQUIRED (WO-16 correction), not approval. 酒井先生 reviewed the original
+# chain and returned three findings: (1) 「見えない人」in the root is ambiguous (readable as
+# "visually impaired person" or "invisible person"); (2) the child-visible tsumari surfacing
+# ("つまり、どういうこと？") violates AD-05 — R1 tsumari must never expose 「つまり」 itself; (3)
+# the original root's jump to 「ろうかはみんなのところ」 was not earned by the prior chain. All
+# three are now corrected in s2.json (see its own history) — the root no longer invokes a
+# "shared space" premise at all, landing instead directly on considering a person in a place you
+# can't see, which layer 2 already established. This correction pass has NOT yet been re-reviewed
+# by 酒井先生; do not record Gate 2 until that re-review actually happens.
 #
 # type: practice (WO-11 decision 6, WO-13 guardrail applied the same way as chanto/genkan): every
 # claim below is framed as a commonly-given explanation or a commonly-observed feature of school
 # hallways, never as the single universal or authoritative reason the "don't run in the hallway"
-# rule exists — c4 in particular deliberately frames the hallway's shared-space purpose as a
-# "commonly framed purpose," not an asserted historical/institutional fact, matching the same
-# guardrail genkan's c3 applies to the そと／うち boundary.
+# rule exists.
+#
+# c4 was revised by this correction pass to match the repaired root (WO-16 correction point 7):
+# the original wording ("hallways are a shared space used by many people... protects people other
+# than just the person running") asserted a shared-space/ownership premise the chain never earned.
+# The revised wording below drops that premise and states only what the repaired root actually
+# supports — taking into account a person you can't see, not why the hallway belongs to anyone.
+# This revised c4 has NOT been approved and is presented here for Founder Gate 1 review of the
+# NEW wording; c1-c3 are semantically unchanged (only s2.json's robotSays register/kanji changed
+# for c3 — 「まがりかど」→「曲がり角」, 「むこう」→「向こう」 — the English claim statement itself
+# already described "corners or blind spots" generically and did not need to change).
 topic: rouka
 question: ろうかで走らないのは、なぜ？
 claims:
@@ -29,5 +43,7 @@ claims:
     status: pending
   - id: c4
     type: practice
-    statement: "A commonly framed purpose for the hallway-running rule is that hallways are a shared space used by many people, some of whom cannot always be seen coming (for example, around a corner), so moving carefully protects people other than just the person running."
+    # WO-16 correction: revised from the original wording (see the header comment above) to match
+    # the repaired root, which no longer invokes a "shared space" premise.
+    statement: "A commonly framed purpose for the hallway-running rule is to take into account a person who may be in a place you cannot see as you move through the hallway (for example, someone approaching from around a corner), not only to avoid danger to yourself."
     status: pending
