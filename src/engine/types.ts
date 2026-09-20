@@ -170,6 +170,20 @@ export interface ModuleUiStrings {
    *  mission (never mission-specific content), so this capability is automatically complete for
    *  every current and future mission without per-mission authoring. */
   predictionParentPrompt: string;
+  /** WO-21 Phase 1: heading for the Bank selection screen — the free-pick list of short Bank
+   *  Digs (AD-04), reached from the parent screen, never a score/leaderboard/ranking surface. */
+  bankHeading: string;
+  /** WO-21 Phase 1: the parent screen's button into the Bank selection screen. Always shown
+   *  when a bank library was supplied, whether or not the just-played mission was itself a
+   *  Bank Dig — the Bank is reachable from any session's end, per spec's "pick in any order". */
+  bankHubButton: string;
+  /** WO-21 Phase 1: the Bank selection screen's own way back to the parent screen — plain
+   *  navigation, not a milestone or evidence event. */
+  bankBackButton: string;
+  /** WO-21 Phase 1: shown next to a Bank topic the active profile has already played through —
+   *  a plain completion marker (matches `progress[id].done`), never a score or correctness
+   *  claim. */
+  bankDoneLabel: string;
 }
 
 /**

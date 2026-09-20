@@ -11,6 +11,7 @@ import { track } from '../engine/analytics';
 import { ProfilePicker } from './ProfilePicker';
 import { pickNextMission } from './missionLibrary';
 import { Toolbox } from './Toolbox';
+import { BankSelect } from './BankSelect';
 import { SlotAssembly } from '../templates/slot-assembly';
 import { Dig, type UseEvidence, type BlindSelfReportEvidence, type DigResult } from '../templates/dig';
 import { Handoff } from '../templates/handoff';
@@ -25,6 +26,14 @@ export interface MissionLibrary {
   missions: Record<string, Mission>;
 }
 
+/** WO-21 Phase 1: the Bank Digs (AD-04) — a free-pick list, never a sequence `pickNextMission`
+ *  walks. `bankOrder` is display order only (spec's "pickable in any order" is about the
+ *  family's choice, not an enforced progression). */
+export interface BankLibrary {
+  bankOrder: string[];
+  missions: Record<string, Mission>;
+}
+
 export interface MissionShellProps {
   moduleId: string;
   freeMissionIds: string[];
@@ -33,6 +42,10 @@ export interface MissionShellProps {
   mission: Mission;
   ui: ModuleUiStrings;
   missionLibrary?: MissionLibrary;
+  /** WO-21 Phase 1: when supplied, the parent screen gains a button into a Bank-selection
+   *  screen reusing this same shell's own Dig-playing machinery — no second engine. Omitted
+   *  entirely (as before) for a module with no Bank content. */
+  bankLibrary?: BankLibrary;
   /** WO-05: module.json's own `followMoves`/`cardTypes`, for the parent screen's Toolbox — never
    *  a second hard-coded move list or label source. Omit for a module with no follow moves. */
   followMoves?: string[];
@@ -49,7 +62,8 @@ type Screen =
   | { kind: 'ouchi' }
   | { kind: 'perspective' }
   | { kind: 'handoff' }
-  | { kind: 'parent' };
+  | { kind: 'parent' }
+  | { kind: 'bank-select' };
 
 /**
  * Phase sequencer + profiles. Spec v0.5 §7 (Task 5): slot-assembly -> dig -> wrapper screens
@@ -62,7 +76,7 @@ type Screen =
  * session keeps working either way, it just won't be remembered after a reload.
  */
 export function MissionShell({
-  moduleId, freeMissionIds, mission: defaultMission, ui, missionLibrary,
+  moduleId, freeMissionIds, mission: defaultMission, ui, missionLibrary, bankLibrary,
   followMoves = [], cardTypes = {},
 }: MissionShellProps) {
   const [appState, setAppState] = useState<AppState>(() => load());
@@ -115,6 +129,20 @@ export function MissionShell({
     setMission(resolved);
     setProfile(p);
     if (!hasAccess(appState.entitlements, moduleId, resolved.id, freeMissionIds)) {
+      setScreen({ kind: 'locked' });
+      return;
+    }
+    setScreen({ kind: 'coop' });
+  }
+
+  /** WO-21 Phase 1: a family picked a specific Bank Dig from the free-pick list. Reuses the
+   *  exact same entitlement check and coop-question entry point every Story mission already
+   *  goes through — a Bank Dig is not a second, differently-gated kind of content. */
+  function selectBankMission(missionId: string) {
+    const picked = bankLibrary?.missions[missionId];
+    if (!picked) return;
+    setMission(picked);
+    if (!hasAccess(appState.entitlements, moduleId, picked.id, freeMissionIds)) {
       setScreen({ kind: 'locked' });
       return;
     }
@@ -325,6 +353,19 @@ export function MissionShell({
     );
   }
 
+  if (screen.kind === 'bank-select' && bankLibrary) {
+    return (
+      <BankSelect
+        bankOrder={bankLibrary.bankOrder}
+        missions={bankLibrary.missions}
+        progress={profile?.progress ?? {}}
+        ui={ui}
+        onSelect={selectBankMission}
+        onBack={() => setScreen({ kind: 'parent' })}
+      />
+    );
+  }
+
   if (screen.kind === 'coop') {
     return (
       <div className="mission-shell__coop">
@@ -489,6 +530,13 @@ export function MissionShell({
               </button>
             ))}
           </div>
+        </div>
+      )}
+      {bankLibrary && (
+        <div className="mission-shell__bank-hub">
+          <button type="button" onClick={() => setScreen({ kind: 'bank-select' })}>
+            {ui.bankHubButton}
+          </button>
         </div>
       )}
     </div>

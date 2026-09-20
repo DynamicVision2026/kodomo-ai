@@ -65,7 +65,11 @@
     "m0Action": "ふうとうを とじる",
     "m0SealedMessage": "ふうとうを とじたよ。",
     "m5Prompt": "おうちの そとでも、この といを つかっているのを 見かけたら、おしえてください。",
-    "predictionParentPrompt": "わからなくても だいじょうぶ。こたえを 知っているかより、いっしょに よそうしてみることが たいせつだよ。"
+    "predictionParentPrompt": "わからなくても だいじょうぶ。こたえを 知っているかより、いっしょに よそうしてみることが たいせつだよ。",
+    "bankHeading": "といの バンク",
+    "bankHubButton": "バンクで あそぶ",
+    "bankBackButton": "もどる",
+    "bankDoneLabel": "あそんだよ"
   },
   "cardTypes": {
     "odai": {

@@ -27,11 +27,11 @@
 // `review` field. Wiring them in here (rather than leaving them unreachable) matches every prior
 // mission's own precedent — reachability is gated by contentClass, not by gate:claims state.
 //
-// Bank topics (B01-B12, src/modules/m1/topics/bank-*) are NOT wired in here: the accepted
-// product design picks bank digs "in any order" through a dedicated bank-selection screen that
-// does not exist yet (out of WO-20's own content-authoring scope) — missionOrder has no bank
-// slots to walk into. Bank content is real, complete, lint-passing, and directly testable
-// (see tests/BankDigs.test.tsx), simply not yet reachable from the production entry point.
+// WO-21 Phase 1: Bank topics (B01-B12, src/modules/m1/topics/bank-*) are now wired in via
+// `bankLibrary` — the free-pick list added to MissionShell (src/shell/BankSelect.tsx), reached
+// from the parent screen. Order below matches docs/AD-04-bank-topics.md's accepted B01-B12
+// numbering exactly (display order only — spec's "pickable in any order" is the family's own
+// choice, not an enforced sequence, so this is not a second missionOrder).
 import { createRoot } from 'react-dom/client';
 import type { Mission, ModuleUiStrings } from './engine/types';
 import { MissionShell } from './shell';
@@ -43,6 +43,18 @@ import minnaMissionJson from './modules/m1/topics/minna/s2.json';
 import zuruiMissionJson from './modules/m1/topics/zurui/s2.json';
 import kashiteMissionJson from './modules/m1/topics/kashite/s2.json';
 import randoseruMissionJson from './modules/m1/topics/randoseru/s2.json';
+import bankAtodeJson from './modules/m1/topics/bank-atode/s2.json';
+import bankEscalatorJson from './modules/m1/topics/bank-escalator/s2.json';
+import bankJankenJson from './modules/m1/topics/bank-janken/s2.json';
+import bankTeamJson from './modules/m1/topics/bank-team/s2.json';
+import bankGakunenJson from './modules/m1/topics/bank-gakunen/s2.json';
+import bankNedanJson from './modules/m1/topics/bank-nedan/s2.json';
+import bankKireiJson from './modules/m1/topics/bank-kirei/s2.json';
+import bankHoshiiJson from './modules/m1/topics/bank-hoshii/s2.json';
+import bankKotobaJson from './modules/m1/topics/bank-kotoba/s2.json';
+import bankItadakimasuJson from './modules/m1/topics/bank-itadakimasu/s2.json';
+import bankArigatouJson from './modules/m1/topics/bank-arigatou/s2.json';
+import bank100yenJson from './modules/m1/topics/bank-100yen/s2.json';
 import moduleJson from './modules/m1/module.json';
 
 const chantoMission = chantoMissionJson as unknown as Mission;
@@ -65,12 +77,22 @@ const missions: Record<string, Mission> = {
   [randoseruMission.id]: randoseruMission,
 };
 
+const bankMissions = [
+  bankAtodeJson, bankEscalatorJson, bankJankenJson, bankTeamJson, bankGakunenJson, bankNedanJson,
+  bankKireiJson, bankHoshiiJson, bankKotobaJson, bankItadakimasuJson, bankArigatouJson,
+  bank100yenJson,
+].map((m) => m as unknown as Mission);
+const bankMissionsById: Record<string, Mission> = Object.fromEntries(
+  bankMissions.map((m) => [m.id, m]),
+);
+
 createRoot(document.getElementById('root')!).render(
   <MissionShell
     moduleId={moduleJson.id}
     freeMissionIds={moduleJson.freeMissionIds}
     mission={chantoMission}
     missionLibrary={{ missionOrder: moduleJson.missionOrder, missions }}
+    bankLibrary={{ bankOrder: bankMissions.map((m) => m.id), missions: bankMissionsById }}
     ui={ui}
     followMoves={moduleJson.followMoves}
     cardTypes={moduleJson.cardTypes}
