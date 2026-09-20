@@ -1,0 +1,78 @@
+{
+  "id": "m1-s2-1-2",
+  "stage": 2,
+  "title": "こおりは なぜ みずに うくの？",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3", "facts.yaml#c4"],
+  "phases": [
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "こおりは 水に うくよ。こおりは 水より かるいからね。",
+          "claims": ["c1"],
+          "gap": "こおりが どうして 水より かるいのか わからない",
+          "gapDistractors": [
+            { "text": "こおりが 水に うくのか どうか わからない", "kind": "answered" },
+            { "text": "大きく ふくらむと、どうして かるく なるのか わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "i1", "text": "どうして こおりは 水より かるいの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
+            { "id": "i2", "text": "こおりは どこで 買えるの？", "tag": "offtopic" },
+            { "id": "i3", "text": "もう いちど いって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それは おみせに よるかな。",
+            "repeat": "うーん、さっきと おなじ こたえに なっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "こおりは どうして 水より かるいんだろうね？" }
+        },
+        {
+          "robotSays": "水が こおると、つぶの あいだに すきまが できて、大きく なるんだ。",
+          "claims": ["c2"],
+          "gap": "大きく ふくらむと、どうして かるく なるのか わからない",
+          "gapDistractors": [
+            { "text": "こおると こおりは 大きく なるのか どうか わからない", "kind": "answered" },
+            { "text": "同じ 大きさで こおりのほうが かるいと、なぜ うくのか わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "i4", "text": "大きく ふくらむと、どうして かるく なるの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
+            { "id": "i5", "text": "こおりは どんな あじが するの？", "tag": "sideways" },
+            { "id": "i6", "text": "もう いちど いって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "あじは しないと おもうよ。でも それは この はなしとは べつだね。",
+            "repeat": "うーん、さっきと おなじ こたえに なっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "大きく ふくらむと、どうして かるく なるんだろうね？" }
+        },
+        {
+          "robotSays": "同じ おもさでも、こおりは 大きい。大きいほど かるく なるんだ。",
+          "claims": ["c3"],
+          "gap": "同じ 大きさで こおりのほうが かるいと、なぜ うくのか わからない",
+          "gapDistractors": [
+            { "text": "同じ 大きさなら、どちらが かるいのか わからない", "kind": "answered" },
+            { "text": "こおりが どうして 水より かるいのか わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "i7", "text": "同じ 大きさで かるいと、どうして うくの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
+            { "id": "i8", "text": "こおりは なんで まるいの？", "tag": "offtopic" },
+            { "id": "i9", "text": "もう いちど いって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "かたちは 作りかた しだいだよ。今は べつの はなしだね。",
+            "repeat": "うーん、さっきと おなじ こたえに なっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "同じ 大きさで かるいと、どうして うくんだろうね？" }
+        }
+      ],
+      "root": {
+        "robotSays": "水より かるい ものは 水に うくから、こおりも うくんだよ。",
+        "claims": ["c4"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "さいしょの こたえで とまらない。もう一{問|もん}。",
+  "teachBack": "ポン太に、こおりが 水に うく りゆうを おしえてあげよう。",
+  "ouchiTalk": "こおりが うくか しずむか、おうちで ためして みようか。"
+}
