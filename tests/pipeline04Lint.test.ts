@@ -8,15 +8,12 @@ const gradeOf = loadGradeMap();
 const claimIds = new Set(['c1', 'c2', 'c3']);
 
 describe('lintMission', () => {
-  it('passes the real, already-fixed bread mission except for pending v0.6 gap/move metadata', () => {
-    // WO-01: bread's move/domain were migrated where unambiguous (both deepen cards' domain,
-    // layer 0's move). `gap` (both layers) and layer 1's move are pedagogical decisions not yet
-    // made — see docs/work-order-w1.md — so they're honestly flagged rather than guessed.
-    expect(lintMission(mission, 2, gradeOf, claimIds)).toEqual([
-      { rule: 'gap', message: 'layer 0 is missing gap (v0.6 content contract)' },
-      { rule: 'gap', message: 'layer 1 is missing gap (v0.6 content contract)' },
-      { rule: 'move', message: 'layer 1 deepen card is missing move (v0.6 content contract)' },
-    ]);
+  it('passes the real, fully-migrated bread mission (v0.6 gap/move/domain contract)', () => {
+    // Follow-up to WO-01: the Coordinator supplied the two gap values and resolved the
+    // layer-1 move-taxonomy gap by adding follow-sorekara ("それから？") to m1's followMoves —
+    // "そのガスは どこへ いくの？" traces a causal consequence forward, which none of the
+    // original four moves (naze/tatoeba/tsumari/hokaniwa) represent.
+    expect(lintMission(mission, 2, gradeOf, claimIds)).toEqual([]);
   });
 
   it('flags a missing schema field', () => {

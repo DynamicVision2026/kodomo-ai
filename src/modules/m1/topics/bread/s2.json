@@ -43,6 +43,7 @@
         {
           "robotSays": "イーストが はたらくからだよ。",
           "claims": ["c1"],
+          "gap": "イーストが はたらく しくみが わからない",
           "hand": [
             { "id": "f1", "text": "なぜ イーストで ふくらむの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
             { "id": "f2", "text": "パンは すきですか？", "tag": "offtopic" },
@@ -57,8 +58,9 @@
         {
           "robotSays": "イーストが さとうを たべて、ガスを 出すんだ。",
           "claims": ["c2"],
+          "gap": "出た ガスが パンを ふくらませる しくみが わからない",
           "hand": [
-            { "id": "f4", "text": "そのガスは どこへ いくの？", "tag": "deepen", "domain": "しぜん・かがく" },
+            { "id": "f4", "text": "そのガスは どこへ いくの？", "tag": "deepen", "move": "follow-sorekara", "domain": "しぜん・かがく" },
             { "id": "f5", "text": "さとうは あまいの？", "tag": "sideways" },
             { "id": "f6", "text": "もう いちど いって", "tag": "repeat" }
           ],

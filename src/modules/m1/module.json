@@ -18,7 +18,8 @@
     "follow-naze",
     "follow-tatoeba",
     "follow-tsumari",
-    "follow-hokaniwa"
+    "follow-hokaniwa",
+    "follow-sorekara"
   ],
   "missionOrder": [
     "m1-s2-1-1",
@@ -71,6 +72,9 @@
     },
     "follow-tsumari": {
       "label": "つまり？"
+    },
+    "follow-sorekara": {
+      "label": "それから？"
     },
     "follow-hokaniwa": {
       "label": "ほかには？"
