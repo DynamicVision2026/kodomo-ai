@@ -70,13 +70,19 @@ describe('lintMission', () => {
 
   // WO-01: v0.6 content contract — gap per Dig layer, move+domain per deepen card, scoped to
   // Stage 2 (real shipping Stage-2 content). See docs/work-order-w1.md.
-  describe('v0.6 content contract (gap / move / domain / props)', () => {
+  // WO-03 (AD-01): gapDistractors — exactly two, one `answered` + one `other-layer`, alongside
+  // the target `gap`, all three texts distinct.
+  describe('v0.6 content contract (gap / move / domain / props / gapDistractors)', () => {
     const validMission = {
       id: 'x', stage: 2,
       phases: [{
         template: 'dig',
         layers: [{
-          robotSays: 'そう', claims: ['nonfactual'], gap: 'テストの ギャップ',
+          robotSays: 'そう', claims: ['nonfactual'], gap: 'そうなる りゆうが わからない',
+          gapDistractors: [
+            { text: 'すでに こたえが 出ている こと', kind: 'answered' },
+            { text: 'べつの ところで わかる こと', kind: 'other-layer' },
+          ],
           hand: [{ id: 'a', text: 'なぜ そうなるの', tag: 'deepen', move: 'follow-naze', domain: '日常' }],
           replies: {},
         }],
@@ -125,6 +131,86 @@ describe('lintMission', () => {
     it('does not require gap/move/domain outside Stage 2', () => {
       const stage3 = { ...validMission, stage: 3, phases: [{ ...validMission.phases[0]!, layers: [{ robotSays: 'そう', claims: ['nonfactual'], hand: [{ id: 'a', text: 'なぜ そうなるの', tag: 'deepen' }], replies: {} }] }] };
       expect(lintMission(stage3, 3, gradeOf, claimIds)).toEqual([]);
+    });
+
+    function withLayer(layer: unknown) {
+      return { ...validMission, phases: [{ ...validMission.phases[0]!, layers: [layer] }] };
+    }
+    const baseLayer = validMission.phases[0]!.layers[0]!;
+
+    it('rejects a shipping Stage-2 layer missing gapDistractors entirely', () => {
+      const { gapDistractors, ...layerWithoutDistractors } = baseLayer;
+      const issues = lintMission(withLayer(layerWithoutDistractors), 2, gradeOf, claimIds);
+      expect(issues).toContainEqual({ rule: 'gapDistractors', message: 'layer 0 needs exactly 2 gapDistractors (AD-01), got 0' });
+    });
+
+    it('rejects the wrong number of gapDistractors', () => {
+      const oneOnly = { ...baseLayer, gapDistractors: [baseLayer.gapDistractors[0]] };
+      const issues = lintMission(withLayer(oneOnly), 2, gradeOf, claimIds);
+      expect(issues).toContainEqual({ rule: 'gapDistractors', message: 'layer 0 needs exactly 2 gapDistractors (AD-01), got 1' });
+    });
+
+    it('rejects two gapDistractors of the same kind (duplicate/missing kind)', () => {
+      const bothAnswered = {
+        ...baseLayer,
+        gapDistractors: [
+          { text: 'すでに こたえが 出ている こと', kind: 'answered' },
+          { text: 'べつの りゆうで こたえが 出ている こと', kind: 'answered' },
+        ],
+      };
+      const issues = lintMission(withLayer(bothAnswered), 2, gradeOf, claimIds);
+      expect(issues).toContainEqual({ rule: 'gapDistractorKind', message: 'layer 0 gapDistractors must have exactly one "answered" and one "other-layer" (got answered, answered)' });
+    });
+
+    it('rejects a duplicate text among gap and its distractors within the layer', () => {
+      const duplicated = {
+        ...baseLayer,
+        gapDistractors: [
+          { text: baseLayer.gap, kind: 'answered' }, // same text as the target gap
+          { text: 'べつの ところで わかる こと', kind: 'other-layer' },
+        ],
+      };
+      const issues = lintMission(withLayer(duplicated), 2, gradeOf, claimIds);
+      expect(issues).toContainEqual({ rule: 'gapDistractorDuplicate', message: `layer 0 has a duplicate gap/gapDistractor text: "${baseLayer.gap}"` });
+    });
+
+    it('rejects an empty gapDistractor text', () => {
+      const empty = {
+        ...baseLayer,
+        gapDistractors: [
+          { text: '   ', kind: 'answered' },
+          { text: 'べつの ところで わかる こと', kind: 'other-layer' },
+        ],
+      };
+      const issues = lintMission(withLayer(empty), 2, gradeOf, claimIds);
+      expect(issues).toContainEqual({ rule: 'gapDistractorText', message: 'layer 0 has an empty gap or gapDistractor text' });
+    });
+
+    it('cross-layer reuse of a gapDistractor string is permitted (AD-01 §2)', () => {
+      const secondLayer = {
+        robotSays: 'そう', claims: ['nonfactual'],
+        gap: 'べつの ぎもんが わからない',
+        gapDistractors: [
+          { text: baseLayer.gap, kind: 'other-layer' }, // reuses layer 0's target verbatim — allowed
+          { text: 'まだ でていない こたえの こと', kind: 'answered' },
+        ],
+        hand: [{ id: 'b', text: 'なぜ べつなの', tag: 'deepen', move: 'follow-naze', domain: '日常' }],
+        replies: {},
+      };
+      const twoLayerMission = { ...validMission, phases: [{ ...validMission.phases[0]!, layers: [baseLayer, secondLayer] }] };
+      expect(lintMission(twoLayerMission, 2, gradeOf, claimIds)).toEqual([]);
+    });
+
+    it('applies the same child-facing text rules to gap and gapDistractor text', () => {
+      const banned = {
+        ...baseLayer,
+        gapDistractors: [
+          { text: '正解が わかっている こと', kind: 'answered' }, // banned word
+          { text: 'べつの ところで わかる こと', kind: 'other-layer' },
+        ],
+      };
+      const issues = lintMission(withLayer(banned), 2, gradeOf, claimIds);
+      expect(issues.some((i) => i.rule === 'banned-word')).toBe(true);
     });
   });
 

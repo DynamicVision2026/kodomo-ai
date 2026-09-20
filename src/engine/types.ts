@@ -53,6 +53,15 @@ export interface SlotAssemblyPhase {
   predictions?: PredictionPrompt[];
 }
 
+/** AD-01: the two permitted forms a gap distractor may take. */
+export type GapDistractorKind = 'answered' | 'other-layer';
+
+/** AD-01: an authored, plausible-but-wrong alternative to a layer's target `gap`. */
+export interface GapDistractor {
+  text: string;
+  kind: GapDistractorKind;
+}
+
 export interface DigCard {
   id: string;
   text: string;
@@ -82,6 +91,12 @@ export interface DigLayer {
    * shipping Stage-2 Dig layer — see `lintMission`.
    */
   gap?: string;
+  /**
+   * AD-01 (WO-03): exactly two authored distractor gaps, one `answered` and one `other-layer`,
+   * presented alongside `gap` in Gap Naming. Required wherever `gap` is required — see
+   * `lintMission`.
+   */
+  gapDistractors?: [GapDistractor, GapDistractor];
 }
 
 export interface DigPhase {
@@ -115,10 +130,6 @@ export interface ModuleUiStrings {
   lockedMessage: string;
   /** WO-02: the 「これでOK？」 judgment gate's "not enough" response, opposite of earlyOk. */
   judgeNotEnough: string;
-  /** WO-02: shown in the pre-gap holding state, before WO-03's Gap Naming exists. */
-  gapPendingMessage: string;
-  /** WO-02: continues from the pre-gap holding state to the layer's follow-up hand. */
-  gapPendingContinue: string;
 }
 
 export interface Mission {

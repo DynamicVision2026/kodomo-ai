@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { DigPhase, ModuleUiStrings } from '../../engine/types';
 import {
-  initDig, playCard, tapEarlyOk, judgeNotEnough, continueFromHolding, depth, currentAnswer,
-  type DigState,
+  initDig, playCard, tapEarlyOk, judgeNotEnough, chooseGap, depth, currentAnswer,
+  type DigState, type GapChoice,
 } from '../../engine/digMachine';
 import { resolveDigLayerPredictionOptions } from '../../engine/predictions';
 import { Card } from '../../ui/Card';
@@ -33,9 +33,11 @@ export interface DigProps {
  * host: it is that layer's data, the same way `earlyOk` already is, and gating it externally
  * would need Dig to expose layer-transition timing it otherwise keeps entirely internal.
  *
- * WO-02: each layer's hand is behind a mandatory 「これでOK？」 judgment gate — see
- * `DigState.gate` in digMachine.ts. A prediction battle, where present, still runs first; the
- * gate applies to what comes after it, same as it does for a layer with no battle at all.
+ * WO-02/WO-03: each layer's hand is behind a mandatory 「これでOK？」 judgment gate — see
+ * `DigState.gate` in digMachine.ts. Judging "not enough" leads to AD-01's Gap Naming (target gap
+ * + two authored distractors, shuffled per presentation); naming any of the three — no verdict,
+ * no filtering — reveals the same complete hand. A prediction battle, where present, still runs
+ * first; the gate applies to what comes after it, same as it does for a layer with no battle.
  */
 export function Dig({ phase, ui, solo, onComplete }: DigProps) {
   const [state, setState] = useState<DigState>(() => initDig(phase));
@@ -75,11 +77,13 @@ export function Dig({ phase, ui, solo, onComplete }: DigProps) {
   }
 
   function judgeNotEnoughTapped() {
-    setState((s) => judgeNotEnough(s));
+    setState((s) => judgeNotEnough(phase, s));
   }
 
-  function continueFromHoldingTapped() {
-    setState((s) => continueFromHolding(s));
+  function gapChosen(choice: GapChoice) {
+    // AD-01 §5: recorded for its classification only — no verdict, no retry, hand unfiltered.
+    track('gap_named', { classification: choice.kind });
+    setState((s) => chooseGap(s));
   }
 
   const { current, total } = depth(phase, state);
@@ -132,14 +136,18 @@ export function Dig({ phase, ui, solo, onComplete }: DigProps) {
                   {ui.judgeNotEnough}
                 </button>
               </div>
-            ) : state.gate === 'holding' ? (
-              <div className="dig__gap-pending">
-                <p className="dig__gap-pending-message">
-                  <Ruby text={ui.gapPendingMessage} />
-                </p>
-                <button type="button" className="dig__gap-pending-continue" onClick={continueFromHoldingTapped}>
-                  {ui.gapPendingContinue}
-                </button>
+            ) : state.gate === 'gapNaming' ? (
+              <div className="dig__gap-naming">
+                {state.gapChoices!.map((choice, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className="dig__gap-naming-option"
+                    onClick={() => gapChosen(choice)}
+                  >
+                    <Ruby text={choice.text} />
+                  </button>
+                ))}
               </div>
             ) : (
               <div className="dig__hand">

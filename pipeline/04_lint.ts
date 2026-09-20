@@ -78,8 +78,40 @@ export function lintMission(mission: unknown, stage: number, gradeOf: GradeMap, 
         // v0.6 content contract (WO-01): every shipping Stage-2 Dig layer needs a `gap`, and its
         // `deepen` card needs a `move` + approved `domain`. Scoped to stage 2 — earlier/later
         // stage fixtures aren't real Stage-2 shipping content and predate this contract.
-        if (stage === 2 && !(layer as { gap?: string }).gap) {
+        const gap = (layer as { gap?: string }).gap;
+        if (gap) texts.push(gap);
+        if (stage === 2 && !gap) {
           issues.push({ rule: 'gap', message: `layer ${n} is missing gap (v0.6 content contract)` });
+        }
+        // AD-01 (WO-03): every layer with a `gap` needs exactly two gapDistractors, one
+        // `answered` and one `other-layer`, all three texts distinct within the layer.
+        if (stage === 2 && gap) {
+          const gapDistractors = (layer as { gapDistractors?: unknown }).gapDistractors;
+          if (!Array.isArray(gapDistractors) || gapDistractors.length !== 2) {
+            issues.push({ rule: 'gapDistractors', message: `layer ${n} needs exactly 2 gapDistractors (AD-01), got ${Array.isArray(gapDistractors) ? gapDistractors.length : 0}` });
+          } else {
+            const distractors = gapDistractors as { text?: string; kind?: string }[];
+            const kinds = distractors.map((d) => d.kind);
+            const hasAnswered = kinds.filter((k) => k === 'answered').length === 1;
+            const hasOtherLayer = kinds.filter((k) => k === 'other-layer').length === 1;
+            if (!hasAnswered || !hasOtherLayer) {
+              issues.push({ rule: 'gapDistractorKind', message: `layer ${n} gapDistractors must have exactly one "answered" and one "other-layer" (got ${kinds.join(', ')})` });
+            }
+            const allTexts = [gap, ...distractors.map((d) => d.text)];
+            const seen = new Set<string>();
+            for (const t of allTexts) {
+              const trimmed = (t ?? '').trim();
+              if (!trimmed) {
+                issues.push({ rule: 'gapDistractorText', message: `layer ${n} has an empty gap or gapDistractor text` });
+                continue;
+              }
+              if (seen.has(trimmed)) {
+                issues.push({ rule: 'gapDistractorDuplicate', message: `layer ${n} has a duplicate gap/gapDistractor text: "${trimmed}"` });
+              }
+              seen.add(trimmed);
+            }
+            for (const d of distractors) if (d.text) texts.push(d.text);
+          }
         }
         for (const c of hand) {
           texts.push(c.text);

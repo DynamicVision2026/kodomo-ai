@@ -65,20 +65,18 @@
   cursor: pointer;
 }
 
-.dig__gap-pending {
+.dig__gap-naming {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  text-align: center;
+  gap: 0.75rem;
+  align-items: stretch;
 }
-.dig__gap-pending-continue {
-  padding: 0.6rem 1.4rem;
-  border-radius: 999px;
-  border: 1px solid #2f6fb0;
+.dig__gap-naming-option {
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #ccc;
   background: #fff;
-  color: #2f6fb0;
-  font-weight: 700;
+  text-align: left;
   cursor: pointer;
 }
 

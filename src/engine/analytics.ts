@@ -10,7 +10,10 @@ export type EventName =
   // Not in spec v0.5 §11's fixed event list — added for /play/unlock (Task 7's redemption
   // screen) because "did the family code flow actually work" has no other signal. Flagging
   // for founder sign-off rather than silently expanding a spec-enumerated list.
-  | 'code_redeemed';
+  | 'code_redeemed'
+  // v0.6 (WO-03, AD-01 §5): the child's Gap Naming choice, classification only — 'target',
+  // 'answered' or 'other-layer' — never a correct/incorrect judgment. Also not in spec v0.5 §11.
+  | 'gap_named';
 
 type Props = Record<string, string | number | boolean>;
 

@@ -46,9 +46,7 @@
     "teachbackSkip": "あとでやる",
     "parentScreenHeading": "おうちの方へ",
     "lockedMessage": "このミッションは まだ あそべないよ",
-    "judgeNotEnough": "まだ たりない",
-    "gapPendingMessage": "なにか たりないね。",
-    "gapPendingContinue": "つぎへ"
+    "judgeNotEnough": "まだ たりない"
   },
   "cardTypes": {
     "odai": {

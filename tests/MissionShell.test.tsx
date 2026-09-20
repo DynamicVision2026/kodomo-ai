@@ -38,10 +38,12 @@ async function createAndSelectProfile(user: ReturnType<typeof userEvent.setup>) 
   await user.click(screen.getByText(ui.profileConfirm));
 }
 
-/** WO-02: every Dig layer's hand sits behind the mandatory 「これでOK？」 judgment gate. */
-async function openGate(user: ReturnType<typeof userEvent.setup>) {
+/** WO-02/WO-03: every Dig layer's hand sits behind 「これでOK？」 -> Gap Naming (any of the
+ *  three authored choices — AD-01's no-verdict rule means it never matters which one). */
+async function passGate(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText(ui.judgeNotEnough));
-  await user.click(screen.getByText(ui.gapPendingContinue));
+  const [firstChoice] = document.querySelectorAll('.dig__gap-naming-option');
+  await user.click(firstChoice as HTMLElement);
 }
 
 describe('MissionShell', () => {
@@ -61,9 +63,9 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
 
     // Phase 2: dig, straight through to the root (solo, no battle on layer 1 either).
-    await openGate(user);
+    await passGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
-    await openGate(user);
+    await passGate(user);
     await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     expect(screen.getByText(digPhase.root.robotSays)).toBeInTheDocument();
     await user.click(screen.getByText(ui.earlyOk));
@@ -96,9 +98,9 @@ describe('MissionShell', () => {
     await createAndSelectProfile(user);
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
-    await openGate(user);
+    await passGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
-    await openGate(user);
+    await passGate(user);
     await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
@@ -125,10 +127,10 @@ describe('MissionShell', () => {
     // Prediction battle now gates the dig phase's layer 1 too, but layer 0 has none —
     // pass layer 0's judgment gate and play it, then skip the layer-1 battle and pass
     // layer 1's own gate to get to the root quickly.
-    await openGate(user);
+    await passGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
     await user.click(screen.getByText(ui.predictionSkip));
-    await openGate(user);
+    await passGate(user);
     await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 

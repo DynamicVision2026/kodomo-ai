@@ -44,6 +44,10 @@
           "robotSays": "イーストが はたらくからだよ。",
           "claims": ["c1"],
           "gap": "イーストが はたらく しくみが わからない",
+          "gapDistractors": [
+            { "text": "なにが パンを ふくらませるのか わからない", "kind": "answered" },
+            { "text": "ポン太の パンが ぺちゃんこだった りゆうが わからない", "kind": "other-layer" }
+          ],
           "hand": [
             { "id": "f1", "text": "なぜ イーストで ふくらむの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
             { "id": "f2", "text": "パンは すきですか？", "tag": "offtopic" },
@@ -59,6 +63,10 @@
           "robotSays": "イーストが さとうを たべて、ガスを 出すんだ。",
           "claims": ["c2"],
           "gap": "出た ガスが パンを ふくらませる しくみが わからない",
+          "gapDistractors": [
+            { "text": "イーストが なにを たべるのか わからない", "kind": "answered" },
+            { "text": "イーストが はたらく しくみが わからない", "kind": "other-layer" }
+          ],
           "hand": [
             { "id": "f4", "text": "なぜ ガスが 出ると ふくらむの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
             { "id": "f5", "text": "さとうは あまいの？", "tag": "sideways" },
