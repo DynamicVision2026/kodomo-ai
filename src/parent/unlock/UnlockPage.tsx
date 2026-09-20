@@ -87,7 +87,7 @@ export function UnlockPage() {
       )}
 
       {status.kind === 'done' && status.result.ok && (
-        <a className="unlock__cta" href="/play">
+        <a className="unlock__cta" href="/play/">
           ミッションを始める
         </a>
       )}

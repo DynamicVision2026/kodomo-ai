@@ -52,6 +52,10 @@ describe('UnlockPage', () => {
 
     expect(await screen.findByText(/登録が完了しました/)).toBeInTheDocument();
     expect(screen.getByText('ミッションを始める')).toBeInTheDocument();
+    // WO-21 Phase 8: trailing slash matters — vite's multi-page build serves /play at its own
+    // directory path (/play/index.html -> /play/); a link missing the trailing slash fell
+    // through to the LP's own index.html instead under a real static host, a real bug.
+    expect(screen.getByText('ミッションを始める').closest('a')).toHaveAttribute('href', '/play/');
 
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
     expect(saved.entitlements).toContain('m1:full');

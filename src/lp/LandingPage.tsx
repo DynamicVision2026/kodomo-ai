@@ -111,7 +111,7 @@ export function LandingPage() {
         <h1>{HEADLINES[variant]}</h1>
         <p className="lp__subhead">{SUBHEAD}</p>
         <div className="lp__cta-row">
-          <a className="lp__cta lp__cta--primary" href="/play" onClick={() => track('cta_play_click')}>
+          <a className="lp__cta lp__cta--primary" href="/play/" onClick={() => track('cta_play_click')}>
             無料でミッション1を体験する
           </a>
           <a className="lp__cta lp__cta--secondary" href="#price" onClick={() => track('cta_buy_click')}>
@@ -260,8 +260,8 @@ export function LandingPage() {
       <footer className="lp__footer">
         {/* src/legal — real company data confirmed from soul-id.jp, still drafts pending the
             founder's own legal review (Task 9, docs/work-order-w1.md). */}
-        <a href="/legal/tokushoho">特定商取引法に基づく表記</a>
-        <a href="/legal/privacy">プライバシーポリシー</a>
+        <a href="/legal/tokushoho/">特定商取引法に基づく表記</a>
+        <a href="/legal/privacy/">プライバシーポリシー</a>
       </footer>
     </main>
   );

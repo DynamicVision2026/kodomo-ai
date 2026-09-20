@@ -78,8 +78,17 @@ describe('LandingPage', () => {
 
   it('links to this app\'s own legal pages, built from the company\'s real confirmed data', () => {
     render(<LandingPage />);
-    expect(screen.getByText('特定商取引法に基づく表記').closest('a')).toHaveAttribute('href', '/legal/tokushoho');
-    expect(screen.getByText('プライバシーポリシー').closest('a')).toHaveAttribute('href', '/legal/privacy');
+    // WO-21 Phase 8: trailing slash matters — vite's multi-page build serves each page at its
+    // own directory path (e.g. /legal/tokushoho/index.html -> /legal/tokushoho/); a link missing
+    // the trailing slash fell through to the LP's own index.html instead, a real bug this
+    // playwright-verified fix closes (see the WO-21 Phase 8 commit for the reproduction).
+    expect(screen.getByText('特定商取引法に基づく表記').closest('a')).toHaveAttribute('href', '/legal/tokushoho/');
+    expect(screen.getByText('プライバシーポリシー').closest('a')).toHaveAttribute('href', '/legal/privacy/');
+  });
+
+  it('WO-21 Phase 8: the primary CTA into the app carries a trailing slash, matching the real built page path', () => {
+    render(<LandingPage />);
+    expect(screen.getByText('無料でミッション1を体験する').closest('a')).toHaveAttribute('href', '/play/');
   });
 
   it('prominently features the privacy slogan right after the hero, before any other section', () => {
