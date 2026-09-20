@@ -100,4 +100,20 @@ describe('LandingPage', () => {
     expect(trust.textContent).toContain('端末');
     expect(trust.textContent).not.toMatch(/オフライン|インターネット接続なし/);
   });
+
+  it('WO-21 Phase 7: consistently states every required commercial fact — price, household licence (in natural Japanese, not raw English), digital+printable, profile/device caps, refund guarantee, no subscription, and founders\' bonus', () => {
+    render(<LandingPage />);
+    const text = document.body.textContent ?? '';
+    expect(text).toContain('¥4,980');
+    expect(text).toContain('世帯ライセンス');
+    expect(text).not.toContain('household licence'); // no untranslated placeholder copy
+    expect(text).toContain('印刷キット'); // digital app + printable kit, both mentioned
+    expect(text).toContain('最大6人'); // MAX_PROFILES
+    expect(text).toContain('最大5台'); // MAX_DEVICES
+    expect(text).toContain('30日間返金保証');
+    expect(text).toContain('月額なし');
+    expect(text).toContain('自動更新はありません'); // explicitly denied, never silently omitted
+    expect(text).toContain('創設ファミリー特典');
+    expect(text).toContain('冬休みスペシャルシート');
+  });
 });

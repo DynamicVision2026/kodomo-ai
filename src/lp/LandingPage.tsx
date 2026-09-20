@@ -228,11 +228,13 @@ export function LandingPage() {
         <h2>価格</h2>
         {/* Price display + wording needs the legal check per spec v0.5 §14 before launch. */}
         <p className="lp__price-anchor">AIスクール1か月分より安く、家族みんなで、買い切り。</p>
-        <p className="lp__price-amount">¥4,980（税込・買い切り）</p>
+        <p className="lp__price-amount">¥4,980（税込・買い切り・月額なし）</p>
         <ul>
-          <li>household licence — ひとつの購入で家族全員が使えます</li>
+          <li>世帯ライセンス — ひとつの購入で、ご家庭のお子さま・保護者の方すべてが使えます（プロフィールは最大6人まで作成可能）</li>
+          <li>アプリ本体とあそべる印刷キット（質問カードなど）の両方が届きます</li>
+          <li>同時に使える端末は最大5台まで</li>
           <li>30日間返金保証</li>
-          <li>創設ファミリー特典（詳細は今後確定）</li>
+          <li>創設ファミリー特典（冬休みスペシャルシート 全9枚 を含む）</li>
         </ul>
         <a className="lp__cta lp__cta--primary" href="#" onClick={() => track('cta_buy_click')}>
           創設ファミリーとして申し込む
@@ -249,7 +251,9 @@ export function LandingPage() {
           <dt>返金はできますか？</dt>
           <dd>購入から30日間、いつでも返金保証をご利用いただけます。</dd>
           <dt>兄弟姉妹で使えますか？</dt>
-          <dd>household licence のため、ご家庭のお子さま・保護者の方すべてでお使いいただけます。</dd>
+          <dd>世帯ライセンスのため、ご家庭のお子さま・保護者の方すべてでお使いいただけます（プロフィールは最大6人まで、同時に使える端末は最大5台までです）。</dd>
+          <dt>毎月お金がかかりますか？</dt>
+          <dd>いいえ。¥4,980の買い切りで、月額料金や自動更新はありません。</dd>
         </dl>
       </section>
 
