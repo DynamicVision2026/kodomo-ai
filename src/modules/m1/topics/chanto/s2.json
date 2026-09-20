@@ -1,0 +1,95 @@
+{
+  "id": "m1-s2-1-1",
+  "contentClass": "release",
+  "rootType": "めあて",
+  "stage": 2,
+  "title": "「ちゃんと しなさい」の「ちゃんと」",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["what"],
+      "cards": [
+        { "id": "w1", "slot": "what", "text": "ちゃんとって、よくきくよね", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "「ちゃんと」って、どういういみ？", "tag": "clear" },
+        { "id": "w3", "slot": "what", "text": "ロボはなにがすき？", "tag": "offtopic" }
+      ],
+      "rules": [
+        { "when": { "what": "clear" }, "archetype": "CLEAR" },
+        { "when": { "what": "offtopic" }, "archetype": "OFFTOPIC" },
+        { "when": { "what": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": {
+          "robotSays": "「ちゃんと」は、きちんとすることだよ。",
+          "animation": "proud",
+          "claims": ["c1"]
+        },
+        "VAGUE": {
+          "robotSays": "「ちゃんと」のはなし、いっぱいあるよ！",
+          "animation": "confused",
+          "tip": "なにがききたいか、はっきりさせよう。",
+          "claims": ["nonfactual"]
+        },
+        "OFFTOPIC": {
+          "robotSays": "うーん、いまはべつのはなしだよ。",
+          "animation": "thinking",
+          "claims": ["nonfactual"]
+        }
+      },
+      "predictions": [{ "beforeRound": 1, "options": ["CLEAR", "VAGUE", "OFFTOPIC"] }]
+    },
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "「ちゃんと」は、きちんとすることだよ。",
+          "claims": ["c1"],
+          "gap": "「きちんと」がなにをすることかわからない",
+          "gapDistractors": [
+            { "text": "「ちゃんと」のだいたいのいみがわからない", "kind": "answered" },
+            { "text": "たべるときも、おなじいみかわからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "c1card", "text": "つまり、どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "ことば" },
+            { "id": "c2card", "text": "ロボはなにがすき？", "tag": "offtopic" },
+            { "id": "c3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "ぼくはいま「ちゃんと」のはなしをしてるよ。",
+            "repeat": "うーん、さっきとおなじこたえになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "「きちんと」って、なにをすることなの？" }
+        },
+        {
+          "robotSays": "つまり、へやのものを、もとのばしょにもどすことだよ。",
+          "claims": ["c2"],
+          "gap": "たべるときも、おなじいみかわからない",
+          "gapDistractors": [
+            { "text": "へやでなにをすればいいかわからない", "kind": "answered" },
+            { "text": "「きちんと」がなにをすることかわからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "c4card", "text": "たとえば、たべるときは？", "tag": "deepen", "move": "follow-tatoeba", "domain": "ことば" },
+            { "id": "c5card", "text": "「ちゃんと」ってことば、すき？", "tag": "sideways" },
+            { "id": "c6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "すきだよ。でも、いまのはなしからそれちゃった。",
+            "repeat": "うーん、さっきとおなじこたえになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "たべるときの「ちゃんと」も、おなじいみ？" },
+          "prediction": { "beforeRound": 2, "options": ["c4card", "c5card", "c6card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "たべるときの「ちゃんと」は、こぼさずたべることだよ。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「いまのちゃんとって、なに？」ってきくと、わかりあえるよ。",
+  "teachBack": "「ちゃんと」って、ばめんでいみがちがうこと、おしえてあげよう。",
+  "ouchiTalk": "きょう、ちゃんとっていわれて、なにかかんがえた？"
+}

@@ -1,0 +1,207 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MissionShell } from '../src/shell/MissionShell';
+import { pickNextMission } from '../src/shell/missionLibrary';
+import { parseRootType } from '../scripts/lib/rootType';
+import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
+import chantoMissionJson from '../src/modules/m1/topics/chanto/s2.json';
+import moduleJson from '../src/modules/m1/module.json';
+
+const chantoMission = chantoMissionJson as unknown as Mission;
+const ui = moduleJson.ui as ModuleUiStrings;
+const digPhase = chantoMission.phases[1] as DigPhase;
+const APPROVED_STAGE2_MOVES = new Set(moduleJson.followMoves);
+
+/**
+ * WO-12: Mission 1-1「ちゃんと しなさい」の「ちゃんと」 — the first real release-content vertical
+ * slice from the commissioned AD-04 v1 library, replacing bread (now archived, WO-11) as the
+ * mission that occupies id "m1-s2-1-1". structural lint (pipeline/04_lint.ts) already enforces
+ * the schema/kanji/AD-01 mechanics for this file exactly as it does for every other mission;
+ * these tests prove it is reachable, fully playable (both phases, all wrapper screens), that its
+ * chain genuinely exercises つまり and たとえば, and that milestones/growth fire the same way any
+ * other real content would — without overclaiming M3 (this is a genuine 2-layer chain, matching
+ * the 2 primary moves AD-04 marks for this topic, not 3).
+ */
+describe('chanto (1-1) — release classification and rootType contract', () => {
+  it('is classified release, and carries no fabricated approval', () => {
+    expect(chantoMission.contentClass).toBe('release');
+    expect(chantoMission.review).toBeUndefined();
+  });
+
+  it('declares a rootType from the closed WO-11C set (めあて), not an invented fourth value', () => {
+    expect(parseRootType(chantoMission.rootType)).toBe('めあて');
+  });
+});
+
+describe('chanto (1-1) — structure (AD-01 gap/distractor contract, accepted move vocabulary)', () => {
+  it('has one slot-assembly phase (たのむ) and one dig phase (ほる) with exactly 2 layers', () => {
+    expect(chantoMission.phases).toHaveLength(2);
+    expect(chantoMission.phases[0]!.template).toBe('slot-assembly');
+    expect(chantoMission.phases[1]!.template).toBe('dig');
+    expect(digPhase.layers).toHaveLength(2);
+  });
+
+  it('every layer satisfies the AD-01 gap/distractor contract', () => {
+    for (const layer of digPhase.layers) {
+      expect(layer.gap).toBeTruthy();
+      expect(layer.gapDistractors).toHaveLength(2);
+      const kinds = layer.gapDistractors!.map((d) => d.kind).sort();
+      expect(kinds).toEqual(['answered', 'other-layer']);
+      const deepenCards = layer.hand.filter((c) => c.tag === 'deepen');
+      expect(deepenCards).toHaveLength(1);
+      const choices = [layer.gap, ...layer.gapDistractors!.map((d) => d.text)];
+      expect(new Set(choices).size).toBe(3);
+    }
+  });
+
+  it('distractors stay inside the same chain — every other-layer distractor matches another layer\'s own target gap verbatim', () => {
+    const gaps = digPhase.layers.map((l) => l.gap);
+    for (const layer of digPhase.layers) {
+      const otherLayerText = layer.gapDistractors!.find((d) => d.kind === 'other-layer')!.text;
+      expect(gaps).toContain(otherLayerText);
+    }
+  });
+
+  it('the chain genuinely exercises つまり (layer 0) and たとえば (layer 1) — the two primary moves AD-04 marks for this topic — and no other/unsupported move', () => {
+    const layer0Deepen = digPhase.layers[0]!.hand.find((c) => c.tag === 'deepen')!;
+    const layer1Deepen = digPhase.layers[1]!.hand.find((c) => c.tag === 'deepen')!;
+    expect(layer0Deepen.move).toBe('follow-tsumari');
+    expect(layer1Deepen.move).toBe('follow-tatoeba');
+    for (const layer of digPhase.layers) {
+      const deepen = layer.hand.find((c) => c.tag === 'deepen')!;
+      expect(APPROVED_STAGE2_MOVES.has(deepen.move!)).toBe(true);
+    }
+  });
+
+  it('forms one continuous chain: layer 0\'s shallow "きちんと" answer is the very thing layer 1 makes concrete, and the root generalizes to a different situation', () => {
+    expect(digPhase.layers[0]!.robotSays).toContain('きちんと');
+    expect(digPhase.layers[0]!.gap).toContain('きちんと');
+    expect(digPhase.layers[1]!.robotSays).toContain('もどすこと'); // the concrete, tidying-room answer
+    expect(digPhase.layers[1]!.gap).toContain('たべるとき'); // whether the same meaning holds elsewhere
+    expect(digPhase.root.robotSays).toContain('たべるとき');
+    expect(digPhase.root.robotSays).not.toBe(digPhase.layers[1]!.robotSays); // a genuinely different answer, not a repeat
+  });
+
+  it('never frames the parent as wrong, vague, foolish, or an opponent — no rule-challenging or argument-winning language anywhere in the chain', () => {
+    const allText = [
+      ...chantoMission.phases.flatMap((p) =>
+        p.template === 'slot-assembly'
+          ? [...p.cards.map((c) => c.text), ...Object.values(p.archetypes).map((a) => a.robotSays)]
+          : [...p.layers.flatMap((l) => [l.robotSays, ...l.hand.map((c) => c.text)]), p.root.robotSays],
+      ),
+      chantoMission.tip, chantoMission.teachBack, chantoMission.ouchiTalk,
+    ].join(' ');
+    for (const forbidden of ['まちがって', 'だめ', 'へん', 'おかしい', 'まけ', 'かった']) {
+      expect(allText).not.toContain(forbidden);
+    }
+  });
+});
+
+describe('chanto (1-1) — reachable through the real m1 mission library', () => {
+  it('is the first mission a brand-new Stage-2 profile reaches, via the real missionOrder', () => {
+    const missions: Record<string, Pick<Mission, 'id' | 'stage'>> = {
+      [chantoMission.id]: { id: chantoMission.id, stage: chantoMission.stage },
+    };
+    const profile = {
+      id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2 as const,
+      progress: {},
+    };
+    const next = pickNextMission(moduleJson.missionOrder, missions, profile);
+    expect(next).toBe(chantoMission.id);
+  });
+
+  it('is one of the module\'s free mission ids', () => {
+    expect(moduleJson.freeMissionIds).toContain(chantoMission.id);
+  });
+});
+
+describe('chanto (1-1) — playable end to end (たのむ -> ほる -> wrapper screens), with honest (not overclaimed) milestone/growth evidence', () => {
+  let plausible: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    localStorage.clear();
+    plausible = vi.fn();
+    window.plausible = plausible;
+  });
+
+  afterEach(() => {
+    cleanup();
+    delete window.plausible;
+  });
+
+  async function passGate(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [firstChoice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(firstChoice as HTMLElement);
+  }
+
+  it('これでOK？ cannot be bypassed and Gap Naming is mandatory at both layers; the mission plays from the たのむ slot card through to ねっこ and every wrapper screen', async () => {
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={chantoMission}
+        ui={ui} followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+
+    await user.click(screen.getByText(ui.profileCreateLabel));
+    await user.click(screen.getByText('🦊'));
+    await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.coopSolo));
+
+    // たのむ: the clear card asks the mission's own opening question.
+    const clearCard = (chantoMission.phases[0]! as Extract<typeof chantoMission.phases[0], { template: 'slot-assembly' }>)
+      .cards.find((c) => c.tag === 'clear')!;
+    await user.click(screen.getByText(clearCard.text));
+
+    // ほる layer 0: これでOK？ is the only way forward, and it opens Gap Naming, not a bypass.
+    expect(screen.getByText(digPhase.layers[0]!.robotSays)).toBeInTheDocument();
+    expect(screen.queryByText(digPhase.layers[0]!.hand.find((c) => c.tag === 'deepen')!.text)).not.toBeInTheDocument();
+    await passGate(user);
+    await user.click(screen.getByText(digPhase.layers[0]!.hand.find((c) => c.tag === 'deepen')!.text));
+
+    // ほる layer 1: same gate, same mandatory Gap Naming, on the deeper (concrete) answer.
+    expect(screen.getByText(digPhase.layers[1]!.robotSays)).toBeInTheDocument();
+    await passGate(user);
+    await user.click(screen.getByText(digPhase.layers[1]!.hand.find((c) => c.tag === 'deepen')!.text));
+
+    // ねっこ reached.
+    expect(screen.getByText(digPhase.root.robotSays)).toBeInTheDocument();
+    await user.click(screen.getByText(ui.earlyOk));
+    expect(plausible).toHaveBeenCalledWith('m1_complete', expect.anything());
+
+    // Wrapper screens, straight through to the parent screen.
+    await user.click(screen.getByText(ui.handoffContinue)); // tip -> teach-back
+    expect(screen.getByText(chantoMission.teachBack)).toBeInTheDocument();
+    await user.click(screen.getByText(ui.handoffContinue)); // teach-back -> おうちトーク
+    expect(screen.getByText(chantoMission.ouchiTalk)).toBeInTheDocument();
+    await user.click(screen.getByText(ui.handoffContinue)); // -> handoff
+    await user.click(screen.getByText(ui.handoffContinue)); // -> parent
+    expect(screen.getByText(ui.parentScreenHeading)).toBeInTheDocument();
+
+    // Honest milestone/growth evidence for a genuine 2-layer chain:
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const profile = saved.profiles[0];
+    expect(profile.progress[chantoMission.id].done).toBe(true);
+
+    // M1 (どうぐが 手に入った): at least one move reached moratta — genuinely true here.
+    expect(profile.milestones.M1).toEqual({ achieved: true, achievedAt: expect.any(Number) });
+    // M3 (3れん ホリ) requires layerCount >= 3 — this chain has 2 layers by design (AD-04 marks
+    // exactly 2 primary moves for this topic), so M3 must NOT be claimed.
+    expect(profile.milestones.M3).toBeUndefined();
+
+    // Both moves this chain actually exercises reach moratta (rendered + one apt_use each, one
+    // domain each — not the 3 distinct domains tsukaeru requires from a single mission).
+    const tsumari = screen.getByText(moduleJson.cardTypes['follow-tsumari'].label).closest('.toolbox__tool')!;
+    expect(tsumari.className).toContain('toolbox__tool--obtained');
+    const tatoeba = screen.getByText(moduleJson.cardTypes['follow-tatoeba'].label).closest('.toolbox__tool')!;
+    expect(tatoeba.className).toContain('toolbox__tool--obtained');
+
+    // M2a proxy evidence (system-observable only — never sets milestones.M2 itself) was recorded
+    // from Gap Naming resolving at both layers, attributed to this one mission.
+    expect(profile.m2Evidence.proxyMissionIds).toEqual([chantoMission.id]);
+    expect(profile.milestones.M2).toBeUndefined(); // only an actual parent confirmation (WO-14) can set this
+  });
+});
