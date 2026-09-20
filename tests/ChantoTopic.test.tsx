@@ -13,6 +13,21 @@ const ui = moduleJson.ui as ModuleUiStrings;
 const digPhase = chantoMission.phases[1] as DigPhase;
 const APPROVED_STAGE2_MOVES = new Set(moduleJson.followMoves);
 
+/** AD-05 final native correction: layer 1's and root's robotSays now carry ruby markup
+ *  ({部屋|へや}, {場所|ばしょ}, {意味|いみ}) — getByText can't match the raw JSON string (with its
+ *  literal `{}` syntax) against what actually renders (<ruby>base<rt>reading</rt></ruby>). A
+ *  ruby element's own textContent is base+reading concatenated (e.g. "部屋へや"), not just the
+ *  base, so even a ruby-stripped comparison string wouldn't appear contiguously. Match on the
+ *  dig__answer paragraph's own rendered text instead, using the LONGEST plain (non-ruby) segment
+ *  of the original string as the needle — every ruby-containing mission string here still has a
+ *  substantial plain run either side of its ruby token(s). */
+function byDigAnswerText(rawMissionText: string) {
+  const plainSegments = rawMissionText.split(/\{[^{}|]+\|[^{}|]+\}/);
+  const needle = plainSegments.reduce((a, b) => (b.length > a.length ? b : a), '');
+  return (_content: string, element: Element | null) =>
+    element?.className === 'dig__answer' && needle.length > 0 && (element.textContent ?? '').includes(needle);
+}
+
 /**
  * WO-12: Mission 1-1「ちゃんと しなさい」の「ちゃんと」 — the first real release-content vertical
  * slice from the commissioned AD-04 v1 library, replacing bread (now archived, WO-11) as the
@@ -24,15 +39,17 @@ const APPROVED_STAGE2_MOVES = new Set(moduleJson.followMoves);
  * the 2 primary moves AD-04 marks for this topic, not 3).
  */
 describe('chanto (1-1) — release classification and rootType contract', () => {
-  it('is classified release; its prior Gate 2 stamp was removed by the AD-05 (WO-14) register migration and not fabricated back', () => {
-    // WO-12 closure recorded a real 酒井先生 review stamp here, but AD-05 (WO-14) rewrote the
-    // child-visible Japanese this mission renders (hub strings, move realizations, kanji floor,
-    // the tsumari question itself) — that stamp reviewed the OLD wording, so it would misrepresent
-    // the CURRENT text as reviewed if left in place. Gate 1 (facts.yaml's approved claims) is
-    // untouched and still valid; only Gate 2 (native-speaker review of the Japanese) is pending
-    // re-stamp.
+  it('is classified release, and carries the register-only Gate 2 re-review stamp recorded after the AD-05 final native correction', () => {
+    // WO-12 closure recorded a real 酒井先生 review stamp; AD-05 (WO-14)'s first pass then
+    // rewrote the child-visible Japanese and removed it (that stamp reviewed the OLD wording).
+    // This final native-review correction pass re-stamps it, with an explicit `note` marking the
+    // review's own scope as register-only — the underlying claims/inquiry structure were not
+    // re-reviewed as facts, only the Japanese wording.
     expect(chantoMission.contentClass).toBe('release');
-    expect(chantoMission.review).toBeUndefined();
+    expect(chantoMission.review).toEqual({
+      by: '酒井先生', date: '2026-09-20',
+      note: 'register-only re-review (AD-05 migration + native corrections)',
+    });
   });
 
   it('declares a rootType from the closed WO-11C set (めあて), not an invented fourth value', () => {
@@ -90,8 +107,10 @@ describe('chanto (1-1) — structure (AD-01 gap/distractor contract, accepted mo
     expect(digPhase.root.robotSays).toContain('とか'); // the eating example is hedged too, not asserted as final truth
     // The root's own landing point — what the mission is FOR — is that the concrete meaning
     // changes with the situation, not "eating means not spilling." This is the Founder Gate 1
-    // correction: the root must not end on a fixed second definition.
-    expect(digPhase.root.robotSays).toContain('ばめんで');
+    // correction: the root must not end on a fixed second definition. (AD-05 final native
+    // correction reworded the exact sentence but preserves this same landing point — 「意味が
+    // かわるんだね」, the eating example still hedged with 「とかね」, not asserted as the final
+    // meaning.)
     expect(digPhase.root.robotSays).toContain('かわる');
     expect(digPhase.root.robotSays).not.toBe(digPhase.layers[1]!.robotSays); // a genuinely different answer, not a repeat
   });
@@ -176,12 +195,12 @@ describe('chanto (1-1) — playable end to end (たのむ -> ほる -> wrapper s
     await user.click(screen.getByText(digPhase.layers[0]!.hand.find((c) => c.tag === 'deepen')!.text));
 
     // ほる layer 1: same gate, same mandatory Gap Naming, on the deeper (concrete) answer.
-    expect(screen.getByText(digPhase.layers[1]!.robotSays)).toBeInTheDocument();
+    expect(screen.getByText(byDigAnswerText(digPhase.layers[1]!.robotSays))).toBeInTheDocument();
     await passGate(user);
     await user.click(screen.getByText(digPhase.layers[1]!.hand.find((c) => c.tag === 'deepen')!.text));
 
     // ねっこ reached.
-    expect(screen.getByText(digPhase.root.robotSays)).toBeInTheDocument();
+    expect(screen.getByText(byDigAnswerText(digPhase.root.robotSays))).toBeInTheDocument();
     await user.click(screen.getByText(ui.earlyOk));
     expect(plausible).toHaveBeenCalledWith('m1_complete', expect.anything());
 

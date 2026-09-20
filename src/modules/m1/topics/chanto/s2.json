@@ -5,13 +5,14 @@
   "stage": 2,
   "title": "「ちゃんと しなさい」の「ちゃんと」",
   "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "review": { "by": "酒井先生", "date": "2026-09-20", "note": "register-only re-review (AD-05 migration + native corrections)" },
   "phases": [
     {
       "template": "slot-assembly",
       "slots": ["what"],
       "cards": [
         { "id": "w1", "slot": "what", "text": "ちゃんとって、よくきくよね", "tag": "vague" },
-        { "id": "w2", "slot": "what", "text": "「ちゃんと」って、どういういみ？", "tag": "clear" },
+        { "id": "w2", "slot": "what", "text": "『ちゃんと』って、どういういみ？", "tag": "clear" },
         { "id": "w3", "slot": "what", "text": "ロボは何がすき？", "tag": "offtopic" }
       ],
       "rules": [
@@ -21,12 +22,12 @@
       ],
       "archetypes": {
         "CLEAR": {
-          "robotSays": "「ちゃんと」は、きちんとすることだよ。",
+          "robotSays": "『ちゃんと』は、きちんとすることだよ。",
           "animation": "proud",
           "claims": ["c1"]
         },
         "VAGUE": {
-          "robotSays": "「ちゃんと」の話、いっぱいあるよ！",
+          "robotSays": "『ちゃんと』の話、いっぱいあるよ！",
           "animation": "confused",
           "tip": "何がききたいか、はっきりさせよう。",
           "claims": ["nonfactual"]
@@ -43,11 +44,11 @@
       "template": "dig",
       "layers": [
         {
-          "robotSays": "「ちゃんと」は、きちんとすることだよ。",
+          "robotSays": "『ちゃんと』は、きちんとすることだよ。",
           "claims": ["c1"],
           "gap": "「きちんと」が何をすることかわからない",
           "gapDistractors": [
-            { "text": "「ちゃんと」のだいたいのいみがわからない", "kind": "answered" },
+            { "text": "『ちゃんと』のだいたいのいみがわからない", "kind": "answered" },
             { "text": "食べるときも、同じいみかわからない", "kind": "other-layer" }
           ],
           "hand": [
@@ -56,13 +57,13 @@
             { "id": "c3card", "text": "もういちどいって", "tag": "repeat" }
           ],
           "replies": {
-            "offtopic": "ぼくは今「ちゃんと」の話をしてるよ。",
+            "offtopic": "ぼくは今『ちゃんと』の話をしてるよ。",
             "repeat": "うーん、さっきと同じ答えになっちゃった。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "「きちんと」って、何をすることなの？" }
         },
         {
-          "robotSays": "へやをかたづけるときは、ばしょにもどすことかな。",
+          "robotSays": "{部屋|へや}をかたづけるときは、もとの{場所|ばしょ}にもどすことかな。",
           "claims": ["c2"],
           "gap": "食べるときも、同じいみかわからない",
           "gapDistractors": [
@@ -71,19 +72,19 @@
           ],
           "hand": [
             { "id": "c4card", "text": "たとえば、食べるときは？", "tag": "deepen", "move": "follow-tatoeba", "domain": "ことば" },
-            { "id": "c5card", "text": "「ちゃんと」ってことば、すき？", "tag": "sideways" },
+            { "id": "c5card", "text": "『ちゃんと』ってことば、すき？", "tag": "sideways" },
             { "id": "c6card", "text": "もういちどいって", "tag": "repeat" }
           ],
           "replies": {
             "sideways": "すきだよ。でも、今の話からそれちゃった。",
             "repeat": "うーん、さっきと同じ答えになっちゃった。"
           },
-          "earlyOk": { "challenger": "ポン太", "asks": "食べるときの「ちゃんと」も、同じいみ？" },
+          "earlyOk": { "challenger": "ポン太", "asks": "食べるときの『ちゃんと』も、同じいみ？" },
           "prediction": { "beforeRound": 2, "options": ["c4card", "c5card", "c6card"] }
         }
       ],
       "root": {
-        "robotSays": "食べるときは、こぼさずとか。ばめんで、いみがかわるんだね。",
+        "robotSays": "食べるときは、こぼさないようにする、とかね。{意味|いみ}がかわるんだね。",
         "claims": ["c3"],
         "label": "ねっこ"
       }
@@ -91,5 +92,5 @@
   ],
   "tip": "「今の『ちゃんと』は、何をすればいい？」ってきくと、わかるよ。",
   "teachBack": "「今の『ちゃんと』は、何をすればいい？」って聞き方を教えよう。",
-  "ouchiTalk": "きょうの「ちゃんと」、なんのことか、いっしょにきいてみよう。"
+  "ouchiTalk": "きょうの『ちゃんと』、なんのことか、いっしょにきいてみよう。"
 }

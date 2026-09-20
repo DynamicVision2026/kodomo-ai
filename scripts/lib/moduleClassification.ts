@@ -53,7 +53,9 @@ export interface FactsFile {
 }
 
 export interface MissionRecord {
-  review?: { by: string; date: string };
+  /** `note` (WO-14 final correction): optional free-text scope annotation, e.g. "register-only
+   *  re-review" — never read here, gate:claims only ever checks `.by`. */
+  review?: { by: string; date: string; note?: string };
 }
 
 export interface MissionEntry {

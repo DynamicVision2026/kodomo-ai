@@ -91,21 +91,46 @@ describe('genkan (1-2) — the counterexample is child-owned and structurally ne
   });
 
   it('the root deepens the そと／うち boundary — categorized by where a shoe is used, not by how clean it looks — and never lands on rule-obedience ("きまり"/"きめて") or moralizes into 「だから、くつをぬごう」', () => {
-    // Gate 1 correction: the root must answer "why are even clean/new shoes removed?" with a
-    // boundary insight (shoes used outside belong to a separate category from the inside),
-    // explicitly ties back to the counterexample ("新しくても"), and must NOT terminate the
-    // inquiry with rule-authority language ("it's the rule") — that was the exact defect flagged.
-    // AD-05 (WO-14) migration: あたらしい/そと are now written with their kanji floor forms
-    // (新しい/外) — the underlying claim is unchanged, only the register/orthography moved.
-    expect(digPhase.root.robotSays).toContain('新しくても'); // ties back to the counterexample
-    expect(digPhase.root.robotSays).toContain('外で'); // the categorization is about where it's used...
-    expect(digPhase.root.robotSays).toContain('べつ'); // ...kept separate from the inside (a boundary, not a verdict)
+    // WO-14 final native-review correction: 酒井先生 found the original two-layer jump to this
+    // root too large for a G3-4 child to reach unaided, and repaired layer 1's own deepen
+    // question (see the epistemic-progression describe block below) rather than having ロボ state
+    // the root's premise early. The root itself now explicitly ties back to the "not just dirt"
+    // tension ("よごれだけじゃなくて") and lands on the そと／うち boundary as a category, not a
+    // verdict — never rule-authority language.
+    expect(digPhase.root.robotSays).toContain('よごれだけじゃなくて'); // ties back to the tension, not the counterexample word itself
+    expect(digPhase.root.robotSays).toContain('外と家の中'); // the categorization: outside vs. inside the house
+    expect(digPhase.root.robotSays).toContain('分ける'); // a boundary/distinction, not a verdict
     expect(digPhase.root.robotSays).not.toContain('きまり');
     expect(digPhase.root.robotSays).not.toContain('きめて');
     expect(digPhase.root.robotSays).not.toContain('だから');
     expect(digPhase.root.robotSays).not.toContain('ぬごう');
     // Not a bare repeat of the "dirty" reason as if it were now proven sufficient.
     expect(digPhase.root.robotSays).not.toBe(digPhase.layers[0]!.robotSays);
+  });
+
+  describe('WO-14 final native-review correction — the repaired epistemic progression (no dig-layer premise leak)', () => {
+    it('layer 1\'s deepen question builds directly on the just-confirmed counterexample and the "not just dirt" tension, without ロボ supplying the そと／うち premise itself', () => {
+      const layer1Deepen = digPhase.layers[1]!.hand.find((c) => c.tag === 'deepen')!;
+      expect(layer1Deepen.text).toContain('よごれてない'); // the tension: confirmed clean, still removed
+      // The question the child asks shares its opening clause with the gap they just named in
+      // Gap Naming — a natural continuation, not an unrelated non-sequitur.
+      expect(digPhase.layers[1]!.gap!.startsWith('よごれてないのに')).toBe(true);
+      expect(layer1Deepen.text.startsWith('よごれてないのに')).toBe(true);
+      // The question itself never supplies the root's own premise — that's what keeps this an
+      // authored QUESTION the child could plausibly generate, not an answer smuggled in as a
+      // question.
+      for (const forbidden of ['外', '家', '分ける', 'そと', 'うち']) {
+        expect(layer1Deepen.text).not.toContain(forbidden);
+      }
+    });
+
+    it('no dig-layer robotSays states the root\'s そと／うち boundary premise ahead of the root itself', () => {
+      for (const layer of digPhase.layers) {
+        for (const forbidden of ['外と家の中', '分ける', 'よごれだけじゃなくて']) {
+          expect(layer.robotSays).not.toContain(forbidden);
+        }
+      }
+    });
   });
 
   it('tip/teachBack/おうちトーク reinforce the transferable skill — たとえば？ as a test of whether an answer covers every known case — not "rules have many reasons" or "question household rules"', () => {

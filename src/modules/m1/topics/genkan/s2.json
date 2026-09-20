@@ -70,7 +70,7 @@
             { "text": "新しいくつもぬぐのか、わからない", "kind": "other-layer" }
           ],
           "hand": [
-            { "id": "g4card", "text": "どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "日常" },
+            { "id": "g4card", "text": "よごれてないのに、どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "日常" },
             { "id": "g5card", "text": "くつって、いくらするの？", "tag": "sideways" },
             { "id": "g6card", "text": "もういちどいって", "tag": "repeat" }
           ],
@@ -83,7 +83,7 @@
         }
       ],
       "root": {
-        "robotSays": "新しくても、外でつかうくつは、うちとべつなんだね。",
+        "robotSays": "そっか！よごれだけじゃなくて、外と家の中を分けるためなんだね。",
         "claims": ["c3"],
         "label": "ねっこ"
       }

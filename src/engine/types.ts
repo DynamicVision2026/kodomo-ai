@@ -189,8 +189,11 @@ export interface Mission {
   title: string;
   /** facts.yaml claim references backing this mission. Checked by gate:claims. */
   sources: string[];
-  /** Native-speaker review stamp. Checked by gate:claims. */
-  review?: { by: string; date: string };
+  /** Native-speaker review stamp. Checked by gate:claims. `note` (WO-14 final correction) is an
+   *  optional free-text annotation on the review's own scope — e.g. "register-only re-review" —
+   *  never read or branched on by any gate; it exists purely as a human-readable record of what
+   *  was (and wasn't) re-reviewed. */
+  review?: { by: string; date: string; note?: string };
   phases: Phase[];
   /** Post-mission wrapper screens. */
   tip: string;
