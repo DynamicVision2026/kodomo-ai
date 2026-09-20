@@ -1,14 +1,16 @@
-# Gate 1 evidence — all three claims are still "pending" Founder approval; nothing here has
-# been approved. `excerpt` is now a literal quoted sentence from each cited source, as supplied
-# and reported independently verified by the Coordinator (this session's own fetch attempts to
-# both sources remained blocked by network egress policy throughout). `statement` is scoped to
-# claim only what each excerpt actually supports — c1 in particular no longer asserts "living
+# Gate 1: PASSED for c1/c2/c3 — the Founder approved all three (see approvedBy/approvedAt per
+# claim below). `excerpt` is a literal quoted sentence from each cited source, supplied and
+# reported independently verified by the Coordinator (this session's own fetch attempts to both
+# sources remained blocked by network egress policy throughout). `statement` is scoped to claim
+# only what each excerpt actually supports — c1 in particular does not assert "living
 # microorganism" as its own release claim, since neither the excerpt nor the child-facing
 # Japanese it backs asserts that; the excerpt establishes identity and use in fermentation, not
 # a claim about the organism's living/non-living nature.
 #
-# Still required before Gate 1 approval: pipeline/02_crosscheck.ts (independent model
-# re-verification) has not been run against these claims; Founder sign-off itself.
+# Gate 1 approval does not imply Gate 2: the Japanese child-facing wording in s2.json still has
+# no native-speaker review stamp, and none is added here. pipeline/02_crosscheck.ts (independent
+# model re-verification) has also not been run against these claims — that remains open, same as
+# before this approval.
 topic: bread
 question: パンは なぜ ふくらむ？
 claims:
@@ -20,7 +22,9 @@ claims:
     # DOI: 10.3389/fgene.2020.584718. PMCID: PMC7686800.
     excerpt: "The first is the addition of commercial baker's yeast, Saccharomyces cerevisiae, to dough."
     adultLevelSource: true
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c2
     statement: "During bread fermentation, Saccharomyces cerevisiae consumes fermentable sugars and produces ethanol and carbon dioxide, with the fermentation process resulting in dough rising."
     sourceUrl: "https://doi.org/10.3389/fgene.2020.584718"
@@ -28,7 +32,9 @@ claims:
     # DOI: 10.3389/fgene.2020.584718. PMCID: PMC7686800.
     excerpt: "The fermentation process that results in dough rising relies on S. cerevisiae consuming sugar and producing ethanol and CO2."
     adultLevelSource: true
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
     # Child-facing Japanese this claim backs is UNCHANGED, per instruction, pending Gate 2:
     # 「イーストが さとうを たべて、ガスを 出すんだ。」
   - id: c3
@@ -42,4 +48,6 @@ claims:
     # dioxide, through the gluten matrix — the mechanism `statement` above summarizes.
     excerpt: "The second factor is the ability of the dough to retain gas."
     adultLevelSource: true
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
