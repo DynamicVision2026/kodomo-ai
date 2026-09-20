@@ -130,6 +130,8 @@ export interface ModuleUiStrings {
   lockedMessage: string;
   /** WO-02: the 「これでOK？」 judgment gate's "not enough" response, opposite of earlyOk. */
   judgeNotEnough: string;
+  /** WO-05: heading for 問いのどうぐばこ, the Toolbox growth surface on the parent screen. */
+  toolboxHeading: string;
 }
 
 export interface Mission {

@@ -6,6 +6,7 @@ import { applyMoveRendered, applyAptUse } from '../engine/scaffold';
 import { track } from '../engine/analytics';
 import { ProfilePicker } from './ProfilePicker';
 import { pickNextMission } from './missionLibrary';
+import { Toolbox } from './Toolbox';
 import { SlotAssembly } from '../templates/slot-assembly';
 import { Dig, type UseEvidence } from '../templates/dig';
 import { Handoff } from '../templates/handoff';
@@ -28,6 +29,10 @@ export interface MissionShellProps {
   mission: Mission;
   ui: ModuleUiStrings;
   missionLibrary?: MissionLibrary;
+  /** WO-05: module.json's own `followMoves`/`cardTypes`, for the parent screen's Toolbox — never
+   *  a second hard-coded move list or label source. Omit for a module with no follow moves. */
+  followMoves?: string[];
+  cardTypes?: Record<string, { label: string }>;
 }
 
 type Screen =
@@ -51,7 +56,10 @@ type Screen =
  * failure (src/engine/storage.ts), so this component just uses them normally — the current
  * session keeps working either way, it just won't be remembered after a reload.
  */
-export function MissionShell({ moduleId, freeMissionIds, mission: defaultMission, ui, missionLibrary }: MissionShellProps) {
+export function MissionShell({
+  moduleId, freeMissionIds, mission: defaultMission, ui, missionLibrary,
+  followMoves = [], cardTypes = {},
+}: MissionShellProps) {
   const [appState, setAppState] = useState<AppState>(() => load());
   const [profile, setProfile] = useState<Profile | null>(null);
   const [solo, setSolo] = useState(false);
@@ -282,11 +290,18 @@ export function MissionShell({ moduleId, freeMissionIds, mission: defaultMission
     );
   }
 
-  // screen.kind === 'parent'. Structural placeholder only — actual parent-voice kit/price/
-  // guarantee copy is Task 7/8's, and needs the legal wording check (spec v0.5 §16) first.
+  // screen.kind === 'parent'. Parent-voice kit/price/guarantee copy is Task 7/8's own, still
+  // pending the legal wording check (spec v0.5 §16) — the Toolbox (WO-05) is this screen's own,
+  // separate concern: a read-only growth surface over the active profile's own moveProgress.
   return (
     <div className="mission-shell__parent">
       <p className="mission-shell__parent-heading">{ui.parentScreenHeading}</p>
+      <Toolbox
+        followMoves={followMoves}
+        cardTypes={cardTypes}
+        moveProgress={profile?.moveProgress ?? {}}
+        heading={ui.toolboxHeading}
+      />
     </div>
   );
 }

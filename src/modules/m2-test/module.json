@@ -23,7 +23,8 @@
     "teachbackSkip": "あとでやる",
     "parentScreenHeading": "おうちの方へ",
     "lockedMessage": "このミッションは まだ あそべないよ",
-    "judgeNotEnough": "まだ たりない"
+    "judgeNotEnough": "まだ たりない",
+    "toolboxHeading": "といの どうぐばこ"
   },
   "cardTypes": {
     "check": { "label": "みなおし" }

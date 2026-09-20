@@ -21,5 +21,7 @@ createRoot(document.getElementById('root')!).render(
     mission={mission}
     missionLibrary={{ missionOrder: moduleJson.missionOrder, missions }}
     ui={ui}
+    followMoves={moduleJson.followMoves}
+    cardTypes={moduleJson.cardTypes}
   />,
 );

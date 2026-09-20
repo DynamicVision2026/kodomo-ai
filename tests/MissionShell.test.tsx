@@ -49,7 +49,16 @@ async function passGate(user: ReturnType<typeof userEvent.setup>) {
 describe('MissionShell', () => {
   it('runs profile -> coop -> both phases (solo) -> every wrapper screen -> parent, tracking each beat', async () => {
     const user = userEvent.setup();
-    render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
+    render(
+      <MissionShell
+        moduleId="m1"
+        freeMissionIds={moduleJson.freeMissionIds}
+        mission={mission}
+        ui={ui}
+        followMoves={moduleJson.followMoves}
+        cardTypes={moduleJson.cardTypes}
+      />,
+    );
 
     await createAndSelectProfile(user);
 
@@ -90,6 +99,15 @@ describe('MissionShell', () => {
 
     expect(screen.getByText(ui.parentScreenHeading)).toBeInTheDocument();
     expect(plausible).toHaveBeenCalledWith('parent_screen_view', expect.anything());
+
+    // WO-05: the Toolbox on this same parent screen reflects this profile's own moveProgress —
+    // follow-naze reached moratta over the two layers just played (both in one domain, so not
+    // tsukaeru — see the moveProgress assertion further down this file).
+    expect(screen.getByText(ui.toolboxHeading)).toBeInTheDocument();
+    const naze = screen.getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
+    expect(naze.className).toContain('toolbox__tool--obtained');
+    const tatoeba = screen.getByText(moduleJson.cardTypes['follow-tatoeba'].label).closest('.toolbox__tool')!;
+    expect(tatoeba.className).toContain('toolbox__tool--undiscovered'); // never played this mission
   });
 
   it('skipping teach-back tracks teachback_skipped instead of teachback_done', async () => {
@@ -160,6 +178,91 @@ describe('MissionShell', () => {
     expect(plausible).not.toHaveBeenCalledWith('apt_use', expect.anything());
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
     expect(saved.profiles[0].moveProgress ?? {}).not.toHaveProperty('undefined');
+  });
+
+  it('WO-05: two profiles keep independent Toolbox state, which survives a reload', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+
+    // Profile A plays the full mission, building real progress on follow-naze.
+    await user.click(screen.getByText(ui.profileCreateLabel));
+    await user.click(screen.getByText('🦊'));
+    await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await passGate(user);
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await passGate(user);
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText(ui.earlyOk));
+    await user.click(screen.getByText(ui.handoffContinue)); // past tip
+    await user.click(screen.getByText(ui.teachbackSkip));
+    await user.click(screen.getByText(ui.handoffContinue)); // past ouchi
+    await user.click(screen.getByText(ui.handoffContinue)); // past handoff prompt -> parent
+
+    const nazeForA = screen.getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
+    expect(nazeForA.className).toContain('toolbox__tool--obtained');
+
+    // Reload: a fresh MissionShell instance, reading the same localStorage from scratch.
+    unmount();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+
+    // Profile B is a second, brand-new profile — untouched by anything profile A did.
+    await user.click(screen.getByText(ui.profileCreateLabel));
+    await user.click(screen.getByText('🐰'));
+    await user.click(screen.getByText('うさぎ'));
+    await user.click(screen.getByText(ui.profileConfirm));
+
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles).toHaveLength(2);
+    // Profile A's progress survived the reload untouched.
+    expect(saved.profiles[0].moveProgress['follow-naze'].rung).toBe('moratta');
+    // Profile B is fully independent — no follow-naze entry at all yet.
+    expect(saved.profiles[1].moveProgress ?? {}).toEqual({});
+  });
+
+  it('WO-05: reaching tsukaeru does not change Dig — the hand is still complete and unfiltered', async () => {
+    // Seed storage with a profile whose follow-naze is already at tsukaeru, then confirm the
+    // dig phase plays out exactly like a fresh profile's — same cards, same gate, no hiding.
+    localStorage.setItem('m-app.v1', JSON.stringify({
+      profiles: [{
+        id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
+        moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
+      }],
+      entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
+    }));
+
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await user.click(screen.getByText('たぬき')); // selects the seeded (already-existing) profile directly
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText(ui.judgeNotEnough));
+
+    // Gap Naming still shows all three authored choices, and the hand (once reached) is the
+    // same three cards — tsukaeru changed nothing about what Dig shows or how it behaves.
+    expect(document.querySelectorAll('.dig__gap-naming-option')).toHaveLength(3);
+    const [firstChoice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(firstChoice as HTMLElement);
+    expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
+    expect(screen.getByText('パンは すきですか？')).toBeInTheDocument();
+    expect(screen.getByText('もう いちど いって')).toBeInTheDocument();
   });
 
   it('shows the locked screen when hasAccess denies the mission, never starting it', async () => {
