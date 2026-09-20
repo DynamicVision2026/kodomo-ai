@@ -1,0 +1,19 @@
+# AD-04 Bank topic B01. See docs/AD-04-bank-topics.md for the accepted 12-topic list.
+# Gate 1: PENDING. Gate 2: PENDING. type: practice (WO-11 decision 6) — every claim below is
+# framed as a commonly-observed pattern in how the word 「あとで」 is used, never as a fixed
+# definition.
+topic: bank-atode
+question: 「あとで」って、いつ？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common first explanation for 'あとで' (later) is that it means after a short while."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "Depending on who says it, 'あとで' commonly ranges anywhere from a few minutes to an hour or more."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand 'あとで' is that its actual length is decided by the person and situation, not a fixed amount of time."
+    status: pending

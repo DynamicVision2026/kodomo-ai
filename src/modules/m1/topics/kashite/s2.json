@@ -1,0 +1,94 @@
+{
+  "id": "m1-s2-1-7",
+  "contentClass": "release",
+  "rootType": "めあて",
+  "stage": 2,
+  "title": "「かして」と言われたら、かさなきゃいけない？",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["what"],
+      "cards": [
+        { "id": "w1", "slot": "what", "text": "『かして』の話、きいて", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "『かして』って言われたら、かさなきゃダメ？", "tag": "clear" },
+        { "id": "w3", "slot": "what", "text": "ロボは、何か かしたことある？", "tag": "offtopic" }
+      ],
+      "rules": [
+        { "when": { "what": "clear" }, "archetype": "CLEAR" },
+        { "when": { "what": "offtopic" }, "archetype": "OFFTOPIC" },
+        { "when": { "what": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": {
+          "robotSays": "『かして』って言われたら、かすのが やさしさだよ。",
+          "animation": "proud",
+          "claims": ["c1"]
+        },
+        "VAGUE": {
+          "robotSays": "『かして』の話、いろいろあるよ！",
+          "animation": "confused",
+          "tip": "何がききたいか、はっきりさせよう。",
+          "claims": ["nonfactual"]
+        },
+        "OFFTOPIC": {
+          "robotSays": "うーん、今はべつの話だよ。",
+          "animation": "thinking",
+          "claims": ["nonfactual"]
+        }
+      },
+      "predictions": [{ "beforeRound": 1, "options": ["CLEAR", "VAGUE", "OFFTOPIC"] }]
+    },
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "『かして』って言われたら、かすのが やさしさだよ。",
+          "claims": ["c1"],
+          "gap": "いつでも、かさなきゃいけないのか、わからない",
+          "gapDistractors": [
+            { "text": "かすのは、やさしさということは、わかった", "kind": "answered" },
+            { "text": "なんで、むりに かさなくても いいのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "k1card", "text": "どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "社会とひと" },
+            { "id": "k2card", "text": "ロボは、かしてって 言われたこと ある？", "tag": "offtopic" },
+            { "id": "k3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "いつでも、かさなきゃ いけないのかな？" }
+        },
+        {
+          "robotSays": "たいせつな ものは、むりに かさなくても いいんだよ。",
+          "claims": ["c2"],
+          "gap": "なんで、むりに かさなくても いいのか、わからない",
+          "gapDistractors": [
+            { "text": "たいせつな ものは べつ、というのは わかった", "kind": "answered" },
+            { "text": "いつでも、かさなきゃいけないのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "k4card", "text": "なんで、むりしなくて いいの？", "tag": "deepen", "move": "follow-naze", "domain": "社会とひと" },
+            { "id": "k5card", "text": "たとえば、どんな とき？", "tag": "deepen", "move": "follow-tatoeba", "domain": "社会とひと" },
+            { "id": "k6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "むりに かさなくても、いいのかな？" },
+          "prediction": { "beforeRound": 2, "options": ["k4card", "k5card", "k6card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！じぶんの 気もちも たいせつに して、きめて いいんだね。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「なんで？」や「たとえば？」で、じぶんの 気もちも きいてみよう。",
+  "teachBack": "きき方を えらんで、聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの『かして』も、じぶんの 気もちを きいてみよう。"
+}

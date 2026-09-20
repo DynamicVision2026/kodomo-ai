@@ -1,0 +1,62 @@
+{
+  "id": "bank-b02",
+  "contentClass": "release",
+  "rootType": "めあて",
+  "stage": 2,
+  "title": "エスカレーターでは、片側をあける？",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "エスカレーターでは、かたがわを あけて 立つんだよ。",
+          "claims": ["c1"],
+          "gap": "なんで、あけるのか、わからない",
+          "gapDistractors": [
+            { "text": "かたがわに 立つことは、わかった", "kind": "answered" },
+            { "text": "どっちがわか、いつも おなじなのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "be1card", "text": "なんで、あけるの？", "tag": "deepen", "move": "follow-naze", "domain": "社会とひと" },
+            { "id": "be2card", "text": "エスカレーターは、だれが つくったの？", "tag": "offtopic" },
+            { "id": "be3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、あけるのかな？" }
+        },
+        {
+          "robotSays": "いそいでる 人が、通れるように なんだよ。",
+          "claims": ["c2"],
+          "gap": "どっちがわか、いつも おなじなのか、わからない",
+          "gapDistractors": [
+            { "text": "いそいでる人の ためとは、わかった", "kind": "answered" },
+            { "text": "なんで、あけるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "be4card", "text": "ほかにもある？", "tag": "deepen", "move": "follow-hokaniwa", "domain": "社会とひと" },
+            { "id": "be5card", "text": "エスカレーターは、早いの？", "tag": "sideways" },
+            { "id": "be6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "どっちがわか、いつも 同じかな？" },
+          "prediction": { "beforeRound": 2, "options": ["be4card", "be5card", "be6card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！あける がわは、ちいきで ちがうんだね。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「ほかにもある？」ってきくと、いろんな ちいきの ちがいが わかるよ。",
+  "teachBack": "「ほかにもある？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの ちいきでは、どうか、「ほかにもある？」できいてみよう。"
+}

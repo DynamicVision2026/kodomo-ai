@@ -1,0 +1,114 @@
+{
+  "id": "m1-s2-1-8",
+  "contentClass": "release",
+  "rootType": "しくみ",
+  "stage": 2,
+  "title": "ランドセル 6年たっても、まだ同じ？",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3", "facts.yaml#c4"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["what"],
+      "cards": [
+        { "id": "w1", "slot": "what", "text": "ランドセルの話、きいて", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "ランドセルは、6年つかっても、まだ同じ？", "tag": "clear" },
+        { "id": "w3", "slot": "what", "text": "ロボは、ランドセル もってる？", "tag": "offtopic" }
+      ],
+      "rules": [
+        { "when": { "what": "clear" }, "archetype": "CLEAR" },
+        { "when": { "what": "offtopic" }, "archetype": "OFFTOPIC" },
+        { "when": { "what": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": {
+          "robotSays": "見た目は かわっても、ずっと 同じ ランドセルだよ。",
+          "animation": "proud",
+          "claims": ["c1"]
+        },
+        "VAGUE": {
+          "robotSays": "ランドセルの話、いろいろあるよ！",
+          "animation": "confused",
+          "tip": "何がききたいか、はっきりさせよう。",
+          "claims": ["nonfactual"]
+        },
+        "OFFTOPIC": {
+          "robotSays": "うーん、今はべつの話だよ。",
+          "animation": "thinking",
+          "claims": ["nonfactual"]
+        }
+      },
+      "predictions": [{ "beforeRound": 1, "options": ["CLEAR", "VAGUE", "OFFTOPIC"] }]
+    },
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "見た目は かわっても、ずっと 同じ ランドセルだよ。",
+          "claims": ["c1"],
+          "gap": "しゅうりで、パーツが かわっても、同じなのか、わからない",
+          "gapDistractors": [
+            { "text": "見た目は かわることは、わかった", "kind": "answered" },
+            { "text": "何が、かわってないのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "r1card", "text": "たとえば？", "tag": "deepen", "move": "follow-tatoeba", "domain": "日常" },
+            { "id": "r2card", "text": "ランドセルは、どこで買うの？", "tag": "offtopic" },
+            { "id": "r3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "パーツが かわっても、同じなのかな？" }
+        },
+        {
+          "robotSays": "たとえば、ベルトも しんも、はんぶん かえたことが あるんだよ。",
+          "claims": ["c2"],
+          "gap": "何が、かわってないのか、わからない",
+          "gapDistractors": [
+            { "text": "ベルトも しんも かえたことは、わかった", "kind": "answered" },
+            { "text": "ほかにも、そう言えるものが あるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "r4card", "text": "なんで、それでも 同じって 言えるの？", "tag": "deepen", "move": "follow-naze", "domain": "日常" },
+            { "id": "r5card", "text": "ランドセルは、いくらするの？", "tag": "sideways" },
+            { "id": "r6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、それでも 同じって 言えるのかな？" }
+        },
+        {
+          "robotSays": "きみが、ずっと つかってきた、ひとつの ものだからだよ。",
+          "claims": ["c3"],
+          "gap": "ほかにも、そう言えるものが あるのか、わからない",
+          "gapDistractors": [
+            { "text": "きみが つかってきたことは、わかった", "kind": "answered" },
+            { "text": "しゅうりで、パーツが かわっても、同じなのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "r7card", "text": "ほかにもある？", "tag": "deepen", "move": "follow-hokaniwa", "domain": "日常" },
+            { "id": "r8card", "text": "ランドセルは、だれが つくったの？", "tag": "sideways" },
+            { "id": "r9card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、そういうものは ないかな？" },
+          "prediction": { "beforeRound": 3, "options": ["r7card", "r8card", "r9card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！同じかどうかは、なかみじゃなくて、時間が きめるんだね。",
+        "claims": ["c4"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「なんで？」ってきくと、同じって いえる りゆうが わかるよ。",
+  "teachBack": "「なんで？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの『ずっと つかうもの』も、「なんで 同じ？」できいてみよう。"
+}

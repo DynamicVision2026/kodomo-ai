@@ -1,0 +1,118 @@
+{
+  "id": "m1-s2-1-5",
+  "contentClass": "release",
+  "rootType": "わかれ",
+  "stage": 2,
+  "title": "「みんなやってる」の「みんな」",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3", "facts.yaml#c4"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["what"],
+      "cards": [
+        { "id": "w1", "slot": "what", "text": "『みんな』の話、きいて", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "『みんな』って、だれのこと？", "tag": "clear" },
+        { "id": "w3", "slot": "what", "text": "ロボは、友だち 多い？", "tag": "offtopic" }
+      ],
+      "rules": [
+        { "when": { "what": "clear" }, "archetype": "CLEAR" },
+        { "when": { "what": "offtopic" }, "archetype": "OFFTOPIC" },
+        { "when": { "what": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": {
+          "robotSays": "「みんな、スマホ もってる」って、言ってたよ。",
+          "animation": "proud",
+          "claims": ["c1"]
+        },
+        "VAGUE": {
+          "robotSays": "『みんな』の話、いろいろあるよ！",
+          "animation": "confused",
+          "tip": "何がききたいか、はっきりさせよう。",
+          "claims": ["nonfactual"]
+        },
+        "OFFTOPIC": {
+          "robotSays": "うーん、今はべつの話だよ。",
+          "animation": "thinking",
+          "claims": ["nonfactual"]
+        }
+      },
+      "predictions": [{ "beforeRound": 1, "options": ["CLEAR", "VAGUE", "OFFTOPIC"] }]
+    },
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "「みんな、スマホ もってる」って、言ってたよ。",
+          "claims": ["c1"],
+          "gap": "『みんな』が、だれなのか、わからない",
+          "gapDistractors": [
+            { "text": "スマホの話ということは、わかった", "kind": "answered" },
+            { "text": "なんで、『みんな』って言うのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "m1card", "text": "ってことは、クラス{全員|ぜんいん}ってこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "ことば" },
+            { "id": "m2card", "text": "スマホって、いつからあるの？", "tag": "offtopic" },
+            { "id": "m3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "『みんな』って、クラス{全員|ぜんいん}のことかな？" }
+        },
+        {
+          "robotSays": "ううん、じっさいは、2、3人だったみたいだよ。",
+          "claims": ["c2"],
+          "gap": "なんで、『みんな』って言うのか、わからない",
+          "gapDistractors": [
+            { "text": "2、3人だったことは、わかった", "kind": "answered" },
+            { "text": "ほかにも、そう かんじることが あるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "m4card", "text": "なんで、『みんな』って言うの？", "tag": "deepen", "move": "follow-naze", "domain": "社会とひと" },
+            { "id": "m5card", "text": "スマホは、いくらするの？", "tag": "sideways" },
+            { "id": "m6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、すこしなのに『みんな』って言うのかな？" }
+        },
+        {
+          "robotSays": "ほしい気もちが つよいと、『みんな』って かんじちゃうのかもね。",
+          "claims": ["c3"],
+          "gap": "ほかにも、そう かんじることが あるのか、わからない",
+          "gapDistractors": [
+            { "text": "気もちが つよいことは、わかった", "kind": "answered" },
+            { "text": "『みんな』が、だれなのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "m7card", "text": "ほかにもある？", "tag": "deepen", "move": "follow-hokaniwa", "domain": "社会とひと" },
+            { "id": "m8card", "text": "ロボは、何が ほしい？", "tag": "sideways" },
+            { "id": "m9card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、そうかんじることは ないかな？" },
+          "prediction": { "beforeRound": 3, "options": ["m7card", "m8card", "m9card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！『みんな』は、人数じゃなくて、気もちの言い方なんだね。",
+        "claims": ["c4"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「ってことは、〜ってこと？」ってきくと、じっさいの人数が わかるよ。",
+  "teachBack": "「ってことは、〜ってこと？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの『みんな』も、「ってことは、〜ってこと？」できいてみよう。",
+  "perspective": {
+    "voice": "べつの子",
+    "text": "わたしの『みんな』は、3人ぐらいのことだったよ。"
+  }
+}

@@ -1,0 +1,26 @@
+# Gate 1: PENDING. No Founder approval has been granted for c1-c4 yet.
+# Gate 2: PENDING. No native-speaker (酒井先生) review has occurred for this mission's Japanese
+# wording yet. s2.json's `review` field is correctly absent.
+#
+# type: practice (WO-11 decision 6): every claim is framed as a commonly-observed pattern about
+# a well-used school backpack (ランドセル), never as a claim about identity/philosophy in the
+# abstract — the abstract point is left to the mission's own root, not asserted as fact here.
+topic: randoseru
+question: ランドセルは、6年つかっても、まだ同じ？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common first explanation children hear for whether a backpack used for 6 years is 'still the same' is that it looks the same overall despite appearance changes."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A commonly cited fact about a well-used 6-year backpack is that more than half of its parts, such as the strap and the core frame, have typically been repaired or replaced at some point."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed reason it's still called 'the same' backpack is that it's the one continuous thing the same person has used the whole time, not that its materials never changed."
+    status: pending
+  - id: c4
+    type: practice
+    statement: "A commonly framed way to understand whether something stays 'the same' over time is that it's decided by the continuity of use, not by whether its physical materials stayed identical."
+    status: pending

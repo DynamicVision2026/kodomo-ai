@@ -1,0 +1,20 @@
+# AD-04 Bank topic B10. See docs/AD-04-bank-topics.md — special caution: keep secular and
+# ordinary-child framing; native review required. This topic never invokes a specific religious
+# framework, doctrine, or requirement — it describes 「いただきます」 as an ordinary, widely
+# practiced expression of gratitude said before eating, nothing more specific than that.
+# Gate 1: PENDING. Gate 2: PENDING (native review explicitly required for this topic).
+topic: bank-itadakimasu
+question: 「いただきます」は、だれに言っている？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common first explanation for 「いただきます」 is that it's said to the person who cooked the meal."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A common further observation is that it's also commonly understood to include the people who grew or raised the food (vegetables, meat, etc.), not only the cook."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand 「いただきます」 is that it's an expression of thanks directed at many people involved in the meal, not just one person."
+    status: pending

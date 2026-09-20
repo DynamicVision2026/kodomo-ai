@@ -1,0 +1,21 @@
+# Gate 1: PENDING. No Founder approval has been granted for c1-c3 yet.
+# Gate 2: PENDING. No native-speaker (酒井先生) review has occurred for this mission's Japanese
+# wording yet. s2.json's `review` field is correctly absent.
+#
+# type: practice (WO-11 decision 6): every claim is framed as a commonly-held view about lending
+# among children, never as an absolute rule that lending is always required or never required.
+topic: kashite
+question: 「かして」と言われたら、かさなきゃいけない？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common first explanation children hear for lending something when asked ('かして') is that lending is a kind thing to do."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A commonly recognized exception is that something precious doesn't have to be lent out just because it was asked for."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand whether to lend something is that it's a decision the lender can make while genuinely taking their own feelings into account, not an absolute obligation."
+    status: pending

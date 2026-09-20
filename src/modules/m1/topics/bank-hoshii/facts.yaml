@@ -1,0 +1,18 @@
+# AD-04 Bank topic B08. See docs/AD-04-bank-topics.md.
+# Gate 1: PENDING. Gate 2: PENDING. type: practice throughout — framed as a commonly-observed
+# feeling, never as a critique of consumerism or a moral judgment about wanting things.
+topic: bank-hoshii
+question: みんなが持っているものが、ほしくなる
+claims:
+  - id: c1
+    type: practice
+    statement: "A common reason children give for wanting something is that everyone else already has it."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "Children commonly notice, on reflection, that they can feel like they want something even when not having it wouldn't actually cause them any trouble."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand wanting something is that it doesn't always mean needing it."
+    status: pending

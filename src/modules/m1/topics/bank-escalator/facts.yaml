@@ -1,0 +1,23 @@
+# AD-04 Bank topic B02. See docs/AD-04-bank-topics.md — special caution: regional variation +
+# sourced factual component.
+# Gate 1: PENDING. Gate 2: PENDING (native review explicitly required for this topic's regional
+# framing).
+# c3 is a FACT claim, not practice: the claim that which side is kept open varies by region in
+# Japan is a real, sourceable convention (not merely "commonly said" the way practice claims
+# are), so it is marked pending-factual-verification rather than given a fabricated source.
+topic: bank-escalator
+question: エスカレーターでは、片側をあける？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common first explanation for standing on an escalator is that you leave one side open (walk-side) rather than standing across both sides."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A common reason given for leaving one side open is so that people in a hurry can pass by."
+    status: pending
+  - id: c3
+    type: fact
+    statement: "Which side is conventionally left open on an escalator varies by region within Japan (for example, differing between the Kanto and Kansai areas), rather than being one single nationwide rule."
+    status: pending-factual-verification
+    evidenceSlot: "Needs a real, checkable regional-custom source before Gate 1 can pass for this claim specifically — not to be filled with an invented citation."

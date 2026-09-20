@@ -1,0 +1,24 @@
+# AD-04 Bank topic B05. See docs/AD-04-bank-topics.md — special caution: early-born / school-year
+# factual sensitivity. This topic stays in "why does a system need a cutoff line at all"
+# territory and never frames any individual child's birth date as advantageous or
+# disadvantageous.
+# Gate 1: PENDING. Gate 2: PENDING (native review required — sensitivity check).
+# c2 is a FACT claim: the legal/administrative necessity of a school-year cutoff date is a real,
+# sourceable convention (Japan's School Education Act enrollment-age counting), so it is marked
+# pending-factual-verification rather than given a fabricated source.
+topic: bank-gakunen
+question: 4月1日と4月2日で、どうして学年が変わる？
+claims:
+  - id: c1
+    type: practice
+    statement: "A commonly known fact among children is that whether you're born on April 1st or April 2nd can put you in a different school year (学年) from a classmate born just one day apart."
+    status: pending
+  - id: c2
+    type: fact
+    statement: "A school system that groups children into fixed yearly grades needs some specific date to draw the dividing line somewhere, and Japan's convention places that line at April 1st/2nd."
+    status: pending-factual-verification
+    evidenceSlot: "Needs a real, checkable source on Japan's School Education Act age-counting convention before Gate 1 can pass for this claim specifically — not to be filled with an invented citation."
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand where a school-year cutoff line is drawn is that it's a matter of convention/agreement, not something that could avoid needing a line somewhere."
+    status: pending

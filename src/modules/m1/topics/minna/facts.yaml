@@ -1,0 +1,27 @@
+# Gate 1: PENDING. No Founder approval has been granted for c1-c4 yet.
+# Gate 2: PENDING. No native-speaker (酒井先生) review has occurred for this mission's Japanese
+# wording yet. s2.json's `review` field is correctly absent.
+#
+# type: practice (WO-11 decision 6): every claim is framed as a commonly-observed pattern in how
+# children use the word 「みんな」, never as a claim about any specific child's honesty or as
+# "adults/rules exaggerate too" — this mission is about the child's OWN claim, not a critique of
+# adults or rules.
+topic: minna
+question: 「みんなやってる」の「みんな」って、だれのこと？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common thing children say when they want something is that 'everyone' (みんな) already has it."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "When checked more closely, the group referred to as 'みんな' commonly turns out to be a specific small number of people, not literally everyone."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly offered explanation for saying 'みんな' when only a few people are meant is that a strong personal feeling of wanting something can make it feel like everyone has it."
+    status: pending
+  - id: c4
+    type: practice
+    statement: "A commonly framed way to understand 'みんな' in this kind of claim is that it functions as an expression of how strongly someone feels, not a literal headcount."
+    status: pending

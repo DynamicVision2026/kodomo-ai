@@ -1,0 +1,17 @@
+# AD-04 Bank topic B03. See docs/AD-04-bank-topics.md.
+# Gate 1: PENDING. Gate 2: PENDING. type: practice throughout.
+topic: bank-janken
+question: じゃんけんで順番を決める
+claims:
+  - id: c1
+    type: practice
+    statement: "A common practice for deciding turn order among children is to use rock-paper-scissors (じゃんけん)."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A common reason given for using rock-paper-scissors is that it's fair to everyone involved."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand rock-paper-scissors as a fairness method is that nobody gets a built-in advantage going in — the outcome isn't decided ahead of time."
+    status: pending

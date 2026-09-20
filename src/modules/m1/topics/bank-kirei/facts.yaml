@@ -1,0 +1,19 @@
+# AD-04 Bank topic B07. See docs/AD-04-bank-topics.md.
+# Gate 1: PENDING. Gate 2: PENDING. type: practice throughout — same register-migration lineage
+# as Mission 1-1's 「ちゃんと」, a vague-word topic whose root lands on a concrete criterion, not
+# a single fixed definition of "clean."
+topic: bank-kirei
+question: 「きれいにしなさい」の「きれい」って？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common first explanation for 'きれい' (clean/tidy) when told to clean up is that there's no trash/mess left around."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A common further observation is that a room can still look 'not きれい' even with no trash present, if toys or belongings are scattered around instead of put away."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand 'きれい' in a tidy-up instruction is that it means things being in their designated place, not simply the absence of visible mess."
+    status: pending

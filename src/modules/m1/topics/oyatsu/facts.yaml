@@ -1,0 +1,28 @@
+# Gate 1: PENDING. No Founder approval has been granted for c1-c4 yet.
+# Gate 2: PENDING. No native-speaker (酒井先生) review has occurred for this mission's Japanese
+# wording yet. s2.json's `review` field is correctly absent.
+#
+# type: practice (WO-11 decision 6, same guardrail every accepted mission applies): every claim
+# below is framed as a commonly-given explanation or a commonly-observed convention about the
+# 遠足のおやつ300円 custom, never as a single universal rule every school/family follows
+# identically — c2/c3 in particular deliberately frame banana's separate treatment, and the
+# school-to-school variation, as commonly observed, not as one fixed national policy.
+topic: oyatsu
+question: バナナは、おやつに入りますか？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common first explanation children hear for why there's a limit on field-trip snacks (遠足のおやつ) is a fixed price cap, such as 300 yen."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A commonly cited convention is that whole fruit, such as a banana, is sometimes treated separately from the priced 'おやつ' (snack) category rather than being counted within the price cap."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "What counts as 'おやつ' for this kind of rule commonly differs from class to class or school to school, not only by the type of food itself."
+    status: pending
+  - id: c4
+    type: practice
+    statement: "A commonly framed explanation for why some foods (like whole fruit) get separate treatment from the 'おやつ' category is that the boundary of what counts is something people agree on by convention, not something inherent to the food itself."
+    status: pending

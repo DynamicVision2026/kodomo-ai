@@ -1,0 +1,62 @@
+{
+  "id": "bank-b05",
+  "contentClass": "release",
+  "rootType": "めあて",
+  "stage": 2,
+  "title": "4月1日と4月2日で、どうして学年が変わる？",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "4月1日生まれと、4月2日生まれで、学年が ちがうんだよ。",
+          "claims": ["c1"],
+          "gap": "なんで、その日で 分かれるのか、わからない",
+          "gapDistractors": [
+            { "text": "学年が ちがうことは、わかった", "kind": "answered" },
+            { "text": "ほかの国でも、同じ日なのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "bg1card", "text": "なんで、その日で 分かれるの？", "tag": "deepen", "move": "follow-naze", "domain": "社会とひと" },
+            { "id": "bg2card", "text": "学年は、いくつまで あるの？", "tag": "offtopic" },
+            { "id": "bg3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、その日で 分かれるのかな？" }
+        },
+        {
+          "robotSays": "学年を くぎるには、どこかで 線を 引く ひつようが あるからだよ。",
+          "claims": ["c2"],
+          "gap": "ほかの国でも、同じ日なのか、わからない",
+          "gapDistractors": [
+            { "text": "線を 引く ひつようが あることは、わかった", "kind": "answered" },
+            { "text": "なんで、その日で 分かれるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "bg4card", "text": "ほかにもある？", "tag": "deepen", "move": "follow-hokaniwa", "domain": "社会とひと" },
+            { "id": "bg5card", "text": "学年が あがるのは、うれしい？", "tag": "sideways" },
+            { "id": "bg6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "ほかの国でも、同じ日なのかな？" },
+          "prediction": { "beforeRound": 2, "options": ["bg4card", "bg5card", "bg6card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！線を どこに 引くかは、きめごとで、きまってるんだね。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「なんで？」ってきくと、きめごとの りゆうが わかるよ。",
+  "teachBack": "「なんで？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの きめごとも、「なんで？」できいてみよう。"
+}

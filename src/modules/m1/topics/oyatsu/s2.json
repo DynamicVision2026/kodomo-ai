@@ -1,0 +1,114 @@
+{
+  "id": "m1-s2-1-4",
+  "contentClass": "release",
+  "rootType": "しくみ",
+  "stage": 2,
+  "title": "バナナは おやつに 入りますか？",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3", "facts.yaml#c4"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["what"],
+      "cards": [
+        { "id": "w1", "slot": "what", "text": "おやつの話、きいて", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "バナナは、おやつに入りますか？", "tag": "clear" },
+        { "id": "w3", "slot": "what", "text": "ロボは バナナ すき？", "tag": "offtopic" }
+      ],
+      "rules": [
+        { "when": { "what": "clear" }, "archetype": "CLEAR" },
+        { "when": { "what": "offtopic" }, "archetype": "OFFTOPIC" },
+        { "when": { "what": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": {
+          "robotSays": "おやつは、300円までって、きまってるんだよ。",
+          "animation": "proud",
+          "claims": ["c1"]
+        },
+        "VAGUE": {
+          "robotSays": "おやつの話、いろいろあるよ！",
+          "animation": "confused",
+          "tip": "何がききたいか、はっきりさせよう。",
+          "claims": ["nonfactual"]
+        },
+        "OFFTOPIC": {
+          "robotSays": "うーん、今はべつの話だよ。",
+          "animation": "thinking",
+          "claims": ["nonfactual"]
+        }
+      },
+      "predictions": [{ "beforeRound": 1, "options": ["CLEAR", "VAGUE", "OFFTOPIC"] }]
+    },
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "おやつは、300円までって、きまってるんだよ。",
+          "claims": ["c1"],
+          "gap": "バナナが、おやつに入るのか、わからない",
+          "gapDistractors": [
+            { "text": "300円までということは、わかった", "kind": "answered" },
+            { "text": "ほかにも、べつあつかいのものが あるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "o1card", "text": "どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "日常" },
+            { "id": "o2card", "text": "バナナは、どこで買うの？", "tag": "offtopic" },
+            { "id": "o3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "バナナも、おやつに入るのかな？" }
+        },
+        {
+          "robotSays": "バナナは、くだものだから、べつあつかいなんだよ。",
+          "claims": ["c2"],
+          "gap": "ほかにも、べつあつかいのものが あるのか、わからない",
+          "gapDistractors": [
+            { "text": "バナナが、くだものなのは、わかった", "kind": "answered" },
+            { "text": "なんで、ちがうのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "o4card", "text": "ほかにもある？", "tag": "deepen", "move": "follow-hokaniwa", "domain": "日常" },
+            { "id": "o5card", "text": "バナナは、どこの国から来るの？", "tag": "sideways" },
+            { "id": "o6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、べつあつかいのものは ないかな？" }
+        },
+        {
+          "robotSays": "何を おやつに するかは、クラスや 学校でも ちがうんだよ。",
+          "claims": ["c3"],
+          "gap": "なんで、ちがうのか、わからない",
+          "gapDistractors": [
+            { "text": "学校によってちがうことは、わかった", "kind": "answered" },
+            { "text": "バナナが、おやつに入るのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "o7card", "text": "なんで、ちがうの？", "tag": "deepen", "move": "follow-naze", "domain": "日常" },
+            { "id": "o8card", "text": "先生は、おやつ すき？", "tag": "sideways" },
+            { "id": "o9card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、ちがうのかな？" },
+          "prediction": { "beforeRound": 3, "options": ["o7card", "o8card", "o9card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！おやつに 何が 入るかは、きめごとで、きまってるんだね。",
+        "claims": ["c4"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「どういうこと？」ってきくと、きめごとの りゆうが わかるよ。",
+  "teachBack": "「どういうこと？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの『きめごと』も、「どういうこと？」できいてみよう。"
+}

@@ -1,0 +1,17 @@
+# AD-04 Bank topic B06. See docs/AD-04-bank-topics.md.
+# Gate 1: PENDING. Gate 2: PENDING. type: practice throughout.
+topic: bank-nedan
+question: 同じお菓子なのに、お店によって値段がちがう
+claims:
+  - id: c1
+    type: practice
+    statement: "A commonly noticed fact is that the exact same snack can be priced differently at different stores."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A common explanation for the price difference is that stores' own costs (such as location and delivery) commonly differ from one another."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand a snack's price is that it's decided not only by the snack itself but also by the selling store's own circumstances."
+    status: pending

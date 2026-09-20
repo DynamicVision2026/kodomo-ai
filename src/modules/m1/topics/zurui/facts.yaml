@@ -1,0 +1,21 @@
+# Gate 1: PENDING. No Founder approval has been granted for c1-c3 yet.
+# Gate 2: PENDING. No native-speaker (酒井先生) review has occurred for this mission's Japanese
+# wording yet. s2.json's `review` field is correctly absent.
+#
+# type: practice (WO-11 decision 6): every claim is framed as a commonly-observed pattern in how
+# children use the word 「ずるい」, never as one universal formal definition of fairness.
+topic: zurui
+question: 「ずるい」ってなに？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common first explanation children give for calling something 'ずるい' (unfair) is that someone got an advantage, such as choosing first."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "Children commonly also call it 'ずるい' when someone didn't follow the agreed rule, not only when someone merely had an advantage."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand 'ずるい' is that it's the feeling that a shared, agreed-upon expectation wasn't kept, not simply that someone had good luck."
+    status: pending

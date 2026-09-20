@@ -1,0 +1,95 @@
+{
+  "id": "m1-s2-1-6",
+  "contentClass": "release",
+  "rootType": "しくみ",
+  "stage": 2,
+  "title": "「ずるい」ってなに？",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["what"],
+      "cards": [
+        { "id": "w1", "slot": "what", "text": "『ずるい』の話、きいて", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "『ずるい』って、何？", "tag": "clear" },
+        { "id": "w3", "slot": "what", "text": "ロボは、ゲーム すき？", "tag": "offtopic" }
+      ],
+      "rules": [
+        { "when": { "what": "clear" }, "archetype": "CLEAR" },
+        { "when": { "what": "offtopic" }, "archetype": "OFFTOPIC" },
+        { "when": { "what": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": {
+          "robotSays": "先に えらべた 人が、とくだから、ずるいよ。",
+          "animation": "proud",
+          "claims": ["c1"]
+        },
+        "VAGUE": {
+          "robotSays": "『ずるい』の話、いろいろあるよ！",
+          "animation": "confused",
+          "tip": "何がききたいか、はっきりさせよう。",
+          "claims": ["nonfactual"]
+        },
+        "OFFTOPIC": {
+          "robotSays": "うーん、今はべつの話だよ。",
+          "animation": "thinking",
+          "claims": ["nonfactual"]
+        }
+      },
+      "predictions": [{ "beforeRound": 1, "options": ["CLEAR", "VAGUE", "OFFTOPIC"] }]
+    },
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "先に えらべた 人が、とくだから、ずるいよ。",
+          "claims": ["c1"],
+          "gap": "とくなだけで、ずるいのか、わからない",
+          "gapDistractors": [
+            { "text": "先にえらべたことは、わかった", "kind": "answered" },
+            { "text": "何が、おなじなのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "z1card", "text": "ほかにもある？", "tag": "deepen", "move": "follow-hokaniwa", "domain": "社会とひと" },
+            { "id": "z2card", "text": "ゲームは、何で あそぶの？", "tag": "offtopic" },
+            { "id": "z3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "とくなだけで、ずるいのかな？" }
+        },
+        {
+          "robotSays": "ルールを まもらなかった 人にも、『ずるい』って 言うよね。",
+          "claims": ["c2"],
+          "gap": "何が、おなじなのか、わからない",
+          "gapDistractors": [
+            { "text": "ルールをまもらなかったことは、わかった", "kind": "answered" },
+            { "text": "とくなだけで、ずるいのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "z4card", "text": "なんで、どっちも『ずるい』なの？", "tag": "deepen", "move": "follow-naze", "domain": "社会とひと" },
+            { "id": "z5card", "text": "ルールは、だれが きめたの？", "tag": "sideways" },
+            { "id": "z6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、どっちも『ずるい』なのかな？" },
+          "prediction": { "beforeRound": 2, "options": ["z4card", "z5card", "z6card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！やくそくが まもられてないと、ずるいって 思うんだね。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「ほかにもある？」ってきくと、『ずるい』の りゆうが わかるよ。",
+  "teachBack": "「ほかにもある？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの『ずるい』も、「ほかにもある？」できいてみよう。"
+}

@@ -1,0 +1,62 @@
+{
+  "id": "bank-b08",
+  "contentClass": "release",
+  "rootType": "わかれ",
+  "stage": 2,
+  "title": "みんなが持っているものが、ほしくなる",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "みんなが もってるから、ほしいと おもうんだよ。",
+          "claims": ["c1"],
+          "gap": "それは、ひつようだから ほしいのか、わからない",
+          "gapDistractors": [
+            { "text": "みんな もってることは、わかった", "kind": "answered" },
+            { "text": "なんで、こまらないのに、ほしいと かんじるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "bh1card", "text": "どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "社会とひと" },
+            { "id": "bh2card", "text": "みんなって、何人ぐらい？", "tag": "offtopic" },
+            { "id": "bh3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "それは、ひつようだから ほしいのかな？" }
+        },
+        {
+          "robotSays": "じつは、なくても こまらないのに、ほしいと かんじるんだよ。",
+          "claims": ["c2"],
+          "gap": "なんで、こまらないのに、ほしいと かんじるのか、わからない",
+          "gapDistractors": [
+            { "text": "こまらないことは、わかった", "kind": "answered" },
+            { "text": "それは、ひつようだから ほしいのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "bh4card", "text": "なんで、こまらないのに ほしいの？", "tag": "deepen", "move": "follow-naze", "domain": "社会とひと" },
+            { "id": "bh5card", "text": "ロボは、何が ほしい？", "tag": "sideways" },
+            { "id": "bh6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、こまらないのに ほしいのかな？" },
+          "prediction": { "beforeRound": 2, "options": ["bh4card", "bh5card", "bh6card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！ほしいは、ひつようとは かぎらないんだね。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「どういうこと？」ってきくと、じっさいに ひつようか わかるよ。",
+  "teachBack": "「どういうこと？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの『ほしい』も、「どういうこと？」できいてみよう。"
+}

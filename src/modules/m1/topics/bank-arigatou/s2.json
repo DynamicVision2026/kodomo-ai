@@ -1,0 +1,62 @@
+{
+  "id": "bank-b11",
+  "contentClass": "release",
+  "rootType": "めあて",
+  "stage": 2,
+  "title": "買ったのはこっちなのに、どうしてお店の人が「ありがとう」と言う？",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "お店の人も、お金が もらえて、うれしいんだよ。",
+          "claims": ["c1"],
+          "gap": "買った がわは、なんで 言わなくて いいのか、わからない",
+          "gapDistractors": [
+            { "text": "お店の人が うれしいことは、わかった", "kind": "answered" },
+            { "text": "ほかにも、りょうほうが ありがとうな ことが あるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "bar1card", "text": "なんで、お店の人だけ 言うの？", "tag": "deepen", "move": "follow-naze", "domain": "社会とひと" },
+            { "id": "bar2card", "text": "お店は、なんじまで あいてるの？", "tag": "offtopic" },
+            { "id": "bar3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "買った がわは、言わなくて いいのかな？" }
+        },
+        {
+          "robotSays": "買う人も、ほしいものが 手に入って うれしいんだよ。",
+          "claims": ["c2"],
+          "gap": "ほかにも、りょうほうが ありがとうな ことが あるのか、わからない",
+          "gapDistractors": [
+            { "text": "買う人も うれしいことは、わかった", "kind": "answered" },
+            { "text": "買った がわは、なんで 言わなくて いいのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "bar4card", "text": "ほかにもある？", "tag": "deepen", "move": "follow-hokaniwa", "domain": "社会とひと" },
+            { "id": "bar5card", "text": "お店の人は、なんにんいるの？", "tag": "sideways" },
+            { "id": "bar6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、ありがとうな ことは あるかな？" },
+          "prediction": { "beforeRound": 2, "options": ["bar4card", "bar5card", "bar6card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！買いものは、おたがいに ありがとうな こうかんなんだね。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「ほかにもある？」ってきくと、おたがいの 気もちが わかるよ。",
+  "teachBack": "「ほかにもある？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの おかいものも、「ほかにもある？」できいてみよう。"
+}

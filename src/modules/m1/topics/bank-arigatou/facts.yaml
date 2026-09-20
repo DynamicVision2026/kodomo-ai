@@ -1,0 +1,17 @@
+# AD-04 Bank topic B11. See docs/AD-04-bank-topics.md.
+# Gate 1: PENDING. Gate 2: PENDING. type: practice throughout.
+topic: bank-arigatou
+question: 買ったのはこっちなのに、どうしてお店の人が「ありがとう」と言う？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common first explanation for a shopkeeper saying 'ありがとう' to a customer is that the shopkeeper is glad to receive payment."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A common further observation is that the buyer is also glad to receive the thing they wanted — both sides commonly feel a kind of gratitude in the exchange, not only the shopkeeper."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand a purchase is that it's a mutual exchange where both sides have reason to be thankful, not a one-directional favor."
+    status: pending

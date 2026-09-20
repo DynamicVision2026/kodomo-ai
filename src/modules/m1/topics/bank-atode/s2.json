@@ -1,0 +1,62 @@
+{
+  "id": "bank-b01",
+  "contentClass": "release",
+  "rootType": "わかれ",
+  "stage": 2,
+  "title": "「あとで」って、いつ？",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "「あとで」は、すこし たってからだよ。",
+          "claims": ["c1"],
+          "gap": "すこしって、どれくらいか、わからない",
+          "gapDistractors": [
+            { "text": "たってから、ということは、わかった", "kind": "answered" },
+            { "text": "なんで、人によって ちがうのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "ba1card", "text": "どういうこと？", "tag": "deepen", "move": "follow-tsumari", "domain": "ことば" },
+            { "id": "ba2card", "text": "「さっき」は、いつのこと？", "tag": "offtopic" },
+            { "id": "ba3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "すこしって、どれくらいかな？" }
+        },
+        {
+          "robotSays": "言う人に よって、5分のことも、1時間のことも あるんだよ。",
+          "claims": ["c2"],
+          "gap": "なんで、人によって ちがうのか、わからない",
+          "gapDistractors": [
+            { "text": "5分や1時間のことが あるのは、わかった", "kind": "answered" },
+            { "text": "すこしって、どれくらいか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "ba4card", "text": "なんで、人によって ちがうの？", "tag": "deepen", "move": "follow-naze", "domain": "ことば" },
+            { "id": "ba5card", "text": "1時間は、なんぷん？", "tag": "sideways" },
+            { "id": "ba6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、人によって ちがうのかな？" },
+          "prediction": { "beforeRound": 2, "options": ["ba4card", "ba5card", "ba6card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！「あとで」の 長さは、人や ばめんで きまるんだね。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「どういうこと？」ってきくと、じっさいの 長さが わかるよ。",
+  "teachBack": "「どういうこと？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの『あとで』も、「どういうこと？」できいてみよう。"
+}

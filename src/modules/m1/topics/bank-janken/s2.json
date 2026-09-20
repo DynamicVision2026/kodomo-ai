@@ -1,0 +1,62 @@
+{
+  "id": "bank-b03",
+  "contentClass": "release",
+  "rootType": "めあて",
+  "stage": 2,
+  "title": "じゃんけんで順番を決める",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "じゃんけんで、じゅんばんを きめるんだよ。",
+          "claims": ["c1"],
+          "gap": "なんで、じゃんけんで きめるのか、わからない",
+          "gapDistractors": [
+            { "text": "じゅんばんを きめることは、わかった", "kind": "answered" },
+            { "text": "ほかにも、こうへいな きめかたが あるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "bj1card", "text": "なんで、じゃんけんなの？", "tag": "deepen", "move": "follow-naze", "domain": "社会とひと" },
+            { "id": "bj2card", "text": "じゃんけんは、だれが はじめたの？", "tag": "offtopic" },
+            { "id": "bj3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはべつの話だよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、じゃんけんで きめるのかな？" }
+        },
+        {
+          "robotSays": "だれにも、こうへいだからだよ。",
+          "claims": ["c2"],
+          "gap": "ほかにも、こうへいな きめかたが あるのか、わからない",
+          "gapDistractors": [
+            { "text": "こうへいだからと いうのは、わかった", "kind": "answered" },
+            { "text": "なんで、じゃんけんで きめるのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "bj4card", "text": "ほかにもある？", "tag": "deepen", "move": "follow-hokaniwa", "domain": "社会とひと" },
+            { "id": "bj5card", "text": "じゃんけんは、何しゅるい あるの？", "tag": "sideways" },
+            { "id": "bj6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
+            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、こうへいな きめかたは ないかな？" },
+          "prediction": { "beforeRound": 2, "options": ["bj4card", "bj5card", "bj6card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "そっか！じゃんけんは、だれも とくをしない、きめかたなんだね。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「ほかにもある？」ってきくと、こうへいな きめかたが みつかるよ。",
+  "teachBack": "「ほかにもある？」って聞き方を教えてあげよう。",
+  "ouchiTalk": "おうちの きめかたも、「ほかにもある？」できいてみよう。"
+}

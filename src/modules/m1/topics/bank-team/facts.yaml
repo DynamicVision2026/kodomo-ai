@@ -1,0 +1,17 @@
+# AD-04 Bank topic B04. See docs/AD-04-bank-topics.md.
+# Gate 1: PENDING. Gate 2: PENDING. type: practice throughout.
+topic: bank-team
+question: チームをどうやって分ける？
+claims:
+  - id: c1
+    type: practice
+    statement: "A common practice for dividing children into teams is rock-paper-scissors or a lottery/draw (くじ)."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "When a random method would make teams too lopsided (e.g. all the strong players on one side), a teacher commonly adjusts the split by hand instead."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand team-dividing methods is that which one is used depends on what's being valued at the time (pure fairness of chance vs. balanced/fun teams), not one single correct method."
+    status: pending

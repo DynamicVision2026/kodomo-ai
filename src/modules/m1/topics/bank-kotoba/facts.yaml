@@ -1,0 +1,17 @@
+# AD-04 Bank topic B09. See docs/AD-04-bank-topics.md.
+# Gate 1: PENDING. Gate 2: PENDING. type: practice throughout.
+topic: bank-kotoba
+question: 同じ言葉なのに、言う人によってちがって聞こえる
+claims:
+  - id: c1
+    type: practice
+    statement: "A commonly noticed fact is that the exact same word or sentence can sound different depending on who says it."
+    status: pending
+  - id: c2
+    type: practice
+    statement: "A common example is that the same word said with a scary face gives a different impression than the same word said another way."
+    status: pending
+  - id: c3
+    type: practice
+    statement: "A commonly framed way to understand a word's meaning as heard is that it's shaped by voice tone and facial expression too, not decided by the word alone."
+    status: pending
