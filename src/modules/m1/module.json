@@ -31,7 +31,7 @@
     "m1-s2-1-8"
   ],
   "ui": {
-    "earlyOk": "これでOK",
+    "earlyOk": "これでOK？",
     "handoffPrompt": "おとなにわたしてね",
     "handoffContinue": "つづける",
     "handoffSkip": "あとでやる",
