@@ -1,0 +1,95 @@
+{
+  "id": "m1-s2-1-2",
+  "contentClass": "release",
+  "rootType": "めあて",
+  "stage": 2,
+  "title": "玄関で くつを ぬぐ",
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
+  "phases": [
+    {
+      "template": "slot-assembly",
+      "slots": ["what"],
+      "cards": [
+        { "id": "w1", "slot": "what", "text": "くつのはなし、きいて", "tag": "vague" },
+        { "id": "w2", "slot": "what", "text": "げんかんで、くつをぬぐのはなぜ？", "tag": "clear" },
+        { "id": "w3", "slot": "what", "text": "ロボはくつすき？", "tag": "offtopic" }
+      ],
+      "rules": [
+        { "when": { "what": "clear" }, "archetype": "CLEAR" },
+        { "when": { "what": "offtopic" }, "archetype": "OFFTOPIC" },
+        { "when": { "what": "*" }, "archetype": "VAGUE" }
+      ],
+      "archetypes": {
+        "CLEAR": {
+          "robotSays": "そとのくつは、よごれているから、ぬぐんだよ。",
+          "animation": "proud",
+          "claims": ["c1"]
+        },
+        "VAGUE": {
+          "robotSays": "くつのはなし、いろいろあるよ！",
+          "animation": "confused",
+          "tip": "なにがききたいか、はっきりさせよう。",
+          "claims": ["nonfactual"]
+        },
+        "OFFTOPIC": {
+          "robotSays": "うーん、いまはべつのはなしだよ。",
+          "animation": "thinking",
+          "claims": ["nonfactual"]
+        }
+      },
+      "predictions": [{ "beforeRound": 1, "options": ["CLEAR", "VAGUE", "OFFTOPIC"] }]
+    },
+    {
+      "template": "dig",
+      "layers": [
+        {
+          "robotSays": "そとのくつは、よごれているから、ぬぐんだよ。",
+          "claims": ["c1"],
+          "gap": "あたらしいくつもぬぐのか、わからない",
+          "gapDistractors": [
+            { "text": "そとのくつをぬぐのか、わからない", "kind": "answered" },
+            { "text": "よごれてないのに、なぜぬぐのかわからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "g1card", "text": "たとえば、あたらしいくつは？", "tag": "deepen", "move": "follow-tatoeba", "domain": "日常" },
+            { "id": "g2card", "text": "くつはどこでかうの？", "tag": "offtopic" },
+            { "id": "g3card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "offtopic": "うーん、それはいまのはなしじゃないね。",
+            "repeat": "うーん、さっきとおなじこたえになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "あたらしいくつも、ぬぐのかな？" }
+        },
+        {
+          "robotSays": "あたらしいくつも、げんかんでぬぐよ。",
+          "claims": ["c2"],
+          "gap": "よごれてないのに、なぜぬぐのかわからない",
+          "gapDistractors": [
+            { "text": "どこでくつをぬぐのか、わからない", "kind": "answered" },
+            { "text": "あたらしいくつもぬぐのか、わからない", "kind": "other-layer" }
+          ],
+          "hand": [
+            { "id": "g4card", "text": "つまり、よごれだけがりゆうじゃない？", "tag": "deepen", "move": "follow-tsumari", "domain": "日常" },
+            { "id": "g5card", "text": "くつって、いくらするの？", "tag": "sideways" },
+            { "id": "g6card", "text": "もういちどいって", "tag": "repeat" }
+          ],
+          "replies": {
+            "sideways": "さあ、いろいろだね。でも、いまのはなしとはべつだよ。",
+            "repeat": "うーん、さっきとおなじこたえになっちゃった。"
+          },
+          "earlyOk": { "challenger": "ポン太", "asks": "よごれてなくても、なぜぬぐのかな？" },
+          "prediction": { "beforeRound": 2, "options": ["g4card", "g5card", "g6card"] }
+        }
+      ],
+      "root": {
+        "robotSays": "みてわからなくても、そとのくつはいれないと、きめてあるんだよ。",
+        "claims": ["c3"],
+        "label": "ねっこ"
+      }
+    }
+  ],
+  "tip": "「よごれてるから」だけじゃ、たりないこともあるよ。",
+  "teachBack": "「あたらしいのに、なんでぬぐの？」ってききかたを、おしえてあげよう。",
+  "ouchiTalk": "うちの『きまり』で、りゆうがひとつじゃないもの、さがしてみよう。"
+}
