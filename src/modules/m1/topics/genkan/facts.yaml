@@ -1,12 +1,8 @@
-# Gate 1: STILL PENDING. No Founder approval has occurred for any claim below — every claim stays
-# status: pending, with no approvedBy/approvedAt. gate:claims (both normal and RELEASE=1 mode) is
-# EXPECTED to fail on this mission's contentClass "release" until a human actually approves these
-# claims — a known, reported state, not a bug to be worked around.
+# Gate 1: PASSED for c1/c2/c3 — the Founder approved all three exactly as recorded (no claim
+# statement or type changed to obtain this approval). See approvedBy/approvedAt per claim below.
 #
 # Gate 2: PASSED. 酒井先生 gave final native-speaker approval of the exact reviewed chain at
-# commit 406c4ee on 2026-09-20 — see s2.json's own `review` stamp. Gate 2 approval reviews the
-# Japanese wording; it does not and cannot substitute for Gate 1's founder approval of the
-# underlying claims below, which remains a separate, still-outstanding step.
+# commit 406c4ee on 2026-09-20 — see s2.json's own `review` stamp.
 #
 # type: practice (WO-11 decision 6): every claim here is a stated everyday-practice observation,
 # not a sourced fact about the natural world, and not a historical/cultural claim about WHY the
@@ -17,21 +13,25 @@
 # category based on where they are used, not judged shoe-by-shoe by current appearance) — none of
 # them asserts a single, universal, or historical/cultural REASON the practice exists, and c3
 # deliberately avoids "rule"/authority framing (Gate 1 correction: the root must land on the
-# そと／うち boundary, not on rule-obedience — see s2.json's own root text and history). What a
-# practice claim still needs — same as any claim — is real Founder Gate 1 review and, for release
-# content, native-speaker Gate 2 review. Neither has happened yet.
+# そと／うち boundary, not on rule-obedience — see s2.json's own root text and history).
 topic: genkan
 question: 玄関で くつを ぬぐのは、なぜ？
 claims:
   - id: c1
     type: practice
     statement: "A common, familiar first explanation people give for removing outdoor shoes at the entrance is that outdoor shoes are dirty."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c2
     type: practice
     statement: "Households and schools that remove outdoor shoes at the entrance commonly apply this to all outdoor shoes, including ones that are new or visibly clean — not only ones that look dirty."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c3
     type: practice
     statement: "Where this practice is followed, outdoor shoes are commonly treated as belonging to a separate 'outside' category from the indoor area, based on where they are used, rather than being judged shoe-by-shoe by how clean a given pair currently looks."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
