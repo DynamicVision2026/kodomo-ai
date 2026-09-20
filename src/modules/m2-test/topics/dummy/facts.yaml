@@ -1,7 +1,11 @@
 # DUMMY FIXTURE — spec v0.5 §13 acceptance criterion (m2-test extensibility check).
-# Not real product content, never rendered to a real player. Approved here directly because
-# it is a test fixture with no factual claim about the world, not because Gate 1 was skipped
-# for real content.
+# Not real product content, never rendered to a real player. module.json declares
+# contentClass: "synthetic", which exempts this module from gate:claims's Gate 1/Gate 2 approval
+# checks entirely (scripts/lib/moduleClassification.ts) — so `status` below stays "pending"
+# permanently, not as "awaiting Founder review" (it never will be reviewed; there is no fact
+# about the world here to approve) but because a synthetic module is architecturally forbidden
+# from carrying a "status: approved" claim, which would misrepresent this fixture as having
+# passed real human Gate 1 review. gate:claims actively fails if this ever says "approved".
 topic: dummy
 question: これは かくちょうせいの テストです
 claims:
@@ -10,4 +14,4 @@ claims:
     sourceUrl: "https://example.com/test-fixture"
     excerpt: "This is a test fixture, not a real source."
     adultLevelSource: true
-    status: approved
+    status: pending
