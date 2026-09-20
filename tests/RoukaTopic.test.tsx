@@ -43,9 +43,9 @@ function byDigAnswerText(rawMissionText: string) {
  * review) are both genuinely absent, not fabricated.
  */
 describe('rouka (1-3) — release classification and rootType contract', () => {
-  it('is classified release, but carries neither a Gate 1 claim approval nor a Gate 2 review stamp — both human gates remain genuinely pending, not fabricated', () => {
+  it('is classified release; carries its real Gate 2 native-speaker stamp (WO-19 Phase 0), while Gate 1 (facts.yaml claim approval) remains genuinely pending and is not fabricated', () => {
     expect(roukaMission.contentClass).toBe('release');
-    expect(roukaMission.review).toBeUndefined();
+    expect(roukaMission.review).toEqual({ by: '酒井先生', date: '2026-09-20' });
   });
 
   it('declares a rootType from the closed WO-11C set (めあて), not an invented fourth value', () => {

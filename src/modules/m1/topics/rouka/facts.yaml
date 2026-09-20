@@ -1,16 +1,12 @@
 # Gate 1: PENDING. No Founder approval has been granted for c1-c4 yet. status is left "pending"
-# below and must not be changed to "approved" until that approval genuinely occurs (WO-16
-# boundary: do not fabricate Founder Gate 1 approval).
+# below and must not be changed to "approved" until that approval genuinely occurs (WO-16/WO-19
+# boundary: do not fabricate Founder Gate 1 approval). See the exact final c1-c4 wording below,
+# returned for Founder review in WO-19's Human Decision Queue.
 #
-# Gate 2: CORRECTION REQUIRED (WO-16 correction), not approval. 酒井先生 reviewed the original
-# chain and returned three findings: (1) 「見えない人」in the root is ambiguous (readable as
-# "visually impaired person" or "invisible person"); (2) the child-visible tsumari surfacing
-# ("つまり、どういうこと？") violates AD-05 — R1 tsumari must never expose 「つまり」 itself; (3)
-# the original root's jump to 「ろうかはみんなのところ」 was not earned by the prior chain. All
-# three are now corrected in s2.json (see its own history) — the root no longer invokes a
-# "shared space" premise at all, landing instead directly on considering a person in a place you
-# can't see, which layer 2 already established. This correction pass has NOT yet been re-reviewed
-# by 酒井先生; do not record Gate 2 until that re-review actually happens.
+# Gate 2: PASSED (WO-19 Phase 0). 酒井先生 reviewed the WO-16-corrected chain (root no longer
+# ambiguous 「見えない人」, tsumari no longer exposed as 「つまり」, root no longer invokes an
+# unearned "shared space" premise) and returned PASS on 2026-09-20 for the exact chain currently
+# in s2.json (unchanged by this Gate 2 recording — see s2.json's own `review` stamp).
 #
 # type: practice (WO-11 decision 6, WO-13 guardrail applied the same way as chanto/genkan): every
 # claim below is framed as a commonly-given explanation or a commonly-observed feature of school
