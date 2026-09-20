@@ -1,33 +1,50 @@
 # Gate 1 evidence prepared — all three claims are still "pending" Founder approval; nothing
-# here has been approved. Replaces the prior placeholder statements/empty evidence fields with
-# real candidate sources found via web search.
+# here has been approved. `statement` and `sourceUrl` are populated with real, appropriately
+# authoritative candidate sources found via web search. `excerpt` is NOT populated: this
+# session's network egress policy blocks direct page fetches to every domain tried (NCBI/PMC,
+# Wikipedia, a university extension page, usda.gov, link.springer.com — checked again on this
+# pass, still blocked), so no source text has actually been opened and read in this session.
+# Per Coordinator instruction, `excerpt` is left as an explicit UNVERIFIED sentinel rather than
+# a search-engine-synthesized paraphrase presented as if it were a verbatim quote. Each claim's
+# "research note" comment below is that paraphrase — useful context for whoever does the human
+# source check, but explicitly NOT a verbatim excerpt and NOT evidence to approve on its own.
 #
-# VERIFICATION CAVEAT (read before approving): this session's network egress policy blocked
-# direct page fetches to every domain tried (NCBI/PMC, Wikipedia, a university extension page,
-# usda.gov), so each `excerpt` below is a search-engine-synthesized summary of the cited page,
-# not a verbatim quote independently confirmed by opening the source. The URLs are real and the
-# sources are appropriately authoritative (peer-reviewed / academic), but a human with full
-# internet access should open each sourceUrl and confirm the excerpt's wording before Gate 1
-# approval. pipeline/02_crosscheck.ts (independent model re-verification) has also not been run
-# against these claims.
+# Required before Gate 1 approval, per claim: a human with real internet access opens sourceUrl,
+# confirms it actually supports `statement`, and replaces `excerpt` with a real verbatim quote
+# from the page (or swaps in a better source if it doesn't hold up). pipeline/02_crosscheck.ts
+# (independent model re-verification) has also not been run against these claims.
 topic: bread
 question: パンは なぜ ふくらむ？
 claims:
   - id: c1
     statement: "Baker's yeast (Saccharomyces cerevisiae) is a living, single-celled fungal microorganism; it is this species that ferments bread dough."
     sourceUrl: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7686800/"
-    excerpt: "Saccharomyces cerevisiae, also known as baker's yeast, is a single-celled fungus and a living microorganism, a member of the fungus kingdom, used primarily for bread making, in which carbon dioxide released during fermentation causes dough to rise. (From: 'History and Domestication of Saccharomyces cerevisiae in Bread Baking', a peer-reviewed review article — search-summarized, not independently fetched in this session; verify before approval.)"
+    # research note (search-summarized, UNVERIFIED, not a quote): "History and Domestication of
+    # Saccharomyces cerevisiae in Bread Baking" (peer-reviewed review) — search summary describes
+    # S. cerevisiae as a single-celled fungus / living microorganism used in bread fermentation.
+    excerpt: "UNVERIFIED — HUMAN SOURCE CHECK REQUIRED"
     adultLevelSource: true
     status: pending
   - id: c2
-    statement: "During bread fermentation, baker's yeast (Saccharomyces cerevisiae) metabolizes the fermentable sugars present in dough — principally glucose, fructose, sucrose, and maltose (it cannot ferment lactose) — producing carbon dioxide gas and ethanol as fermentation byproducts."
+    statement: "During bread fermentation, baker's yeast (Saccharomyces cerevisiae) metabolizes the fermentable sugars present in dough — which include not only any added sugar but also maltose released from starch by flour's own amylase enzymes during mixing/proofing, glucose, fructose, and sucrose (lactose is not fermentable by this species) — producing carbon dioxide gas and ethanol as fermentation byproducts."
     sourceUrl: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11895419/"
-    excerpt: "Yeast can ferment glucose, fructose, and sucrose but cannot ferment lactose; maltose is also fermented, though more slowly than glucose. In non-sugared ('lean') doughs, maltose is the most abundant sugar available to yeast. (From: 'A Dive Into Yeast's Sugar Diet — Comparing the Metabolic Response of Glucose, Fructose, Sucrose, and Maltose Under Dynamic Feast/Famine Conditions', peer-reviewed, PMC — search-summarized, not independently fetched in this session; verify before approval. Corroborating, more directly bread-specific source: PMC7686800, cited for c1 above.)"
+    # research note (search-summarized, UNVERIFIED, not a quote): "A Dive Into Yeast's Sugar
+    # Diet — Comparing the Metabolic Response of Glucose, Fructose, Sucrose, and Maltose Under
+    # Dynamic Feast/Famine Conditions" (peer-reviewed, PMC) — search summary states yeast ferments
+    # glucose/fructose/sucrose/maltose but not lactose, and that in lean (unsweetened) dough,
+    # maltose from starch breakdown is the most abundant fermentable sugar available to the yeast
+    # — i.e. dough's fermentable sugar is not just added table sugar. Corroborating, more
+    # directly bread-specific source per c1's note above: PMC7686800.
+    excerpt: "UNVERIFIED — HUMAN SOURCE CHECK REQUIRED"
     adultLevelSource: true
     status: pending
   - id: c3
     statement: "The gluten network formed in wheat dough (from the proteins gliadin and glutenin, developed by hydration and kneading) is viscoelastic and retains the carbon dioxide gas produced by yeast fermentation; this gas retention is what allows the dough to expand and rise."
     sourceUrl: "https://link.springer.com/chapter/10.1007/978-1-4899-0664-9_36"
-    excerpt: "Forming a gluten network is key for getting dough to rise: the network acts as a balloon that traps gases during rising, proofing and baking; the dough's ability to retain gas results from the slow diffusion of low-molecular-weight molecules, including carbon dioxide, through the gluten matrix. (From: 'Wheat Gluten: Rheological and Gas Retaining Properties', an academic book chapter — search-summarized, not independently fetched in this session; verify before approval.)"
+    # research note (search-summarized, UNVERIFIED, not a quote): "Wheat Gluten: Rheological and
+    # Gas Retaining Properties" (academic book chapter) — search summary describes the gluten
+    # network as acting like a balloon that traps fermentation gases (including CO2), via slow
+    # gas diffusion through the gluten matrix, which is what lets the dough expand.
+    excerpt: "UNVERIFIED — HUMAN SOURCE CHECK REQUIRED"
     adultLevelSource: true
     status: pending
