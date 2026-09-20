@@ -23,14 +23,14 @@ describe('lintMission', () => {
     expect(issues).toEqual([{ rule: 'schema', message: 'missing id, stage or phases' }]);
   });
 
-  it('flags a dig layer without exactly one deepen card', () => {
+  it('flags a dig layer with zero deepen cards', () => {
     const bad = {
       id: 'x', stage: 2,
       phases: [{
         template: 'dig',
         layers: [{
           robotSays: 'そう', claims: ['nonfactual'],
-          hand: [{ id: 'a', text: 'そう', tag: 'deepen' }, { id: 'b', text: 'そう', tag: 'deepen' }],
+          hand: [{ id: 'a', text: 'そう', tag: 'sideways' }],
           replies: {},
         }],
         root: { robotSays: 'そう', claims: ['nonfactual'] },
@@ -38,7 +38,30 @@ describe('lintMission', () => {
       tip: 'そう', teachBack: 'そう', ouchiTalk: 'そう',
     };
     const issues = lintMission(bad, 2, gradeOf, claimIds);
-    expect(issues).toContainEqual({ rule: 'hand', message: 'layer 0 has 2 deepen cards, need exactly 1' });
+    expect(issues).toContainEqual({ rule: 'hand', message: 'layer 0 has 0 deepen cards, need at least 1' });
+  });
+
+  it('WO-20: no longer flags a dig layer with MORE than one deepen card — the child may genuinely choose which move to follow (Missions 1-7/1-8)', () => {
+    const ok = {
+      id: 'x', stage: 2,
+      phases: [{
+        template: 'dig',
+        layers: [{
+          robotSays: 'ねっこじゃないよ', claims: ['nonfactual'],
+          gap: 'わからない',
+          gapDistractors: [{ text: 'こたえた', kind: 'answered' }, { text: 'べつのそう', kind: 'other-layer' }],
+          hand: [
+            { id: 'a', text: 'なんで？', tag: 'deepen', move: 'follow-naze', domain: '日常' },
+            { id: 'b', text: 'たとえば？', tag: 'deepen', move: 'follow-tatoeba', domain: '日常' },
+          ],
+          replies: {},
+        }],
+        root: { robotSays: 'ねっこだよ', claims: ['nonfactual'], label: 'ねっこ' },
+      }],
+      tip: 'そう', teachBack: 'そう', ouchiTalk: 'そう',
+    };
+    const issues = lintMission(ok, 2, gradeOf, claimIds);
+    expect(issues.filter((i) => i.rule === 'hand')).toEqual([]);
   });
 
   it('flags a claim id not present in facts.yaml', () => {

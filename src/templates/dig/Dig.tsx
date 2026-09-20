@@ -172,36 +172,45 @@ export function Dig({
     setState((s) => judgeNotEnough(phase, s));
   }
 
-  // WO-07: every dig layer's lint-enforced schema guarantees exactly one deepen card per hand
-  // (pipeline/04_lint.ts's `hand` rule), so this lookup is always unambiguous — never an
-  // inference, never a choice among competing moves.
-  function currentLayerDeepenMove(): string | undefined {
-    return phase.layers[state.layer]?.hand.find((c) => c.tag === 'deepen')?.move;
+  // WO-20: a layer's hand may now carry more than one deepen card (pipeline/04_lint.ts requires
+  // AT LEAST one, no longer exactly one) — the child genuinely chooses which move to follow,
+  // deterministically, with no ranking/scoring of the choice (Missions 1-7/1-8). Every existing
+  // single-deepen layer still returns exactly one move here, unchanged.
+  function currentLayerDeepenMoves(): string[] {
+    return (phase.layers[state.layer]?.hand ?? [])
+      .filter((c) => c.tag === 'deepen' && c.move)
+      .map((c) => c.move!);
   }
 
   function gapChosen(choice: GapChoice) {
     // AD-01 §5: recorded for its classification only — no verdict, no retry, hand unfiltered.
     // WO-04/WO-07: gap choice has no bearing on scaffold progression or Blind-first eligibility
-    // — target vs distractor is never read here. The hand this choice reveals is what makes the
-    // layer's move みはっけん.
+    // — target vs distractor is never read here. The hand this choice reveals is what makes
+    // every one of the layer's deepen moves みはっけん (WO-20: all of them, not just one).
     track('gap_named', { classification: choice.kind });
     // WO-08: this resolution IS the M2a system-proxy event — judged "not enough," named a gap,
     // before the next follow-up is played. Mission-scoped evidence, independent of the choice.
     onGapNamed({ missionId });
-    const move = currentLayerDeepenMove();
-    if (move) onMoveRendered(move);
-    const eligible = !!move && isAtLeast(moveProgress[move]?.rung ?? 'mihakken', 'tsukaeru');
+    const moves = currentLayerDeepenMoves();
+    for (const move of moves) onMoveRendered(move);
+    // WO-07's Blind-first presumes exactly ONE known move is being withdrawn from view before
+    // the reveal — that premise doesn't generalize to a layer offering a genuine CHOICE among
+    // moves (WO-20), so a multi-deepen layer is simply never Blind-first eligible. Every
+    // existing single-deepen layer (moves.length === 1, always true for them) is completely
+    // unaffected — this is the exact same eligibility check as before WO-20 in that case.
+    const eligible = moves.length === 1 && isAtLeast(moveProgress[moves[0]!]?.rung ?? 'mihakken', 'tsukaeru');
     setState((s) => chooseGap(s, eligible));
   }
 
   function blindCommitTapped() {
-    const move = currentLayerDeepenMove();
+    // Only reachable when `eligible` was true above, which requires moves.length === 1.
+    const move = currentLayerDeepenMoves()[0];
     if (move) onBlindCommit(move);
     setState((s) => commitBlind(s));
   }
 
   function selfReportTapped(classification: SelfReportKind) {
-    const move = currentLayerDeepenMove();
+    const move = currentLayerDeepenMoves()[0];
     if (move) onBlindSelfReport({ move, missionId, layerIndex: state.layer, classification });
     setState((s) => giveSelfReport(s));
   }

@@ -87,8 +87,12 @@ export function lintMission(mission: unknown, stage: number, gradeOf: GradeMap, 
         checkClaims(layer.claims, `layer ${n}`);
         const hand = (layer.hand as { tag: string; text: string; move?: string; domain?: string }[]) ?? [];
         const deepen = hand.filter((c) => c.tag === 'deepen');
-        if (deepen.length !== 1) {
-          issues.push({ rule: 'hand', message: `layer ${n} has ${deepen.length} deepen cards, need exactly 1` });
+        // WO-20: at least one deepen card is required; more than one is now accepted (Missions
+        // 1-7/1-8) — the child genuinely chooses which move to follow, deterministically, with
+        // no ranking of the choice. digMachine.ts/Dig.tsx already support this generically (see
+        // Dig.tsx's currentLayerDeepenMoves). Every existing single-deepen layer is unaffected.
+        if (deepen.length < 1) {
+          issues.push({ rule: 'hand', message: `layer ${n} has ${deepen.length} deepen cards, need at least 1` });
         }
         // v0.6 content contract (WO-01): every shipping Stage-2 Dig layer needs a `gap`, and its
         // `deepen` card needs a `move` + approved `domain`. Scoped to stage 2 — earlier/later

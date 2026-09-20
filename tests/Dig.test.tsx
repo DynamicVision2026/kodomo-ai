@@ -538,3 +538,93 @@ describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)
     expect(screen.getByText(ui.earlyOk)).toBeDisabled();
   });
 });
+
+/** WO-20: a layer whose hand offers TWO deepen cards (the child genuinely chooses which move to
+ *  follow — Missions 1-7/1-8), each carrying a distinct move/domain. Synthetic, not real content
+ *  — proves the mechanism, mirroring how other Dig.test.tsx fixtures are hand-built. */
+const multiDeepenPhase: DigPhase = {
+  template: 'dig',
+  layers: [
+    {
+      robotSays: 'かすときも、あるよ。',
+      claims: ['nonfactual'],
+      gap: 'いつも かすのか わからない',
+      gapDistractors: [
+        { text: 'かさないこともあるのは わかった', kind: 'answered' },
+        { text: 'べつのそう', kind: 'other-layer' },
+      ],
+      hand: [
+        { id: 'x1', text: 'なんで？', tag: 'deepen', move: 'follow-naze', domain: '日常' },
+        { id: 'x2', text: 'たとえば？', tag: 'deepen', move: 'follow-tatoeba', domain: '日常' },
+        { id: 'x3', text: 'もういちどいって', tag: 'repeat' },
+      ],
+      replies: { repeat: 'もういちど。' },
+    },
+  ],
+  root: { robotSays: 'ねっこだよ、りゆうがあるんだね。', claims: ['nonfactual'], label: 'ねっこ' },
+};
+
+describe('Dig template — WO-20 multi-deepen layers (child genuinely chooses the move)', () => {
+  it('either deepen card advances the layer to the root — a genuine choice, not a fixed single path', async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    render(<Dig phase={multiDeepenPhase} ui={ui} {...baseDigProps} solo onComplete={onComplete} />);
+
+    await passGate(user);
+    expect(screen.getByText('なんで？')).toBeInTheDocument();
+    expect(screen.getByText('たとえば？')).toBeInTheDocument();
+    await user.click(screen.getByText('たとえば？')); // child picks the SECOND deepen card
+    expect(screen.getByText('ねっこだよ、りゆうがあるんだね。')).toBeInTheDocument();
+  });
+
+  it('rendering the hand fires onMoveRendered for EVERY deepen move in it, not just one', async () => {
+    const user = userEvent.setup();
+    const onMoveRendered = vi.fn();
+    render(<Dig phase={multiDeepenPhase} ui={ui} {...baseDigProps} onMoveRendered={onMoveRendered} solo onComplete={() => {}} />);
+
+    await passGate(user);
+    expect(onMoveRendered).toHaveBeenCalledWith('follow-naze');
+    expect(onMoveRendered).toHaveBeenCalledWith('follow-tatoeba');
+  });
+
+  it('playing either deepen card attributes onUse evidence to the SPECIFIC move the child actually played, never both, never neither', async () => {
+    const user = userEvent.setup();
+    const onUse = vi.fn();
+    render(<Dig phase={multiDeepenPhase} ui={ui} {...baseDigProps} onUse={onUse} solo onComplete={() => {}} />);
+
+    await passGate(user);
+    await user.click(screen.getByText('なんで？'));
+    const moveArgs = onUse.mock.calls.map((c) => c[0].move);
+    expect(moveArgs).toContain('follow-naze');
+    expect(moveArgs).not.toContain('follow-tatoeba');
+  });
+
+  it('a multi-deepen layer is never Blind-first eligible, even when every one of its moves is already at tsukaeru — no scoring/ranking of which move the child would have picked', async () => {
+    const user = userEvent.setup();
+    const moveProgress = {
+      'follow-naze': { rung: 'tsukaeru' as const, aptUseDomains: ['日常', 'ことば', '社会とひと'] },
+      'follow-tatoeba': { rung: 'tsukaeru' as const, aptUseDomains: ['日常', 'ことば', '社会とひと'] },
+    };
+    render(<Dig phase={multiDeepenPhase} ui={ui} {...baseDigProps} moveProgress={moveProgress} solo onComplete={() => {}} />);
+
+    await passGate(user);
+    // Blind-first would hide the hand behind a 「いえた」 commit button; instead the full,
+    // unfiltered hand (both choices) is immediately visible, exactly as for an ineligible layer.
+    expect(document.querySelector('.dig__blind-commit')).not.toBeInTheDocument();
+    expect(screen.getByText('なんで？')).toBeInTheDocument();
+    expect(screen.getByText('たとえば？')).toBeInTheDocument();
+  });
+
+  it('every existing single-deepen layer (bread/s2.json) is completely unaffected — still exactly one rendered move, still Blind-first eligible at tsukaeru', async () => {
+    const user = userEvent.setup();
+    const onMoveRendered = vi.fn();
+    const moveProgress = { 'follow-naze': { rung: 'tsukaeru' as const, aptUseDomains: ['日常', 'ことば', '社会とひと'] } };
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} onMoveRendered={onMoveRendered} moveProgress={moveProgress} solo onComplete={() => {}} />);
+
+    await passGate(user);
+    expect(onMoveRendered).toHaveBeenCalledTimes(1);
+    expect(onMoveRendered).toHaveBeenCalledWith('follow-naze');
+    // Still Blind-first eligible exactly as before WO-20 — the hand is hidden behind 「いえた」.
+    expect(document.querySelector('.dig__blind-commit')).toBeInTheDocument();
+  });
+});
