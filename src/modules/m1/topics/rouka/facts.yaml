@@ -1,7 +1,6 @@
-# Gate 1: PENDING. No Founder approval has been granted for c1-c4 yet. status is left "pending"
-# below and must not be changed to "approved" until that approval genuinely occurs (WO-16/WO-19
-# boundary: do not fabricate Founder Gate 1 approval). See the exact final c1-c4 wording below,
-# returned for Founder review in WO-19's Human Decision Queue.
+# Gate 1: PASSED (WO-20 Phase 0). Founder approved c1-c4 exactly as recorded below on 2026-09-20
+# — no claim statement or type changed to obtain this approval. See approvedBy/approvedAt per
+# claim below.
 #
 # Gate 2: PASSED (WO-19 Phase 0). 酒井先生 reviewed the WO-16-corrected chain (root no longer
 # ambiguous 「見えない人」, tsumari no longer exposed as 「つまり」, root no longer invokes an
@@ -18,28 +17,36 @@
 # than just the person running") asserted a shared-space/ownership premise the chain never earned.
 # The revised wording below drops that premise and states only what the repaired root actually
 # supports — taking into account a person you can't see, not why the hallway belongs to anyone.
-# This revised c4 has NOT been approved and is presented here for Founder Gate 1 review of the
-# NEW wording; c1-c3 are semantically unchanged (only s2.json's robotSays register/kanji changed
-# for c3 — 「まがりかど」→「曲がり角」, 「むこう」→「向こう」 — the English claim statement itself
-# already described "corners or blind spots" generically and did not need to change).
+# This revised c4 wording is what the Founder approved (WO-20 Phase 0, 2026-09-20); c1-c3 are
+# semantically unchanged (only s2.json's robotSays register/kanji changed for c3 —
+# 「まがりかど」→「曲がり角」, 「むこう」→「向こう」 — the English claim statement itself already
+# described "corners or blind spots" generically and did not need to change).
 topic: rouka
 question: ろうかで走らないのは、なぜ？
 claims:
   - id: c1
     type: practice
     statement: "A common, familiar first explanation children hear for the rule against running in school hallways is that running there is dangerous."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c2
     type: practice
     statement: "A common, more specific version of this danger explanation is that a running child might bump into another person."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c3
     type: practice
     statement: "A common elaboration people give for the hallway-running rule is that hallways often have corners or blind spots, so a person coming from another direction may not be seen until they are close by."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c4
     type: practice
     # WO-16 correction: revised from the original wording (see the header comment above) to match
     # the repaired root, which no longer invokes a "shared space" premise.
     statement: "A commonly framed purpose for the hallway-running rule is to take into account a person who may be in a place you cannot see as you move through the hallway (for example, someone approaching from around a corner), not only to avoid danger to yourself."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
