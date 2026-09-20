@@ -24,9 +24,9 @@ const APPROVED_STAGE2_MOVES = new Set(moduleJson.followMoves);
  * the 2 primary moves AD-04 marks for this topic, not 3).
  */
 describe('chanto (1-1) — release classification and rootType contract', () => {
-  it('is classified release, and carries no fabricated approval', () => {
+  it('is classified release, and carries the real Gate 2 native-speaker review stamp recorded after WO-12 closure', () => {
     expect(chantoMission.contentClass).toBe('release');
-    expect(chantoMission.review).toBeUndefined();
+    expect(chantoMission.review).toEqual({ by: '酒井先生', date: '2026-09-20' });
   });
 
   it('declares a rootType from the closed WO-11C set (めあて), not an invented fourth value', () => {

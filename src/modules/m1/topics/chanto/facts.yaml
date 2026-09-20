@@ -1,29 +1,33 @@
-# Gate 1: PENDING. No Founder approval has occurred for any claim below — WO-12 explicitly
-# forbids fabricating one, so every claim stays status: pending, with no approvedBy/approvedAt.
-# gate:claims (both normal and RELEASE=1 mode) is EXPECTED to fail on this mission's contentClass
-# "release" until a human actually approves these claims — same honest-pending pattern as ice's
-# facts.yaml (topics/ice) before its own Gate 1 pass, and documented as a known, reported state,
-# not a bug to be worked around.
+# Gate 1: PASSED for c1/c2/c3 — the Founder approved all three, against the corrected content at
+# commit 4394bc7 (the Gate 1 correction that reworded c2/c3 and the ねっこ so the room/eating
+# examples read as situational examples, not fixed sub-definitions of 「ちゃんと」). See
+# approvedBy/approvedAt per claim below.
 #
 # type: practice (WO-11 decision 6 / docs/WO-11-implementation-notes-content-classification.md):
 # every claim here is a stated everyday-language observation, not an assertion about the physical
 # or natural world — there is no research paper to cite for "parents use 「ちゃんと」 as a general
 # instruction word." Per the fact/practice contract, a practice claim has no inherent external-
-# source requirement; sourceUrl/excerpt/adultLevelSource are correctly absent here. What a
-# practice claim still needs — same as any claim — is real Founder Gate 1 review and, for
-# release content, native-speaker Gate 2 review. Neither has happened yet.
+# source requirement; sourceUrl/excerpt/adultLevelSource are correctly absent here, same as
+# before this approval. Gate 1 approval does not imply Gate 2 on its own, but Gate 2 has also
+# separately passed for this mission — see s2.json's own `review` stamp (酒井先生).
 topic: chanto
 question: 「ちゃんと しなさい」の「ちゃんと」って、なに？
 claims:
   - id: c1
     type: practice
     statement: "Japanese parents commonly use 「ちゃんと」 as a general instruction (e.g. 「ちゃんとしなさい」) without stating, in the moment, what concrete action it requires."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c2
     type: practice
     statement: "In the specific situation of tidying a room, one commonly given example of what a speaker might mean by 「ちゃんと」 is returning items to their designated place — this is a situational example, not a fixed or universal meaning of the word."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c3
     type: practice
     statement: "「ちゃんと」 has no single concrete action built into it; what a speaker means by it depends on the situation and on what that speaker is actually asking for. In the specific situation of eating a meal, one commonly given example is eating without spilling or making a mess — again a situational example, not the definitive meaning, and a different example from the tidying-room case."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
