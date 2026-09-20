@@ -30,7 +30,7 @@ describe('resolveDigLayerPredictionOptions', () => {
     const prompt = layer1.prediction!;
     const options = resolveDigLayerPredictionOptions(layer1, prompt);
     expect(options).toEqual([
-      { key: 'f4', label: 'そのガスは どこへ いくの？' },
+      { key: 'f4', label: 'なぜ ガスが 出ると ふくらむの？' },
       { key: 'f5', label: 'さとうは あまいの？' },
       { key: 'f6', label: 'もう いちど いって' },
     ]);

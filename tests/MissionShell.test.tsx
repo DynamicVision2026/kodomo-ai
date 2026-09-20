@@ -56,7 +56,7 @@ describe('MissionShell', () => {
 
     // Phase 2: dig, straight through to the root (solo, no battle on layer 1 either).
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
-    await user.click(screen.getByText('そのガスは どこへ いくの？'));
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     expect(screen.getByText(digPhase.root.robotSays)).toBeInTheDocument();
     await user.click(screen.getByText(ui.earlyOk));
 
@@ -89,7 +89,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
-    await user.click(screen.getByText('そのガスは どこへ いくの？'));
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
     await user.click(screen.getByText(ui.handoffContinue)); // past tip
@@ -116,7 +116,7 @@ describe('MissionShell', () => {
     // play it, then skip the layer-1 battle to get to the root quickly.
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
     await user.click(screen.getByText(ui.predictionSkip));
-    await user.click(screen.getByText('そのガスは どこへ いくの？'));
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);

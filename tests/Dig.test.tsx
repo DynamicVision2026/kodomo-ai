@@ -21,7 +21,7 @@ describe('Dig template (solo — no prediction battle)', () => {
     expect(screen.getByText('イーストが さとうを たべて、ガスを 出すんだ。')).toBeInTheDocument();
     expect(onComplete).not.toHaveBeenCalled();
 
-    await user.click(screen.getByText('そのガスは どこへ いくの？'));
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     // The ねっこ screen renders and stays up — onComplete doesn't fire until the player
     // acknowledges it, so they actually get to read it (not an instant hand-off).
     expect(screen.getByText(phase.root.robotSays)).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)
     expect(screen.getByText('イーストが さとうを たべて、ガスを 出すんだ。')).toBeInTheDocument();
     expect(screen.getByText(ui.predictionSkip)).toBeInTheDocument();
     expect(document.querySelector('.dig__hand')).not.toBeInTheDocument();
-    expect(screen.getByText('そのガスは どこへ いくの？').className).toBe('prediction-battle__option');
+    expect(screen.getByText('なぜ ガスが 出ると ふくらむの？').className).toBe('prediction-battle__option');
   });
 
   it('completing the battle reveals the hand, and play proceeds to the root normally', async () => {
@@ -81,10 +81,10 @@ describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
     await user.click(screen.getByText('さとうは あまいの？')); // child predicts f5
     await user.click(screen.getByText(ui.handoffContinue));
-    await user.click(screen.getByText('そのガスは どこへ いくの？')); // parent predicts f4 (the real deepen)
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？')); // parent predicts f4 (the real deepen)
 
     // Battle resolved; the real hand is now up. Play it for real.
-    await user.click(screen.getByText('そのガスは どこへ いくの？'));
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     expect(screen.getByText(phase.root.robotSays)).toBeInTheDocument();
 
     await user.click(screen.getByText(ui.earlyOk));

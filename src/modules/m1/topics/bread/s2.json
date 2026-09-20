@@ -60,7 +60,7 @@
           "claims": ["c2"],
           "gap": "出た ガスが パンを ふくらませる しくみが わからない",
           "hand": [
-            { "id": "f4", "text": "そのガスは どこへ いくの？", "tag": "deepen", "domain": "しぜん・かがく" },
+            { "id": "f4", "text": "なぜ ガスが 出ると ふくらむの？", "tag": "deepen", "move": "follow-naze", "domain": "しぜん・かがく" },
             { "id": "f5", "text": "さとうは あまいの？", "tag": "sideways" },
             { "id": "f6", "text": "もう いちど いって", "tag": "repeat" }
           ],
