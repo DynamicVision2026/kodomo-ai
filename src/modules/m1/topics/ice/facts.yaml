@@ -1,10 +1,17 @@
-# Gate 1 evidence — WO-10 (second Stage-2 depth-3 topic). All four claims are status: pending,
-# awaiting Founder approval. Nothing here is approved; no approvedBy/approvedAt fabricated.
+# Gate 1 evidence — WO-10 (second Stage-2 depth-3 topic), revised per Coordinator correction on
+# top of 6c9184b. Simplified from 4 claims to 3, mapped one-to-one onto the three authoritative
+# sources the Coordinator named as independently verified (USGS Water Density; OpenStax
+# University Physics, density; OpenStax University Physics, Archimedes' principle and buoyancy),
+# and reworded so each claim corresponds directly to what the mission now actually asserts —
+# c1 covers both layer 0 (ice is lighter than the same size of water) and layer 1 (why: freezing
+# spreads the structure out), since both are the same USGS-sourced fact/mechanism, not two
+# claims. All three claims are status: pending — nothing here is approved; no approvedBy/
+# approvedAt fabricated.
 #
 # VERIFICATION CAVEAT (same as bread's own history — see facts.yaml in topics/bread): this
-# session's network egress policy blocks direct page fetches to every source domain tried
-# throughout this project (confirmed again for usgs.gov and chem.libretexts.org on this pass),
-# so `excerpt` is an explicit UNVERIFIED sentinel, not a quote — no search-engine-synthesized
+# session's network egress policy still blocks direct page fetches to every source domain tried
+# throughout this project (confirmed again for usgs.gov and openstax.org on this pass), so
+# `excerpt` is an explicit UNVERIFIED sentinel, not a quote — no search-engine-synthesized
 # paraphrase is presented as verbatim source text. Each claim's "research note" comment is that
 # paraphrase: useful context for whoever does the human source check, never evidence to approve
 # on its own. Required before Gate 1 approval, per claim: a human with real internet access opens
@@ -14,44 +21,35 @@ topic: ice
 question: こおりは なぜ みずに うくの？
 claims:
   - id: c1
-    statement: "Ice is measurably less dense than liquid water — about 9% less dense — which is why ice floats in water."
+    statement: "When water freezes into ice, its molecular structure becomes more open and spread out, so the same mass occupies more volume; as a result, ice is measurably less dense than liquid water (about 9% less dense) and is lighter than the same size/amount of liquid water."
     sourceUrl: "https://www.usgs.gov/water-science-school/science/water-density"
     # research note (search-summarized, UNVERIFIED, not a quote): USGS Water Science School,
-    # "Water Density" — search summary states ice is less dense than liquid water, its density
-    # decreasing by about 9 percent upon freezing, which is why ice floats; almost all of an
-    # iceberg's volume sits below the waterline.
+    # "Water Density" — search summary states ice is less dense than liquid water (density
+    # decreases by about 9% upon freezing) because frozen water molecules align into a regular
+    # crystal lattice that takes up more space than the disorganized liquid arrangement, holding
+    # the molecules further apart; this lower density is why ice floats.
     excerpt: "UNVERIFIED — HUMAN SOURCE CHECK REQUIRED"
     adultLevelSource: true
     status: pending
   - id: c2
-    statement: "When liquid water freezes into ice, its molecules lock into an open hexagonal crystal lattice held apart by hydrogen bonds, which occupies more volume (has more internal empty space) than the same mass of liquid water; this is why water expands by about 9% in volume when it freezes."
-    sourceUrl: "https://chem.libretexts.org/Bookshelves/General_Chemistry/ChemPRIME_(Moore_et_al.)/08:_Properties_of_Organic_Compounds/8.12:_Ice_and_Water"
-    # research note (search-summarized, UNVERIFIED, not a quote): Chemistry LibreTexts (an
-    # open academic chemistry textbook consortium), "8.12: Ice and Water" — search summary
-    # states hydrogen bonds lock water molecules into a repeating hexagonal ice lattice with
-    # open spaces throughout, which is why ice occupies more room than the same liquid water;
-    # ordinary water increases in volume by about 9% when it freezes.
+    statement: "Density is mass per unit volume. For the same mass, occupying a larger volume means lower density; equivalently, for the same volume/size, a less dense material contains less mass and is therefore lighter."
+    sourceUrl: "https://openstax.org/books/university-physics-volume-1/pages/14-1-fluids-density-and-pressure"
+    # research note (search-summarized, UNVERIFIED, not a quote): OpenStax University Physics
+    # Volume 1, "14.1 Fluids, Density, and Pressure" (open-source, peer-reviewed university
+    # physics textbook) — search summary states density is defined as mass per unit volume
+    # (rho = m/V); comparing two objects of the same mass, the one with the larger volume has
+    # the lower density.
     excerpt: "UNVERIFIED — HUMAN SOURCE CHECK REQUIRED"
     adultLevelSource: true
     status: pending
   - id: c3
-    statement: "Density is mass per unit volume; a material with more internal empty space packed into the same volume has less mass in that volume, and is therefore lighter, for the same size, than a denser material."
-    sourceUrl: "https://www.purdue.edu/science/K12/LabPages/Density.html"
-    # research note (search-summarized, UNVERIFIED, not a quote): Purdue University College of
-    # Science, K-12 "Teaching Density" resource — search summary states density is mass per
-    # unit volume (how much mass is packed into a given amount of space); a less dense object
-    # always has a lower mass-per-unit-volume than its surroundings.
-    excerpt: "UNVERIFIED — HUMAN SOURCE CHECK REQUIRED"
-    adultLevelSource: true
-    status: pending
-  - id: c4
     statement: "An object that is less dense than the fluid it is placed in experiences a net upward buoyant force and floats; this is Archimedes' principle."
-    sourceUrl: "https://phys.libretexts.org/Bookshelves/University_Physics/University_Physics_(OpenStax)/Book:_University_Physics_I_-_Mechanics_Sound_Oscillations_and_Waves_(OpenStax)/14:_Fluid_Mechanics/14.06:_Archimedes_Principle_and_Buoyancy"
-    # research note (search-summarized, UNVERIFIED, not a quote): University Physics Volume 1
-    # (OpenStax, an open-source, peer-reviewed university physics textbook), "Archimedes'
-    # Principle and Buoyancy" — search summary states an object floats if its average density
-    # is less than that of the surrounding fluid, because the denser fluid exerts a buoyant
-    # force equal to the weight of fluid displaced.
+    sourceUrl: "https://openstax.org/books/university-physics-volume-1/pages/14-4-archimedes-principle-and-buoyancy"
+    # research note (search-summarized, UNVERIFIED, not a quote): OpenStax University Physics
+    # Volume 1, "14.4 Archimedes' Principle and Buoyancy" — search summary states an object
+    # floats if its average density is less than that of the surrounding fluid, because the
+    # fluid pressure difference between the object's top and bottom produces a net upward
+    # (buoyant) force equal to the weight of the fluid displaced.
     excerpt: "UNVERIFIED — HUMAN SOURCE CHECK REQUIRED"
     adultLevelSource: true
     status: pending

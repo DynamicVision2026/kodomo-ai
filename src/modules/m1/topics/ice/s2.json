@@ -2,13 +2,13 @@
   "id": "m1-s2-1-2",
   "stage": 2,
   "title": "こおりは なぜ みずに うくの？",
-  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3", "facts.yaml#c4"],
+  "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
   "phases": [
     {
       "template": "dig",
       "layers": [
         {
-          "robotSays": "こおりは 水に うくよ。こおりは 水より かるいからね。",
+          "robotSays": "こおりは おなじ 大きさの 水より かるいから、うくよ。",
           "claims": ["c1"],
           "gap": "こおりが どうして 水より かるいのか わからない",
           "gapDistractors": [
@@ -28,7 +28,7 @@
         },
         {
           "robotSays": "水が こおると、つぶの あいだに すきまが できて、大きく なるんだ。",
-          "claims": ["c2"],
+          "claims": ["c1"],
           "gap": "大きく ふくらむと、どうして かるく なるのか わからない",
           "gapDistractors": [
             { "text": "こおると こおりは 大きく なるのか どうか わからない", "kind": "answered" },
@@ -46,8 +46,8 @@
           "earlyOk": { "challenger": "ポン太", "asks": "大きく ふくらむと、どうして かるく なるんだろうね？" }
         },
         {
-          "robotSays": "同じ おもさでも、こおりは 大きい。大きいほど かるく なるんだ。",
-          "claims": ["c3"],
+          "robotSays": "同じ おもさなら、こおりは 大きい。おなじ 大きさなら、かるいんだ。",
+          "claims": ["c2"],
           "gap": "同じ 大きさで こおりのほうが かるいと、なぜ うくのか わからない",
           "gapDistractors": [
             { "text": "同じ 大きさなら、どちらが かるいのか わからない", "kind": "answered" },
@@ -67,7 +67,7 @@
       ],
       "root": {
         "robotSays": "水より かるい ものは 水に うくから、こおりも うくんだよ。",
-        "claims": ["c4"],
+        "claims": ["c3"],
         "label": "ねっこ"
       }
     }
