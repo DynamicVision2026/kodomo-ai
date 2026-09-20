@@ -26,9 +26,13 @@ const APPROVED_STAGE2_MOVES = new Set(moduleJson.followMoves);
  * cultural claim is asserted, and that Mission 1-1 is completely unaffected.
  */
 describe('genkan (1-2) — release classification and rootType contract', () => {
-  it('is classified release, and carries no fabricated approval (Gate 1/Gate 2 both pending)', () => {
+  it('is classified release; carries its real Gate 2 native-speaker stamp, while Gate 1 (facts.yaml claim approval) remains genuinely pending and is not fabricated', () => {
+    // 酒井先生 gave final native-speaker approval of the exact reviewed chain at commit 406c4ee
+    // — that is Gate 2 (the Japanese wording). It does not substitute for Gate 1 (Founder
+    // approval of the underlying facts.yaml claims), which has never been granted for this
+    // mission and is correctly still absent here.
     expect(genkanMission.contentClass).toBe('release');
-    expect(genkanMission.review).toBeUndefined();
+    expect(genkanMission.review).toEqual({ by: '酒井先生', date: '2026-09-20' });
   });
 
   it('declares a rootType from the closed WO-11C set (めあて), not an invented fourth value', () => {

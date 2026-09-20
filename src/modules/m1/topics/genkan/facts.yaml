@@ -1,9 +1,12 @@
-# Gate 1: PENDING. No Founder approval has occurred for any claim below — WO-13 explicitly
-# forbids fabricating one, so every claim stays status: pending, with no approvedBy/approvedAt.
-# gate:claims (both normal and RELEASE=1 mode) is EXPECTED to fail on this mission's contentClass
-# "release" until a human actually approves these claims — same honest-pending pattern chanto's
-# facts.yaml (topics/chanto) went through before its own Gate 1/Gate 2 passes, and documented as
-# a known, reported state, not a bug to be worked around.
+# Gate 1: STILL PENDING. No Founder approval has occurred for any claim below — every claim stays
+# status: pending, with no approvedBy/approvedAt. gate:claims (both normal and RELEASE=1 mode) is
+# EXPECTED to fail on this mission's contentClass "release" until a human actually approves these
+# claims — a known, reported state, not a bug to be worked around.
+#
+# Gate 2: PASSED. 酒井先生 gave final native-speaker approval of the exact reviewed chain at
+# commit 406c4ee on 2026-09-20 — see s2.json's own `review` stamp. Gate 2 approval reviews the
+# Japanese wording; it does not and cannot substitute for Gate 1's founder approval of the
+# underlying claims below, which remains a separate, still-outstanding step.
 #
 # type: practice (WO-11 decision 6): every claim here is a stated everyday-practice observation,
 # not a sourced fact about the natural world, and not a historical/cultural claim about WHY the
