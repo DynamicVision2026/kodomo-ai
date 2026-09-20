@@ -1,7 +1,8 @@
 {
   "kitItem": "full-45-card-deck",
-  "status": "pending",
+  "status": "candidate",
   "stage": 2,
   "intendedCount": 45,
-  "cards": []
+  "cards": [],
+  "note": "WO-20 Phase 7: this file is a documentation stub only — the real, live-derived deck is computed by src/print/kit/deriveFullDeck.ts (imported directly in src/print/kit/main.tsx), never read from this static file. As of WO-20: 10/10 おだい populated (real topic titles/clear-cards), 4/12 追問カード populated (1 canonical phrasing per move, not yet 3 each), 2/2 blank populated, 0/12 core slots (why/who/format never authored), 0/4 ひみつ, 0/3 ロボのリアクション, 0/2 あそびかた. See pipeline/lib/kitDeckComposition.ts's checkDeckComposition() for the exact live gap against the accepted 45-card composition, and tests/deriveFullDeck.test.ts for proof every populated card traces to real course content. Status is 'candidate', not 'ready': composition is incomplete AND every source Mission/Bank topic except chanto/genkan/rouka has not passed Gate 1/Gate 2 yet."
 }

@@ -4,11 +4,11 @@
     {
       "id": "full-45-card-deck",
       "label": "Full 45-card printable deck",
-      "status": "pending",
-      "renderPath": "PrintDeck (src/print/deck/PrintDeck.tsx) — same component the existing 9-card sampler already uses",
+      "status": "candidate",
+      "renderPath": "PrintDeck (src/print/deck/PrintDeck.tsx), fed by src/print/kit/deriveFullDeck.ts — same component the existing 9-card sampler already uses",
       "dataPath": "src/print/kit-data/full-deck.json",
       "schemaPath": "pipeline/lib/kitDeckComposition.ts (FULL_DECK_COMPOSITION, checkDeckComposition)",
-      "note": "The existing src/modules/m1/deck.s2.json is the separate, already-COMPLETE 9-card free sampler (spec §8) — not a partial version of this item. Content depends on Story Missions 1-4 through 1-8 and the Bank topics."
+      "note": "WO-20 Phase 7: live-derived from real Story Mission/Bank content (deriveFullDeck.ts) — 10/10 おだい, 4/12 追問カード (1 of 3 phrasings per move), 2/2 blank populated; 0/12 core slots, 0/4 ひみつ, 0/3 ロボのリアクション, 0/2 あそびかた remain (no genuine source exists for those yet). The existing src/modules/m1/deck.s2.json remains the separate, already-COMPLETE 9-card free sampler — not a partial version of this item. status is 'candidate', not 'ready': composition is incomplete AND every source topic except chanto/genkan/rouka has not passed Gate 1/Gate 2."
     },
     {
       "id": "rules-a4x5",

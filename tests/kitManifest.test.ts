@@ -19,8 +19,18 @@ describe('WO-19 Phase 4 kit manifest', () => {
     expect(manifest.items.map((i) => i.id).sort()).toEqual([...EXPECTED_ITEM_IDS].sort());
   });
 
-  it('every item is honestly marked "pending" — none claims completeness merely because a renderer exists', () => {
-    for (const item of manifest.items) expect(item.status).toBe('pending');
+  it('every item is honestly marked "pending" or "candidate" — none claims "ready" merely because a renderer exists or content is candidate-derived', () => {
+    for (const item of manifest.items) {
+      expect(['pending', 'candidate']).toContain(item.status);
+      expect(item.status).not.toBe('ready');
+    }
+  });
+
+  it('only the full-45-card-deck is "candidate" (WO-20 Phase 7 live derivation) — every other item remains genuinely "pending"', () => {
+    for (const item of manifest.items) {
+      if (item.id === 'full-45-card-deck') expect(item.status).toBe('candidate');
+      else expect(item.status).toBe('pending');
+    }
   });
 
   it('every item\'s declared dataPath exists on disk', () => {
@@ -38,9 +48,9 @@ describe('WO-19 Phase 4 kit manifest', () => {
     }
   });
 
-  it('the full-45-card-deck data file is pending, empty, and would validate against FULL_DECK_COMPOSITION once real content is inserted', () => {
+  it('the full-45-card-deck STATIC STUB file is a documentation record only (candidate, empty cards array) — the real deck is live-derived by src/print/kit/deriveFullDeck.ts, proven in tests/deriveFullDeck.test.ts', () => {
     const raw = JSON.parse(readFileSync(resolve(ROOT, 'src/print/kit-data/full-deck.json'), 'utf8'));
-    expect(raw.status).toBe('pending');
+    expect(raw.status).toBe('candidate');
     expect(raw.cards).toEqual([]);
     // The composition CHECK works even against an empty deck — every kind is reported missing,
     // proving the validator is live and ready for real content, not a stub that always passes.
