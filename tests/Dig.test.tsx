@@ -173,17 +173,58 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     expect(typeof evidence.timestamp).toBe('number');
   });
 
-  it('does not qualify as apt_use when the deepen card is not the first play at the layer', async () => {
+  it('Correction 01: an offtopic play is still use evidence (no move), and the deepen after it does not qualify as apt_use', async () => {
     const user = userEvent.setup();
     const onUse = vi.fn();
     render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
 
     await passGate(user);
-    await user.click(screen.getByText('パンは すきですか？')); // f2: offtopic, no move -> no onUse call at all
-    expect(onUse).not.toHaveBeenCalled();
-    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // f1: deepen, but NOT the first play anymore
+    await user.click(screen.getByText('パンは すきですか？')); // f2: offtopic — still recorded as a play
     expect(onUse).toHaveBeenCalledTimes(1);
-    expect(onUse.mock.calls[0]![0]).toMatchObject({ move: 'follow-naze', aptUse: false });
+    expect(onUse.mock.calls[0]![0]).toMatchObject({ move: undefined, domain: undefined, aptUse: false });
+
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // f1: deepen, but NOT the first play anymore
+    expect(onUse).toHaveBeenCalledTimes(2);
+    expect(onUse.mock.calls[1]![0]).toMatchObject({ move: 'follow-naze', aptUse: false });
+  });
+
+  it('Correction 01: a repeat play before the deepen also disqualifies it from apt_use', async () => {
+    const user = userEvent.setup();
+    const onUse = vi.fn();
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
+
+    await passGate(user);
+    await user.click(screen.getByText('もう いちど いって')); // f3: repeat — still recorded as a play
+    expect(onUse).toHaveBeenCalledTimes(1);
+    expect(onUse.mock.calls[0]![0]).toMatchObject({ move: undefined, domain: undefined, aptUse: false });
+
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // f1: deepen, but NOT the first play anymore
+    expect(onUse).toHaveBeenCalledTimes(2);
+    expect(onUse.mock.calls[1]![0]).toMatchObject({ move: 'follow-naze', aptUse: false });
+  });
+
+  it('Correction 01: a sideways play before the deepen also disqualifies it from apt_use', async () => {
+    const user = userEvent.setup();
+    const onUse = vi.fn();
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} solo={false} onComplete={() => {}} />);
+
+    // Reach layer 1 (its own prediction battle auto-skips in solo... this render is co-play, so
+    // walk the battle instead — same path tests/Dig.test.tsx's co-play describe block uses).
+    await passGate(user);
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // layer 0's deepen -> enters layer 1
+    await user.click(screen.getByText('さとうは あまいの？')); // child predicts f5
+    await user.click(screen.getByText(ui.handoffContinue));
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？')); // parent predicts f4
+    onUse.mockClear(); // discard layer 0's evidence — this test is about layer 1 only
+    await passGate(user);
+
+    await user.click(screen.getByText('さとうは あまいの？')); // f5: sideways — still recorded as a play
+    expect(onUse).toHaveBeenCalledTimes(1);
+    expect(onUse.mock.calls[0]![0]).toMatchObject({ move: undefined, domain: undefined, aptUse: false });
+
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？')); // f4: deepen, but NOT the first play anymore
+    expect(onUse).toHaveBeenCalledTimes(2);
+    expect(onUse.mock.calls[1]![0]).toMatchObject({ move: 'follow-naze', aptUse: false });
   });
 
   it('Gap Naming target vs distractor choice has no effect on the resulting onUse evidence', async () => {

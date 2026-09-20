@@ -127,9 +127,13 @@ export function MissionShell({ moduleId, freeMissionIds, mission: defaultMission
     persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
   }
 
-  /** WO-04: a follow-up card carrying a `move` was played. Always tracked; only a qualifying
-   *  `apt_use` advances scaffold progression (もらった -> つかえる once 3 distinct domains). */
+  /** WO-04 (Correction 01): a follow-up card was played — every tag, including sideways/repeat/
+   *  offtopic, which establish play order (so a later deepen at the same layer correctly fails
+   *  apt_use) but carry no move of their own. Only evidence with an attributable move is
+   *  reported here or can advance that move's scaffold progression — no move identity is
+   *  invented for the rest. */
   function moveUsed(evidence: UseEvidence) {
+    if (!evidence.move || !evidence.domain) return;
     const props = {
       move: evidence.move, domain: evidence.domain, missionId: evidence.missionId,
       layerIndex: evidence.layerIndex, timestamp: evidence.timestamp,

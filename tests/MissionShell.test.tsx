@@ -147,6 +147,21 @@ describe('MissionShell', () => {
     });
   });
 
+  it('Correction 01: a play with no attributable move is never tracked and never touches moveProgress', async () => {
+    const user = userEvent.setup();
+    render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
+    await createAndSelectProfile(user);
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await passGate(user);
+    await user.click(screen.getByText('パンは すきですか？')); // f2: offtopic — a play, but no move to attribute
+
+    expect(plausible).not.toHaveBeenCalledWith('use', expect.anything());
+    expect(plausible).not.toHaveBeenCalledWith('apt_use', expect.anything());
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].moveProgress ?? {}).not.toHaveProperty('undefined');
+  });
+
   it('shows the locked screen when hasAccess denies the mission, never starting it', async () => {
     const user = userEvent.setup();
     // Not in freeMissionIds, and the default AppState has no "m1:full" entitlement.

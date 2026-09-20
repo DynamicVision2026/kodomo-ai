@@ -16,11 +16,21 @@ export interface DigResult {
   misses: number[];
 }
 
-/** WO-04: evidence emitted whenever a played follow-up card carries a `move` — see
- *  src/engine/scaffold.ts. `aptUse` is the qualifying subset (first play at the layer, deepen). */
+/**
+ * WO-04 (Correction 01): evidence emitted for EVERY played follow-up card — a `use` is "a
+ * follow-up card is played," full stop, not just the ones that happen to carry a `move`. This is
+ * what lets a sideways/repeat/offtopic play establish that a later deepen at the same layer
+ * wasn't the first play, without needing a move identity of its own to do it.
+ *
+ * `move`/`domain` are only present when the played card actually carries them (currently, only
+ * deepen cards do — see src/engine/scaffold.ts) — sideways/repeat/offtopic plays are still
+ * recorded, just with no move to attribute progression to. `aptUse` is the qualifying subset
+ * (first play at the layer, `tag === 'deepen'`); it is computed the same way regardless of
+ * whether `move` is present, but only evidence carrying a `move` can ever advance progression.
+ */
 export interface UseEvidence {
-  move: string;
-  domain: string;
+  move?: string;
+  domain?: string;
   missionId: string;
   layerIndex: number;
   timestamp: number;
@@ -37,7 +47,7 @@ export interface DigProps {
   onComplete: (result: DigResult) => void;
   /** WO-04: a move's follow-up card was just shown, whether or not it gets played. */
   onMoveRendered: (move: string) => void;
-  /** WO-04: a follow-up card carrying a `move` was played. */
+  /** WO-04 (Correction 01): a follow-up card was played — every tag, not just deepen. */
   onUse: (evidence: UseEvidence) => void;
 }
 
@@ -80,7 +90,11 @@ export function Dig({ phase, ui, solo, missionId, onComplete, onMoveRendered, on
     const playIndexAtLayer = state.misses[state.layer] ?? 0;
     const next = playCard(phase, state, card);
     setState(next);
-    if (next !== state && card.move && card.domain) {
+    if (next !== state) {
+      // Correction 01: every play is `use` evidence, regardless of tag or whether the card
+      // carries a move — sideways/repeat/offtopic plays still establish play order (so a later
+      // deepen at this layer correctly fails isAptUse), even though they have no move of their
+      // own to attribute progression to.
       onUse({
         move: card.move,
         domain: card.domain,
