@@ -9,6 +9,10 @@ import moduleJson from '../src/modules/m1/module.json';
 const phase = mission.phases[1] as unknown as DigPhase;
 const ui = moduleJson.ui as ModuleUiStrings;
 
+/** WO-04: DigProps Dig.test.tsx doesn't otherwise exercise — a fixed missionId and no-op
+ *  evidence callbacks, since these tests are about Dig's own dig-phase behaviour. */
+const baseDigProps = { missionId: mission.id, onMoveRendered: () => {}, onUse: () => {} };
+
 beforeEach(() => cleanup());
 
 /** WO-02/WO-03: every layer's hand sits behind 「これでOK？」 -> Gap Naming (any of the three
@@ -23,7 +27,7 @@ describe('Dig template (solo — no prediction battle)', () => {
   it('is playable from bread/s2.json alone: two deepen taps reach the root', async () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
-    render(<Dig phase={phase} ui={ui} solo onComplete={onComplete} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={onComplete} />);
 
     await passGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
@@ -43,7 +47,7 @@ describe('Dig template (solo — no prediction battle)', () => {
   });
 
   it('blocks a direct follow-up tap before the judgment gate is passed', async () => {
-    render(<Dig phase={phase} ui={ui} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
 
     // Fresh layer 0: only the judgment gate is up, not the hand.
     expect(screen.queryByText('なぜ イーストで ふくらむの？')).not.toBeInTheDocument();
@@ -53,7 +57,7 @@ describe('Dig template (solo — no prediction battle)', () => {
 
   it('"not enough" reaches Gap Naming with exactly the target and both authored distractors, no follow-up selectable yet', async () => {
     const user = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
 
     await user.click(screen.getByText(ui.judgeNotEnough));
     expect(screen.getByText('イーストが はたらく しくみが わからない')).toBeInTheDocument(); // target
@@ -66,7 +70,7 @@ describe('Dig template (solo — no prediction battle)', () => {
 
   it('choosing a distractor gap reveals the same complete, unfiltered hand as choosing the target', async () => {
     const user = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
 
     await user.click(screen.getByText(ui.judgeNotEnough));
     // Deliberately name a DISTRACTOR, not the target, to prove the hand isn't filtered by choice.
@@ -80,7 +84,7 @@ describe('Dig template (solo — no prediction battle)', () => {
 
   it('produces no correct/incorrect indication for either the target or a distractor', async () => {
     const user = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
 
     await user.click(screen.getByText(ui.judgeNotEnough));
     // All three options share one class — nothing distinguishes the target visually.
@@ -95,7 +99,7 @@ describe('Dig template (solo — no prediction battle)', () => {
     window.plausible = plausible;
     try {
       const user = userEvent.setup();
-      render(<Dig phase={phase} ui={ui} solo onComplete={() => {}} />);
+      render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
       await user.click(screen.getByText(ui.judgeNotEnough));
       await user.click(screen.getByText('イーストが はたらく しくみが わからない')); // the target
       expect(plausible).toHaveBeenCalledWith(
@@ -109,7 +113,7 @@ describe('Dig template (solo — no prediction battle)', () => {
 
   it('これでOK still shows the challenge even while Gap Naming choices are up', async () => {
     const user = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
 
     await user.click(screen.getByText(ui.judgeNotEnough));
     await user.click(screen.getByText(ui.earlyOk));
@@ -118,7 +122,7 @@ describe('Dig template (solo — no prediction battle)', () => {
 
   it('a non-deepen card shows a flat reply and does not advance', async () => {
     const user = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
 
     await passGate(user);
     await user.click(screen.getByText('パンは すきですか？'));
@@ -129,7 +133,7 @@ describe('Dig template (solo — no prediction battle)', () => {
 
   it('tapping the early-ok button always shows the challenge, never blocks play', async () => {
     const user = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
 
     await user.click(screen.getByText(ui.earlyOk));
     expect(screen.getByText('ポン太')).toBeInTheDocument();
@@ -137,16 +141,77 @@ describe('Dig template (solo — no prediction battle)', () => {
   });
 
   it('never renders 正解/不正解 anywhere', () => {
-    render(<Dig phase={phase} ui={ui} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo onComplete={() => {}} />);
     expect(screen.queryByText(/正解/)).not.toBeInTheDocument();
     expect(screen.queryByText(/不正解/)).not.toBeInTheDocument();
+  });
+});
+
+describe('Dig template (WO-04 scaffold evidence)', () => {
+  it('fires onMoveRendered with the layer\'s deepen move as soon as its hand is revealed', async () => {
+    const user = userEvent.setup();
+    const onMoveRendered = vi.fn();
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={() => {}} onMoveRendered={onMoveRendered} solo onComplete={() => {}} />);
+
+    expect(onMoveRendered).not.toHaveBeenCalled(); // not yet — still at the judgment gate
+    await passGate(user);
+    expect(onMoveRendered).toHaveBeenCalledWith('follow-naze');
+  });
+
+  it('fires onUse with the full required record when a card carrying a move is played, qualifying as apt_use on the first play', async () => {
+    const user = userEvent.setup();
+    const onUse = vi.fn();
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
+
+    await passGate(user);
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // f1: layer 0's deepen, first play
+    expect(onUse).toHaveBeenCalledTimes(1);
+    const [evidence] = onUse.mock.calls[0]!;
+    expect(evidence).toMatchObject({
+      move: 'follow-naze', domain: 'しぜん・かがく', missionId: mission.id, layerIndex: 0, aptUse: true,
+    });
+    expect(typeof evidence.timestamp).toBe('number');
+  });
+
+  it('does not qualify as apt_use when the deepen card is not the first play at the layer', async () => {
+    const user = userEvent.setup();
+    const onUse = vi.fn();
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
+
+    await passGate(user);
+    await user.click(screen.getByText('パンは すきですか？')); // f2: offtopic, no move -> no onUse call at all
+    expect(onUse).not.toHaveBeenCalled();
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // f1: deepen, but NOT the first play anymore
+    expect(onUse).toHaveBeenCalledTimes(1);
+    expect(onUse.mock.calls[0]![0]).toMatchObject({ move: 'follow-naze', aptUse: false });
+  });
+
+  it('Gap Naming target vs distractor choice has no effect on the resulting onUse evidence', async () => {
+    const targetUse = vi.fn();
+    const distractorUse = vi.fn();
+    const userA = userEvent.setup();
+    const { unmount } = render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={targetUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
+    await userA.click(screen.getByText(ui.judgeNotEnough));
+    await userA.click(screen.getByText('イーストが はたらく しくみが わからない')); // the target
+    await userA.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    unmount();
+
+    const userB = userEvent.setup();
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={distractorUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
+    await userB.click(screen.getByText(ui.judgeNotEnough));
+    await userB.click(screen.getByText('なにが パンを ふくらませるのか わからない')); // an answered distractor
+    await userB.click(screen.getByText('なぜ イーストで ふくらむの？'));
+
+    const [targetEvidence] = targetUse.mock.calls[0]!;
+    const [distractorEvidence] = distractorUse.mock.calls[0]!;
+    expect({ ...targetEvidence, timestamp: 0 }).toEqual({ ...distractorEvidence, timestamp: 0 });
   });
 });
 
 describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)', () => {
   it('shows the battle instead of the hand on entering layer 1, using the hand cards\' own text', async () => {
     const user = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} solo={false} onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo={false} onComplete={() => {}} />);
 
     await passGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // layer 0's deepen -> enters layer 1
@@ -161,7 +226,7 @@ describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)
 
   it('completing the battle still requires the judgment gate before the hand appears', async () => {
     const user = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} solo={false} onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo={false} onComplete={() => {}} />);
 
     await passGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
@@ -177,7 +242,7 @@ describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)
   it('completing the battle then the gate reveals the hand, and play proceeds to the root normally', async () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
-    render(<Dig phase={phase} ui={ui} solo={false} onComplete={onComplete} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo={false} onComplete={onComplete} />);
 
     await passGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
@@ -196,7 +261,7 @@ describe('Dig template (co-play — layer 1\'s prediction battle gates its hand)
 
   it('the これでOK button is disabled while a battle is showing, but enabled at the judgment gate', async () => {
     const user = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} solo={false} onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} solo={false} onComplete={() => {}} />);
 
     // Layer 0 has no battle: これでOK is enabled right at the gate.
     expect(screen.getByText(ui.earlyOk)).toBeEnabled();

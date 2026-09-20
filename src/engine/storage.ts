@@ -1,4 +1,5 @@
 import type { Stage } from './types';
+import type { MoveProgressMap } from './scaffold';
 
 /**
  * Local, per-device state. NO PII: preset avatar + preset nickname id + a stage number.
@@ -13,6 +14,9 @@ export interface Profile {
   nicknameId: string;
   stage: Stage;
   progress: Record<string, Progress>;
+  /** WO-04: per-move scaffold progression for this profile. Absent on profiles created before
+   *  WO-04 — callers treat that the same as `{}`, never as an error. */
+  moveProgress?: MoveProgressMap;
 }
 export interface AppState {
   profiles: Profile[];

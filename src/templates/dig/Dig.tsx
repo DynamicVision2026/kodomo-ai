@@ -4,6 +4,7 @@ import {
   initDig, playCard, tapEarlyOk, judgeNotEnough, chooseGap, depth, currentAnswer,
   type DigState, type GapChoice,
 } from '../../engine/digMachine';
+import { isAptUse } from '../../engine/scaffold';
 import { resolveDigLayerPredictionOptions } from '../../engine/predictions';
 import { Card } from '../../ui/Card';
 import { Ruby } from '../../engine/ruby';
@@ -15,12 +16,29 @@ export interface DigResult {
   misses: number[];
 }
 
+/** WO-04: evidence emitted whenever a played follow-up card carries a `move` — see
+ *  src/engine/scaffold.ts. `aptUse` is the qualifying subset (first play at the layer, deepen). */
+export interface UseEvidence {
+  move: string;
+  domain: string;
+  missionId: string;
+  layerIndex: number;
+  timestamp: number;
+  aptUse: boolean;
+}
+
 export interface DigProps {
   phase: DigPhase;
   ui: ModuleUiStrings;
   /** Solo play: every prediction battle in this phase auto-skips. Spec v0.5 pillar 5. */
   solo: boolean;
+  /** WO-04: carried on `UseEvidence` — Dig itself never knows the wider Mission object. */
+  missionId: string;
   onComplete: (result: DigResult) => void;
+  /** WO-04: a move's follow-up card was just shown, whether or not it gets played. */
+  onMoveRendered: (move: string) => void;
+  /** WO-04: a follow-up card carrying a `move` was played. */
+  onUse: (evidence: UseEvidence) => void;
 }
 
 /**
@@ -38,8 +56,14 @@ export interface DigProps {
  * + two authored distractors, shuffled per presentation); naming any of the three — no verdict,
  * no filtering — reveals the same complete hand. A prediction battle, where present, still runs
  * first; the gate applies to what comes after it, same as it does for a layer with no battle.
+ *
+ * WO-04: revealing a layer's hand is also this move's mihakken -> moratta moment
+ * (`onMoveRendered`, fired once the gate opens); playing a card that carries a `move` is a
+ * `use` (`onUse`). Dig only ever emits this raw evidence — it never reads scaffold progression
+ * itself, so reaching tsukaeru cannot change anything about how Dig looks or plays (that's the
+ * later Blind-first ticket's job).
  */
-export function Dig({ phase, ui, solo, onComplete }: DigProps) {
+export function Dig({ phase, ui, solo, missionId, onComplete, onMoveRendered, onUse }: DigProps) {
   const [state, setState] = useState<DigState>(() => initDig(phase));
   const [battledLayers, setBattledLayers] = useState<ReadonlySet<number>>(new Set());
 
@@ -49,8 +73,23 @@ export function Dig({ phase, ui, solo, onComplete }: DigProps) {
     const card = layer?.hand.find((c) => c.id === cardId);
     if (!card) return;
     const prevLayer = state.layer;
+    // WO-04: a dig layer's hand is visited exactly once, ending only via its one deepen play —
+    // so every prior play at this layer is necessarily non-advancing, and `misses[layer]` (read
+    // BEFORE this play) is exactly the count of cards already played here. That's what
+    // `isAptUse` needs to know whether this is the first play at the layer.
+    const playIndexAtLayer = state.misses[state.layer] ?? 0;
     const next = playCard(phase, state, card);
     setState(next);
+    if (next !== state && card.move && card.domain) {
+      onUse({
+        move: card.move,
+        domain: card.domain,
+        missionId,
+        layerIndex: prevLayer,
+        timestamp: Date.now(),
+        aptUse: isAptUse(playIndexAtLayer, card.tag),
+      });
+    }
     if (next.finished) {
       // The ねっこ screen renders now; onComplete waits for the player to tap これでOK so they
       // actually get to read it, instead of the phase handing off in the same tick it arrives.
@@ -82,7 +121,11 @@ export function Dig({ phase, ui, solo, onComplete }: DigProps) {
 
   function gapChosen(choice: GapChoice) {
     // AD-01 §5: recorded for its classification only — no verdict, no retry, hand unfiltered.
+    // WO-04: gap choice has no bearing on scaffold progression — target vs distractor is never
+    // read here. The hand this choice reveals is what makes the layer's move みはっけん.
     track('gap_named', { classification: choice.kind });
+    const deepenCard = phase.layers[state.layer]?.hand.find((c) => c.tag === 'deepen');
+    if (deepenCard?.move) onMoveRendered(deepenCard.move);
     setState((s) => chooseGap(s));
   }
 

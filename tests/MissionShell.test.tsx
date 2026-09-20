@@ -137,6 +137,14 @@ describe('MissionShell', () => {
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
     expect(saved.profiles).toHaveLength(1);
     expect(saved.profiles[0].progress[mission.id]).toEqual({ done: true, stamps: 0, coop: true });
+
+    // WO-04: both bread layers' deepen cards are follow-naze in the same domain
+    // (しぜん・かがく), each played first-at-its-layer -> two qualifying apt_use, but only ONE
+    // distinct domain — the critical distinction (three uses in one domain isn't enough).
+    expect(saved.profiles[0].moveProgress['follow-naze']).toEqual({
+      rung: 'moratta',
+      aptUseDomains: ['しぜん・かがく'],
+    });
   });
 
   it('shows the locked screen when hasAccess denies the mission, never starting it', async () => {

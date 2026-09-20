@@ -13,7 +13,11 @@ export type EventName =
   | 'code_redeemed'
   // v0.6 (WO-03, AD-01 §5): the child's Gap Naming choice, classification only — 'target',
   // 'answered' or 'other-layer' — never a correct/incorrect judgment. Also not in spec v0.5 §11.
-  | 'gap_named';
+  | 'gap_named'
+  // v0.6 (WO-04): deterministic scaffold-progression evidence. `use` fires whenever a played
+  // follow-up card carries a `move`; `apt_use` additionally only when it qualifies (first play
+  // at the layer, tag === 'deepen') — see src/engine/scaffold.ts. Also not in spec v0.5 §11.
+  | 'use' | 'apt_use';
 
 type Props = Record<string, string | number | boolean>;
 

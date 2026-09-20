@@ -2,11 +2,12 @@ import { useState } from 'react';
 import type { Mission, ModuleUiStrings } from '../engine/types';
 import { load, save, MAX_PROFILES, type AppState, type Profile } from '../engine/storage';
 import { hasAccess } from '../engine/entitlements';
+import { applyMoveRendered, applyAptUse } from '../engine/scaffold';
 import { track } from '../engine/analytics';
 import { ProfilePicker } from './ProfilePicker';
 import { pickNextMission } from './missionLibrary';
 import { SlotAssembly } from '../templates/slot-assembly';
-import { Dig } from '../templates/dig';
+import { Dig, type UseEvidence } from '../templates/dig';
 import { Handoff } from '../templates/handoff';
 import { Ruby } from '../engine/ruby';
 import './mission-shell.css';
@@ -118,6 +119,33 @@ export function MissionShell({ moduleId, freeMissionIds, mission: defaultMission
     persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
   }
 
+  /** WO-04: a move's follow-up card was shown (みはっけん -> もらった, once). */
+  function moveRendered(move: string) {
+    if (!profile) return;
+    const nextProfile: Profile = { ...profile, moveProgress: applyMoveRendered(profile.moveProgress ?? {}, move) };
+    setProfile(nextProfile);
+    persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
+  }
+
+  /** WO-04: a follow-up card carrying a `move` was played. Always tracked; only a qualifying
+   *  `apt_use` advances scaffold progression (もらった -> つかえる once 3 distinct domains). */
+  function moveUsed(evidence: UseEvidence) {
+    const props = {
+      move: evidence.move, domain: evidence.domain, missionId: evidence.missionId,
+      layerIndex: evidence.layerIndex, timestamp: evidence.timestamp,
+    };
+    track('use', props);
+    if (!evidence.aptUse) return;
+    track('apt_use', props);
+    if (!profile) return;
+    const nextProfile: Profile = {
+      ...profile,
+      moveProgress: applyAptUse(profile.moveProgress ?? {}, evidence.move, evidence.domain),
+    };
+    setProfile(nextProfile);
+    persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
+  }
+
   function completePhase() {
     const nextIndex = (screen.kind === 'phase' ? screen.index : 0) + 1;
     if (nextIndex >= mission.phases.length) {
@@ -171,7 +199,17 @@ export function MissionShell({ moduleId, freeMissionIds, mission: defaultMission
     if (phase.template === 'slot-assembly') {
       return <SlotAssembly phase={phase} ui={ui} solo={solo} onComplete={completePhase} />;
     }
-    return <Dig phase={phase} ui={ui} solo={solo} onComplete={completePhase} />;
+    return (
+      <Dig
+        phase={phase}
+        ui={ui}
+        solo={solo}
+        missionId={mission.id}
+        onComplete={completePhase}
+        onMoveRendered={moveRendered}
+        onUse={moveUsed}
+      />
+    );
   }
 
   if (screen.kind === 'tip') {
