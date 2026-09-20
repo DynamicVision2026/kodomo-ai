@@ -29,7 +29,14 @@ export interface MoveProgress {
 
 export type MoveProgressMap = Record<string, MoveProgress>;
 
-function isAtLeast(rung: ScaffoldRung, target: ScaffoldRung): boolean {
+/** WO-07: Blind-first's own three accepted self-report choices, romanized like every other
+ *  internal identifier — the Japanese button copy (おなじだった/もっといいのを きいた/ちがった)
+ *  lives only in module JSON. Display/reflection evidence only; never affects progression. */
+export type SelfReportKind = 'same' | 'better' | 'different';
+
+/** Exported so callers (WO-07's Dig, MissionShell) can decide Blind-first eligibility
+ *  (tsukaeru or above) from a move's current rung without duplicating the rung ordering. */
+export function isAtLeast(rung: ScaffoldRung, target: ScaffoldRung): boolean {
   return RUNG_ORDER.indexOf(rung) >= RUNG_ORDER.indexOf(target);
 }
 
@@ -68,6 +75,22 @@ export function applyAptUse(map: MoveProgressMap, move: string, domain: string):
   if (aptUseDomains.length >= 3) rung = advanceTo(rung, 'tsukaeru');
   if (rung === current.rung && aptUseDomains === current.aptUseDomains) return map;
   return { ...map, [move]: { rung, aptUseDomains } };
+}
+
+/**
+ * WO-07: a valid `blind_commit` for `move` — the child committed to their own next question
+ * before the authored hand was shown. Advances tsukaeru -> hitoride, monotonically, and ONLY
+ * when the move is already at tsukaeru or beyond: eligibility is decided by the caller (WO-07's
+ * Dig checks this same rung before ever offering Blind-first), but this guard means a
+ * `blind_commit` can never vault a move from below tsukaeru straight to hitoride even if it
+ * somehow fired out of order — no semantic evaluation of what the child said, ever.
+ */
+export function applyBlindCommit(map: MoveProgressMap, move: string): MoveProgressMap {
+  const current = progressOf(map, move);
+  if (!isAtLeast(current.rung, 'tsukaeru')) return map;
+  const rung = advanceTo(current.rung, 'hitoride');
+  if (rung === current.rung) return map;
+  return { ...map, [move]: { ...current, rung } };
 }
 
 /**

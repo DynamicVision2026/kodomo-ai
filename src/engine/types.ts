@@ -132,6 +132,14 @@ export interface ModuleUiStrings {
   judgeNotEnough: string;
   /** WO-05: heading for 問いのどうぐばこ, the Toolbox growth surface on the parent screen. */
   toolboxHeading: string;
+  /** WO-07: Blind-first's commit button — 「いえた」, tapped while the hand is still hidden. */
+  blindCommit: string;
+  /** WO-07: blind_selfreport option — the child's own question was the same as an authored card. */
+  blindSelfReportSame: string;
+  /** WO-07: blind_selfreport option — the child thought of something better than any authored card. */
+  blindSelfReportBetter: string;
+  /** WO-07: blind_selfreport option — the child's own question differed from the authored cards. */
+  blindSelfReportDifferent: string;
 }
 
 export interface Mission {

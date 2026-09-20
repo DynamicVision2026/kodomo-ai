@@ -80,6 +80,34 @@
   cursor: pointer;
 }
 
+.dig__blind-commit {
+  display: flex;
+  justify-content: center;
+}
+.dig__blind-commit-button {
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid #2f8f6b;
+  background: #fff;
+  color: #2f8f6b;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dig__self-report {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.dig__self-report button {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+}
+
 .dig__challenge {
   display: flex;
   flex-direction: column;

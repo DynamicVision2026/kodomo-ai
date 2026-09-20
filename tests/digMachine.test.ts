@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  initDig, playCard, tapEarlyOk, judgeNotEnough, chooseGap, buildGapChoices, depth, currentAnswer,
-  type DigState,
+  initDig, playCard, tapEarlyOk, judgeNotEnough, chooseGap, commitBlind, giveSelfReport,
+  buildGapChoices, depth, currentAnswer, type DigState,
 } from '../src/engine/digMachine';
 import type { DigPhase } from '../src/engine/types';
 import mission from '../src/modules/m1/topics/bread/s2.json';
@@ -115,5 +115,74 @@ describe('dig machine', () => {
     s = passGate(s);
     s = playCard(phase, s, card(1, 'f4'));
     expect(tapEarlyOk(phase, s).finished).toBe(true);
+  });
+});
+
+describe('WO-07: Blind-first', () => {
+  it('chooseGap(state) defaults to non-eligible — unchanged pre-WO-07 behaviour', () => {
+    const s = chooseGap(judgeNotEnough(phase, initDig(phase)));
+    expect(s.gate).toBe('open');
+  });
+
+  it('an eligible chooseGap withholds the hand — blindCommit, not open', () => {
+    const s = chooseGap(judgeNotEnough(phase, initDig(phase)), true);
+    expect(s.gate).toBe('blindCommit');
+    expect(s.gapChoices).toBeNull();
+  });
+
+  it('no follow-up card can be selected while awaiting blind_commit', () => {
+    const s = chooseGap(judgeNotEnough(phase, initDig(phase)), true);
+    expect(playCard(phase, s, card(0, 'f1'))).toEqual(s);
+  });
+
+  it('merely reaching blindCommit does not itself touch awaitingSelfReport or open the hand', () => {
+    const s = chooseGap(judgeNotEnough(phase, initDig(phase)), true);
+    expect(s.awaitingSelfReport).toBe(false);
+    expect(s.gate).not.toBe('open');
+  });
+
+  it('commitBlind reveals the hand (open) and marks a self-report as pending', () => {
+    const eligible = chooseGap(judgeNotEnough(phase, initDig(phase)), true);
+    const committed = commitBlind(eligible);
+    expect(committed.gate).toBe('open');
+    expect(committed.awaitingSelfReport).toBe(true);
+    expect(playCard(phase, committed, card(0, 'f1')).layer).toBe(1); // hand is now playable
+  });
+
+  it('commitBlind is a no-op unless a Blind-first commit is actually being awaited', () => {
+    const notEligible = chooseGap(judgeNotEnough(phase, initDig(phase)), false); // already open
+    expect(commitBlind(notEligible)).toEqual(notEligible);
+    expect(commitBlind(initDig(phase))).toEqual(initDig(phase)); // at the plain judgment gate
+  });
+
+  it('giveSelfReport clears the pending flag without touching gate or hand contents', () => {
+    const committed = commitBlind(chooseGap(judgeNotEnough(phase, initDig(phase)), true));
+    const reported = giveSelfReport(committed);
+    expect(reported.awaitingSelfReport).toBe(false);
+    expect(reported.gate).toBe('open');
+    expect({ ...reported, awaitingSelfReport: true }).toEqual(committed);
+  });
+
+  it('giveSelfReport is a no-op when no self-report is pending', () => {
+    const opened = passGate(initDig(phase)); // ordinary (non-Blind-first) reveal
+    expect(opened.awaitingSelfReport).toBe(false);
+    expect(giveSelfReport(opened)).toEqual(opened);
+  });
+
+  it('advancing to the next layer clears awaitingSelfReport along with the rest of the gate', () => {
+    let s = commitBlind(chooseGap(judgeNotEnough(phase, initDig(phase)), true));
+    expect(s.awaitingSelfReport).toBe(true);
+    s = playCard(phase, s, card(0, 'f1')); // deepen -> layer 1
+    expect(s.layer).toBe(1);
+    expect(s.gate).toBe('gate');
+    expect(s.awaitingSelfReport).toBe(false);
+  });
+
+  it('Blind-first eligibility has no dependency on which gap was named — chooseGap takes no such argument', () => {
+    // chooseGap's signature is (state, eligible?) — there is no channel through which the target
+    // vs. distractor choice could reach it at all, only a plain eligibility boolean the caller
+    // computes independently from moveProgress.
+    expect(chooseGap(judgeNotEnough(phase, initDig(phase)), true).gate).toBe('blindCommit');
+    expect(chooseGap(judgeNotEnough(phase, initDig(phase)), false).gate).toBe('open');
   });
 });

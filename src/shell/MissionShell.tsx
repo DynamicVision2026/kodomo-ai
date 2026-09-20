@@ -2,13 +2,13 @@ import { useState } from 'react';
 import type { Mission, ModuleUiStrings } from '../engine/types';
 import { load, save, MAX_PROFILES, type AppState, type Profile } from '../engine/storage';
 import { hasAccess } from '../engine/entitlements';
-import { applyMoveRendered, applyAptUse } from '../engine/scaffold';
+import { applyMoveRendered, applyAptUse, applyBlindCommit } from '../engine/scaffold';
 import { track } from '../engine/analytics';
 import { ProfilePicker } from './ProfilePicker';
 import { pickNextMission } from './missionLibrary';
 import { Toolbox } from './Toolbox';
 import { SlotAssembly } from '../templates/slot-assembly';
-import { Dig, type UseEvidence } from '../templates/dig';
+import { Dig, type UseEvidence, type BlindSelfReportEvidence } from '../templates/dig';
 import { Handoff } from '../templates/handoff';
 import { Ruby } from '../engine/ruby';
 import './mission-shell.css';
@@ -158,6 +158,27 @@ export function MissionShell({
     persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
   }
 
+  /** WO-07: the child committed 「いえた」 for `move` while its hand was still hidden. Means only
+   *  that the commitment happened before the reveal — never a judgment of what was said.
+   *  applyBlindCommit itself guards against advancing a move that isn't already at tsukaeru, so
+   *  this can never affect any other move's progression. */
+  function blindCommitted(move: string) {
+    track('blind_commit', { move, missionId: mission.id });
+    if (!profile) return;
+    const nextProfile: Profile = { ...profile, moveProgress: applyBlindCommit(profile.moveProgress ?? {}, move) };
+    setProfile(nextProfile);
+    persist({ ...appState, profiles: appState.profiles.map((p) => (p.id === nextProfile.id ? nextProfile : p)) });
+  }
+
+  /** WO-07: blind_selfreport — display/reflection evidence only. Tracked for observability;
+   *  deliberately never touches moveProgress, whichever of the three choices was given. */
+  function selfReported(evidence: BlindSelfReportEvidence) {
+    track('blind_selfreport', {
+      move: evidence.move, missionId: evidence.missionId,
+      layerIndex: evidence.layerIndex, classification: evidence.classification,
+    });
+  }
+
   function completePhase() {
     const nextIndex = (screen.kind === 'phase' ? screen.index : 0) + 1;
     if (nextIndex >= mission.phases.length) {
@@ -217,9 +238,12 @@ export function MissionShell({
         ui={ui}
         solo={solo}
         missionId={mission.id}
+        moveProgress={profile?.moveProgress ?? {}}
         onComplete={completePhase}
         onMoveRendered={moveRendered}
         onUse={moveUsed}
+        onBlindCommit={blindCommitted}
+        onBlindSelfReport={selfReported}
       />
     );
   }

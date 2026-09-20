@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { applyMoveRendered, applyAptUse, isAptUse, type MoveProgressMap } from '../src/engine/scaffold';
+import {
+  applyMoveRendered, applyAptUse, applyBlindCommit, isAptUse, isAtLeast, type MoveProgressMap,
+} from '../src/engine/scaffold';
 
 describe('isAptUse (WO-04 Critical distinction)', () => {
   it('qualifies the first play at a layer when it is a deepen card', () => {
@@ -95,14 +97,74 @@ describe('applyAptUse (moratta -> tsukaeru, three DISTINCT domains)', () => {
   });
 });
 
-// WO-04 explicitly leaves hitoride/sotode to later tickets. This proves the enum and the
-// monotonic-advance mechanism already accommodate them without redesign — no blind_commit or
-// outside_use event is invented here.
-describe('scaffold leaves a clean seam for later rungs', () => {
-  it('hitoride and sotode are valid ScaffoldRung values, unreachable by this ticket\'s functions', () => {
+// WO-07 fills in the seam WO-04 left for blind_commit.
+describe('applyBlindCommit (tsukaeru -> hitoride)', () => {
+  function atTsukaeru(): MoveProgressMap {
     let map: MoveProgressMap = {};
     for (const domain of ['日常', 'ことば', '社会とひと']) map = applyAptUse(map, 'follow-naze', domain);
-    expect(map['follow-naze']!.rung).toBe('tsukaeru');
-    // No function in this module can produce 'hitoride' or 'sotode' — that's later tickets' job.
+    return map;
+  }
+
+  it('advances a move already at tsukaeru to hitoride', () => {
+    const map = applyBlindCommit(atTsukaeru(), 'follow-naze');
+    expect(map['follow-naze']!.rung).toBe('hitoride');
+  });
+
+  it('does not require, or care about, semantic evaluation of what the child said — the function takes no such input', () => {
+    // applyBlindCommit's signature is (map, move) only; there is no argument through which a
+    // spoken/free-form question, its correctness, or its content could even be passed in.
+    expect(applyBlindCommit.length).toBe(2);
+  });
+
+  it('is a no-op — never a skip-ahead to hitoride — for a move below tsukaeru', () => {
+    const belowThreshold = applyAptUse({}, 'follow-naze', '日常'); // only 1 domain -> moratta
+    expect(belowThreshold['follow-naze']!.rung).toBe('moratta');
+    const after = applyBlindCommit(belowThreshold, 'follow-naze');
+    expect(after).toEqual(belowThreshold);
+    expect(after['follow-naze']!.rung).not.toBe('hitoride');
+  });
+
+  it('is a no-op for a move with no progress at all (mihakken)', () => {
+    const after = applyBlindCommit({}, 'follow-naze');
+    expect(after).toEqual({});
+  });
+
+  it('never regresses, and is idempotent once already at hitoride', () => {
+    const hitoride = applyBlindCommit(atTsukaeru(), 'follow-naze');
+    expect(applyBlindCommit(hitoride, 'follow-naze')).toEqual(hitoride);
+  });
+
+  it('advances only the committed move — another move\'s progression is unaffected', () => {
+    let map = atTsukaeru(); // follow-naze at tsukaeru
+    map = applyAptUse(map, 'follow-tatoeba', '日常'); // a second move, still at moratta
+    map = applyBlindCommit(map, 'follow-naze');
+    expect(map['follow-naze']!.rung).toBe('hitoride');
+    expect(map['follow-tatoeba']!.rung).toBe('moratta'); // untouched
+  });
+
+  it('leaves aptUseDomains untouched — no new scoring or counters introduced', () => {
+    const before = atTsukaeru();
+    const after = applyBlindCommit(before, 'follow-naze');
+    expect(after['follow-naze']!.aptUseDomains).toEqual(before['follow-naze']!.aptUseDomains);
+  });
+});
+
+describe('isAtLeast (exported for Blind-first eligibility checks)', () => {
+  it('treats tsukaeru as eligible, and mihakken/moratta as not', () => {
+    expect(isAtLeast('tsukaeru', 'tsukaeru')).toBe(true);
+    expect(isAtLeast('hitoride', 'tsukaeru')).toBe(true);
+    expect(isAtLeast('moratta', 'tsukaeru')).toBe(false);
+    expect(isAtLeast('mihakken', 'tsukaeru')).toBe(false);
+  });
+});
+
+// WO-04 explicitly left hitoride/sotode to later tickets; WO-07 fills in hitoride only.
+describe('scaffold leaves a clean seam for sotode, the one remaining later rung', () => {
+  it('sotode is a valid ScaffoldRung value, unreachable by any function in this module', () => {
+    let map: MoveProgressMap = {};
+    for (const domain of ['日常', 'ことば', '社会とひと']) map = applyAptUse(map, 'follow-naze', domain);
+    map = applyBlindCommit(map, 'follow-naze');
+    expect(map['follow-naze']!.rung).toBe('hitoride');
+    // No function in this module can produce 'sotode' — that's outside_use's later ticket.
   });
 });

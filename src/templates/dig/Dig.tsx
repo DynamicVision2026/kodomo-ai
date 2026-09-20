@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { DigPhase, ModuleUiStrings } from '../../engine/types';
 import {
-  initDig, playCard, tapEarlyOk, judgeNotEnough, chooseGap, depth, currentAnswer,
-  type DigState, type GapChoice,
+  initDig, playCard, tapEarlyOk, judgeNotEnough, chooseGap, commitBlind, giveSelfReport,
+  depth, currentAnswer, type DigState, type GapChoice,
 } from '../../engine/digMachine';
-import { isAptUse } from '../../engine/scaffold';
+import { isAptUse, isAtLeast, type MoveProgressMap, type SelfReportKind } from '../../engine/scaffold';
 import { resolveDigLayerPredictionOptions } from '../../engine/predictions';
 import { Card } from '../../ui/Card';
 import { Ruby } from '../../engine/ruby';
@@ -37,6 +37,14 @@ export interface UseEvidence {
   aptUse: boolean;
 }
 
+/** WO-07: the child's non-evaluative self-report after a Blind-first reveal. */
+export interface BlindSelfReportEvidence {
+  move: string;
+  missionId: string;
+  layerIndex: number;
+  classification: SelfReportKind;
+}
+
 export interface DigProps {
   phase: DigPhase;
   ui: ModuleUiStrings;
@@ -44,11 +52,19 @@ export interface DigProps {
   solo: boolean;
   /** WO-04: carried on `UseEvidence` — Dig itself never knows the wider Mission object. */
   missionId: string;
+  /** WO-07: the active profile's per-move progression — read ONLY to decide whether the current
+   *  layer's move is Blind-first eligible (tsukaeru or above). Dig still never writes progression
+   *  itself, and reaching tsukaeru changes nothing else about how Dig looks or plays (WO-05). */
+  moveProgress: MoveProgressMap;
   onComplete: (result: DigResult) => void;
   /** WO-04: a move's follow-up card was just shown, whether or not it gets played. */
   onMoveRendered: (move: string) => void;
   /** WO-04 (Correction 01): a follow-up card was played — every tag, not just deepen. */
   onUse: (evidence: UseEvidence) => void;
+  /** WO-07: 「いえた」 was tapped for an eligible move, while its hand was still hidden. */
+  onBlindCommit: (move: string) => void;
+  /** WO-07: the child gave one of the three accepted blind_selfreport choices after reveal. */
+  onBlindSelfReport: (evidence: BlindSelfReportEvidence) => void;
 }
 
 /**
@@ -69,11 +85,21 @@ export interface DigProps {
  *
  * WO-04: revealing a layer's hand is also this move's mihakken -> moratta moment
  * (`onMoveRendered`, fired once the gate opens); playing a card that carries a `move` is a
- * `use` (`onUse`). Dig only ever emits this raw evidence — it never reads scaffold progression
- * itself, so reaching tsukaeru cannot change anything about how Dig looks or plays (that's the
- * later Blind-first ticket's job).
+ * `use` (`onUse`). Dig only ever emits this raw evidence — it never writes scaffold progression
+ * itself.
+ *
+ * WO-07: reaching tsukaeru DOES now change one thing — whether the current layer's Gap Naming
+ * resolves straight to the hand, or first to Blind-first (hand hidden, 「いえた」 to commit, then
+ * revealed unfiltered). Eligibility is read from `moveProgress` at the moment Gap Naming
+ * resolves, from that layer's own single authored deepen card's `move` — never inferred from
+ * which gap was named. Everything else about the hand (complete, unfiltered, same cards) is
+ * unchanged; blind_selfreport afterwards is a non-blocking reflection prompt that never gates
+ * card play and never touches progression.
  */
-export function Dig({ phase, ui, solo, missionId, onComplete, onMoveRendered, onUse }: DigProps) {
+export function Dig({
+  phase, ui, solo, missionId, moveProgress, onComplete, onMoveRendered, onUse,
+  onBlindCommit, onBlindSelfReport,
+}: DigProps) {
   const [state, setState] = useState<DigState>(() => initDig(phase));
   const [battledLayers, setBattledLayers] = useState<ReadonlySet<number>>(new Set());
 
@@ -133,14 +159,35 @@ export function Dig({ phase, ui, solo, missionId, onComplete, onMoveRendered, on
     setState((s) => judgeNotEnough(phase, s));
   }
 
+  // WO-07: every dig layer's lint-enforced schema guarantees exactly one deepen card per hand
+  // (pipeline/04_lint.ts's `hand` rule), so this lookup is always unambiguous — never an
+  // inference, never a choice among competing moves.
+  function currentLayerDeepenMove(): string | undefined {
+    return phase.layers[state.layer]?.hand.find((c) => c.tag === 'deepen')?.move;
+  }
+
   function gapChosen(choice: GapChoice) {
     // AD-01 §5: recorded for its classification only — no verdict, no retry, hand unfiltered.
-    // WO-04: gap choice has no bearing on scaffold progression — target vs distractor is never
-    // read here. The hand this choice reveals is what makes the layer's move みはっけん.
+    // WO-04/WO-07: gap choice has no bearing on scaffold progression or Blind-first eligibility
+    // — target vs distractor is never read here. The hand this choice reveals is what makes the
+    // layer's move みはっけん.
     track('gap_named', { classification: choice.kind });
-    const deepenCard = phase.layers[state.layer]?.hand.find((c) => c.tag === 'deepen');
-    if (deepenCard?.move) onMoveRendered(deepenCard.move);
-    setState((s) => chooseGap(s));
+    const move = currentLayerDeepenMove();
+    if (move) onMoveRendered(move);
+    const eligible = !!move && isAtLeast(moveProgress[move]?.rung ?? 'mihakken', 'tsukaeru');
+    setState((s) => chooseGap(s, eligible));
+  }
+
+  function blindCommitTapped() {
+    const move = currentLayerDeepenMove();
+    if (move) onBlindCommit(move);
+    setState((s) => commitBlind(s));
+  }
+
+  function selfReportTapped(classification: SelfReportKind) {
+    const move = currentLayerDeepenMove();
+    if (move) onBlindSelfReport({ move, missionId, layerIndex: state.layer, classification });
+    setState((s) => giveSelfReport(s));
   }
 
   const { current, total } = depth(phase, state);
@@ -206,12 +253,33 @@ export function Dig({ phase, ui, solo, missionId, onComplete, onMoveRendered, on
                   </button>
                 ))}
               </div>
-            ) : (
-              <div className="dig__hand">
-                {phase.layers[state.layer]!.hand.map((c) => (
-                  <Card key={c.id} kind="dig" text={c.text} onClick={() => playHandCard(c.id)} />
-                ))}
+            ) : state.gate === 'blindCommit' ? (
+              <div className="dig__blind-commit">
+                <button type="button" className="dig__blind-commit-button" onClick={blindCommitTapped}>
+                  {ui.blindCommit}
+                </button>
               </div>
+            ) : (
+              <>
+                {state.awaitingSelfReport && (
+                  <div className="dig__self-report">
+                    <button type="button" onClick={() => selfReportTapped('same')}>
+                      {ui.blindSelfReportSame}
+                    </button>
+                    <button type="button" onClick={() => selfReportTapped('better')}>
+                      {ui.blindSelfReportBetter}
+                    </button>
+                    <button type="button" onClick={() => selfReportTapped('different')}>
+                      {ui.blindSelfReportDifferent}
+                    </button>
+                  </div>
+                )}
+                <div className="dig__hand">
+                  {phase.layers[state.layer]!.hand.map((c) => (
+                    <Card key={c.id} kind="dig" text={c.text} onClick={() => playHandCard(c.id)} />
+                  ))}
+                </div>
+              </>
             )
           )}
         </>

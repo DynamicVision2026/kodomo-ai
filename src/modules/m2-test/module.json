@@ -24,7 +24,11 @@
     "parentScreenHeading": "おうちの方へ",
     "lockedMessage": "このミッションは まだ あそべないよ",
     "judgeNotEnough": "まだ たりない",
-    "toolboxHeading": "といの どうぐばこ"
+    "toolboxHeading": "といの どうぐばこ",
+    "blindCommit": "いえた",
+    "blindSelfReportSame": "おなじだった",
+    "blindSelfReportBetter": "もっといいのを きいた",
+    "blindSelfReportDifferent": "ちがった"
   },
   "cardTypes": {
     "check": { "label": "みなおし" }

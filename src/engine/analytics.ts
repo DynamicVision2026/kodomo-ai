@@ -17,7 +17,12 @@ export type EventName =
   // v0.6 (WO-04): deterministic scaffold-progression evidence. `use` fires whenever a played
   // follow-up card carries a `move`; `apt_use` additionally only when it qualifies (first play
   // at the layer, tag === 'deepen') — see src/engine/scaffold.ts. Also not in spec v0.5 §11.
-  | 'use' | 'apt_use';
+  | 'use' | 'apt_use'
+  // v0.6 (WO-07): Blind-first evidence. `blind_commit` means only that the child committed to
+  // their own question before the authored hand was shown — never a judgment of what they said.
+  // `blind_selfreport` is display/reflection evidence only and never affects progression. Also
+  // not in spec v0.5 §11.
+  | 'blind_commit' | 'blind_selfreport';
 
 type Props = Record<string, string | number | boolean>;
 

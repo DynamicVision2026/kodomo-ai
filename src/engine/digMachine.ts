@@ -2,14 +2,16 @@ import type { DigCard, DigPhase, DigLayer, GapDistractorKind } from './types';
 import { advances } from './resolver';
 
 /**
- * WO-02/WO-03: the mandatory 「これでOK？」 judgment gate for a layer's hand.
- * 'gate'      — a new robot answer just arrived; the child must judge it before the hand appears.
- * 'gapNaming' — the child judged "not enough": AD-01's Gap Naming choice is up. No follow-up
- *               card is selectable here.
- * 'open'      — the hand is visible and playable, same as pre-WO-02 behaviour.
+ * WO-02/WO-03/WO-07: the mandatory 「これでOK？」 judgment gate for a layer's hand.
+ * 'gate'        — a new robot answer just arrived; the child must judge it before the hand appears.
+ * 'gapNaming'   — the child judged "not enough": AD-01's Gap Naming choice is up. No follow-up
+ *                 card is selectable here.
+ * 'blindCommit' — WO-07: this layer's move is Blind-first eligible (tsukaeru+). The hand stays
+ *                 hidden until the child commits 「いえた」 — no follow-up card is selectable here.
+ * 'open'        — the hand is visible and playable, same as pre-WO-02 behaviour.
  * Irrelevant at the root, which never has a hand to gate.
  */
-export type JudgmentGate = 'gate' | 'gapNaming' | 'open';
+export type JudgmentGate = 'gate' | 'gapNaming' | 'blindCommit' | 'open';
 
 /** AD-01: one option in a Gap Naming presentation — the target gap, or one of its distractors. */
 export interface GapChoice {
@@ -52,11 +54,16 @@ export interface DigState {
   /** Challenge shown after tapping 「これでOK」 early. */
   challenge: { challenger: string; asks: string } | null;
   finished: boolean;
-  /** WO-02/WO-03 judgment gate for the current layer. See `JudgmentGate`. */
+  /** WO-02/WO-03/WO-07 judgment gate for the current layer. See `JudgmentGate`. */
   gate: JudgmentGate;
   /** The current layer's Gap Naming choice set, fixed for this presentation. Set on entering
    *  'gapNaming', cleared once resolved or once the layer changes. */
   gapChoices: GapChoice[] | null;
+  /** WO-07: true from the moment a Blind-first `blind_commit` reveals this layer's hand until
+   *  the child gives (or the layer changes past) `blind_selfreport`. Never true for a hand
+   *  revealed the ordinary way (chooseGap with `eligible: false`). Purely a display flag — it
+   *  never gates card play. */
+  awaitingSelfReport: boolean;
 }
 
 export function initDig(phase: DigPhase): DigState {
@@ -70,6 +77,7 @@ export function initDig(phase: DigPhase): DigState {
     finished: false,
     gate: 'gate',
     gapChoices: null,
+    awaitingSelfReport: false,
   };
 }
 
@@ -92,7 +100,7 @@ export function playCard(phase: DigPhase, state: DigState, card: DigCard): DigSt
   if (next >= phase.layers.length) {
     return { ...cleared, atRoot: true, flatReply: null, finished: true };
   }
-  return { ...cleared, layer: next, flatReply: null, gate: 'gate', gapChoices: null };
+  return { ...cleared, layer: next, flatReply: null, gate: 'gate', gapChoices: null, awaitingSelfReport: false };
 }
 
 /**
@@ -109,13 +117,41 @@ export function judgeNotEnough(phase: DigPhase, state: DigState, rng?: () => num
 }
 
 /**
- * AD-01 §5: the child names a gap — target or distractor, no distinction in outcome. Reveals the
- * hand unchanged and unfiltered; the caller is responsible for recording `gap_named` with the
- * choice's `kind` (digMachine stays framework-free and makes no analytics calls itself).
+ * AD-01 §5: the child names a gap — target or distractor, no distinction in outcome
+ * (`eligible` is decided entirely by the caller from this layer's move progression, never by
+ * which gap was named — WO-07 requires target vs. distractor to never affect Blind-first).
+ *
+ * `eligible: false` (the default, and the only behaviour before WO-07) reveals the hand
+ * immediately, unchanged and unfiltered — same as before. `eligible: true` withholds it: the
+ * next step is `commitBlind`, not the hand. The caller is responsible for recording `gap_named`
+ * with the choice's `kind` (digMachine stays framework-free and makes no analytics calls itself).
  */
-export function chooseGap(state: DigState): DigState {
+export function chooseGap(state: DigState, eligible = false): DigState {
   if (state.finished || state.atRoot || state.gate !== 'gapNaming') return state;
+  if (eligible) return { ...state, gate: 'blindCommit', gapChoices: null };
   return { ...state, gate: 'open', gapChoices: null };
+}
+
+/**
+ * WO-07: the child commits 「いえた」 — they've said/thought of their own next question — while
+ * the hand is still hidden. This means only that the commitment happened before the reveal; it
+ * carries no judgment of what was said. Reveals the hand (now `open`) and marks a
+ * `blind_selfreport` as pending. No-op unless a Blind-first commit is actually being awaited.
+ */
+export function commitBlind(state: DigState): DigState {
+  if (state.finished || state.atRoot || state.gate !== 'blindCommit') return state;
+  return { ...state, gate: 'open', awaitingSelfReport: true };
+}
+
+/**
+ * WO-07: the child gives `blind_selfreport` (any of the three accepted choices — display/
+ * reflection evidence only, identical outcome regardless of which). Clears the pending flag;
+ * never touches `gate` or the hand, which is already open and was never filtered. No-op if no
+ * self-report is currently pending.
+ */
+export function giveSelfReport(state: DigState): DigState {
+  if (!state.awaitingSelfReport) return state;
+  return { ...state, awaitingSelfReport: false };
 }
 
 /** 「これでOK」 — always available, never blocked by the judgment gate. Returns the challenge,

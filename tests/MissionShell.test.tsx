@@ -232,9 +232,8 @@ describe('MissionShell', () => {
     expect(saved.profiles[1].moveProgress ?? {}).toEqual({});
   });
 
-  it('WO-05: reaching tsukaeru does not change Dig — the hand is still complete and unfiltered', async () => {
-    // Seed storage with a profile whose follow-naze is already at tsukaeru, then confirm the
-    // dig phase plays out exactly like a fresh profile's — same cards, same gate, no hiding.
+  it('WO-07: reaching tsukaeru routes Gap Naming into Blind-first, and the complete unfiltered hand still appears after commit', async () => {
+    // Seed storage with a profile whose follow-naze is already at tsukaeru.
     localStorage.setItem('m-app.v1', JSON.stringify({
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
@@ -255,14 +254,100 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
     await user.click(screen.getByText(ui.judgeNotEnough));
 
-    // Gap Naming still shows all three authored choices, and the hand (once reached) is the
-    // same three cards — tsukaeru changed nothing about what Dig shows or how it behaves.
+    // Gap Naming still shows all three authored choices, unaffected by eligibility.
     expect(document.querySelectorAll('.dig__gap-naming-option')).toHaveLength(3);
     const [firstChoice] = document.querySelectorAll('.dig__gap-naming-option');
     await user.click(firstChoice as HTMLElement);
+
+    // Eligible (tsukaeru): Blind-first now runs — hand hidden, only いえた to commit.
+    expect(document.querySelector('.dig__hand')).not.toBeInTheDocument();
+    expect(screen.getByText(ui.blindCommit)).toBeInTheDocument();
+    await user.click(screen.getByText(ui.blindCommit));
+
+    // After commit, the complete authored hand is revealed, unchanged and unfiltered.
     expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
     expect(screen.getByText('パンは すきですか？')).toBeInTheDocument();
     expect(screen.getByText('もう いちど いって')).toBeInTheDocument();
+
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].moveProgress['follow-naze'].rung).toBe('hitoride');
+  });
+
+  it('WO-07: blind_selfreport is tracked but never changes moveProgress, whichever option is chosen', async () => {
+    localStorage.setItem('m-app.v1', JSON.stringify({
+      profiles: [{
+        id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
+        moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
+      }],
+      entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
+    }));
+
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [firstChoice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(firstChoice as HTMLElement);
+    await user.click(screen.getByText(ui.blindCommit));
+
+    const beforeSelfReport = JSON.parse(localStorage.getItem('m-app.v1')!).profiles[0].moveProgress;
+    await user.click(screen.getByText(ui.blindSelfReportDifferent)); // "ちがった" — still non-evaluative
+
+    expect(plausible).toHaveBeenCalledWith(
+      'blind_selfreport',
+      expect.objectContaining({ props: expect.objectContaining({ classification: 'different' }) }),
+    );
+    const afterSelfReport = JSON.parse(localStorage.getItem('m-app.v1')!).profiles[0].moveProgress;
+    expect(afterSelfReport).toEqual(beforeSelfReport); // unchanged by self-report
+  });
+
+  it('WO-07: the Toolbox reflects hitoride after normal state propagation and a reload', async () => {
+    localStorage.setItem('m-app.v1', JSON.stringify({
+      profiles: [{
+        id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
+        moveProgress: { 'follow-naze': { rung: 'hitoride', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
+      }],
+      entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
+    }));
+
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.coopSolo));
+    await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [firstChoice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(firstChoice as HTMLElement);
+    await user.click(screen.getByText(ui.blindCommit));
+    await user.click(screen.getByText(ui.blindSelfReportSame));
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await user.click(screen.getByText(ui.judgeNotEnough)); // layer 1's own gate (still hitoride)
+    const [secondChoice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(secondChoice as HTMLElement);
+    await user.click(screen.getByText(ui.blindCommit)); // layer 1 is also Blind-first eligible
+    await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
+    await user.click(screen.getByText(ui.earlyOk));
+    await user.click(screen.getByText(ui.handoffContinue));
+    await user.click(screen.getByText(ui.teachbackSkip));
+    await user.click(screen.getByText(ui.handoffContinue));
+    await user.click(screen.getByText(ui.handoffContinue));
+
+    // No scores/counters — just the tool's growth state, still just hitoride (no fabricated sotode).
+    const naze = screen.getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
+    expect(naze.className).toContain('toolbox__tool--independent');
+    expect(document.querySelector('.toolbox')!.textContent ?? '').not.toMatch(/\d\s*\/\s*\d/);
   });
 
   it('shows the locked screen when hasAccess denies the mission, never starting it', async () => {

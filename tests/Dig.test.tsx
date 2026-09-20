@@ -9,9 +9,13 @@ import moduleJson from '../src/modules/m1/module.json';
 const phase = mission.phases[1] as unknown as DigPhase;
 const ui = moduleJson.ui as ModuleUiStrings;
 
-/** WO-04: DigProps Dig.test.tsx doesn't otherwise exercise — a fixed missionId and no-op
- *  evidence callbacks, since these tests are about Dig's own dig-phase behaviour. */
-const baseDigProps = { missionId: mission.id, onMoveRendered: () => {}, onUse: () => {} };
+/** WO-04/WO-07: DigProps Dig.test.tsx doesn't otherwise exercise — a fixed missionId, empty
+ *  moveProgress (never Blind-first eligible by default), and no-op evidence callbacks, since
+ *  these tests are about Dig's own dig-phase behaviour. */
+const baseDigProps = {
+  missionId: mission.id, moveProgress: {}, onMoveRendered: () => {}, onUse: () => {},
+  onBlindCommit: () => {}, onBlindSelfReport: () => {},
+};
 
 beforeEach(() => cleanup());
 
@@ -151,7 +155,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
   it('fires onMoveRendered with the layer\'s deepen move as soon as its hand is revealed', async () => {
     const user = userEvent.setup();
     const onMoveRendered = vi.fn();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={() => {}} onMoveRendered={onMoveRendered} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={() => {}} onMoveRendered={onMoveRendered} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
 
     expect(onMoveRendered).not.toHaveBeenCalled(); // not yet — still at the judgment gate
     await passGate(user);
@@ -161,7 +165,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
   it('fires onUse with the full required record when a card carrying a move is played, qualifying as apt_use on the first play', async () => {
     const user = userEvent.setup();
     const onUse = vi.fn();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
 
     await passGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？')); // f1: layer 0's deepen, first play
@@ -176,7 +180,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
   it('Correction 01: an offtopic play is still use evidence (no move), and the deepen after it does not qualify as apt_use', async () => {
     const user = userEvent.setup();
     const onUse = vi.fn();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
 
     await passGate(user);
     await user.click(screen.getByText('パンは すきですか？')); // f2: offtopic — still recorded as a play
@@ -191,7 +195,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
   it('Correction 01: a repeat play before the deepen also disqualifies it from apt_use', async () => {
     const user = userEvent.setup();
     const onUse = vi.fn();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
 
     await passGate(user);
     await user.click(screen.getByText('もう いちど いって')); // f3: repeat — still recorded as a play
@@ -206,7 +210,7 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
   it('Correction 01: a sideways play before the deepen also disqualifies it from apt_use', async () => {
     const user = userEvent.setup();
     const onUse = vi.fn();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} solo={false} onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={onUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo={false} onComplete={() => {}} />);
 
     // Reach layer 1 (its own prediction battle auto-skips in solo... this render is co-play, so
     // walk the battle instead — same path tests/Dig.test.tsx's co-play describe block uses).
@@ -231,14 +235,14 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     const targetUse = vi.fn();
     const distractorUse = vi.fn();
     const userA = userEvent.setup();
-    const { unmount } = render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={targetUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
+    const { unmount } = render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={targetUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
     await userA.click(screen.getByText(ui.judgeNotEnough));
     await userA.click(screen.getByText('イーストが はたらく しくみが わからない')); // the target
     await userA.click(screen.getByText('なぜ イーストで ふくらむの？'));
     unmount();
 
     const userB = userEvent.setup();
-    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={distractorUse} onMoveRendered={() => {}} solo onComplete={() => {}} />);
+    render(<Dig phase={phase} ui={ui} missionId={mission.id} onUse={distractorUse} onMoveRendered={() => {}} moveProgress={{}} onBlindCommit={() => {}} onBlindSelfReport={() => {}} solo onComplete={() => {}} />);
     await userB.click(screen.getByText(ui.judgeNotEnough));
     await userB.click(screen.getByText('なにが パンを ふくらませるのか わからない')); // an answered distractor
     await userB.click(screen.getByText('なぜ イーストで ふくらむの？'));
@@ -246,6 +250,143 @@ describe('Dig template (WO-04 scaffold evidence)', () => {
     const [targetEvidence] = targetUse.mock.calls[0]!;
     const [distractorEvidence] = distractorUse.mock.calls[0]!;
     expect({ ...targetEvidence, timestamp: 0 }).toEqual({ ...distractorEvidence, timestamp: 0 });
+  });
+});
+
+describe('Dig template (WO-07 Blind-first)', () => {
+  const eligibleProgress = { 'follow-naze': { rung: 'tsukaeru' as const, aptUseDomains: ['日常', 'ことば', '社会とひと'] } };
+  const belowThresholdProgress = { 'follow-naze': { rung: 'moratta' as const, aptUseDomains: ['日常'] } };
+
+  it('below tsukaeru, Gap Naming still resolves straight to the hand (unchanged pre-WO-07 flow)', async () => {
+    const user = userEvent.setup();
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} moveProgress={belowThresholdProgress} solo onComplete={() => {}} />);
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [choice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(choice as HTMLElement);
+    expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
+    expect(document.querySelector('.dig__blind-commit')).not.toBeInTheDocument();
+  });
+
+  it('at tsukaeru, Gap Naming leads to Blind-first with the hand hidden, no card selectable', async () => {
+    const user = userEvent.setup();
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} moveProgress={eligibleProgress} solo onComplete={() => {}} />);
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [choice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(choice as HTMLElement);
+
+    expect(document.querySelector('.dig__hand')).not.toBeInTheDocument();
+    expect(screen.queryByText('なぜ イーストで ふくらむの？')).not.toBeInTheDocument();
+    expect(screen.getByText(ui.blindCommit)).toBeInTheDocument();
+  });
+
+  it('merely rendering Blind-first does not advance progression (no onBlindCommit call)', async () => {
+    const user = userEvent.setup();
+    const onBlindCommit = vi.fn();
+    render(
+      <Dig phase={phase} ui={ui} {...baseDigProps} moveProgress={eligibleProgress} onBlindCommit={onBlindCommit} solo onComplete={() => {}} />,
+    );
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [choice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(choice as HTMLElement);
+    expect(screen.getByText(ui.blindCommit)).toBeInTheDocument();
+    expect(onBlindCommit).not.toHaveBeenCalled();
+  });
+
+  it('committing 「いえた」 records blind_commit for the layer\'s move and reveals the complete, unchanged hand', async () => {
+    const user = userEvent.setup();
+    const onBlindCommit = vi.fn();
+    render(
+      <Dig phase={phase} ui={ui} {...baseDigProps} moveProgress={eligibleProgress} onBlindCommit={onBlindCommit} solo onComplete={() => {}} />,
+    );
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [choice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(choice as HTMLElement);
+    await user.click(screen.getByText(ui.blindCommit));
+
+    expect(onBlindCommit).toHaveBeenCalledTimes(1);
+    expect(onBlindCommit).toHaveBeenCalledWith('follow-naze');
+    expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
+    expect(screen.getByText('パンは すきですか？')).toBeInTheDocument();
+    expect(screen.getByText('もう いちど いって')).toBeInTheDocument();
+  });
+
+  it('the hand is fully playable immediately after commit, without requiring a self-report first', async () => {
+    const user = userEvent.setup();
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} moveProgress={eligibleProgress} solo onComplete={() => {}} />);
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [choice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(choice as HTMLElement);
+    await user.click(screen.getByText(ui.blindCommit));
+
+    // Self-report is showing, but playing a card works right away regardless.
+    expect(screen.getByText(ui.blindSelfReportSame)).toBeInTheDocument();
+    await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    expect(screen.getByText('イーストが さとうを たべて、ガスを 出すんだ。')).toBeInTheDocument();
+  });
+
+  it('all three blind_selfreport choices are non-evaluative: each records evidence and none affects progression', async () => {
+    for (const [buttonKey, classification] of [
+      ['blindSelfReportSame', 'same'],
+      ['blindSelfReportBetter', 'better'],
+      ['blindSelfReportDifferent', 'different'],
+    ] as const) {
+      const user = userEvent.setup();
+      const onBlindSelfReport = vi.fn();
+      const { unmount } = render(
+        <Dig phase={phase} ui={ui} {...baseDigProps} moveProgress={eligibleProgress} onBlindSelfReport={onBlindSelfReport} solo onComplete={() => {}} />,
+      );
+      await user.click(screen.getByText(ui.judgeNotEnough));
+      const [choice] = document.querySelectorAll('.dig__gap-naming-option');
+      await user.click(choice as HTMLElement);
+      await user.click(screen.getByText(ui.blindCommit));
+      await user.click(screen.getByText(ui[buttonKey]));
+
+      expect(onBlindSelfReport).toHaveBeenCalledTimes(1);
+      expect(onBlindSelfReport).toHaveBeenCalledWith(
+        expect.objectContaining({ move: 'follow-naze', classification }),
+      );
+      // The self-report row disappears once answered; the hand remains, unfiltered.
+      expect(screen.queryByText(ui.blindSelfReportSame)).not.toBeInTheDocument();
+      expect(screen.getByText('なぜ イーストで ふくらむの？')).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it('never introduces text input, audio capture, or any evaluative UI', async () => {
+    const user = userEvent.setup();
+    render(<Dig phase={phase} ui={ui} {...baseDigProps} moveProgress={eligibleProgress} solo onComplete={() => {}} />);
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    const [choice] = document.querySelectorAll('.dig__gap-naming-option');
+    await user.click(choice as HTMLElement);
+    expect(document.querySelectorAll('input, textarea, [contenteditable="true"]')).toHaveLength(0);
+    await user.click(screen.getByText(ui.blindCommit));
+    expect(document.querySelectorAll('input, textarea, [contenteditable="true"], audio')).toHaveLength(0);
+    expect(screen.queryByText(/正解|不正解|せいかい|ざんねん/)).not.toBeInTheDocument();
+  });
+
+  it('target vs. distractor Gap Naming produces identical Blind-first behaviour', async () => {
+    const targetCommit = vi.fn();
+    const userA = userEvent.setup();
+    const { unmount } = render(
+      <Dig phase={phase} ui={ui} {...baseDigProps} moveProgress={eligibleProgress} onBlindCommit={targetCommit} solo onComplete={() => {}} />,
+    );
+    await userA.click(screen.getByText(ui.judgeNotEnough));
+    await userA.click(screen.getByText('イーストが はたらく しくみが わからない')); // the target
+    expect(screen.getByText(ui.blindCommit)).toBeInTheDocument();
+    await userA.click(screen.getByText(ui.blindCommit));
+    unmount();
+
+    const distractorCommit = vi.fn();
+    const userB = userEvent.setup();
+    render(
+      <Dig phase={phase} ui={ui} {...baseDigProps} moveProgress={eligibleProgress} onBlindCommit={distractorCommit} solo onComplete={() => {}} />,
+    );
+    await userB.click(screen.getByText(ui.judgeNotEnough));
+    await userB.click(screen.getByText('なにが パンを ふくらませるのか わからない')); // a distractor
+    expect(screen.getByText(ui.blindCommit)).toBeInTheDocument();
+    await userB.click(screen.getByText(ui.blindCommit));
+
+    expect(targetCommit.mock.calls).toEqual(distractorCommit.mock.calls);
   });
 });
 
