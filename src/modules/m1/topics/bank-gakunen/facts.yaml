@@ -2,17 +2,19 @@
 # factual sensitivity. This topic stays in "why does a system need a cutoff line at all"
 # territory and never frames any individual child's birth date as advantageous or
 # disadvantageous.
-# Gate 1: PASSED (WO-21 Phase 0). Founder accepted the WO-20 content batch and approved
-# every practice claim below exactly as recorded (no wording changed to obtain approval).
-# The remaining fact-type claim(s) in this file, if any, stay pending-factual-verification
-# until a real source is attached (see docs/WO-21-factual-verification.md).
+# Gate 1: PASSED (WO-21 Phase 0/6). Founder accepted the WO-20 content batch and approved every
+# practice claim below exactly as recorded (no wording changed to obtain approval). c2 (the one
+# fact-type claim) was pending-factual-verification until WO-21 Phase 6 attached a real source
+# (see docs/WO-21-factual-verification.md) — the mission's own child-facing wording already
+# correctly framed the cutoff as a きめごと (convention/rule), never as one child's birth date
+# being advantageous or disadvantageous, so no wording change was needed.
 # Gate 2: WAIVED for this release cycle (WO-21 Phase 0) — the Founder chose not to keep
 # the separate native-speaker (酒井先生) review as a blocking step. This is NOT a claim
 # that 酒井先生 reviewed this content — see s2.json's own `gate2Waiver` field, which is
 # structurally distinct from a real `review` stamp.
 # c2 is a FACT claim: the legal/administrative necessity of a school-year cutoff date is a real,
-# sourceable convention (Japan's School Education Act enrollment-age counting), so it is marked
-# pending-factual-verification rather than given a fabricated source.
+# sourced convention (Japan's School Education Act enrollment-age counting) — see its own
+# `verifiedSource`/`verifiedVia` fields below, never fabricated.
 topic: bank-gakunen
 question: 4月1日と4月2日で、どうして学年が変わる？
 claims:
@@ -25,8 +27,10 @@ claims:
   - id: c2
     type: fact
     statement: "A school system that groups children into fixed yearly grades needs some specific date to draw the dividing line somewhere, and Japan's convention places that line at April 1st/2nd."
-    status: pending-factual-verification
-    evidenceSlot: "Needs a real, checkable source on Japan's School Education Act age-counting convention before Gate 1 can pass for this claim specifically — not to be filled with an invented citation."
+    status: approved
+    verifiedSource: "Real, government-established rule (not merely informal custom): 学校教育法施行規則第59条 sets Japan's school year as April 1 to the following March 31. Civil Code (民法) Article 143's age-counting convention means a person legally turns the next age at the end of the day before their birthday — so a child born April 1 turns 6 at the end of March 31, making them eligible to start school (学校教育法第17条: enrollment from the first school-year start after turning 6) in the same April 1 school-year as children born the previous April 2 through that March 31; a child born April 2 starts the following year's cohort. Corroborated by MEXT's own official guidance page on this exact question."
+    verifiedVia: "WO-21 Phase 6 factual verification (WebSearch, 2026-09-20) — see docs/WO-21-factual-verification.md for the full citation and resolution log."
+    verifiedAt: "2026-09-20"
   - id: c3
     type: practice
     statement: "A commonly framed way to understand where a school-year cutoff line is drawn is that it's a matter of convention/agreement, not something that could avoid needing a line somewhere."

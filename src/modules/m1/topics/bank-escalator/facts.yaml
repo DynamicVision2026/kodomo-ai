@@ -1,17 +1,17 @@
 # AD-04 Bank topic B02. See docs/AD-04-bank-topics.md — special caution: regional variation +
 # sourced factual component.
-# Gate 1: PASSED (WO-21 Phase 0). Founder accepted the WO-20 content batch and approved
-# every practice claim below exactly as recorded (no wording changed to obtain approval).
-# The remaining fact-type claim(s) in this file, if any, stay pending-factual-verification
-# until a real source is attached (see docs/WO-21-factual-verification.md).
+# Gate 1: PASSED (WO-21 Phase 0/6). Founder accepted the WO-20 content batch and approved every
+# practice claim below exactly as recorded (no wording changed to obtain approval). c3 (the one
+# fact-type claim) was pending-factual-verification until WO-21 Phase 6 attached a real source
+# (see docs/WO-21-factual-verification.md) — the mission's own child-facing wording already
+# correctly framed it as a regional custom, not a universal rule, so no wording change was needed.
 # Gate 2: WAIVED for this release cycle (WO-21 Phase 0) — the Founder chose not to keep
 # the separate native-speaker (酒井先生) review as a blocking step. This is NOT a claim
 # that 酒井先生 reviewed this content — see s2.json's own `gate2Waiver` field, which is
 # structurally distinct from a real `review` stamp.
 # type: practice/fact as marked per claim (see framing).
-# c3 is a FACT claim, not practice: the claim that which side is kept open varies by region in
-# Japan is a real, sourceable convention (not merely "commonly said" the way practice claims
-# are), so it is marked pending-factual-verification rather than given a fabricated source.
+# c3 is a FACT claim, not practice: which side is kept open varies by region in Japan, a real,
+# sourced convention — see its own `verifiedSource`/`verifiedVia` fields below, never fabricated.
 topic: bank-escalator
 question: エスカレーターでは、片側をあける？
 claims:
@@ -30,5 +30,7 @@ claims:
   - id: c3
     type: fact
     statement: "Which side is conventionally left open on an escalator varies by region within Japan (for example, differing between the Kanto and Kansai areas), rather than being one single nationwide rule."
-    status: pending-factual-verification
-    evidenceSlot: "Needs a real, checkable regional-custom source before Gate 1 can pass for this claim specifically — not to be filled with an invented citation."
+    status: approved
+    verifiedSource: "Regional custom, not law: most regions (including Kanto/Tokyo) conventionally stand left (keeping the right side open for walkers); Kansai (including Osaka) conventionally stands right (keeping the left side open) — traced to a 1967 Hankyu Railway Umeda Station platform announcement, not a safety regulation. Corroborated by multiple independent Japanese sources; no single government body regulates this custom, consistent with the claim's own framing as regional convention, not universal rule."
+    verifiedVia: "WO-21 Phase 6 factual verification (WebSearch, 2026-09-20) — see docs/WO-21-factual-verification.md for the full citation and resolution log."
+    verifiedAt: "2026-09-20"

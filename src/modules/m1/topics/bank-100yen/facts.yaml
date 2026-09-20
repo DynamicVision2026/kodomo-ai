@@ -2,18 +2,20 @@
 # sourced factual component. This topic avoids moralizing the child's own future behavior
 # ("you must always turn it in because it's right") and instead lands descriptively on the
 # structural purpose of a lost-and-found system existing at all (so an owner can be found).
-# Gate 1: PASSED (WO-21 Phase 0). Founder accepted the WO-20 content batch and approved
-# every practice claim below exactly as recorded (no wording changed to obtain approval).
-# The remaining fact-type claim(s) in this file, if any, stay pending-factual-verification
-# until a real source is attached (see docs/WO-21-factual-verification.md).
+# Gate 1: PASSED (WO-21 Phase 0/6). Founder accepted the WO-20 content batch and approved every
+# practice claim below exactly as recorded (no wording changed to obtain approval). c3 (the one
+# fact-type claim) was pending-factual-verification until WO-21 Phase 6 attached a real source
+# (see docs/WO-21-factual-verification.md) — the mission's own child-facing wording already
+# avoided legal-instruction framing, landing descriptively on the system's purpose, so no wording
+# change was needed.
 # Gate 2: WAIVED for this release cycle (WO-21 Phase 0) — the Founder chose not to keep
 # the separate native-speaker (酒井先生) review as a blocking step. This is NOT a claim
 # that 酒井先生 reviewed this content — see s2.json's own `gate2Waiver` field, which is
 # structurally distinct from a real `review` stamp.
 # c3 is a FACT claim, not practice: the existence of a real system (police/lost-property
-# handling, koban) for reuniting found money with its owner is a real, sourceable legal/
-# administrative practice, so it is marked pending-factual-verification rather than given a
-# fabricated source.
+# handling, koban) for reuniting found money with its owner is a real, sourced legal/
+# administrative practice — see its own `verifiedSource`/`verifiedVia` fields below, never
+# fabricated.
 topic: bank-100yen
 question: ひろった100円は、だれのもの？
 claims:
@@ -32,5 +34,7 @@ claims:
   - id: c3
     type: fact
     statement: "There is a real system in Japan (police lost-property handling, including the koban system) for holding found items so their original owner can potentially be found and reunited with them."
-    status: pending-factual-verification
-    evidenceSlot: "Needs a real, checkable source on Japan's lost-property (遺失物) handling system before Gate 1 can pass for this claim specifically — not to be filled with an invented citation."
+    status: approved
+    verifiedSource: "Real, government-established system: Japan's Lost Property Act (遺失物法) governs how police handle found items — a finder who turns an item in to a police station or koban enables the police to hold it while attempting to locate the original owner (a finder must report to a facility occupant within 24 hours, or to police within 7 days, to retain finder's rights). If unclaimed after roughly 3 months, the finder may become entitled to keep it. Corroborated by multiple official police-agency sources (Tokyo Metropolitan Police, National Police Agency, and several prefectural police lost-property pages), all describing the same reunification-with-owner purpose the claim states — not a legal-instruction claim about what a child is obligated to do, consistent with this file's own moral-instruction-risk caution."
+    verifiedVia: "WO-21 Phase 6 factual verification (WebSearch, 2026-09-20) — see docs/WO-21-factual-verification.md for the full citation and resolution log."
+    verifiedAt: "2026-09-20"
