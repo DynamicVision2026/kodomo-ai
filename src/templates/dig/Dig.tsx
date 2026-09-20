@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import type { DigPhase, ModuleUiStrings } from '../../engine/types';
-import { initDig, playCard, tapEarlyOk, depth, currentAnswer, type DigState } from '../../engine/digMachine';
+import {
+  initDig, playCard, tapEarlyOk, judgeNotEnough, continueFromHolding, depth, currentAnswer,
+  type DigState,
+} from '../../engine/digMachine';
 import { resolveDigLayerPredictionOptions } from '../../engine/predictions';
 import { Card } from '../../ui/Card';
 import { Ruby } from '../../engine/ruby';
@@ -29,6 +32,10 @@ export interface DigProps {
  * A layer's own `prediction` (よそうバトル, §4.2) runs here rather than being sequenced by a
  * host: it is that layer's data, the same way `earlyOk` already is, and gating it externally
  * would need Dig to expose layer-transition timing it otherwise keeps entirely internal.
+ *
+ * WO-02: each layer's hand is behind a mandatory 「これでOK？」 judgment gate — see
+ * `DigState.gate` in digMachine.ts. A prediction battle, where present, still runs first; the
+ * gate applies to what comes after it, same as it does for a layer with no battle at all.
  */
 export function Dig({ phase, ui, solo, onComplete }: DigProps) {
   const [state, setState] = useState<DigState>(() => initDig(phase));
@@ -65,6 +72,14 @@ export function Dig({ phase, ui, solo, onComplete }: DigProps) {
 
   function dismissChallenge() {
     setState((s) => (s.challenge ? { ...s, challenge: null } : s));
+  }
+
+  function judgeNotEnoughTapped() {
+    setState((s) => judgeNotEnough(s));
+  }
+
+  function continueFromHoldingTapped() {
+    setState((s) => continueFromHolding(s));
   }
 
   const { current, total } = depth(phase, state);
@@ -111,6 +126,21 @@ export function Dig({ phase, ui, solo, onComplete }: DigProps) {
                 handoffSkipLabel={ui.handoffSkip}
                 onComplete={() => setBattledLayers((s) => new Set(s).add(state.layer))}
               />
+            ) : state.gate === 'gate' ? (
+              <div className="dig__judgment">
+                <button type="button" className="dig__judgment-not-enough" onClick={judgeNotEnoughTapped}>
+                  {ui.judgeNotEnough}
+                </button>
+              </div>
+            ) : state.gate === 'holding' ? (
+              <div className="dig__gap-pending">
+                <p className="dig__gap-pending-message">
+                  <Ruby text={ui.gapPendingMessage} />
+                </p>
+                <button type="button" className="dig__gap-pending-continue" onClick={continueFromHoldingTapped}>
+                  {ui.gapPendingContinue}
+                </button>
+              </div>
             ) : (
               <div className="dig__hand">
                 {phase.layers[state.layer]!.hand.map((c) => (

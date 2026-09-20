@@ -113,6 +113,12 @@ export interface ModuleUiStrings {
   teachbackSkip: string;
   parentScreenHeading: string;
   lockedMessage: string;
+  /** WO-02: the 「これでOK？」 judgment gate's "not enough" response, opposite of earlyOk. */
+  judgeNotEnough: string;
+  /** WO-02: shown in the pre-gap holding state, before WO-03's Gap Naming exists. */
+  gapPendingMessage: string;
+  /** WO-02: continues from the pre-gap holding state to the layer's follow-up hand. */
+  gapPendingContinue: string;
 }
 
 export interface Mission {

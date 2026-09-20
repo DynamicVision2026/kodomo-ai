@@ -51,6 +51,37 @@
   justify-content: center;
 }
 
+.dig__judgment {
+  display: flex;
+  justify-content: center;
+}
+.dig__judgment-not-enough {
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid #b0632f;
+  background: #fff;
+  color: #b0632f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dig__gap-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+.dig__gap-pending-continue {
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid #2f6fb0;
+  background: #fff;
+  color: #2f6fb0;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .dig__challenge {
   display: flex;
   flex-direction: column;

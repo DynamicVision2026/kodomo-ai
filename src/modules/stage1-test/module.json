@@ -22,7 +22,10 @@
     "coopSolo": "ひとりであそぶ",
     "teachbackSkip": "あとでやる",
     "parentScreenHeading": "おうちの方へ",
-    "lockedMessage": "このミッションは まだ あそべないよ"
+    "lockedMessage": "このミッションは まだ あそべないよ",
+    "judgeNotEnough": "まだ たりない",
+    "gapPendingMessage": "なにか たりないね。",
+    "gapPendingContinue": "つぎへ"
   },
   "cardTypes": {
     "what": { "label": "なにを" }

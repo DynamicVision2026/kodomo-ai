@@ -38,6 +38,12 @@ async function createAndSelectProfile(user: ReturnType<typeof userEvent.setup>) 
   await user.click(screen.getByText(ui.profileConfirm));
 }
 
+/** WO-02: every Dig layer's hand sits behind the mandatory 「これでOK？」 judgment gate. */
+async function openGate(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByText(ui.judgeNotEnough));
+  await user.click(screen.getByText(ui.gapPendingContinue));
+}
+
 describe('MissionShell', () => {
   it('runs profile -> coop -> both phases (solo) -> every wrapper screen -> parent, tracking each beat', async () => {
     const user = userEvent.setup();
@@ -55,7 +61,9 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
 
     // Phase 2: dig, straight through to the root (solo, no battle on layer 1 either).
+    await openGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await openGate(user);
     await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     expect(screen.getByText(digPhase.root.robotSays)).toBeInTheDocument();
     await user.click(screen.getByText(ui.earlyOk));
@@ -88,7 +96,9 @@ describe('MissionShell', () => {
     await createAndSelectProfile(user);
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
+    await openGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
+    await openGate(user);
     await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
@@ -113,9 +123,12 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('パンが ふくらむ りゆうを おしえて'));
 
     // Prediction battle now gates the dig phase's layer 1 too, but layer 0 has none —
-    // play it, then skip the layer-1 battle to get to the root quickly.
+    // pass layer 0's judgment gate and play it, then skip the layer-1 battle and pass
+    // layer 1's own gate to get to the root quickly.
+    await openGate(user);
     await user.click(screen.getByText('なぜ イーストで ふくらむの？'));
     await user.click(screen.getByText(ui.predictionSkip));
+    await openGate(user);
     await user.click(screen.getByText('なぜ ガスが 出ると ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
