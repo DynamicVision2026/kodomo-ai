@@ -60,7 +60,11 @@
     "blindSelfReportDifferent": "ちがった",
     "m2ConfirmPrompt": "お子さんが、ロボの さいしょの こたえだけでは たりないと、じぶんで 気づいて 言えていたら、下のボタンを おしてください。",
     "m2ConfirmAction": "はい、そう 言えていました",
-    "m2ConfirmedMessage": "かくにんしました。"
+    "m2ConfirmedMessage": "かくにんしました。",
+    "m0Prompt": "きょうから、『なぜ？』を さがす たびが はじまるよ。今の きもちを、ふうとうに しまっておこう。",
+    "m0Action": "ふうとうを とじる",
+    "m0SealedMessage": "ふうとうを とじたよ。",
+    "m5Prompt": "おうちの そとでも、この といを つかっているのを 見かけたら、おしえてください。"
   },
   "cardTypes": {
     "odai": {

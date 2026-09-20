@@ -5,22 +5,27 @@ import { isAtLeast, type MoveProgressMap } from './scaffold';
  * meaningful, durable, first-occurrence facts — never a score, streak, percentage, rank, or
  * calendar-driven award. Execution Handoff v2 / WO-08, R10-R11.
  *
- * M0-M5 are the accepted Stage-2 milestone identities. This module implements only the
- * transitions with existing authoritative evidence:
+ * M0-M5 are the accepted Stage-2 milestone identities. As of WO-19, every one of them has a real
+ * caller — see src/shell/MissionShell.tsx for the actual UI/evidence wiring, not just this
+ * module's own functions:
+ *  - M0 (封をする — a Day-1 baseline-question envelope): `applyM0Sealed`, the parent-screen
+ *    envelope-seal action (WO-19). One explicit tap, once, per profile.
  *  - M1 (どうぐが 手に入った): derived read-only from moveProgress reaching moratta.
  *  - M2a (system proxy): evidence only, tracked separately in `M2Evidence` — can NEVER set
  *    milestones.M2 itself. See `hasM2Proxy`.
- *  - M2 / M2b (actual): requires a parent-confirmation event this ticket does not build a UX
- *    for. `applyM2Confirmed` exists as the clean seam a later ticket's confirmation UI calls;
- *    nothing in this codebase invokes it yet.
+ *  - M2 / M2b (actual): `applyM2Confirmed`, invoked by the parent screen's M2b confirmation
+ *    button (WO-14, `src/shell/MissionShell.tsx`'s `confirmM2b`).
  *  - M3 (3れん ホリ): a Dig phase completed with a genuine 3+ authored layer chain — the
  *    engine's own layer count, deterministic, already what digMachine's depth() counts from.
  *  - M4 (カードなしで きけた): the first blind_commit (WO-07) — already fully authoritative.
+ *  - M5 (そとで つかった): `evaluateM5`, derived read-only from moveProgress reaching sotode —
+ *    itself set by `applyOutsideUse` (src/engine/scaffold.ts), invoked from the parent screen's
+ *    outside-use recording action (WO-19).
  *
- * M0 (封をする — a Day-1 baseline-question envelope) and M5 (そとで つかった — parent-logged
- * outside use) are representable identities only. No function here ever sets them: M0 needs an
- * envelope-capture interaction and M5 needs a parent outside-use log, and neither interaction
- * exists in the accepted product yet.
+ * Caution for future readers: this doc comment describes wiring that lives in MissionShell.tsx,
+ * not in this file — verify the actual caller before trusting this comment's currency (a past
+ * ticket's audit trusted an earlier, then-stale version of this exact comment and reported a
+ * real M2b UI as missing; do not repeat that mistake — grep the shell/UI layer directly).
  */
 export type MilestoneId = 'M0' | 'M1' | 'M2' | 'M3' | 'M4' | 'M5';
 
@@ -62,6 +67,29 @@ export function evaluateM1(milestones: MilestoneMap, moveProgress: MoveProgressM
  */
 export function evaluateM3(milestones: MilestoneMap, layerCount: number, now: number): MilestoneMap {
   return layerCount >= 3 ? achieve(milestones, 'M3', now) : milestones;
+}
+
+/**
+ * WO-19: M0 — the Day-1 envelope moment. An explicit, one-time parent/child tap on the parent
+ * screen's own "seal it" action (see MissionShell.tsx's `sealM0`) — never inferred from mere
+ * profile creation or play, so it stays a genuine ritual moment the family performs, not a flag
+ * silently flipped underneath them. Monotonic and idempotent via `achieve`, same as every other
+ * milestone here — no separate milestone system.
+ */
+export function applyM0Sealed(milestones: MilestoneMap, now: number): MilestoneMap {
+  return achieve(milestones, 'M0', now);
+}
+
+/**
+ * WO-19: M5 — そとで つかった (real transfer). Derived read-only from moveProgress, exactly
+ * mirroring `evaluateM1`'s own pattern: achieved once ANY move's scaffold rung reaches sotode.
+ * A move only ever reaches sotode via `applyOutsideUse` (src/engine/scaffold.ts), which itself
+ * only fires from the parent screen's explicit outside-use recording action — never inferred,
+ * never AI-evaluated, never requiring free text.
+ */
+export function evaluateM5(milestones: MilestoneMap, moveProgress: MoveProgressMap, now: number): MilestoneMap {
+  const anyOutside = Object.values(moveProgress).some((p) => isAtLeast(p.rung, 'sotode'));
+  return anyOutside ? achieve(milestones, 'M5', now) : milestones;
 }
 
 /**
@@ -142,4 +170,10 @@ export function recordFirstThreeChain(map: MemoryMomentMap, now: number, mission
 /** Shares its qualifying evidence with M4 — see `evaluateM4`. */
 export function recordFirstBlindCommit(map: MemoryMomentMap, now: number, missionId: string): MemoryMomentMap {
   return recordMemory(map, 'first_blind_commit', now, missionId);
+}
+
+/** WO-19: shares its qualifying evidence with M5 — see `evaluateM5`. Not mission-scoped (the
+ *  observation happens outside any authored mission), so `missionId` is correctly omitted. */
+export function recordOutsideUse(map: MemoryMomentMap, now: number): MemoryMomentMap {
+  return recordMemory(map, 'outside_use', now);
 }

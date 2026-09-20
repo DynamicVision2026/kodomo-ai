@@ -22,7 +22,11 @@ export type EventName =
   // their own question before the authored hand was shown — never a judgment of what they said.
   // `blind_selfreport` is display/reflection evidence only and never affects progression. Also
   // not in spec v0.5 §11.
-  | 'blind_commit' | 'blind_selfreport';
+  | 'blind_commit' | 'blind_selfreport'
+  // WO-19: M0/M5 parent-screen evidence. `m0_sealed` fires once, on the Day-1 envelope tap.
+  // `outside_use` fires whenever a parent records a real-world observation for a move — never a
+  // judgment of correctness, only which move was identified. Also not in spec v0.5 §11.
+  | 'm0_sealed' | 'outside_use';
 
 type Props = Record<string, string | number | boolean>;
 

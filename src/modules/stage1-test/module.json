@@ -2,11 +2,19 @@
   "id": "stage1-test",
   "title": "Stage 1 extensibility smoke test — not a real module, never shipped",
   "sku": "stage1-test-dummy",
-  "stages": [1],
-  "freeMissionIds": ["stage1-test-dummy"],
-  "slotTypes": ["what"],
+  "stages": [
+    1
+  ],
+  "freeMissionIds": [
+    "stage1-test-dummy"
+  ],
+  "slotTypes": [
+    "what"
+  ],
   "followMoves": [],
-  "missionOrder": ["stage1-test-dummy"],
+  "missionOrder": [
+    "stage1-test-dummy"
+  ],
   "ui": {
     "earlyOk": "これでOK",
     "handoffPrompt": "おとなにわたしてね",
@@ -31,9 +39,15 @@
     "blindSelfReportDifferent": "ちがった",
     "m2ConfirmPrompt": "お子さんが、ロボの さいしょの こたえだけでは たりないと、じぶんで 気づいて 言えていたら、下のボタンを おしてください。",
     "m2ConfirmAction": "はい、そう 言えていました",
-    "m2ConfirmedMessage": "かくにんしました。"
+    "m2ConfirmedMessage": "かくにんしました。",
+    "m0Prompt": "きょうから、『なぜ？』を さがす たびが はじまるよ。今の きもちを、ふうとうに しまっておこう。",
+    "m0Action": "ふうとうを とじる",
+    "m0SealedMessage": "ふうとうを とじたよ。",
+    "m5Prompt": "おうちの そとでも、この といを つかっているのを 見かけたら、おしえてください。"
   },
   "cardTypes": {
-    "what": { "label": "なにを" }
+    "what": {
+      "label": "なにを"
+    }
   }
 }

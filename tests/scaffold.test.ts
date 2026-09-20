@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  applyMoveRendered, applyAptUse, applyBlindCommit, isAptUse, isAtLeast, type MoveProgressMap,
+  applyMoveRendered, applyAptUse, applyBlindCommit, applyOutsideUse, isAptUse, isAtLeast,
+  type MoveProgressMap,
 } from '../src/engine/scaffold';
 
 describe('isAptUse (WO-04 Critical distinction)', () => {
@@ -158,13 +159,42 @@ describe('isAtLeast (exported for Blind-first eligibility checks)', () => {
   });
 });
 
-// WO-04 explicitly left hitoride/sotode to later tickets; WO-07 fills in hitoride only.
-describe('scaffold leaves a clean seam for sotode, the one remaining later rung', () => {
-  it('sotode is a valid ScaffoldRung value, unreachable by any function in this module', () => {
+describe('applyOutsideUse (WO-19: -> sotode)', () => {
+  it('advances a move with no prior progress (mihakken) straight to sotode — unlike blind_commit, no in-app rung prerequisite', () => {
+    const map = applyOutsideUse({}, 'follow-naze');
+    expect(map['follow-naze']!.rung).toBe('sotode');
+  });
+
+  it('advances a move already at hitoride to sotode', () => {
     let map: MoveProgressMap = {};
     for (const domain of ['日常', 'ことば', '社会とひと']) map = applyAptUse(map, 'follow-naze', domain);
     map = applyBlindCommit(map, 'follow-naze');
     expect(map['follow-naze']!.rung).toBe('hitoride');
-    // No function in this module can produce 'sotode' — that's outside_use's later ticket.
+    map = applyOutsideUse(map, 'follow-naze');
+    expect(map['follow-naze']!.rung).toBe('sotode');
+  });
+
+  it('never regresses, and is idempotent once already at sotode', () => {
+    let map = applyOutsideUse({}, 'follow-naze');
+    map = applyOutsideUse(map, 'follow-naze');
+    expect(map['follow-naze']!.rung).toBe('sotode');
+  });
+
+  it('advances only the recorded move — another move\'s progression is unaffected', () => {
+    let map = applyAptUse({}, 'follow-tatoeba', '日常');
+    map = applyOutsideUse(map, 'follow-naze');
+    expect(map['follow-naze']!.rung).toBe('sotode');
+    expect(map['follow-tatoeba']!.rung).toBe('moratta'); // untouched
+  });
+
+  it('leaves aptUseDomains untouched — no new scoring or counters introduced', () => {
+    let map = applyAptUse({}, 'follow-naze', '日常');
+    map = applyOutsideUse(map, 'follow-naze');
+    expect(map['follow-naze']!.aptUseDomains).toEqual(['日常']);
+  });
+
+  it('does not require, or care about, semantic evaluation of what was observed — the function takes no such input, only the move identity', () => {
+    // Signature itself is the proof: (map, move) -> MoveProgressMap. No "correct"/"quality" param.
+    expect(applyOutsideUse.length).toBe(2);
   });
 });

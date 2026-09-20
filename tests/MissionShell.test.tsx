@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
@@ -104,9 +104,9 @@ describe('MissionShell', () => {
     // follow-naze reached moratta over the two layers just played (both in one domain, so not
     // tsukaeru — see the moveProgress assertion further down this file).
     expect(screen.getByText(ui.toolboxHeading)).toBeInTheDocument();
-    const naze = screen.getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
+    const naze = within(document.querySelector('.toolbox')!).getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
     expect(naze.className).toContain('toolbox__tool--obtained');
-    const tatoeba = screen.getByText(moduleJson.cardTypes['follow-tatoeba'].label).closest('.toolbox__tool')!;
+    const tatoeba = within(document.querySelector('.toolbox')!).getByText(moduleJson.cardTypes['follow-tatoeba'].label).closest('.toolbox__tool')!;
     expect(tatoeba.className).toContain('toolbox__tool--undiscovered'); // never played this mission
   });
 
@@ -206,7 +206,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText(ui.handoffContinue)); // past ouchi
     await user.click(screen.getByText(ui.handoffContinue)); // past handoff prompt -> parent
 
-    const nazeForA = screen.getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
+    const nazeForA = within(document.querySelector('.toolbox')!).getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
     expect(nazeForA.className).toContain('toolbox__tool--obtained');
 
     // Reload: a fresh MissionShell instance, reading the same localStorage from scratch.
@@ -345,7 +345,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText(ui.handoffContinue));
 
     // No scores/counters — just the tool's growth state, still just hitoride (no fabricated sotode).
-    const naze = screen.getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
+    const naze = within(document.querySelector('.toolbox')!).getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
     expect(naze.className).toContain('toolbox__tool--independent');
     expect(document.querySelector('.toolbox')!.textContent ?? '').not.toMatch(/\d\s*\/\s*\d/);
   });
@@ -605,7 +605,7 @@ describe('MissionShell', () => {
 
     expect(screen.getByText(ui.parentScreenHeading)).toBeInTheDocument();
     expect(screen.getByText(ui.toolboxHeading)).toBeInTheDocument();
-    const naze = screen.getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
+    const naze = within(document.querySelector('.toolbox')!).getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
     expect(naze.className).toContain('toolbox__tool--obtained'); // real persisted progression, not a placeholder
     expect(screen.getByText(ui.m2ConfirmPrompt)).toBeInTheDocument();
     expect(screen.getByText(ui.m2ConfirmAction)).toBeInTheDocument();
@@ -794,6 +794,163 @@ describe('MissionShell', () => {
     const parent = document.querySelector('.mission-shell__parent')!;
     expect(parent.textContent ?? '').not.toMatch(/\d/); // no numbers anywhere: no score, no percent, no count
     expect(parent.querySelectorAll('input, textarea, [contenteditable="true"], audio')).toHaveLength(0);
+  });
+
+  // --- WO-19: M0 (Day-1 envelope) + M5 (そとで つかった) ------------------------------------
+
+  it('WO-19: the parent screen shows an unconfirmed M0 envelope prompt on a profile\'s first visit', async () => {
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await createAndSelectProfile(user);
+    await playThroughToParentScreen(user);
+
+    expect(screen.getByText(ui.m0Prompt)).toBeInTheDocument();
+    expect(screen.getByText(ui.m0Action)).toBeInTheDocument();
+    expect(screen.queryByText(ui.m0SealedMessage)).not.toBeInTheDocument();
+  });
+
+  it('WO-19: focused interaction — sealing M0 persists it, monotonically, and survives a reload', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await createAndSelectProfile(user);
+    await playThroughToParentScreen(user);
+
+    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones?.M0).toBeUndefined();
+
+    await user.click(screen.getByText(ui.m0Action));
+    expect(screen.getByText(ui.m0SealedMessage)).toBeInTheDocument();
+    expect(screen.queryByText(ui.m0Action)).not.toBeInTheDocument();
+    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const firstAchievedAt = saved.profiles[0].milestones.M0.achievedAt;
+    expect(saved.profiles[0].milestones.M0).toEqual({ achieved: true, achievedAt: expect.any(Number) });
+
+    // Reload: a fresh MissionShell instance reading the same localStorage from scratch. The
+    // button never reappears — a second seal isn't even reachable through the UI.
+    unmount();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await user.click(screen.getByText('たぬき'));
+    await playThroughToParentScreen(user);
+    expect(screen.getByText(ui.m0SealedMessage)).toBeInTheDocument();
+    expect(screen.queryByText(ui.m0Action)).not.toBeInTheDocument();
+    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones.M0).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // unchanged
+  });
+
+  it('WO-19: the parent screen offers a move button per accepted follow move, to record real-world outside use — no free-text input anywhere', async () => {
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await createAndSelectProfile(user);
+    await playThroughToParentScreen(user);
+
+    expect(screen.getByText(ui.m5Prompt)).toBeInTheDocument();
+    const m5Moves = document.querySelector('.mission-shell__m5-moves') as HTMLElement;
+    for (const move of moduleJson.followMoves) {
+      expect(within(m5Moves).getByText(moduleJson.cardTypes[move as keyof typeof moduleJson.cardTypes]!.label)).toBeInTheDocument();
+    }
+    const parent = document.querySelector('.mission-shell__parent')!;
+    expect(parent.querySelectorAll('input, textarea, [contenteditable="true"]')).toHaveLength(0);
+  });
+
+  it('WO-19: focused interaction — recording outside use for one move advances it to sotode, achieves M5, and never touches another move\'s progression', async () => {
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await createAndSelectProfile(user);
+    await playThroughToParentScreen(user);
+
+    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones?.M5).toBeUndefined();
+
+    const nazeButton = within(document.querySelector('.mission-shell__m5-moves')!)
+      .getByText(moduleJson.cardTypes['follow-naze'].label);
+    await user.click(nazeButton);
+
+    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].moveProgress['follow-naze'].rung).toBe('sotode');
+    expect(saved.profiles[0].milestones.M5).toEqual({ achieved: true, achievedAt: expect.any(Number) });
+    expect(saved.profiles[0].moveProgress['follow-tatoeba']?.rung ?? 'mihakken').toBe('mihakken'); // untouched
+
+    // The Toolbox itself now reflects sotode for follow-naze (existing --outside styling).
+    const nazeToolboxEntry = within(document.querySelector('.toolbox')!)
+      .getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
+    expect(nazeToolboxEntry.className).toContain('toolbox__tool--outside');
+  });
+
+  it('WO-19: repeated outside-use recording for the same move is safe/idempotent', async () => {
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await createAndSelectProfile(user);
+    await playThroughToParentScreen(user);
+
+    const nazeButton = () => within(document.querySelector('.mission-shell__m5-moves')!)
+      .getByText(moduleJson.cardTypes['follow-naze'].label);
+    await user.click(nazeButton());
+    const firstSaved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const firstAchievedAt = firstSaved.profiles[0].milestones.M5.achievedAt;
+
+    await user.click(nazeButton()); // tap again — button stays available for other moves too
+    const secondSaved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(secondSaved.profiles[0].moveProgress['follow-naze'].rung).toBe('sotode'); // unchanged
+    expect(secondSaved.profiles[0].milestones.M5).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // unchanged
+  });
+
+  it('WO-19: M0/M5 coexist with M1-M4 without changing their own behavior, and child progression is never blocked by either', async () => {
+    const user = userEvent.setup();
+    render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui}
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+    await createAndSelectProfile(user);
+    // Child progression completes normally, all the way to the parent screen, with neither M0
+    // sealed nor any outside use recorded — proving neither gates the other's play.
+    await playThroughToParentScreen(user);
+    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].progress[mission.id].done).toBe(true);
+    expect(saved.profiles[0].milestones.M1.achieved).toBe(true);
+
+    await user.click(screen.getByText(ui.m0Action));
+    await user.click(screen.getByText(ui.m2ConfirmAction));
+    const nazeButton = within(document.querySelector('.mission-shell__m5-moves')!)
+      .getByText(moduleJson.cardTypes['follow-naze'].label);
+    await user.click(nazeButton);
+
+    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones.M0.achieved).toBe(true);
+    expect(saved.profiles[0].milestones.M1.achieved).toBe(true); // unaffected
+    expect(saved.profiles[0].milestones.M2.achieved).toBe(true); // unaffected
+    expect(saved.profiles[0].milestones.M5.achieved).toBe(true);
   });
 
   it('keeps working for the session when storage throws (blocked storage)', async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import { pickNextMission } from '../src/shell/missionLibrary';
@@ -296,11 +296,11 @@ describe('rouka (1-3) — playable end to end (たのむ -> ほる x3 -> wrapper
     expect(profile.milestones.M3).toEqual({ achieved: true, achievedAt: expect.any(Number) });
 
     // All three moves this chain exercises reach moratta.
-    const naze = screen.getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
+    const naze = within(document.querySelector('.toolbox')!).getByText(moduleJson.cardTypes['follow-naze'].label).closest('.toolbox__tool')!;
     expect(naze.className).toContain('toolbox__tool--obtained');
-    const hokaniwa = screen.getByText(moduleJson.cardTypes['follow-hokaniwa'].label).closest('.toolbox__tool')!;
+    const hokaniwa = within(document.querySelector('.toolbox')!).getByText(moduleJson.cardTypes['follow-hokaniwa'].label).closest('.toolbox__tool')!;
     expect(hokaniwa.className).toContain('toolbox__tool--obtained');
-    const tsumari = screen.getByText(moduleJson.cardTypes['follow-tsumari'].label).closest('.toolbox__tool')!;
+    const tsumari = within(document.querySelector('.toolbox')!).getByText(moduleJson.cardTypes['follow-tsumari'].label).closest('.toolbox__tool')!;
     expect(tsumari.className).toContain('toolbox__tool--obtained');
 
     // M2a proxy evidence (system-observable only — never sets milestones.M2 itself) recorded from

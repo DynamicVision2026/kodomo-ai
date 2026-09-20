@@ -150,6 +150,19 @@ export interface ModuleUiStrings {
   /** WO-14: shown in place of the prompt/button once M2b has been confirmed — monotonic, no
    *  "undo". Plain confirmation text, not a badge or score. */
   m2ConfirmedMessage: string;
+  /** WO-19: the parent screen's M0 (封をする, the Day-1 envelope moment) prompt, shown once,
+   *  the first time a profile reaches the parent screen without M0 already achieved. */
+  m0Prompt: string;
+  /** WO-19: the M0 envelope-seal button's label — the family's one explicit tap. */
+  m0Action: string;
+  /** WO-19: shown in place of the prompt/button once M0 has been sealed — monotonic, no "undo",
+   *  same pattern as `m2ConfirmedMessage`. */
+  m0SealedMessage: string;
+  /** WO-19: the parent screen's M5 (そとで つかった) prompt, explaining that tapping a move
+   *  below records a real-world observation of that move being used outside an authored
+   *  mission — never a judgment of correctness. Always shown (not gated on M5 achievement),
+   *  since a parent may record outside use for more than one move over multiple visits. */
+  m5Prompt: string;
 }
 
 /**

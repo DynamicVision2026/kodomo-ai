@@ -9,12 +9,9 @@
  * whichever later UI ticket actually displays a rung.
  *
  * Rung order: mihakken (みはっけん, seen) -> moratta (もらった, given) -> tsukaeru (つかえる,
- * usable) -> hitoride (ひとりで, alone) -> sotode (そとで, outside). This ticket implements only
- * the first two transitions. `hitoride` depends on a later ticket's `blind_commit`; `sotode`
- * depends on a later ticket's parent `outside_use`. Neither event is invented here —
- * `applyMoveRendered`/`applyAptUse` and the monotonic `advanceTo` helper below are the seam a
- * later ticket extends with `applyBlindCommit`/`applyOutsideUse` in the same shape, without
- * redesigning this module.
+ * usable) -> hitoride (ひとりで, alone) -> sotode (そとで, outside). WO-04 implemented the first
+ * two transitions; WO-07 added `applyBlindCommit` (tsukaeru -> hitoride); WO-19 adds
+ * `applyOutsideUse` (-> sotode) below, in the same shape, without redesigning this module.
  */
 export type ScaffoldRung = 'mihakken' | 'moratta' | 'tsukaeru' | 'hitoride' | 'sotode';
 
@@ -89,6 +86,23 @@ export function applyBlindCommit(map: MoveProgressMap, move: string): MoveProgre
   const current = progressOf(map, move);
   if (!isAtLeast(current.rung, 'tsukaeru')) return map;
   const rung = advanceTo(current.rung, 'hitoride');
+  if (rung === current.rung) return map;
+  return { ...map, [move]: { ...current, rung } };
+}
+
+/**
+ * WO-19: a parent-recorded `outside_use` observation for `move` — the family noticed the child
+ * using this questioning move somewhere outside an authored training mission (dinner, school,
+ * shopping, an ordinary conversation, ...). Advances straight to sotode, monotonically, and
+ * unlike `applyBlindCommit` carries NO in-app rung prerequisite: real-world use is independent
+ * evidence a parent observed directly, not a staged in-app escalation, so a move can reach
+ * sotode from any current rung, including mihakken. No semantic evaluation of what was said —
+ * the parent identifies WHICH move (an existing, already-taught vocabulary item), never whether
+ * it was "correct".
+ */
+export function applyOutsideUse(map: MoveProgressMap, move: string): MoveProgressMap {
+  const current = progressOf(map, move);
+  const rung = advanceTo(current.rung, 'sotode');
   if (rung === current.rung) return map;
   return { ...map, [move]: { ...current, rung } };
 }

@@ -2,10 +2,10 @@ import { useState } from 'react';
 import type { Mission, ModuleUiStrings } from '../engine/types';
 import { load, save, MAX_PROFILES, type AppState, type Profile } from '../engine/storage';
 import { hasAccess } from '../engine/entitlements';
-import { applyMoveRendered, applyAptUse, applyBlindCommit } from '../engine/scaffold';
+import { applyMoveRendered, applyAptUse, applyBlindCommit, applyOutsideUse } from '../engine/scaffold';
 import {
-  evaluateM1, evaluateM3, evaluateM4, addM2ProxyMission, applyM2Confirmed,
-  recordFirstThreeChain, recordFirstBlindCommit,
+  evaluateM1, evaluateM3, evaluateM4, evaluateM5, addM2ProxyMission, applyM2Confirmed,
+  applyM0Sealed, recordFirstThreeChain, recordFirstBlindCommit, recordOutsideUse,
 } from '../engine/milestones';
 import { track } from '../engine/analytics';
 import { ProfilePicker } from './ProfilePicker';
@@ -263,6 +263,36 @@ export function MissionShell({
     }));
   }
 
+  /** WO-19: M0 — the Day-1 envelope moment. Fires only from the parent screen's own explicit
+   *  "seal it" tap, once, per profile — never inferred from profile creation or play. Monotonic
+   *  via applyM0Sealed, same as every other milestone here. */
+  function sealM0() {
+    track('m0_sealed');
+    persistProfile((current) => ({
+      ...current,
+      milestones: applyM0Sealed(current.milestones ?? {}, Date.now()),
+    }));
+  }
+
+  /** WO-19: M5 — そとで つかった. Fires only from the parent screen's own explicit per-move
+   *  recording action: the parent identifies WHICH existing move they observed being used
+   *  outside an authored mission, never whether it was "correct". Advances that move's scaffold
+   *  rung to sotode (applyOutsideUse), re-evaluates M5 from the resulting moveProgress (same
+   *  derived pattern as M1/evaluateM1), and records the first_outside_use memory moment. */
+  function logOutsideUse(move: string) {
+    track('outside_use', { move });
+    persistProfile((current) => {
+      const moveProgress = applyOutsideUse(current.moveProgress ?? {}, move);
+      const now = Date.now();
+      return {
+        ...current,
+        moveProgress,
+        milestones: evaluateM5(current.milestones ?? {}, moveProgress, now),
+        memories: recordOutsideUse(current.memories ?? {}, now),
+      };
+    });
+  }
+
   function completePhase(digResult?: DigResult) {
     if (digResult) digPhaseCompleted(digResult);
     const nextIndex = (screen.kind === 'phase' ? screen.index : 0) + 1;
@@ -405,6 +435,7 @@ export function MissionShell({
   // confirmation (WO-14) are this screen's own, separate concerns: read-only growth over the
   // active profile's own moveProgress, and one binary parent attestation over its milestones.
   const m2Achieved = profile?.milestones?.M2?.achieved ?? false;
+  const m0Achieved = profile?.milestones?.M0?.achieved ?? false;
   return (
     <div className="mission-shell__parent">
       <p className="mission-shell__parent-heading">{ui.parentScreenHeading}</p>
@@ -414,12 +445,32 @@ export function MissionShell({
         moveProgress={profile?.moveProgress ?? {}}
         heading={ui.toolboxHeading}
       />
+      {m0Achieved ? (
+        <p className="mission-shell__m0-sealed">{ui.m0SealedMessage}</p>
+      ) : (
+        <div className="mission-shell__m0">
+          <p>{ui.m0Prompt}</p>
+          <button type="button" onClick={sealM0}>{ui.m0Action}</button>
+        </div>
+      )}
       {m2Achieved ? (
         <p className="mission-shell__m2-confirmed">{ui.m2ConfirmedMessage}</p>
       ) : (
         <div className="mission-shell__m2">
           <p>{ui.m2ConfirmPrompt}</p>
           <button type="button" onClick={confirmM2b}>{ui.m2ConfirmAction}</button>
+        </div>
+      )}
+      {followMoves.length > 0 && (
+        <div className="mission-shell__m5">
+          <p>{ui.m5Prompt}</p>
+          <div className="mission-shell__m5-moves">
+            {followMoves.map((move) => (
+              <button key={move} type="button" onClick={() => logOutsideUse(move)}>
+                {cardTypes[move]?.label ?? move}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

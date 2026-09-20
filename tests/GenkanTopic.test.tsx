@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import { pickNextMission } from '../src/shell/missionLibrary';
@@ -250,9 +250,9 @@ describe('genkan (1-2) — playable end to end (たのむ -> ほる -> wrapper s
     expect(profile.milestones.M1).toEqual({ achieved: true, achievedAt: expect.any(Number) });
     expect(profile.milestones.M3).toBeUndefined(); // genuine 2-layer chain, not overclaimed
 
-    const tatoeba = screen.getByText(moduleJson.cardTypes['follow-tatoeba'].label).closest('.toolbox__tool')!;
+    const tatoeba = within(document.querySelector('.toolbox')!).getByText(moduleJson.cardTypes['follow-tatoeba'].label).closest('.toolbox__tool')!;
     expect(tatoeba.className).toContain('toolbox__tool--obtained');
-    const tsumari = screen.getByText(moduleJson.cardTypes['follow-tsumari'].label).closest('.toolbox__tool')!;
+    const tsumari = within(document.querySelector('.toolbox')!).getByText(moduleJson.cardTypes['follow-tsumari'].label).closest('.toolbox__tool')!;
     expect(tsumari.className).toContain('toolbox__tool--obtained');
 
     expect(profile.m2Evidence.proxyMissionIds).toEqual([genkanMission.id]);

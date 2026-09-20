@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
-  evaluateM1, evaluateM3, evaluateM4, applyM2Confirmed,
-  addM2ProxyMission, hasM2Proxy, recordFirstThreeChain, recordFirstBlindCommit,
+  evaluateM1, evaluateM3, evaluateM4, evaluateM5, applyM2Confirmed, applyM0Sealed,
+  addM2ProxyMission, hasM2Proxy, recordFirstThreeChain, recordFirstBlindCommit, recordOutsideUse,
   type MilestoneMap, type M2Evidence, type MemoryMomentMap,
 } from '../src/engine/milestones';
-import { applyAptUse, type MoveProgressMap } from '../src/engine/scaffold';
+import { applyAptUse, applyOutsideUse, type MoveProgressMap } from '../src/engine/scaffold';
 
 const NOW = 1_700_000_000_000;
 
@@ -79,8 +79,8 @@ describe('evaluateM4 (カードなしで きけた — first blind_commit)', () 
   });
 });
 
-describe('applyM2Confirmed (M2b — the actual milestone, unwired seam)', () => {
-  it('achieves M2 when called directly (the seam a later confirmation UI would call)', () => {
+describe('applyM2Confirmed (M2b — the actual milestone, wired to the parent screen\'s confirmation button since WO-14)', () => {
+  it('achieves M2 when called directly', () => {
     const result = applyM2Confirmed({}, NOW);
     expect(result.M2).toEqual({ achieved: true, achievedAt: NOW });
   });
@@ -88,6 +88,70 @@ describe('applyM2Confirmed (M2b — the actual milestone, unwired seam)', () => 
   it('is idempotent', () => {
     const first = applyM2Confirmed({}, NOW);
     expect(applyM2Confirmed(first, NOW + 1000)).toEqual(first);
+  });
+});
+
+describe('applyM0Sealed (WO-19: M0, the Day-1 envelope moment)', () => {
+  it('achieves M0 when called directly (the parent screen\'s "seal it" tap)', () => {
+    const result = applyM0Sealed({}, NOW);
+    expect(result.M0).toEqual({ achieved: true, achievedAt: NOW });
+  });
+
+  it('is idempotent', () => {
+    const first = applyM0Sealed({}, NOW);
+    expect(applyM0Sealed(first, NOW + 1000)).toEqual(first);
+  });
+
+  it('leaves other milestones untouched', () => {
+    const milestones: MilestoneMap = { M1: { achieved: true, achievedAt: NOW - 1 } };
+    const result = applyM0Sealed(milestones, NOW);
+    expect(result.M1).toEqual({ achieved: true, achievedAt: NOW - 1 });
+    expect(result.M0?.achieved).toBe(true);
+  });
+});
+
+describe('evaluateM5 (そとで つかった — derived from moveProgress, mirrors evaluateM1)', () => {
+  it('does not achieve M5 when no move has reached sotode', () => {
+    const moveProgress: MoveProgressMap = { 'follow-naze': { rung: 'hitoride', aptUseDomains: [] } };
+    expect(evaluateM5({}, moveProgress, NOW).M5).toBeUndefined();
+  });
+
+  it('achieves M5 once any move has reached sotode via applyOutsideUse', () => {
+    const moveProgress = applyOutsideUse({}, 'follow-naze');
+    const result = evaluateM5({}, moveProgress, NOW);
+    expect(result.M5).toEqual({ achieved: true, achievedAt: NOW });
+  });
+
+  it('is idempotent: does not re-timestamp once already achieved', () => {
+    const moveProgress = applyOutsideUse({}, 'follow-naze');
+    const achieved = evaluateM5({}, moveProgress, NOW);
+    const later = evaluateM5(achieved, moveProgress, NOW + 1000);
+    expect(later).toEqual(achieved);
+  });
+
+  it('leaves M1-M4 untouched', () => {
+    const milestones: MilestoneMap = {
+      M1: { achieved: true, achievedAt: NOW - 3 },
+      M4: { achieved: true, achievedAt: NOW - 1 },
+    };
+    const moveProgress = applyOutsideUse({}, 'follow-naze');
+    const result = evaluateM5(milestones, moveProgress, NOW);
+    expect(result.M1).toEqual({ achieved: true, achievedAt: NOW - 3 });
+    expect(result.M4).toEqual({ achieved: true, achievedAt: NOW - 1 });
+    expect(result.M5?.achieved).toBe(true);
+  });
+});
+
+describe('recordOutsideUse (WO-19: shares its evidence with M5, first-occurrence only, not mission-scoped)', () => {
+  it('records outside_use once', () => {
+    const result = recordOutsideUse({}, NOW);
+    expect(result.outside_use).toEqual({ kind: 'outside_use', recordedAt: NOW, missionId: undefined });
+  });
+
+  it('does not overwrite an already-recorded first occurrence', () => {
+    const first = recordOutsideUse({}, NOW);
+    const second = recordOutsideUse(first, NOW + 1000);
+    expect(second).toEqual(first);
   });
 });
 
