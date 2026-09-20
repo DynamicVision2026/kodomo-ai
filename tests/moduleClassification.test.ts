@@ -123,15 +123,34 @@ describe('checkMissions — release missions require genuine human approvals', (
     expect(issues).toEqual([]);
   });
 
-  it('RELEASE=1 (strict) fails a release mission missing its Gate 2 review stamp', () => {
+  it('RELEASE=1 (strict) fails a release mission missing both its Gate 2 review stamp and a Gate 2 waiver', () => {
     const m = releaseMission({ mission: {} });
     const { issues } = checkMissions([m], { strict: true, productionImportedTopicKeys: new Set() });
-    expect(issues).toEqual([`${m.relPath} has no native-speaker review stamp (RELEASE=1)`]);
+    expect(issues).toEqual([`${m.relPath} has no native-speaker review stamp and no Gate 2 waiver (RELEASE=1)`]);
   });
 
   it('RELEASE=1 passes a release mission with both an approved claim and a review stamp', () => {
     const { issues } = checkMissions([releaseMission()], { strict: true, productionImportedTopicKeys: new Set() });
     expect(issues).toEqual([]);
+  });
+
+  it('RELEASE=1 (WO-21 Phase 0) passes a release mission with an explicit Gate 2 waiver in place of a review stamp', () => {
+    const m = releaseMission({
+      mission: { gate2Waiver: { waivedBy: '傅豊国', waivedAt: '2026-09-20', reason: 'Founder waived Gate 2 for this release cycle.' } },
+    });
+    const { issues } = checkMissions([m], { strict: true, productionImportedTopicKeys: new Set() });
+    expect(issues).toEqual([]);
+  });
+
+  it('a Gate 2 waiver never gets treated as a real review stamp: still fails without one when not strict-relevant to waiver but claims are unapproved', () => {
+    // A waiver only ever substitutes for the RELEASE=1 review-stamp check — it never satisfies
+    // the separate Gate 1 (approved-claims) requirement, which is checked independently.
+    const m = releaseMission({
+      mission: { gate2Waiver: { waivedBy: '傅豊国', waivedAt: '2026-09-20', reason: 'Founder waived Gate 2 for this release cycle.' } },
+      facts: { claims: [{ id: 'c1', status: 'pending' }] },
+    });
+    const { issues } = checkMissions([m], { strict: true, productionImportedTopicKeys: new Set() });
+    expect(issues).toEqual([`${m.relPath} uses facts.yaml with unapproved claims: c1`]);
   });
 });
 
@@ -164,6 +183,15 @@ describe('checkMissions — synthetic missions never require, and must never car
     const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatch(/must never carry Gate 2 native-review approval/);
+  });
+
+  it('FAILS a synthetic mission whose mission carries a Gate 2 waiver (WO-21 Phase 0): synthetic content must never carry any release-gate decision', () => {
+    const m = syntheticMission({
+      mission: { gate2Waiver: { waivedBy: 'someone', waivedAt: '2026-01-01', reason: 'n/a' } },
+    });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/must never carry a release-gate decision/);
   });
 });
 

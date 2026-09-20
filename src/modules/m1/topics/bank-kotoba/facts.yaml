@@ -1,17 +1,30 @@
 # AD-04 Bank topic B09. See docs/AD-04-bank-topics.md.
-# Gate 1: PENDING. Gate 2: PENDING. type: practice throughout.
+# Gate 1: PASSED (WO-21 Phase 0). Founder accepted the WO-20 content batch and approved
+# every practice claim below exactly as recorded (no wording changed to obtain approval).
+# The remaining fact-type claim(s) in this file, if any, stay pending-factual-verification
+# until a real source is attached (see docs/WO-21-factual-verification.md).
+# Gate 2: WAIVED for this release cycle (WO-21 Phase 0) — the Founder chose not to keep
+# the separate native-speaker (酒井先生) review as a blocking step. This is NOT a claim
+# that 酒井先生 reviewed this content — see s2.json's own `gate2Waiver` field, which is
+# structurally distinct from a real `review` stamp.
 topic: bank-kotoba
 question: 同じ言葉なのに、言う人によってちがって聞こえる
 claims:
   - id: c1
     type: practice
     statement: "A commonly noticed fact is that the exact same word or sentence can sound different depending on who says it."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c2
     type: practice
     statement: "A common example is that the same word said with a scary face gives a different impression than the same word said another way."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c3
     type: practice
     statement: "A commonly framed way to understand a word's meaning as heard is that it's shaped by voice tone and facial expression too, not decided by the word alone."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"

@@ -1,7 +1,14 @@
 # AD-04 Bank topic B02. See docs/AD-04-bank-topics.md — special caution: regional variation +
 # sourced factual component.
-# Gate 1: PENDING. Gate 2: PENDING (native review explicitly required for this topic's regional
-# framing).
+# Gate 1: PASSED (WO-21 Phase 0). Founder accepted the WO-20 content batch and approved
+# every practice claim below exactly as recorded (no wording changed to obtain approval).
+# The remaining fact-type claim(s) in this file, if any, stay pending-factual-verification
+# until a real source is attached (see docs/WO-21-factual-verification.md).
+# Gate 2: WAIVED for this release cycle (WO-21 Phase 0) — the Founder chose not to keep
+# the separate native-speaker (酒井先生) review as a blocking step. This is NOT a claim
+# that 酒井先生 reviewed this content — see s2.json's own `gate2Waiver` field, which is
+# structurally distinct from a real `review` stamp.
+# type: practice/fact as marked per claim (see framing).
 # c3 is a FACT claim, not practice: the claim that which side is kept open varies by region in
 # Japan is a real, sourceable convention (not merely "commonly said" the way practice claims
 # are), so it is marked pending-factual-verification rather than given a fabricated source.
@@ -11,11 +18,15 @@ claims:
   - id: c1
     type: practice
     statement: "A common first explanation for standing on an escalator is that you leave one side open (walk-side) rather than standing across both sides."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c2
     type: practice
     statement: "A common reason given for leaving one side open is so that people in a hurry can pass by."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c3
     type: fact
     statement: "Which side is conventionally left open on an escalator varies by region within Japan (for example, differing between the Kanto and Kansai areas), rather than being one single nationwide rule."

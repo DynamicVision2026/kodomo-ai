@@ -90,5 +90,10 @@
   ],
   "tip": "「なんで？」や「たとえば？」で、じぶんの 気もちも きいてみよう。",
   "teachBack": "きき方を えらんで、聞き方を教えてあげよう。",
-  "ouchiTalk": "おうちの『かして』も、じぶんの 気もちを きいてみよう。"
+  "ouchiTalk": "おうちの『かして』も、じぶんの 気もちを きいてみよう。",
+  "gate2Waiver": {
+    "waivedBy": "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)",
+    "waivedAt": "2026-09-20",
+    "reason": "WO-21 Phase 0: Founder chose not to keep the separate native-speaker (酒井先生) Gate 2 review as a blocking step for this release cycle. This does not claim a native review occurred."
+  }
 }

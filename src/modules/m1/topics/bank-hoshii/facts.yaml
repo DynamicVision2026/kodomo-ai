@@ -1,18 +1,31 @@
 # AD-04 Bank topic B08. See docs/AD-04-bank-topics.md.
-# Gate 1: PENDING. Gate 2: PENDING. type: practice throughout — framed as a commonly-observed
-# feeling, never as a critique of consumerism or a moral judgment about wanting things.
+# Gate 1: PASSED (WO-21 Phase 0). Founder accepted the WO-20 content batch and approved
+# every practice claim below exactly as recorded (no wording changed to obtain approval).
+# The remaining fact-type claim(s) in this file, if any, stay pending-factual-verification
+# until a real source is attached (see docs/WO-21-factual-verification.md).
+# Gate 2: WAIVED for this release cycle (WO-21 Phase 0) — the Founder chose not to keep
+# the separate native-speaker (酒井先生) review as a blocking step. This is NOT a claim
+# that 酒井先生 reviewed this content — see s2.json's own `gate2Waiver` field, which is
+# structurally distinct from a real `review` stamp.
+# type: practice throughout — framed as a commonly-observed feeling, never as a critique of consumerism or a moral judgment about wanting things.
 topic: bank-hoshii
 question: みんなが持っているものが、ほしくなる
 claims:
   - id: c1
     type: practice
     statement: "A common reason children give for wanting something is that everyone else already has it."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c2
     type: practice
     statement: "Children commonly notice, on reflection, that they can feel like they want something even when not having it wouldn't actually cause them any trouble."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c3
     type: practice
     statement: "A commonly framed way to understand wanting something is that it doesn't always mean needing it."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"

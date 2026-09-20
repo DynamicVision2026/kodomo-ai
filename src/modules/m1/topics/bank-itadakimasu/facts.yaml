@@ -2,19 +2,32 @@
 # ordinary-child framing; native review required. This topic never invokes a specific religious
 # framework, doctrine, or requirement — it describes 「いただきます」 as an ordinary, widely
 # practiced expression of gratitude said before eating, nothing more specific than that.
-# Gate 1: PENDING. Gate 2: PENDING (native review explicitly required for this topic).
+# Gate 1: PASSED (WO-21 Phase 0). Founder accepted the WO-20 content batch and approved
+# every practice claim below exactly as recorded (no wording changed to obtain approval).
+# The remaining fact-type claim(s) in this file, if any, stay pending-factual-verification
+# until a real source is attached (see docs/WO-21-factual-verification.md).
+# Gate 2: WAIVED for this release cycle (WO-21 Phase 0) — the Founder chose not to keep
+# the separate native-speaker (酒井先生) review as a blocking step. This is NOT a claim
+# that 酒井先生 reviewed this content — see s2.json's own `gate2Waiver` field, which is
+# structurally distinct from a real `review` stamp.
 topic: bank-itadakimasu
 question: 「いただきます」は、だれに言っている？
 claims:
   - id: c1
     type: practice
     statement: "A common first explanation for 「いただきます」 is that it's said to the person who cooked the meal."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c2
     type: practice
     statement: "A common further observation is that it's also commonly understood to include the people who grew or raised the food (vegetables, meat, etc.), not only the cook."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c3
     type: practice
     statement: "A commonly framed way to understand 「いただきます」 is that it's an expression of thanks directed at many people involved in the meal, not just one person."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"

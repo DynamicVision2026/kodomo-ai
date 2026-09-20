@@ -214,6 +214,16 @@ export interface Mission {
    *  never read or branched on by any gate; it exists purely as a human-readable record of what
    *  was (and wasn't) re-reviewed. */
   review?: { by: string; date: string; note?: string };
+  /**
+   * WO-21 Phase 0: an explicit, honest record that the Founder has chosen to waive the separate
+   * native-speaker (酒井先生) Gate 2 round as a BLOCKING step for this release cycle — never a
+   * substitute for, or a claim of, an actual native review. `review` (above) still means exactly
+   * what it always has (a real native-speaker stamp); this field is structurally distinct and
+   * gate:claims (scripts/lib/moduleClassification.ts) only ever accepts EITHER a real `review.by`
+   * OR this explicit waiver in RELEASE=1 mode, never inferring one from the other. Absent on
+   * every mission that hasn't had this decision made for it.
+   */
+  gate2Waiver?: { waivedBy: string; waivedAt: string; reason: string };
   phases: Phase[];
   /** Post-mission wrapper screens. */
   tip: string;

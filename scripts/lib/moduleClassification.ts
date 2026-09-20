@@ -56,6 +56,10 @@ export interface MissionRecord {
   /** `note` (WO-14 final correction): optional free-text scope annotation, e.g. "register-only
    *  re-review" — never read here, gate:claims only ever checks `.by`. */
   review?: { by: string; date: string; note?: string };
+  /** WO-21 Phase 0: an explicit Founder decision to waive the native-speaker Gate 2 round as a
+   *  blocking step for this release cycle — never a substitute for `review`, never inferred from
+   *  it. gate:claims accepts EITHER a real `review.by` OR this waiver in RELEASE=1 mode. */
+  gate2Waiver?: { waivedBy: string; waivedAt: string; reason: string };
 }
 
 export interface MissionEntry {
@@ -197,8 +201,12 @@ export function checkMissions(missions: MissionEntry[], opts: CheckOptions): Che
       if (unapproved.length) {
         issues.push(`${relPath} uses facts.yaml with unapproved claims: ${unapproved.join(', ')}`);
       }
-      if (opts.strict && !mission.review?.by) {
-        issues.push(`${relPath} has no native-speaker review stamp (RELEASE=1)`);
+      // WO-21 Phase 0: a genuine, explicit Founder waiver of the Gate 2 blocking step satisfies
+      // this check exactly like a real review stamp would — but the two are never conflated:
+      // `gate2Waiver` never claims a native review happened, and `review.by` never gets inferred
+      // from a waiver's mere presence.
+      if (opts.strict && !mission.review?.by && !mission.gate2Waiver?.waivedBy) {
+        issues.push(`${relPath} has no native-speaker review stamp and no Gate 2 waiver (RELEASE=1)`);
       }
     } else if (contentClass === 'synthetic') {
       const approvedClaims = (facts?.claims ?? []).filter((c) => c.status === 'approved').map((c) => c.id);
@@ -212,6 +220,12 @@ export function checkMissions(missions: MissionEntry[], opts: CheckOptions): Che
         issues.push(
           `${relPath} is classified synthetic but carries a Gate 2 review stamp ` +
           `(by: ${mission.review.by}) — synthetic content must never carry Gate 2 native-review approval`,
+        );
+      }
+      if (mission.gate2Waiver?.waivedBy) {
+        issues.push(
+          `${relPath} is classified synthetic but carries a Gate 2 waiver — synthetic content ` +
+          `must never carry a release-gate decision of any kind`,
         );
       }
     }

@@ -2,7 +2,14 @@
 # factual sensitivity. This topic stays in "why does a system need a cutoff line at all"
 # territory and never frames any individual child's birth date as advantageous or
 # disadvantageous.
-# Gate 1: PENDING. Gate 2: PENDING (native review required — sensitivity check).
+# Gate 1: PASSED (WO-21 Phase 0). Founder accepted the WO-20 content batch and approved
+# every practice claim below exactly as recorded (no wording changed to obtain approval).
+# The remaining fact-type claim(s) in this file, if any, stay pending-factual-verification
+# until a real source is attached (see docs/WO-21-factual-verification.md).
+# Gate 2: WAIVED for this release cycle (WO-21 Phase 0) — the Founder chose not to keep
+# the separate native-speaker (酒井先生) review as a blocking step. This is NOT a claim
+# that 酒井先生 reviewed this content — see s2.json's own `gate2Waiver` field, which is
+# structurally distinct from a real `review` stamp.
 # c2 is a FACT claim: the legal/administrative necessity of a school-year cutoff date is a real,
 # sourceable convention (Japan's School Education Act enrollment-age counting), so it is marked
 # pending-factual-verification rather than given a fabricated source.
@@ -12,7 +19,9 @@ claims:
   - id: c1
     type: practice
     statement: "A commonly known fact among children is that whether you're born on April 1st or April 2nd can put you in a different school year (学年) from a classmate born just one day apart."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c2
     type: fact
     statement: "A school system that groups children into fixed yearly grades needs some specific date to draw the dividing line somewhere, and Japan's convention places that line at April 1st/2nd."
@@ -21,4 +30,6 @@ claims:
   - id: c3
     type: practice
     statement: "A commonly framed way to understand where a school-year cutoff line is drawn is that it's a matter of convention/agreement, not something that could avoid needing a line somewhere."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"

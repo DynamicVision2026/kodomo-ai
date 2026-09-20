@@ -2,7 +2,14 @@
 # sourced factual component. This topic avoids moralizing the child's own future behavior
 # ("you must always turn it in because it's right") and instead lands descriptively on the
 # structural purpose of a lost-and-found system existing at all (so an owner can be found).
-# Gate 1: PENDING. Gate 2: PENDING.
+# Gate 1: PASSED (WO-21 Phase 0). Founder accepted the WO-20 content batch and approved
+# every practice claim below exactly as recorded (no wording changed to obtain approval).
+# The remaining fact-type claim(s) in this file, if any, stay pending-factual-verification
+# until a real source is attached (see docs/WO-21-factual-verification.md).
+# Gate 2: WAIVED for this release cycle (WO-21 Phase 0) — the Founder chose not to keep
+# the separate native-speaker (酒井先生) review as a blocking step. This is NOT a claim
+# that 酒井先生 reviewed this content — see s2.json's own `gate2Waiver` field, which is
+# structurally distinct from a real `review` stamp.
 # c3 is a FACT claim, not practice: the existence of a real system (police/lost-property
 # handling, koban) for reuniting found money with its owner is a real, sourceable legal/
 # administrative practice, so it is marked pending-factual-verification rather than given a
@@ -13,11 +20,15 @@ claims:
   - id: c1
     type: practice
     statement: "A common first explanation for what to do with found money is to hand it in to the police."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c2
     type: practice
     statement: "A common reason given for handing it in is that the person who lost it might be in trouble without it."
-    status: pending
+    status: approved
+    approvedBy: "傅豊国 (代表取締役, Beyond Culture 獨歩文化株式会社)"
+    approvedAt: "2026-09-20"
   - id: c3
     type: fact
     statement: "There is a real system in Japan (police lost-property handling, including the koban system) for holding found items so their original owner can potentially be found and reunited with them."
