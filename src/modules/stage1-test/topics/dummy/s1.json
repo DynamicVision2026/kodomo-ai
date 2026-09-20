@@ -1,5 +1,6 @@
 {
   "id": "stage1-test-dummy",
+  "contentClass": "synthetic",
   "stage": 1,
   "title": "ステージ１の テスト",
   "sources": ["d1"],

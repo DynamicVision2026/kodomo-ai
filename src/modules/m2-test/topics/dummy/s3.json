@@ -1,5 +1,6 @@
 {
   "id": "m2-test-dummy",
+  "contentClass": "synthetic",
   "stage": 3,
   "title": "かくちょうせいの テスト",
   "sources": ["d1"],

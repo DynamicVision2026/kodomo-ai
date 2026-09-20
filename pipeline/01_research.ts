@@ -29,9 +29,22 @@ const MODEL = 'claude-opus-5';
 const MIN_CLAIMS = 4;
 const MAX_CLAIMS = 6;
 
+/** AD-02 §6 (WO-11): a claim's verification path. "fact" needs an external source/evidence
+ *  (sourceUrl/excerpt/adultLevelSource, exactly as today). "practice" — a stated everyday
+ *  rule/practice rather than a factual assertion about the world — has no inherent external-
+ *  source requirement; Founder Gate 1 + native-speaker Gate 2 are what validate it instead.
+ *  Optional and unenforced by any gate yet: existing claims predate this distinction and are
+ *  not required to carry it. The gate/pipeline behavior this implies (e.g. relaxing sourceUrl
+ *  for "practice") is intentionally not implemented here — recording the contract only, for the
+ *  next content ticket to build against. */
+export type ClaimType = 'fact' | 'practice';
+
 export interface Claim {
   id: string;            // c1, c2, ...
   statement: string;     // language-neutral, atomic
+  /** AD-02 §6 — defaults to 'fact' in spirit (every claim to date has been evidence-backed);
+   *  absent on any claim written before this field existed. */
+  type?: ClaimType;
   sourceUrl: string;
   excerpt: string;
   adultLevelSource: boolean;

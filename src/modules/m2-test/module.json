@@ -1,6 +1,5 @@
 {
   "id": "m2-test",
-  "contentClass": "synthetic",
   "title": "M2 extensibility smoke test — not a real module, never shipped",
   "sku": "m2-test-dummy",
   "stages": [3],

@@ -1,6 +1,5 @@
 {
   "id": "stage1-test",
-  "contentClass": "synthetic",
   "title": "Stage 1 extensibility smoke test — not a real module, never shipped",
   "sku": "stage1-test-dummy",
   "stages": [1],

@@ -1,5 +1,6 @@
 {
   "id": "m1-s2-1-2",
+  "contentClass": "archived",
   "stage": 2,
   "title": "こおりは なぜ みずに うくの？",
   "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],

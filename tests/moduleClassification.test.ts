@@ -1,39 +1,47 @@
 import { describe, it, expect } from 'vitest';
 import {
-  parseContentClass, extractImportedModuleIds, checkModules,
-  type ModuleEntry,
+  parseContentClass, topicKeyOf, extractImportedTopicKeys, checkMissions,
+  type MissionEntry,
 } from '../scripts/lib/moduleClassification';
 
-function releaseModule(overrides: Partial<ModuleEntry> = {}): ModuleEntry {
+function releaseMission(overrides: Partial<MissionEntry> = {}): MissionEntry {
   return {
-    id: 'm1',
+    moduleId: 'm1',
+    relPath: 'src/modules/m1/topics/tabemono/s2.json',
     contentClassRaw: 'release',
-    missions: [{
-      relPath: 'src/modules/m1/topics/bread/s2.json',
-      mission: { review: { by: '酒井先生', date: '2026-09-20' } },
-      facts: { claims: [{ id: 'c1', status: 'approved' }] },
-    }],
+    mission: { review: { by: '酒井先生', date: '2026-09-20' } },
+    facts: { claims: [{ id: 'c1', status: 'approved' }] },
     ...overrides,
   };
 }
 
-function syntheticModule(overrides: Partial<ModuleEntry> = {}): ModuleEntry {
+function syntheticMission(overrides: Partial<MissionEntry> = {}): MissionEntry {
   return {
-    id: 'm2-test',
+    moduleId: 'm2-test',
+    relPath: 'src/modules/m2-test/topics/dummy/s3.json',
     contentClassRaw: 'synthetic',
-    missions: [{
-      relPath: 'src/modules/m2-test/topics/dummy/s3.json',
-      mission: {},
-      facts: { claims: [{ id: 'd1', status: 'pending' }] },
-    }],
+    mission: {},
+    facts: { claims: [{ id: 'd1', status: 'pending' }] },
+    ...overrides,
+  };
+}
+
+function archivedMission(overrides: Partial<MissionEntry> = {}): MissionEntry {
+  return {
+    moduleId: 'm1',
+    relPath: 'src/modules/m1/topics/bread/s2.json',
+    contentClassRaw: 'archived',
+    mission: { review: { by: '酒井先生', date: '2026-09-20' } },
+    facts: { claims: [{ id: 'c1', status: 'approved' }, { id: 'c2', status: 'approved' }] },
     ...overrides,
   };
 }
 
 describe('parseContentClass (no default — missing/invalid never inferred)', () => {
-  it('accepts exactly "release" and "synthetic"', () => {
+  it('accepts exactly "release", "synthetic" and "archived"', () => {
     expect(parseContentClass('release')).toBe('release');
     expect(parseContentClass('synthetic')).toBe('synthetic');
+    expect(parseContentClass('archived')).toBe('archived');
   });
 
   it('rejects everything else, including plausible-looking values', () => {
@@ -41,211 +49,235 @@ describe('parseContentClass (no default — missing/invalid never inferred)', ()
     expect(parseContentClass(null)).toBeNull();
     expect(parseContentClass('')).toBeNull();
     expect(parseContentClass('Release')).toBeNull(); // case-sensitive, no normalization
-    expect(parseContentClass('test')).toBeNull();
+    expect(parseContentClass('deprecated')).toBeNull();
     expect(parseContentClass('production')).toBeNull();
     expect(parseContentClass(true)).toBeNull();
   });
 });
 
-describe('checkModules — contentClass validation (Acceptance Proof: missing/invalid fails)', () => {
-  it('fails a module with no contentClass field at all', () => {
-    const mod = releaseModule({ contentClassRaw: undefined });
-    const { issues } = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
-    expect(issues).toHaveLength(1);
-    expect(issues[0]).toMatch(/missing or unrecognised contentClass/);
-    expect(issues[0]).toContain('m1');
+describe('topicKeyOf', () => {
+  it('extracts the modules/<id>/topics/<id>/ segment from a mission relPath', () => {
+    expect(topicKeyOf('src/modules/m1/topics/bread/s2.json')).toBe('modules/m1/topics/bread/');
   });
 
-  it('fails a module with an unrecognised contentClass value', () => {
-    const mod = releaseModule({ contentClassRaw: 'draft' });
-    const { issues } = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
+  it('returns null for a path with no /topics/ segment', () => {
+    expect(topicKeyOf('src/modules/m1/module.json')).toBeNull();
+    expect(topicKeyOf('src/modules/m1/deck.s2.json')).toBeNull();
+  });
+});
+
+describe('checkMissions — contentClass validation (Acceptance Proof: missing/invalid fails)', () => {
+  it('fails a mission with no contentClass field at all', () => {
+    const m = releaseMission({ contentClassRaw: undefined });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/missing or unrecognised contentClass/);
+    expect(issues[0]).toContain(m.relPath);
+  });
+
+  it('fails a mission with an unrecognised contentClass value', () => {
+    const m = releaseMission({ contentClassRaw: 'draft' });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatch(/missing or unrecognised contentClass/);
   });
 
   it('fails regardless of strict mode — this is a manifest error, not a release-readiness gap', () => {
-    const mod = releaseModule({ contentClassRaw: undefined });
-    const normal = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
-    const release = checkModules([mod], { strict: true, productionImportedModuleIds: new Set() });
+    const m = releaseMission({ contentClassRaw: undefined });
+    const normal = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    const release = checkMissions([m], { strict: true, productionImportedTopicKeys: new Set() });
     expect(normal.issues).toHaveLength(1);
     expect(release.issues).toHaveLength(1);
   });
 
-  it('does not count a misclassified module toward either release or synthetic totals', () => {
-    const mod = releaseModule({ contentClassRaw: 'nonsense' });
-    const { releaseModuleCount, syntheticModuleCount } = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
-    expect(releaseModuleCount).toBe(0);
-    expect(syntheticModuleCount).toBe(0);
+  it('does not count a misclassified mission toward any class total', () => {
+    const m = releaseMission({ contentClassRaw: 'nonsense' });
+    const r = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(r.releaseTopicCount).toBe(0);
+    expect(r.syntheticTopicCount).toBe(0);
+    expect(r.archivedTopicCount).toBe(0);
   });
 });
 
-describe('checkModules — release modules require genuine human approvals', () => {
-  it('passes a release module with an approved claim, non-strict', () => {
-    const { issues } = checkModules([releaseModule()], { strict: false, productionImportedModuleIds: new Set() });
+describe('checkMissions — release missions require genuine human approvals', () => {
+  it('passes a release mission with an approved claim, non-strict', () => {
+    const { issues } = checkMissions([releaseMission()], { strict: false, productionImportedTopicKeys: new Set() });
     expect(issues).toEqual([]);
   });
 
-  it('fails a release module with an unapproved claim', () => {
-    const mod = releaseModule({ missions: [{
-      relPath: 'src/modules/m1/topics/bread/s2.json',
-      mission: {},
-      facts: { claims: [{ id: 'c1', status: 'pending' }] },
-    }] });
-    const { issues } = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
-    expect(issues).toEqual(['src/modules/m1/topics/bread/s2.json uses facts.yaml with unapproved claims: c1']);
+  it('fails a release mission with an unapproved claim', () => {
+    const m = releaseMission({ facts: { claims: [{ id: 'c1', status: 'pending' }] } });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toEqual([`${m.relPath} uses facts.yaml with unapproved claims: c1`]);
   });
 
-  it('fails a release module with no facts.yaml beside its mission', () => {
-    const mod = releaseModule({ missions: [{
-      relPath: 'src/modules/m1/topics/bread/s2.json', mission: {}, facts: null,
-    }] });
-    const { issues } = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
-    expect(issues).toEqual(['src/modules/m1/topics/bread/s2.json has no facts.yaml beside it']);
+  it('fails a release mission with no facts.yaml beside it', () => {
+    const m = releaseMission({ facts: null });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toEqual([`${m.relPath} has no facts.yaml beside it`]);
   });
 
   it('does not require a review stamp in normal (non-RELEASE) mode', () => {
-    const mod = releaseModule({ missions: [{
-      relPath: 'src/modules/m1/topics/bread/s2.json',
-      mission: {}, // no review field
-      facts: { claims: [{ id: 'c1', status: 'approved' }] },
-    }] });
-    const { issues } = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
+    const m = releaseMission({ mission: {} });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
     expect(issues).toEqual([]);
   });
 
-  it('RELEASE=1 (strict) fails a release module missing its Gate 2 review stamp — proves removing bread\'s real stamp would fail RELEASE', () => {
-    const mod = releaseModule({ missions: [{
-      relPath: 'src/modules/m1/topics/bread/s2.json',
-      mission: {}, // review stamp removed, as if 酒井先生's stamp were stripped
-      facts: { claims: [{ id: 'c1', status: 'approved' }] },
-    }] });
-    const { issues } = checkModules([mod], { strict: true, productionImportedModuleIds: new Set() });
-    expect(issues).toEqual(['src/modules/m1/topics/bread/s2.json has no native-speaker review stamp (RELEASE=1)']);
+  it('RELEASE=1 (strict) fails a release mission missing its Gate 2 review stamp', () => {
+    const m = releaseMission({ mission: {} });
+    const { issues } = checkMissions([m], { strict: true, productionImportedTopicKeys: new Set() });
+    expect(issues).toEqual([`${m.relPath} has no native-speaker review stamp (RELEASE=1)`]);
   });
 
-  it('RELEASE=1 passes a release module with both an approved claim and a review stamp', () => {
-    const { issues } = checkModules([releaseModule()], { strict: true, productionImportedModuleIds: new Set() });
+  it('RELEASE=1 passes a release mission with both an approved claim and a review stamp', () => {
+    const { issues } = checkMissions([releaseMission()], { strict: true, productionImportedTopicKeys: new Set() });
     expect(issues).toEqual([]);
   });
 });
 
-describe('checkModules — synthetic modules never require, and must never carry, human approval', () => {
-  it('passes a synthetic module whose claim is merely "pending" — no Gate 1 required', () => {
-    const { issues } = checkModules([syntheticModule()], { strict: false, productionImportedModuleIds: new Set() });
+describe('checkMissions — synthetic missions never require, and must never carry, human approval', () => {
+  it('passes a synthetic mission whose claim is merely "pending" — no Gate 1 required', () => {
+    const { issues } = checkMissions([syntheticMission()], { strict: false, productionImportedTopicKeys: new Set() });
     expect(issues).toEqual([]);
   });
 
-  it('passes a synthetic module with no facts.yaml at all — structural fixtures need no claims', () => {
-    const mod = syntheticModule({ missions: [{
-      relPath: 'src/modules/m2-test/topics/dummy/s3.json', mission: {}, facts: null,
-    }] });
-    const { issues } = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
+  it('passes a synthetic mission with no facts.yaml at all', () => {
+    const m = syntheticMission({ facts: null });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
     expect(issues).toEqual([]);
   });
 
-  it('passes a synthetic module even under RELEASE=1, with no review stamp', () => {
-    const { issues } = checkModules([syntheticModule()], { strict: true, productionImportedModuleIds: new Set() });
+  it('passes a synthetic mission even under RELEASE=1, with no review stamp', () => {
+    const { issues } = checkMissions([syntheticMission()], { strict: true, productionImportedTopicKeys: new Set() });
     expect(issues).toEqual([]);
   });
 
-  it('FAILS a synthetic module whose facts.yaml claim is marked approved (Acceptance Proof: synthetic + approval metadata fails)', () => {
-    const mod = syntheticModule({ missions: [{
-      relPath: 'src/modules/m2-test/topics/dummy/s3.json',
-      mission: {},
-      facts: { claims: [{ id: 'd1', status: 'approved' }] },
-    }] });
-    const { issues } = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
+  it('FAILS a synthetic mission whose facts.yaml claim is marked approved', () => {
+    const m = syntheticMission({ facts: { claims: [{ id: 'd1', status: 'approved' }] } });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
     expect(issues).toHaveLength(1);
-    expect(issues[0]).toMatch(/synthetic module "m2-test"/);
     expect(issues[0]).toMatch(/must never carry Gate 1 human approval/);
   });
 
-  it('FAILS a synthetic module whose mission carries a Gate 2 review stamp', () => {
-    const mod = syntheticModule({ missions: [{
-      relPath: 'src/modules/m2-test/topics/dummy/s3.json',
-      mission: { review: { by: 'someone', date: '2026-01-01' } },
-      facts: { claims: [{ id: 'd1', status: 'pending' }] },
-    }] });
-    const { issues } = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
+  it('FAILS a synthetic mission whose mission carries a Gate 2 review stamp', () => {
+    const m = syntheticMission({ mission: { review: { by: 'someone', date: '2026-01-01' } } });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
     expect(issues).toHaveLength(1);
-    expect(issues[0]).toMatch(/synthetic module "m2-test"/);
     expect(issues[0]).toMatch(/must never carry Gate 2 native-review approval/);
   });
+});
 
-  it('this failure is independent of strict mode — forbidden in normal mode too', () => {
-    const mod = syntheticModule({ missions: [{
-      relPath: 'src/modules/m2-test/topics/dummy/s3.json',
-      mission: {},
-      facts: { claims: [{ id: 'd1', status: 'approved' }] },
-    }] });
-    const normal = checkModules([mod], { strict: false, productionImportedModuleIds: new Set() });
-    const release = checkModules([mod], { strict: true, productionImportedModuleIds: new Set() });
-    expect(normal.issues).toHaveLength(1);
-    expect(release.issues).toHaveLength(1);
+describe('checkMissions — archived missions (AD-02 §5): preserve real approval history, need no ongoing approval', () => {
+  it('passes an archived mission that still carries its real, historical approved claims and review stamp — nothing here flags or touches them', () => {
+    const { issues } = checkMissions([archivedMission()], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toEqual([]);
+  });
+
+  it('passes an archived mission under RELEASE=1 too — no review-stamp requirement applies to archived content', () => {
+    const { issues } = checkMissions([archivedMission()], { strict: true, productionImportedTopicKeys: new Set() });
+    expect(issues).toEqual([]);
+  });
+
+  it('passes an archived mission that was NEVER approved (e.g. retired before Gate 1/2 completed) — archived does not require prior approval, just excludes ongoing requirements', () => {
+    const m = archivedMission({
+      mission: {}, // no review stamp — genuinely never reached Gate 2
+      facts: { claims: [{ id: 'c1', status: 'pending' }] }, // genuinely never reached Gate 1
+    });
+    const normal = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    const release = checkMissions([m], { strict: true, productionImportedTopicKeys: new Set() });
+    expect(normal.issues).toEqual([]);
+    expect(release.issues).toEqual([]);
+  });
+
+  it('does not require facts.yaml to exist at all', () => {
+    const m = archivedMission({ facts: null });
+    const { issues } = checkMissions([m], { strict: false, productionImportedTopicKeys: new Set() });
+    expect(issues).toEqual([]);
   });
 });
 
-describe('checkModules — production reachability (Acceptance Proof: synthetic reachability fails)', () => {
-  it('fails when a synthetic module id is found imported from production source', () => {
-    const { issues } = checkModules([syntheticModule()], {
+describe('checkMissions — production reachability (synthetic AND archived must never be reachable)', () => {
+  it('fails when a synthetic mission\'s own topic folder is found imported from production source', () => {
+    const m = syntheticMission();
+    const { issues } = checkMissions([m], {
       strict: false,
-      productionImportedModuleIds: new Set(['m2-test']),
+      productionImportedTopicKeys: new Set([topicKeyOf(m.relPath)!]),
     });
     expect(issues).toHaveLength(1);
-    expect(issues[0]).toMatch(/module "m2-test" is classified synthetic but is imported from production/);
+    expect(issues[0]).toMatch(/classified synthetic .* imported from production/);
   });
 
-  it('does not flag a release module for being imported from production — that is expected', () => {
-    const { issues } = checkModules([releaseModule()], {
+  it('fails when an archived mission\'s own topic folder is found imported from production source — this is the guardrail that made bread/ice unreachable', () => {
+    const m = archivedMission();
+    const { issues } = checkMissions([m], {
       strict: false,
-      productionImportedModuleIds: new Set(['m1']),
+      productionImportedTopicKeys: new Set([topicKeyOf(m.relPath)!]),
+    });
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/classified archived .* imported from production/);
+  });
+
+  it('does not flag a release mission for being imported from production — that is expected', () => {
+    const m = releaseMission();
+    const { issues } = checkMissions([m], {
+      strict: false,
+      productionImportedTopicKeys: new Set([topicKeyOf(m.relPath)!]),
     });
     expect(issues).toEqual([]);
   });
 
-  it('does not flag a synthetic module that is NOT reachable from production', () => {
-    const { issues } = checkModules([syntheticModule()], {
-      strict: false,
-      productionImportedModuleIds: new Set(['m1']), // only m1 is production-reachable
-    });
-    expect(issues).toEqual([]);
+  it('does not flag a synthetic or archived mission that is NOT reachable from production', () => {
+    const other = new Set(['modules/m1/topics/some-other-topic/']);
+    expect(checkMissions([syntheticMission()], { strict: false, productionImportedTopicKeys: other }).issues).toEqual([]);
+    expect(checkMissions([archivedMission()], { strict: false, productionImportedTopicKeys: other }).issues).toEqual([]);
   });
 });
 
-describe('checkModules — release-module count is reported (Acceptance Proof)', () => {
-  it('counts release and synthetic modules independently across a mixed set', () => {
-    const result = checkModules(
-      [releaseModule(), syntheticModule({ id: 'm2-test' }), syntheticModule({ id: 'stage1-test' })],
-      { strict: false, productionImportedModuleIds: new Set() },
+describe('checkMissions — topic counts are reported (Acceptance Proof: truthful release-topic count)', () => {
+  it('counts release, synthetic and archived missions independently across a mixed set', () => {
+    const result = checkMissions(
+      [archivedMission({ relPath: 'src/modules/m1/topics/bread/s2.json' }),
+       archivedMission({ relPath: 'src/modules/m1/topics/ice/s2.json' }),
+       syntheticMission()],
+      { strict: false, productionImportedTopicKeys: new Set() },
     );
-    expect(result.releaseModuleCount).toBe(1);
-    expect(result.syntheticModuleCount).toBe(2);
+    expect(result.releaseTopicCount).toBe(0); // truthfully zero — no manufactured release topic
+    expect(result.syntheticTopicCount).toBe(1);
+    expect(result.archivedTopicCount).toBe(2);
     expect(result.issues).toEqual([]);
   });
 });
 
-describe('extractImportedModuleIds', () => {
-  it('extracts a module id from a relative import path', () => {
-    const ids = extractImportedModuleIds([`import moduleJson from './modules/m1/module.json';`]);
-    expect(ids).toEqual(new Set(['m1']));
+describe('extractImportedTopicKeys', () => {
+  it('extracts a topic key from a relative import path', () => {
+    const keys = extractImportedTopicKeys([`import m from './modules/m1/topics/bread/s2.json';`]);
+    expect(keys).toEqual(new Set(['modules/m1/topics/bread/']));
   });
 
-  it('extracts a module id from a deeper relative path (../..)', () => {
-    const ids = extractImportedModuleIds([`import deck from '../../modules/m1/deck.s2.json';`]);
-    expect(ids).toEqual(new Set(['m1']));
+  it('extracts a topic key from a deeper relative path (../..)', () => {
+    const keys = extractImportedTopicKeys([`import m from '../../modules/m1/topics/ice/s2.json';`]);
+    expect(keys).toEqual(new Set(['modules/m1/topics/ice/']));
   });
 
-  it('extracts every distinct module id across multiple files, de-duplicated', () => {
-    const ids = extractImportedModuleIds([
-      `import a from './modules/m1/module.json';`,
-      `import b from './modules/m1/topics/bread/s2.json';`,
-      `import c from './modules/m2-test/module.json';`,
+  it('does NOT capture a plain module.json or deck.sN.json import — those are not topic content', () => {
+    const keys = extractImportedTopicKeys([
+      `import moduleJson from './modules/m1/module.json';`,
+      `import deck from '../../modules/m1/deck.s2.json';`,
     ]);
-    expect(ids).toEqual(new Set(['m1', 'm2-test']));
+    expect(keys).toEqual(new Set());
   });
 
-  it('finds nothing in a file with no modules/ import', () => {
-    const ids = extractImportedModuleIds([`import { useState } from 'react';`]);
-    expect(ids).toEqual(new Set());
+  it('extracts every distinct topic key across multiple files, de-duplicated', () => {
+    const keys = extractImportedTopicKeys([
+      `import a from './modules/m1/topics/bread/s2.json';`,
+      `import b from './modules/m1/topics/bread/facts.yaml';`, // same topic, still one key
+      `import c from './modules/m2-test/topics/dummy/s3.json';`,
+    ]);
+    expect(keys).toEqual(new Set(['modules/m1/topics/bread/', 'modules/m2-test/topics/dummy/']));
+  });
+
+  it('finds nothing in a file with no /topics/ import', () => {
+    const keys = extractImportedTopicKeys([`import { useState } from 'react';`]);
+    expect(keys).toEqual(new Set());
   });
 });
