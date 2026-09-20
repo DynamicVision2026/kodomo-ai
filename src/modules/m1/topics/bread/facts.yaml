@@ -1,24 +1,33 @@
-# TEMPLATE ONLY — status is "pending" for every claim, so gate:claims will REJECT this build.
-# That is intentional: it proves the gate works. Replace with output from pipeline/01 + 02,
-# then approve each claim at Gate 1 (spec v0.5 §6).
+# Gate 1 evidence prepared — all three claims are still "pending" Founder approval; nothing
+# here has been approved. Replaces the prior placeholder statements/empty evidence fields with
+# real candidate sources found via web search.
+#
+# VERIFICATION CAVEAT (read before approving): this session's network egress policy blocked
+# direct page fetches to every domain tried (NCBI/PMC, Wikipedia, a university extension page,
+# usda.gov), so each `excerpt` below is a search-engine-synthesized summary of the cited page,
+# not a verbatim quote independently confirmed by opening the source. The URLs are real and the
+# sources are appropriately authoritative (peer-reviewed / academic), but a human with full
+# internet access should open each sourceUrl and confirm the excerpt's wording before Gate 1
+# approval. pipeline/02_crosscheck.ts (independent model re-verification) has also not been run
+# against these claims.
 topic: bread
 question: パンは なぜ ふくらむ？
 claims:
   - id: c1
-    statement: "PLACEHOLDER — yeast is a living microorganism"
-    sourceUrl: ""
-    excerpt: ""
-    adultLevelSource: false
+    statement: "Baker's yeast (Saccharomyces cerevisiae) is a living, single-celled fungal microorganism; it is this species that ferments bread dough."
+    sourceUrl: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7686800/"
+    excerpt: "Saccharomyces cerevisiae, also known as baker's yeast, is a single-celled fungus and a living microorganism, a member of the fungus kingdom, used primarily for bread making, in which carbon dioxide released during fermentation causes dough to rise. (From: 'History and Domestication of Saccharomyces cerevisiae in Bread Baking', a peer-reviewed review article — search-summarized, not independently fetched in this session; verify before approval.)"
+    adultLevelSource: true
     status: pending
   - id: c2
-    statement: "PLACEHOLDER — yeast consumes sugars and releases carbon dioxide"
-    sourceUrl: ""
-    excerpt: ""
-    adultLevelSource: false
+    statement: "During bread fermentation, baker's yeast (Saccharomyces cerevisiae) metabolizes the fermentable sugars present in dough — principally glucose, fructose, sucrose, and maltose (it cannot ferment lactose) — producing carbon dioxide gas and ethanol as fermentation byproducts."
+    sourceUrl: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11895419/"
+    excerpt: "Yeast can ferment glucose, fructose, and sucrose but cannot ferment lactose; maltose is also fermented, though more slowly than glucose. In non-sugared ('lean') doughs, maltose is the most abundant sugar available to yeast. (From: 'A Dive Into Yeast's Sugar Diet — Comparing the Metabolic Response of Glucose, Fructose, Sucrose, and Maltose Under Dynamic Feast/Famine Conditions', peer-reviewed, PMC — search-summarized, not independently fetched in this session; verify before approval. Corroborating, more directly bread-specific source: PMC7686800, cited for c1 above.)"
+    adultLevelSource: true
     status: pending
   - id: c3
-    statement: "PLACEHOLDER — gluten forms an elastic network that traps the gas"
-    sourceUrl: ""
-    excerpt: ""
-    adultLevelSource: false
+    statement: "The gluten network formed in wheat dough (from the proteins gliadin and glutenin, developed by hydration and kneading) is viscoelastic and retains the carbon dioxide gas produced by yeast fermentation; this gas retention is what allows the dough to expand and rise."
+    sourceUrl: "https://link.springer.com/chapter/10.1007/978-1-4899-0664-9_36"
+    excerpt: "Forming a gluten network is key for getting dough to rise: the network acts as a balloon that traps gases during rising, proofing and baking; the dough's ability to retain gas results from the slow diffusion of low-molecular-weight molecules, including carbon dioxide, through the gluten matrix. (From: 'Wheat Gluten: Rheological and Gas Retaining Properties', an academic book chapter — search-summarized, not independently fetched in this session; verify before approval.)"
+    adultLevelSource: true
     status: pending
