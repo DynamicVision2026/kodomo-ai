@@ -74,12 +74,19 @@ describe('chanto (1-1) — structure (AD-01 gap/distractor contract, accepted mo
     }
   });
 
-  it('forms one continuous chain: layer 0\'s shallow "きちんと" answer is the very thing layer 1 makes concrete, and the root generalizes to a different situation', () => {
+  it('forms one continuous chain: layer 0\'s shallow "きちんと" answer is what layer 1 makes concrete (as a situational example, hedged, not a fixed rule), and the root lands on context-dependence, not on the eating example as final truth', () => {
     expect(digPhase.layers[0]!.robotSays).toContain('きちんと');
     expect(digPhase.layers[0]!.gap).toContain('きちんと');
-    expect(digPhase.layers[1]!.robotSays).toContain('もどすこと'); // the concrete, tidying-room answer
+    expect(digPhase.layers[1]!.robotSays).toContain('もどすこと'); // the tidying-room example
+    expect(digPhase.layers[1]!.robotSays).toContain('かな'); // hedged as one example, not asserted as the definition
     expect(digPhase.layers[1]!.gap).toContain('たべるとき'); // whether the same meaning holds elsewhere
     expect(digPhase.root.robotSays).toContain('たべるとき');
+    expect(digPhase.root.robotSays).toContain('とか'); // the eating example is hedged too, not asserted as final truth
+    // The root's own landing point — what the mission is FOR — is that the concrete meaning
+    // changes with the situation, not "eating means not spilling." This is the Founder Gate 1
+    // correction: the root must not end on a fixed second definition.
+    expect(digPhase.root.robotSays).toContain('ばめんで');
+    expect(digPhase.root.robotSays).toContain('かわる');
     expect(digPhase.root.robotSays).not.toBe(digPhase.layers[1]!.robotSays); // a genuinely different answer, not a repeat
   });
 

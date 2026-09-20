@@ -21,9 +21,9 @@ claims:
     status: pending
   - id: c2
     type: practice
-    statement: "When 「ちゃんと」 is used about tidying a room, it is commonly understood to mean returning items to their designated place."
+    statement: "In the specific situation of tidying a room, one commonly given example of what a speaker might mean by 「ちゃんと」 is returning items to their designated place — this is a situational example, not a fixed or universal meaning of the word."
     status: pending
   - id: c3
     type: practice
-    statement: "When 「ちゃんと」 is used about eating a meal, it is commonly understood to mean eating without spilling or making a mess — a different concrete standard from the tidying-room case."
+    statement: "「ちゃんと」 has no single concrete action built into it; what a speaker means by it depends on the situation and on what that speaker is actually asking for. In the specific situation of eating a meal, one commonly given example is eating without spilling or making a mess — again a situational example, not the definitive meaning, and a different example from the tidying-room case."
     status: pending
