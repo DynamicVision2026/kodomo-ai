@@ -1,0 +1,77 @@
+{
+  "specRef": "docs/spec-v0.5.md §4.4, §8, §9",
+  "items": [
+    {
+      "id": "full-45-card-deck",
+      "label": "Full 45-card printable deck",
+      "status": "pending",
+      "renderPath": "PrintDeck (src/print/deck/PrintDeck.tsx) — same component the existing 9-card sampler already uses",
+      "dataPath": "src/print/kit-data/full-deck.json",
+      "schemaPath": "pipeline/lib/kitDeckComposition.ts (FULL_DECK_COMPOSITION, checkDeckComposition)",
+      "note": "The existing src/modules/m1/deck.s2.json is the separate, already-COMPLETE 9-card free sampler (spec §8) — not a partial version of this item. Content depends on Story Missions 1-4 through 1-8 and the Bank topics."
+    },
+    {
+      "id": "rules-a4x5",
+      "label": "Rules A4 x5",
+      "status": "pending",
+      "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
+      "dataPath": "src/print/kit-data/rules.json",
+      "schemaPath": "src/print/sheet/schema.ts",
+      "note": "Title quotes spec §8's own 「ほりさげゲーム」 naming; instructional body text not yet drafted."
+    },
+    {
+      "id": "parent-handbook",
+      "label": "Parent Handbook",
+      "status": "pending",
+      "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
+      "dataPath": "src/print/kit-data/parent-handbook.json",
+      "schemaPath": "src/print/sheet/schema.ts",
+      "note": "Spec §4.4: three rules, one question per mission, no answer keys, one page linking the game to school learning per §1A. Content depends on enough missions existing to summarize."
+    },
+    {
+      "id": "adult-memo",
+      "label": "Adult Memo x3",
+      "status": "pending",
+      "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
+      "dataPath": "src/print/kit-data/adult-memo.json",
+      "schemaPath": "src/print/sheet/schema.ts",
+      "note": "Spec §4.4 names this item singular (おとな版1分メモ); WO-19 Phase 4 lists it 'x3'. Whether that means 3 copies of one memo or 3 distinct memos is unresolved — flagged in the Human Decision Queue rather than assumed."
+    },
+    {
+      "id": "certificate",
+      "label": "Parent/child certificate",
+      "status": "pending",
+      "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
+      "dataPath": "src/print/kit-data/certificate.json",
+      "schemaPath": "src/print/sheet/schema.ts",
+      "note": "Title quotes spec §4.4's own 親子認定証 naming. 質問レシピシート (also named in spec §4.4 alongside the certificate) is not separately itemized in WO-19 Phase 4's 8-item list — flagged in the Human Decision Queue."
+    },
+    {
+      "id": "real-ai-guide",
+      "label": "Real-AI family session guide",
+      "status": "pending",
+      "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
+      "dataPath": "src/print/kit-data/real-ai-guide.json",
+      "schemaPath": "src/print/sheet/schema.ts",
+      "note": "No exact Japanese title exists in the spec text for this item — the title in real-ai-guide.json is a working title, not spec-quoted, and should be confirmed rather than assumed final."
+    },
+    {
+      "id": "envelope-sheet",
+      "label": "First-question / envelope sheet",
+      "status": "pending",
+      "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
+      "dataPath": "src/print/kit-data/envelope-sheet.json",
+      "schemaPath": "src/print/sheet/schema.ts",
+      "note": "Pairs with the digital M0 milestone (src/engine/milestones.ts applyM0Sealed, WO-19 Phase 2) — the physical envelope a family can use alongside the app's own Day-1 seal moment. No exact spec-quoted title; working title only."
+    },
+    {
+      "id": "founders-bonus-deck",
+      "label": "Founders' winter bonus x9",
+      "status": "pending",
+      "renderPath": "PrintDeck (src/print/deck/PrintDeck.tsx) — same component the existing 9-card sampler already uses",
+      "dataPath": "src/print/kit-data/bonus-deck.json",
+      "schemaPath": "pipeline/lib/kitDeckComposition.ts (BONUS_SHEET_COMPOSITION, checkDeckComposition)",
+      "note": "Spec §8: 9 「冬休みスペシャル」 おだい cards, all kind: \"odai\". Content not yet authored."
+    }
+  ]
+}

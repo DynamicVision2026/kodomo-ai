@@ -1,0 +1,49 @@
+@page {
+  size: A4;
+  margin: 15mm;
+}
+
+.print-sheet__page {
+  width: 180mm;
+  min-height: 267mm;
+  margin: 0 auto;
+  page-break-after: always;
+}
+
+.print-sheet__title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.print-sheet__heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-top: 1rem;
+}
+
+.print-sheet__body {
+  line-height: 1.7;
+}
+
+.print-sheet__pending {
+  color: #888;
+  font-style: italic;
+}
+
+/* On screen (not printing), give pages breathing room so more than one is visible at once. */
+@media screen {
+  .print-sheet {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem 0;
+    background: #eee;
+  }
+  .print-sheet__page {
+    background: #fff;
+    padding: 15mm;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+}
