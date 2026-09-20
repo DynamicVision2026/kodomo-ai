@@ -10,10 +10,13 @@
 # practice exists. Per WO-13's explicit guardrail ("must not claim there is one universal reason
 # every Japanese household removes shoes"), every statement below is deliberately scoped to what
 # is commonly OBSERVED and PRACTICED (an explanation people commonly give; that the practice
-# extends to visibly clean shoes; that it is applied as a category rule rather than a per-shoe
-# judgment) — none of them asserts a single, universal, or historical/cultural REASON the
-# practice exists. What a practice claim still needs — same as any claim — is real Founder
-# Gate 1 review and, for release content, native-speaker Gate 2 review. Neither has happened yet.
+# extends to visibly clean shoes; that outdoor shoes are commonly treated as a separate "outside"
+# category based on where they are used, not judged shoe-by-shoe by current appearance) — none of
+# them asserts a single, universal, or historical/cultural REASON the practice exists, and c3
+# deliberately avoids "rule"/authority framing (Gate 1 correction: the root must land on the
+# そと／うち boundary, not on rule-obedience — see s2.json's own root text and history). What a
+# practice claim still needs — same as any claim — is real Founder Gate 1 review and, for release
+# content, native-speaker Gate 2 review. Neither has happened yet.
 topic: genkan
 question: 玄関で くつを ぬぐのは、なぜ？
 claims:
@@ -27,5 +30,5 @@ claims:
     status: pending
   - id: c3
     type: practice
-    statement: "Where this practice is followed, it is commonly applied as a category rule — outdoor shoes as a class are kept out of the indoor area — rather than being decided shoe-by-shoe based on how clean a given pair looks."
+    statement: "Where this practice is followed, outdoor shoes are commonly treated as belonging to a separate 'outside' category from the indoor area, based on where they are used, rather than being judged shoe-by-shoe by how clean a given pair currently looks."
     status: pending

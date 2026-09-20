@@ -90,12 +90,31 @@ describe('genkan (1-2) — the counterexample is child-owned and structurally ne
     expect(digPhase.layers[1]!.gap).toContain('よごれてない'); // the gap only exists because the counterexample was confirmed
   });
 
-  it('the root deepens the inside/outside boundary — a category rule, not a per-shoe inspection — and never moralizes into 「だから、くつをぬごう」', () => {
-    expect(digPhase.root.robotSays).toContain('きめてある'); // a rule/boundary, not a shoe-by-shoe judgment
+  it('the root deepens the そと／うち boundary — categorized by where a shoe is used, not by how clean it looks — and never lands on rule-obedience ("きまり"/"きめて") or moralizes into 「だから、くつをぬごう」', () => {
+    // Gate 1 correction: the root must answer "why are even clean/new shoes removed?" with a
+    // boundary insight (shoes used outside belong to a separate category from the inside),
+    // explicitly ties back to the counterexample ("あたらしくても"), and must NOT terminate the
+    // inquiry with rule-authority language ("it's the rule") — that was the exact defect flagged.
+    expect(digPhase.root.robotSays).toContain('あたらしくても'); // ties back to the counterexample
+    expect(digPhase.root.robotSays).toContain('そとで'); // the categorization is about where it's used...
+    expect(digPhase.root.robotSays).toContain('べつ'); // ...kept separate from the inside (a boundary, not a verdict)
+    expect(digPhase.root.robotSays).not.toContain('きまり');
+    expect(digPhase.root.robotSays).not.toContain('きめて');
     expect(digPhase.root.robotSays).not.toContain('だから');
     expect(digPhase.root.robotSays).not.toContain('ぬごう');
     // Not a bare repeat of the "dirty" reason as if it were now proven sufficient.
     expect(digPhase.root.robotSays).not.toBe(digPhase.layers[0]!.robotSays);
+  });
+
+  it('tip/teachBack/おうちトーク reinforce the transferable skill — たとえば？ as a test of whether an answer covers every known case — not "rules have many reasons" or "question household rules"', () => {
+    expect(genkanMission.tip).toContain('たとえば');
+    expect(genkanMission.teachBack).toContain('たとえば');
+    expect(genkanMission.ouchiTalk).toContain('たとえば');
+    for (const forbidden of ['きまり', 'ただしい', 'まちがって']) {
+      expect(genkanMission.tip).not.toContain(forbidden);
+      expect(genkanMission.teachBack).not.toContain(forbidden);
+      expect(genkanMission.ouchiTalk).not.toContain(forbidden);
+    }
   });
 
   it('never asserts a single universal cultural reason, and never frames the practice, adults, or schools as wrong', () => {
