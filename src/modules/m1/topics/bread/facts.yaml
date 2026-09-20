@@ -1,43 +1,32 @@
-# Gate 1 evidence, in progress — all three claims are still "pending" Founder approval; nothing
-# here has been approved. `statement` and `sourceUrl` reflect exact citations and factual
-# propositions supplied by the Coordinator, who reports having personally opened and verified
-# each source. `excerpt` is STILL an explicit UNVERIFIED sentinel, not a quote: the Coordinator's
-# messages describe what each verified source establishes, in the Coordinator's own words, but
-# have not (yet) included the literal quoted sentence(s) from the page itself. This session's own
-# fetch attempts to every source domain remain blocked by network egress policy. Per the standing
-# rule from the prior correction pass, no excerpt is invented, reconstructed, or copied from a
-# paraphrase (the Coordinator's own words included) and presented as if it were verbatim source
-# text — only an actual quoted passage, copied from the source, belongs in `excerpt`.
+# Gate 1 evidence — all three claims are still "pending" Founder approval; nothing here has
+# been approved. `excerpt` is now a literal quoted sentence from each cited source, as supplied
+# and reported independently verified by the Coordinator (this session's own fetch attempts to
+# both sources remained blocked by network egress policy throughout). `statement` is scoped to
+# claim only what each excerpt actually supports — c1 in particular no longer asserts "living
+# microorganism" as its own release claim, since neither the excerpt nor the child-facing
+# Japanese it backs asserts that; the excerpt establishes identity and use in fermentation, not
+# a claim about the organism's living/non-living nature.
 #
-# Required before Gate 1 approval, per claim: the literal quoted sentence(s) from the cited
-# source that support `statement`, to replace the sentinel below. pipeline/02_crosscheck.ts
-# (independent model re-verification) has also not been run against these claims.
+# Still required before Gate 1 approval: pipeline/02_crosscheck.ts (independent model
+# re-verification) has not been run against these claims; Founder sign-off itself.
 topic: bread
 question: パンは なぜ ふくらむ？
 claims:
   - id: c1
-    statement: "Commercial baker's yeast, Saccharomyces cerevisiae, is a living yeast organism used to ferment bread dough."
+    statement: "Commercial baker's yeast is Saccharomyces cerevisiae and is used in bread dough fermentation."
     sourceUrl: "https://doi.org/10.3389/fgene.2020.584718"
-    # citation (Coordinator-supplied, source-open reported but literal excerpt not yet supplied):
-    # Lahue C, Madden AA, Dunn RR, Smukowski Heil C. "History and Domestication of Saccharomyces
-    # cerevisiae in Bread Baking." Frontiers in Genetics 11 (2020), 584718.
+    # citation: Lahue C, Madden AA, Dunn RR, Smukowski Heil C. "History and Domestication of
+    # Saccharomyces cerevisiae in Bread Baking." Frontiers in Genetics 11 (2020): 584718.
     # DOI: 10.3389/fgene.2020.584718. PMCID: PMC7686800.
-    # Coordinator's description (paraphrase, NOT a quote) of what the verified text establishes:
-    # commercial baker's yeast added to dough is Saccharomyces cerevisiae; the source discusses
-    # yeast as living organisms/beings used for fermentation.
-    excerpt: "UNVERIFIED — HUMAN SOURCE CHECK REQUIRED (literal quoted sentence still needed)"
+    excerpt: "The first is the addition of commercial baker's yeast, Saccharomyces cerevisiae, to dough."
     adultLevelSource: true
     status: pending
   - id: c2
-    statement: "During bread fermentation, Saccharomyces cerevisiae consumes fermentable sugars in the dough and produces ethanol and carbon dioxide; the CO2 contributes to dough rising."
+    statement: "During bread fermentation, Saccharomyces cerevisiae consumes fermentable sugars and produces ethanol and carbon dioxide, with the fermentation process resulting in dough rising."
     sourceUrl: "https://doi.org/10.3389/fgene.2020.584718"
     # citation: same source as c1 — Lahue et al. 2020, Frontiers in Genetics 11:584718.
     # DOI: 10.3389/fgene.2020.584718. PMCID: PMC7686800.
-    # Coordinator's description (paraphrase, NOT a quote) of what the verified text establishes:
-    # dough rising relies on S. cerevisiae consuming sugar and producing ethanol and CO2; the
-    # maltose used in bread dough is produced by amylase enzymes (naturally present in grains)
-    # breaking down starch — i.e. this does not depend on added table sugar specifically.
-    excerpt: "UNVERIFIED — HUMAN SOURCE CHECK REQUIRED (literal quoted sentence still needed)"
+    excerpt: "The fermentation process that results in dough rising relies on S. cerevisiae consuming sugar and producing ethanol and CO2."
     adultLevelSource: true
     status: pending
     # Child-facing Japanese this claim backs is UNCHANGED, per instruction, pending Gate 2:
@@ -45,13 +34,12 @@ claims:
   - id: c3
     statement: "The gluten matrix in wheat dough helps retain carbon dioxide gas, allowing the dough to remain expanded during leavening."
     sourceUrl: "https://doi.org/10.1007/978-1-4899-0664-9_36"
-    # citation (Coordinator-supplied, source-open reported but literal excerpt not yet supplied):
-    # Hoseney RC. "Wheat Gluten: Rheological and Gas Retaining Properties." Advances in
-    # Experimental Medicine and Biology 302 (1991): 657-666. PMID: 1746356.
+    # citation: Hoseney RC. "Wheat Gluten: Rheological and Gas Retaining Properties." Advances
+    # in Experimental Medicine and Biology 302 (1991): 657-666. PMID: 1746356.
     # DOI: 10.1007/978-1-4899-0664-9_36.
-    # Coordinator's description (paraphrase, NOT a quote) of what the verified abstract states:
-    # dough has the ability to retain gas; this is attributed to slow diffusion of low-molecular-
-    # weight molecules, including carbon dioxide, through the gluten matrix.
-    excerpt: "UNVERIFIED — HUMAN SOURCE CHECK REQUIRED (literal quoted sentence still needed)"
+    # The abstract's next sentence (paraphrased, NOT part of the quoted excerpt below) attributes
+    # this gas retention to slow diffusion of low-molecular-weight molecules, including carbon
+    # dioxide, through the gluten matrix — the mechanism `statement` above summarizes.
+    excerpt: "The second factor is the ability of the dough to retain gas."
     adultLevelSource: true
     status: pending
