@@ -1,0 +1,125 @@
+/* WO-29 §H: a plain, parent-facing utility page — the same white/flat/no-soil signal every
+ * other parent-mode screen already uses (AD-06 D6/D8, WO-28's own token system), so a family
+ * knows within a second this is theirs to use, not another child-facing dashboard. */
+.print-centre {
+  min-height: 100dvh;
+  background: var(--parent-surface, #fff);
+  color: var(--parent-ink, #2b2622);
+  font-family: var(--font-parent, system-ui), sans-serif;
+}
+
+.print-centre__scroll {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: var(--space-6, 24px) var(--space-4, 16px) var(--space-12, 48px);
+}
+
+.print-centre__header {
+  margin-bottom: var(--space-6, 24px);
+  text-align: center;
+}
+.print-centre__heading {
+  margin: 0 0 var(--space-2, 8px);
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+.print-centre__subheading {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink-soft, #6b5d4f);
+  line-height: 1.6;
+}
+
+.print-centre__zip-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-8, 32px);
+  padding: var(--space-4, 16px);
+  border-radius: var(--radius-card, 1.1rem);
+  background: var(--soil-1, #e8dcc8);
+  box-shadow: var(--shadow-mid, none);
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+}
+.print-centre__zip-heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.print-centre__zip-description {
+  font-size: 0.85rem;
+  color: var(--ink-soft, #6b5d4f);
+}
+.print-centre__zip-button {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-8, 32px);
+  margin-top: var(--space-2, 8px);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--root, #c8922e);
+  color: #fff;
+  font-weight: 700;
+}
+
+.print-centre__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+}
+
+.print-centre__folder {
+  padding: var(--space-4, 16px);
+  border-radius: var(--radius-card, 1.1rem);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-low, none);
+}
+.print-centre__folder-title {
+  margin: 0 0 var(--space-1, 4px);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.print-centre__folder-description {
+  margin: 0 0 var(--space-3, 12px);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ink-soft, #6b5d4f);
+}
+
+.print-centre__folder-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+}
+.print-centre__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+  min-height: 48px;
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  border-radius: var(--radius-chip, 0.85rem);
+  background: var(--surface, #f7f3ec);
+  text-decoration: none;
+  color: inherit;
+}
+.print-centre__item-name {
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+.print-centre__item-download {
+  flex: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--root, #c8922e);
+}
+
+@media (min-width: 768px) {
+  .print-centre__folder-items { flex-direction: row; flex-wrap: wrap; }
+  .print-centre__item { flex: 1 1 12rem; }
+}

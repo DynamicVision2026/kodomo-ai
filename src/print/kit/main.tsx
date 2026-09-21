@@ -55,9 +55,17 @@ import bankItadakimasu from '../../modules/m1/topics/bank-itadakimasu/s2.json';
 import bankArigatou from '../../modules/m1/topics/bank-arigatou/s2.json';
 import bank100yen from '../../modules/m1/topics/bank-100yen/s2.json';
 
-const sheets = [
+const allSheets = [
   rules, parentHandbook, adultMemo, certificate, realAiGuide, envelopeSheet, questionRecipeSheet,
 ] as PrintSheetFile[];
+
+// WO-29 §A/§I: the home-kit PDF build (scripts/build-home-kit.ts) needs to render exactly ONE
+// deliverable per PDF file, not this page's own everything-at-once preview. ?item=<kitItem id>
+// (manifest.json's own id, e.g. "parent-handbook", "full-45-card-deck") filters to just that one
+// sheet or deck; no param (or an id that matches nothing) keeps the original combined-preview
+// behavior this page has always had, so nothing about the existing manual-preview usage changes.
+const onlyItem = new URLSearchParams(location.search).get('item');
+const sheets = onlyItem ? allSheets.filter((s) => s.kitItem === onlyItem) : allSheets;
 
 const storyMissions = [
   chantoMissionJson, genkanMissionJson, roukaMissionJson, oyatsuMissionJson,
@@ -72,7 +80,11 @@ const fullDeck: DeckFile = {
   stage: 2,
   cards: deriveFullDeck({ storyMissions, bankTopics, moveRealizations: moduleJson.moveRealizations }),
 };
-const decks = [fullDeck, bonusDeck as unknown as DeckFile];
+const allDecks: { id: string; deck: DeckFile }[] = [
+  { id: 'full-45-card-deck', deck: fullDeck },
+  { id: 'founders-bonus-deck', deck: bonusDeck as unknown as DeckFile },
+];
+const decks = (onlyItem ? allDecks.filter((d) => d.id === onlyItem) : allDecks).map((d) => d.deck);
 
 createRoot(document.getElementById('root')!).render(
   <div>

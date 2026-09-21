@@ -1,0 +1,64 @@
+{
+  "note": "WO-29 §I: the single source of truth for what the Home Kit ZIP/Print Centre actually ship — read by both scripts/build-home-kit.ts (which PDF to render into which file, from which /print/kit route) and src/print/centre/PrintCentre.tsx (what to list and link). Each folder's own `items` may point at more than one kitItem (manifest.json's own ids) where WO-29's suggested 7-folder structure reasonably absorbs an already-approved, real companion item WO-29's own top-level package list does not separately name (the Question Recipe Sheet folds into 02_QuickStart alongside Rules; the Adult Memo folds into 03_ParentHandbook alongside the Handbook) rather than silently dropping real, already-authored content or inventing an 8th/9th top-level folder WO-29 never asked for.",
+  "zipBaseName": "NAZEHORI_Module1_HomeKit",
+  "folders": [
+    {
+      "id": "01_Cards",
+      "title": "問いカード 45枚セット",
+      "description": "63×88mmの正しいサイズで印刷できる、45枚の問いカードです。A4用紙に9枚ずつ、切り取り線つきでレイアウトしてあります。",
+      "items": [
+        { "kitItem": "full-45-card-deck", "kind": "deck", "fileName": "ナゼホリ_問いカード45枚.pdf" }
+      ]
+    },
+    {
+      "id": "02_QuickStart",
+      "title": "あそびかた ＆ 質問レシピ",
+      "description": "はじめての方向けの、あそびかたガイドと、AIの答えを見たあと次に何を聞けばいいかがわかる質問レシピシートです。",
+      "items": [
+        { "kitItem": "rules-a4x5", "kind": "sheet", "fileName": "あそびかた.pdf" },
+        { "kitItem": "question-recipe-sheet", "kind": "sheet", "fileName": "質問レシピシート.pdf" }
+      ]
+    },
+    {
+      "id": "03_ParentHandbook",
+      "title": "保護者ハンドブック",
+      "description": "おうちの方向けの、くわしい心がまえガイドと、すきま時間に読める1分メモです。",
+      "items": [
+        { "kitItem": "parent-handbook", "kind": "sheet", "fileName": "保護者ハンドブック.pdf" },
+        { "kitItem": "adult-memo", "kind": "sheet", "fileName": "おとな版1分メモ.pdf" }
+      ]
+    },
+    {
+      "id": "04_AdultTrap",
+      "title": "冬休みスペシャル（おとなも挑戦）",
+      "description": "おとなも答えをすぐには言えない、9つのおだいカードです。親子で一緒に掘り下げてみましょう。",
+      "items": [
+        { "kitItem": "founders-bonus-deck", "kind": "deck", "fileName": "冬休みスペシャル_おだい9枚.pdf" }
+      ]
+    },
+    {
+      "id": "05_Certificate",
+      "title": "しゅうりょう認定証",
+      "description": "6週間の旅を終えたら、親子で読める認定証です。点数や順位は書かれていません。",
+      "items": [
+        { "kitItem": "certificate", "kind": "sheet", "fileName": "しゅうりょう認定証.pdf" }
+      ]
+    },
+    {
+      "id": "06_Day1Envelope",
+      "title": "はじめの といの ふうとう",
+      "description": "1日目に、今いちばん知りたいことを書いて閉じる、封筒の中身です。はさみとのり、封筒だけで使えます。",
+      "items": [
+        { "kitItem": "envelope-sheet", "kind": "sheet", "fileName": "はじめのといのふうとう.pdf" }
+      ]
+    },
+    {
+      "id": "07_RealAI_Guide",
+      "title": "本物のAIを つかう回 ガイド",
+      "description": "おうちの方のアカウントで、実際の生成AIを使ってみるときの案内です。",
+      "items": [
+        { "kitItem": "real-ai-guide", "kind": "sheet", "fileName": "本物のAIをつかう回ガイド.pdf" }
+      ]
+    }
+  ]
+}

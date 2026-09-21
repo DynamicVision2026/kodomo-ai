@@ -3,15 +3,16 @@
   "status": "candidate",
   "stage": 2,
   "intendedCount": 9,
+  "note": "WO-29 §D: reconciled to consistently follow WO-11 decision 7's Adult Trap redefinition (docs/WO-11-implementation-notes-questioning-adult-trap.md — 'a familiar everyday rule or practice the parent follows but cannot readily explain, not a science fact the adult gets wrong'). The prior 9 mixed real customs (kept) with science facts (snow colour, day length, mochi's starch chemistry, why warm food feels comforting) that matched the OLD, superseded definition — those 4 are replaced with everyday New Year/winter customs an adult participates in every year without necessarily being able to explain their origin (New Year's Eve soba, hatsumode, kadomatsu/shimekazari, osechi's variety, mochi-eating itself rather than why it stretches, and year-end cleaning). Every card stays a plain odai prompt, same as every other card in the deck — the co-learning, non-adversarial framing comes from how the kit's own Adult Memo/Rules sheets frame play, not from special wording on the card itself.",
   "cards": [
     { "id": "bonus-1", "kind": "odai", "text": "おしょうがつって、なんで「あけましておめでとう」って いうの？" },
-    { "id": "bonus-2", "kind": "odai", "text": "ふゆは なんで てぶくろを するの？" },
-    { "id": "bonus-3", "kind": "odai", "text": "クリスマスは なんで プレゼントを あげるの？" },
-    { "id": "bonus-4", "kind": "odai", "text": "おとしだまは なんで おとなから もらえるの？" },
-    { "id": "bonus-5", "kind": "odai", "text": "ゆきは なんで しろいの？" },
-    { "id": "bonus-6", "kind": "odai", "text": "ふゆは なんで ひが みじかいの？" },
-    { "id": "bonus-7", "kind": "odai", "text": "あったかい ものを たべると、なんで ほっとするの？" },
-    { "id": "bonus-8", "kind": "odai", "text": "おもちは なんで のびるの？" },
-    { "id": "bonus-9", "kind": "odai", "text": "ふゆやすみは なんで なつやすみより みじかいの？" }
+    { "id": "bonus-2", "kind": "odai", "text": "クリスマスは なんで プレゼントを あげるの？" },
+    { "id": "bonus-3", "kind": "odai", "text": "おとしだまは なんで おとなから もらえるの？" },
+    { "id": "bonus-4", "kind": "odai", "text": "おおみそかに としこしそばを たべるのは なんで？" },
+    { "id": "bonus-5", "kind": "odai", "text": "おしょうがつに はつもうでに いくのは なんで？" },
+    { "id": "bonus-6", "kind": "odai", "text": "おしょうがつに かどまつや しめかざりを かざるのは なんで？" },
+    { "id": "bonus-7", "kind": "odai", "text": "おせちりょうりに、いろんな たべものが はいっているのは なんで？" },
+    { "id": "bonus-8", "kind": "odai", "text": "おしょうがつに おもちを たべるのは なんで？" },
+    { "id": "bonus-9", "kind": "odai", "text": "としの くれに おおそうじを するのは なんで？" }
   ]
 }

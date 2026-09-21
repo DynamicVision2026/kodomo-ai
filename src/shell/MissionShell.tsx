@@ -518,7 +518,10 @@ export function MissionShell({
         onSelectMission={selectStoryMission}
         onOpenBank={() => setScreen({ kind: 'bank-select' })}
         onOpenParent={() => setScreen({ kind: 'parent', afterMission: false })}
-        onOpenKit={() => window.open('/print/kit/', '_blank', 'noopener')}
+        // WO-29 §H: the family-facing Print Centre (each deliverable listed separately, plus
+        // 「まとめてダウンロード」 for the full ZIP) — /print/kit/ itself remains the internal
+        // everything-at-once preview, never what a family is sent to.
+        onOpenKit={() => window.open('/print/centre/', '_blank', 'noopener')}
       />
     );
   }

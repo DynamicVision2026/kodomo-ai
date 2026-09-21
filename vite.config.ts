@@ -17,6 +17,7 @@ export default defineConfig({
         unlock: resolve(__dirname, 'play/unlock/index.html'),
         deck: resolve(__dirname, 'print/deck/index.html'),
         kit: resolve(__dirname, 'print/kit/index.html'),
+        printCentre: resolve(__dirname, 'print/centre/index.html'),
         tokushoho: resolve(__dirname, 'legal/tokushoho/index.html'),
         privacy: resolve(__dirname, 'legal/privacy/index.html'),
       },
