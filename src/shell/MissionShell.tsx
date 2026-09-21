@@ -110,6 +110,10 @@ export function MissionShell({
   const [profile, setProfile] = useState<Profile | null>(null);
   const [solo, setSolo] = useState(false);
   const [screen, setScreen] = useState<Screen>({ kind: 'profile' });
+  /** WO-25 #6: which of the 'stage-teachback' screen's own two steps (teach-back -> return-to-
+   *  child) is showing — kept out of the Screen union itself since neither step is a real hard
+   *  navigation target on its own (nothing else ever routes to "just step 2"). */
+  const [parentGaveTeachBack, setParentGaveTeachBack] = useState(false);
   const [mission, setMission] = useState<Mission>(defaultMission);
 
   function persist(next: AppState) {
@@ -406,10 +410,16 @@ export function MissionShell({
   // solo play goes straight to the parent screen; co-play goes straight to the Mission-1-only
   // handoff curtain, tip beat straight into HANDOFF, no separate teach-back/ouchi-talk screens
   // in between (see the stage-teachback screen below for where teach-back moved to).
+  // WO-25 #6 (P0): the synthetic-child audit's own finding — a solo child was being dropped
+  // into the dense multi-control おうちの方へ dashboard with no explanation. AD-07's own
+  // "solo mode skips this sequence completely" meant skip the WHOLE parent sequence, not just
+  // the handoff curtain — solo goes straight to the child-facing completion screen instead.
+  // The parent screen is never deleted or unreachable: Course Home's own standing おうちの方へ
+  // button (unchanged) still opens it any time a parent wants it.
   function stageCompleted(digResult: DigResult) {
     digPhaseCompleted(digResult);
     markDone();
-    setScreen(solo ? { kind: 'parent' } : { kind: 'handoff' });
+    setScreen(solo ? { kind: 'complete' } : { kind: 'handoff' });
   }
 
   /** Mission Complete's own primary action — resolves the active profile's now-updated next
@@ -618,18 +628,21 @@ export function MissionShell({
       track('parent_screen_view');
       setScreen({ kind: 'parent' });
     };
-    // WO-24 (AD-07 §4D わたす / beat 14-15): Mission 1 only — "child sees only [the prompt] and
-    // one action." Solo already never reaches this screen for Mission 1 (stageCompleted routes
-    // solo straight to 'parent'). The continue action goes to the Mission-1-only parent-turn
-    // teach-back beat, not straight to the ordinary parent screen — every other mission keeps
-    // the original generic Handoff (prompt + continue + skip, straight to 'parent') below,
-    // completely unchanged.
+    // WO-24/25 (AD-07 §4D わたす / beat 14-15): Mission 1 only — "child sees only [the prompt]
+    // and one action." Solo already never reaches this screen for Mission 1 (stageCompleted
+    // routes solo straight to 'complete'). The continue action goes to the Mission-1-only
+    // parent-turn teach-back beat, never the dense multi-control parent dashboard — every other
+    // mission keeps the original generic Handoff (prompt + continue + skip, straight to
+    // 'parent') below, completely unchanged.
     if (mission.id === continuousStageMissionId) {
       return (
         <Handoff
           prompt={ui.stageHandoffPrompt}
           continueLabel={ui.stageHandoffGiven}
-          onContinue={() => setScreen({ kind: 'stage-teachback' })}
+          onContinue={() => {
+            setParentGaveTeachBack(false);
+            setScreen({ kind: 'stage-teachback' });
+          }}
         />
       );
     }
@@ -652,19 +665,37 @@ export function MissionShell({
   // their child teach it back IS the M2b moment AD-07 describes, not a new mechanism. Reached
   // only from Mission 1's own co-play 'handoff' screen.
   if (screen.kind === 'stage-teachback') {
-    const gotIt = () => {
-      addStamp();
-      track('teachback_done');
-      confirmM2b();
-      track('parent_screen_view');
-      setScreen({ kind: 'parent' });
-    };
+    // WO-25 #6 (P0): two steps, ONE primary action each — "optional/secondary parent tools
+    // must NOT compete with the primary task." Step 1 is the teach-back attestation; step 2 is
+    // the one persistent, always-in-view "give it back" action. Neither step shows the dense
+    // multi-control parent screen (Toolbox/M0/M5/Bank) — Mission 1 routes around it entirely,
+    // exactly as the audit's P0 finding requires; nothing about that screen itself changes for
+    // a parent who opens it independently via Course Home's own standing おうちの方へ button.
+    if (!parentGaveTeachBack) {
+      const gotIt = () => {
+        addStamp();
+        track('teachback_done');
+        confirmM2b();
+        setParentGaveTeachBack(true);
+      };
+      return (
+        <div className="mission-shell__wrapper mission-shell__wrapper--parent">
+          <p><Ruby text={mission.teachBack} /></p>
+          <p className="mission-shell__stage-teachback-ouchi"><Ruby text={mission.ouchiTalk} /></p>
+          <button type="button" onClick={gotIt}>
+            {ui.stageParentGotItLabel}
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="mission-shell__wrapper mission-shell__wrapper--parent">
-        <p><Ruby text={mission.teachBack} /></p>
-        <p className="mission-shell__stage-teachback-ouchi"><Ruby text={mission.ouchiTalk} /></p>
-        <button type="button" onClick={gotIt}>
-          {ui.stageParentGotItLabel}
+        <button
+          type="button"
+          className="mission-shell__stage-return-to-child"
+          onClick={() => setScreen({ kind: 'complete' })}
+        >
+          {ui.stageReturnToChild}
         </button>
       </div>
     );

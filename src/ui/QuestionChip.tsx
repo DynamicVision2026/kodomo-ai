@@ -25,9 +25,13 @@ export interface QuestionChipProps {
   /** Extra class(es) a caller needs on the root element — e.g. a motion state class. Never used
    *  to smuggle in child-facing text; still no styling decisions live outside question-chip.css. */
   className?: string;
+  /** WO-25 #4: a small decorative glyph overlay (never child-facing text — CI gate 3 only scans
+   *  for Japanese script, and a glyph carries no copy) marking a chip as permanently blocked —
+   *  the dig stage's own "hit a stone, already tried" marker, kept visible rather than removed. */
+  badge?: string;
 }
 
-export function QuestionChip({ kind, label, text, selected, disabled, onClick, className }: QuestionChipProps) {
+export function QuestionChip({ kind, label, text, selected, disabled, onClick, className, badge }: QuestionChipProps) {
   const meta = CARD_KIND_META[kind];
   const cls = [
     'question-chip', `question-chip--${kind}`, `question-chip--corner-${meta.corner}`,
@@ -39,6 +43,7 @@ export function QuestionChip({ kind, label, text, selected, disabled, onClick, c
       <span className="question-chip__icon" aria-hidden="true">{meta.icon}</span>
       {label && <span className="question-chip__label">{label}</span>}
       <span className="question-chip__text"><Ruby text={text} /></span>
+      {badge && <span className="question-chip__badge" aria-hidden="true">{badge}</span>}
     </>
   );
 

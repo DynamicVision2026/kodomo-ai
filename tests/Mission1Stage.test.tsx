@@ -22,14 +22,15 @@ beforeEach(() => localStorage.clear());
 afterEach(() => cleanup());
 
 /**
- * WO-24 (AD-07 v0.7a prototype): "STATES ARE NOT SCREENS." Mission 1 is now a continuous scene
- * (src/stage/MissionStage.tsx) — this file proves the section 17 functional requirements, plus
- * the follow-up gap closures (beat 13's real つぎへ button, JUDGE's SHOW pulse, per-verb guidance
- * thresholds, beat 15's parent teach-back, and the drive/settle/rise motion), against the real
- * production wiring (main.tsx's own missionLibrary/continuousStageMissionId), not a synthetic
- * fixture. Every other Story Mission and every Bank Dig is untouched — see
- * tests/ChantoTopic.test.tsx, tests/StoryMissions1to8.test.tsx, tests/BankDigs.test.tsx, which
- * keep passing unmodified because none of them opt into `continuousStageMissionId`.
+ * WO-24/25 (AD-07 v0.7a prototype + the synthetic-child acceptance fix). "STATES ARE NOT
+ * SCREENS." Mission 1 is a continuous scene (src/stage/MissionStage.tsx) — this file proves
+ * WO-25's five audit-finding repairs (one-tap dialogue progression, explicit GAP/question
+ * prompts, the visually-causal dig, real stone recovery, explicit root discovery) plus the P0
+ * parent-handoff repair, against the real production wiring (main.tsx's own missionLibrary/
+ * continuousStageMissionId), not a synthetic fixture. Every other Story Mission and every Bank
+ * Dig is untouched — see tests/ChantoTopic.test.tsx, tests/StoryMissions1to8.test.tsx,
+ * tests/BankDigs.test.tsx, which keep passing unmodified because none of them opt into
+ * `continuousStageMissionId`.
  */
 function renderShell() {
   return render(
@@ -60,15 +61,13 @@ async function enterStage(user: ReturnType<typeof userEvent.setup>, coop: 'solo'
   await user.click(screen.getByText(coop === 'solo' ? ui.coopSolo : ui.coopYes));
 }
 
-/** Picks the CLEAR card, reads the robot's terminal reply, reaches JUDGE for layer 0.
- *  Chanto's own authored content echoes the same line twice on purpose — the slot phase's
- *  CLEAR archetype robotSays and dig layer 0's own opening robotSays are the identical string
- *  ("『ちゃんと』は、きちんとすることだよ。"), so reaching JUDGE takes two separate dialogue
- *  taps on that text: one to read the slot's resolution, one to read the layer's own answer. */
+/** WO-25 #1: picks the CLEAR card and reads the robot's terminal reply — ONE tap now reaches
+ *  JUDGE directly (the fix: chanto's slot-resolution robotSays and dig layer 0's own opening
+ *  robotSays are the same authored statement re-opened for digging; showing it as two
+ *  separately-tapped bubbles was the "first tap does nothing" defect the audit found). */
 async function pickClearAndReachJudge(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText('『ちゃんと』って、どういういみ？'));
-  await user.click(screen.getByText('『ちゃんと』は、きちんとすることだよ。')); // slot resolution read
-  await user.click(screen.getByText('『ちゃんと』は、きちんとすることだよ。')); // layer 0's own opening read
+  await user.click(screen.getByText('『ちゃんと』は、きちんとすることだよ。'));
 }
 
 async function passLayer0Gate(user: ReturnType<typeof userEvent.setup>) {
@@ -77,12 +76,21 @@ async function passLayer0Gate(user: ReturnType<typeof userEvent.setup>) {
   await user.click(target as HTMLElement);
 }
 
-/** AD-07 §B/F: a deepen pick drives the chip into the soil for ~260ms before the world actually
- *  descends — the real commit (state change, root/next-layer reveal) lands slightly after the
- *  click resolves, so every deepen play needs a `waitFor` around whatever it's expected to
- *  produce, rather than asserting synchronously the way a non-deepen play still safely can. */
+/** AD-07 §B/F + WO-25 #3: EVERY hand pick drives for ~260ms before it commits, so a deepen
+ *  play needs a `waitFor` around whatever it's expected to produce. */
 async function clickDeepen(user: ReturnType<typeof userEvent.setup>, text: string) {
   await user.click(screen.getByText(text));
+}
+
+/** WO-25 #4: a non-deepen play drives (~260ms), then holds a brief impact/settle beat
+ *  (~300ms) BEFORE its own recovery bubble appears — `waitFor` the bubble text rather than
+ *  asserting it synchronously. */
+async function clickNonDeepenAndReadReply(user: ReturnType<typeof userEvent.setup>, cardText: string, replyText: string) {
+  await user.click(screen.getByText(cardText));
+  await waitFor(() => {
+    expect(screen.getByText(replyText)).toBeInTheDocument();
+  });
+  await user.click(screen.getByText(replyText));
 }
 
 /** Walks layer 0's deepen from a freshly-opened hand through to layer 1's own opening line. */
@@ -103,7 +111,7 @@ async function reachRoot(user: ReturnType<typeof userEvent.setup>, coop: 'solo' 
   await user.click(target as HTMLElement);
   await clickDeepen(user, 'たとえば、食べるときは？');
   await waitFor(() => {
-    expect(screen.getByText((_c, el) => el?.className === 'speech-bubble__text' && (el.textContent ?? '').includes('こぼさないように'))).toBeInTheDocument();
+    expect(screen.getByText(ui.stageRootDiscoveryLabel)).toBeInTheDocument();
   });
 }
 
@@ -114,16 +122,8 @@ async function readRootAndTip(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText(ui.stageNextLabel));
 }
 
-describe('Mission 1 continuous stage (WO-24, AD-07 prototype)', () => {
-  it('launches from the map (Course Home) into the stage\'s own choose tray', async () => {
-    const user = userEvent.setup();
-    renderShell();
-    await enterStage(user);
-    expect(screen.getByText('『ちゃんと』って、どういういみ？')).toBeInTheDocument();
-    expect(screen.getByText('ロボは何がすき？')).toBeInTheDocument(); // the offtopic initial card
-  });
-
-  it('dialogue advances by tapping the bubble, with no generic Next button anywhere near it', async () => {
+describe('WO-25 #1 — one tap advances exactly once, everywhere', () => {
+  it('the FIRST robot answer: one tap on the resolved question reaches JUDGE directly, no second identical tap', async () => {
     const user = userEvent.setup();
     renderShell();
     await enterStage(user);
@@ -133,69 +133,76 @@ describe('Mission 1 continuous stage (WO-24, AD-07 prototype)', () => {
     expect(bubble.className).toContain('speech-bubble');
     expect(screen.queryByText(ui.handoffContinue)).not.toBeInTheDocument();
     expect(screen.queryByText('つづける')).not.toBeInTheDocument();
+    expect(screen.queryByText(ui.earlyOk)).not.toBeInTheDocument(); // not yet — one tap hasn't happened
 
-    await user.click(bubble); // the bubble itself IS the interaction target -> the slot resolution read
-    // Chanto's slot CLEAR reply and dig layer 0's own opening line are the identical authored
-    // string, so the very next beat is a fresh dialogue bubble with the same text (layer 0's own
-    // robotSays) — reading it too is what actually reaches JUDGE.
-    const secondBubble = screen.getByText('『ちゃんと』は、きちんとすることだよ。').closest('button')!;
-    expect(screen.queryByText(ui.handoffContinue)).not.toBeInTheDocument();
-    await user.click(secondBubble);
-    expect(screen.getByText(ui.earlyOk)).toBeInTheDocument(); // -> JUDGE
-  });
-
-  it('JUDGE shows exactly the two intended choices, pulsing alternately at SHOW, and わかった！never appears anywhere else', async () => {
-    const user = userEvent.setup();
-    renderShell();
-    await enterStage(user);
-
-    // Not yet at JUDGE: still choosing the initial question.
-    expect(screen.queryByText(ui.earlyOk)).not.toBeInTheDocument();
-
-    await pickClearAndReachJudge(user);
-    const judgeButtons = document.querySelectorAll('.stage__judge-buttons button');
-    expect(judgeButtons).toHaveLength(2);
-    expect(screen.getByText(ui.earlyOk)).toBeInTheDocument();
+    await user.click(bubble); // the ONE tap
+    expect(screen.getByText(ui.earlyOk)).toBeInTheDocument(); // -> JUDGE, immediately
     expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument();
-    // AD-07 §4C/§9: a brand-new profile is at SHOW for みきわめる — both buttons pulse alternately.
-    const judgeButtonsRow = document.querySelector('.stage__judge-buttons')!;
-    expect(judgeButtonsRow.className).toContain('stage__judge-buttons--show');
-
-    // もうちょっと聞く -> Gap Naming: わかった！ is gone again.
-    await user.click(screen.getByText(ui.judgeNotEnough));
-    expect(screen.queryByText(ui.earlyOk)).not.toBeInTheDocument();
-
-    // Naming any gap reveals the hand: still gone.
-    const [target] = document.querySelectorAll('.choice-tray .question-chip');
-    await user.click(target as HTMLElement);
-    expect(screen.queryByText(ui.earlyOk)).not.toBeInTheDocument();
+    // The exact same line does NOT render a second time as a still-pending bubble.
+    expect(document.querySelectorAll('.speech-bubble')).toHaveLength(0);
   });
 
-  it('selecting a gap reveals the question tray, and a deepen pick progresses the depth', async () => {
+  it('every other Mission 1 dialogue bubble also advances on one tap: challenge, layer opening lines, stone recovery, root', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await enterStage(user);
+    await pickClearAndReachJudge(user); // one tap already proven above
+
+    // JUDGE -> わかった！ -> Pon太's challenge -> one tap dismisses back to JUDGE.
+    await user.click(screen.getByText(ui.earlyOk));
+    expect(screen.getByText('ポン太')).toBeInTheDocument();
+    await user.click(screen.getByText('「きちんと」って、何をすることなの？').closest('button')!);
+    expect(screen.getByText(ui.earlyOk)).toBeInTheDocument(); // back at JUDGE, one tap
+
+    await passLayer0Gate(user);
+    // Stone recovery: one tap on the reply bubble returns the tray (proven with a wait since
+    // the impact beat precedes it — see clickNonDeepenAndReadReply).
+    await clickNonDeepenAndReadReply(user, 'ロボは何がすき？', 'ぼくは今『ちゃんと』の話をしてるよ。');
+    expect(screen.getByText('どういうこと？')).toBeInTheDocument(); // tray back, one tap
+
+    await deepenLayer0(user);
+    // Layer 1's own opening line: one tap reaches its own JUDGE.
+    await user.click(screen.getByText((_c, el) => el?.tagName === 'BUTTON' && (el.textContent ?? '').includes('かたづけるとき')));
+    expect(screen.getByText(ui.earlyOk)).toBeInTheDocument();
+  });
+});
+
+describe('WO-25 #2 — explicit task prompts', () => {
+  it('the GAP screen names the decision, above the choice group', async () => {
     const user = userEvent.setup();
     renderShell();
     await enterStage(user);
     await pickClearAndReachJudge(user);
-
     await user.click(screen.getByText(ui.judgeNotEnough));
-    expect(document.querySelectorAll('.choice-tray .question-chip')).toHaveLength(3); // gap + 2 distractors
 
-    const [gapChoice] = document.querySelectorAll('.choice-tray .question-chip');
-    await user.click(gapChoice as HTMLElement);
-    // The question tray: all 3 of layer 0's authored hand cards, undifferentiated.
-    expect(screen.getByText('どういうこと？')).toBeInTheDocument();
-    expect(screen.getByText('ロボは何がすき？')).toBeInTheDocument();
-    expect(screen.getByText('もういちどいって')).toBeInTheDocument();
-
-    const filledBefore = document.querySelectorAll('.stage__meter-dot.is-filled').length;
-    await clickDeepen(user, 'どういうこと？'); // the deepen card — drives into the soil first
-    await waitFor(() => {
-      const filledAfter = document.querySelectorAll('.stage__meter-dot.is-filled').length;
-      expect(filledAfter).toBe(filledBefore + 1);
-    });
+    const prompt = screen.getByText(ui.stageGapPrompt);
+    expect(prompt).toBeInTheDocument();
+    expect(prompt.tagName).toBe('P'); // L2 context, not a chip
+    expect(document.querySelectorAll('.choice-tray .question-chip')).toHaveLength(3);
   });
 
-  it('a deepen chip visibly drives into the soil before the world descends', async () => {
+  it('the question tray names the decision, both at first reveal and after a stone recovery', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await enterStage(user);
+    await pickClearAndReachJudge(user);
+    await passLayer0Gate(user);
+    expect(screen.getByText(ui.stageQuestionPrompt)).toBeInTheDocument();
+
+    await clickNonDeepenAndReadReply(user, 'ロボは何がすき？', 'ぼくは今『ちゃんと』の話をしてるよ。');
+    expect(screen.getByText(ui.stageQuestionPrompt)).toBeInTheDocument(); // still named, after recovery
+  });
+
+  it('the very first (slot) question choice is also named', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await enterStage(user);
+    expect(screen.getByText(ui.stageQuestionPrompt)).toBeInTheDocument();
+  });
+});
+
+describe('WO-25 #3/#4 — the question is visibly the shovel, and a stone is a real recovery, not a disappearance', () => {
+  it('a deepen chip stays visible and drives into the soil; the world reacts at the same moment it lands', async () => {
     const user = userEvent.setup();
     renderShell();
     await enterStage(user);
@@ -203,66 +210,81 @@ describe('Mission 1 continuous stage (WO-24, AD-07 prototype)', () => {
     await passLayer0Gate(user);
 
     await user.click(screen.getByText('どういうこと？'));
-    // AD-07 §B/F "the question is the shovel": the chip itself carries the drive animation
-    // immediately — before the world has descended to layer 2 at all.
     const chip = screen.getByText('どういうこと？').closest('.question-chip')!;
-    expect(chip.className).toContain('is-driving');
+    expect(chip.className).toContain('is-driving'); // still visible, mid-drive — never an instant fade
     expect(document.querySelector('.stage__world')!.getAttribute('data-depth')).toBe('1');
 
     await waitFor(() => {
+      // The world's own impact flash fires at the same commit as the depth change.
       expect(document.querySelector('.stage__world')!.getAttribute('data-depth')).toBe('2');
     });
   });
 
-  it('a non-deepen play never dead-ends: the chip settles out, the rest stay live, progression is still guaranteed', async () => {
+  it('a non-deepen play never dead-ends: the chip visibly hits a stone, stays visible as a blocked marker, gives a neutral recovery cue, and the rest stay live', async () => {
     const user = userEvent.setup();
     renderShell();
     await enterStage(user);
     await pickClearAndReachJudge(user);
-    await user.click(screen.getByText(ui.judgeNotEnough));
-    const [gapChoice] = document.querySelectorAll('.choice-tray .question-chip');
-    await user.click(gapChoice as HTMLElement);
+    await passLayer0Gate(user);
 
-    await user.click(screen.getByText('ロボは何がすき？')); // offtopic — non-deepen, settles immediately
-    // AD-07 §4E: the robot's natural flat reply, read as dialogue, never a red X / 不正解.
-    expect(screen.getByText('ぼくは今『ちゃんと』の話をしてるよ。')).toBeInTheDocument();
+    await user.click(screen.getByText('ロボは何がすき？')); // offtopic
+    const chip = screen.getByText('ロボは何がすき？').closest('.question-chip')!;
+    expect(chip.className).toContain('is-driving'); // still visible, mid-drive
+
+    await waitFor(() => {
+      expect(screen.getByText('ロボは何がすき？').closest('.question-chip')!.className).toContain('is-settling');
+    });
+
+    // The robot's own authored reply, never a red X / 不正解 verdict.
+    await waitFor(() => {
+      expect(screen.getByText('ぼくは今『ちゃんと』の話をしてるよ。')).toBeInTheDocument();
+    });
     expect(screen.queryByText('不正解')).not.toBeInTheDocument();
-    await user.click(screen.getByText('ぼくは今『ちゃんと』の話をしてるよ。')); // dialogue tap returns the tray
+    await user.click(screen.getByText('ぼくは今『ちゃんと』の話をしてるよ。'));
 
-    // AD-07 §5: the used chip is gone; the rest are still live, still clickable.
-    expect(screen.queryByText('ロボは何がすき？')).not.toBeInTheDocument();
-    expect(screen.getByText('どういうこと？')).toBeInTheDocument();
-    expect(screen.getByText('もういちどいって')).toBeInTheDocument();
-    await user.click(screen.getByText('もういちどいって')); // repeat — also non-deepen, also settles
-    await user.click(screen.getByText('うーん、さっきと同じ答えになっちゃった。'));
+    // WO-25 #4: the used chip stays VISIBLE (never disappears), badged, disabled — and the
+    // short neutral continuation nudge (existing UI-string architecture, WO-23's own
+    // digContinuePrompt) invites another pick.
+    const settledChip = screen.getByText('ロボは何がすき？').closest('.question-chip') as HTMLElement;
+    expect(settledChip.className).toContain('is-blocked');
+    expect(within(settledChip).getByText('🪨')).toBeInTheDocument();
+    expect((settledChip as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(ui.digContinuePrompt)).toBeInTheDocument();
 
-    // Only the deepen card remains — progression is now guaranteed by construction.
-    expect(document.querySelectorAll('.stage__hand-tray .question-chip')).toHaveLength(1);
+    // The rest are still live, still clickable.
     expect(screen.getByText('どういうこと？')).toBeInTheDocument();
+    expect((screen.getByText('もういちどいって').closest('.question-chip') as HTMLButtonElement).disabled).toBe(false);
+    await clickNonDeepenAndReadReply(user, 'もういちどいって', 'うーん、さっきと同じ答えになっちゃった。');
+
+    // Only the deepen card remains active — progression is guaranteed by construction, and
+    // every card is STILL in the tray (2 blocked, visible, + 1 active), none removed.
+    expect(document.querySelectorAll('.stage__hand-tray .question-chip')).toHaveLength(3);
+    expect(document.querySelectorAll('.stage__hand-tray .question-chip.is-blocked')).toHaveLength(2);
     await clickDeepen(user, 'どういうこと？');
     await waitFor(() => {
       expect(document.querySelectorAll('.stage__meter-dot.is-filled')).toHaveLength(2);
     });
   });
+});
 
-  it('reaches the root, then 今日のコツ as a real つぎへ button (not a dialogue bubble)', async () => {
+describe('WO-25 #5 — root discovery is explicit', () => {
+  it('shows the discovery label alongside the root reveal, before 今日のコツ', async () => {
     const user = userEvent.setup();
     renderShell();
     await enterStage(user);
     await pickClearAndReachJudge(user);
     await passLayer0Gate(user);
     await deepenLayer0(user);
-    await reachRoot(user, 'solo');
+    await reachRoot(user, 'solo'); // waits for the discovery label itself
 
-    // AD-07 beat 13: "one line, large... no bubble here, so a button" — never a speech-bubble.
-    await user.click(screen.getByText((_c, el) => el?.className === 'speech-bubble__text' && (el.textContent ?? '').includes('こぼさないように')).closest('button')!);
-    const tipLine = screen.getByText(chanto.tip);
-    expect(tipLine.closest('button')).toBeNull();
-    expect(tipLine.className).not.toContain('speech-bubble'); // not a dialogue bubble
-    expect(screen.getByText(ui.stageNextLabel).tagName).toBe('BUTTON');
+    expect(screen.getByText(ui.stageRootDiscoveryLabel)).toBeInTheDocument();
+    // No score/star/streak/confetti copy anywhere near it.
+    expect(screen.queryByText(/\d+\s*点/)).not.toBeInTheDocument();
   });
+});
 
-  it('solo play skips the handoff sequence entirely — straight from 今日のコツ to the parent screen', async () => {
+describe('WO-25 #6 (P0) — parent handoff repair', () => {
+  it('SOLO never enters the parent dashboard — straight from 今日のコツ to the child-facing completion screen', async () => {
     const user = userEvent.setup();
     renderShell();
     await enterStage(user, 'solo');
@@ -273,8 +295,11 @@ describe('Mission 1 continuous stage (WO-24, AD-07 prototype)', () => {
     await readRootAndTip(user);
 
     await waitFor(() => {
-      expect(screen.getByText(ui.parentScreenHeading)).toBeInTheDocument();
+      expect(screen.getByText(ui.completeHeading)).toBeInTheDocument();
     });
+    // Never the dense multi-control dashboard, never the handoff curtain, never beat 15.
+    expect(screen.queryByText(ui.parentScreenHeading)).not.toBeInTheDocument();
+    expect(screen.queryByText(ui.toolboxHeading)).not.toBeInTheDocument();
     expect(screen.queryByText(ui.stageHandoffPrompt)).not.toBeInTheDocument();
     expect(screen.queryByText(ui.stageParentGotItLabel)).not.toBeInTheDocument();
 
@@ -282,12 +307,10 @@ describe('Mission 1 continuous stage (WO-24, AD-07 prototype)', () => {
     expect(saved.profiles[0].progress[chanto.id].done).toBe(true);
   });
 
-  it('co-play reaches the stage\'s own single-action handoff straight after 今日のコツ (child sees only the prompt and one button)', async () => {
+  it('CO-PLAY: explicit handoff (one prompt, one action) -> parent register (one prompt, one action) -> persistent return-to-child, visible without scrolling, then completion', async () => {
     const user = userEvent.setup();
     renderShell();
     await enterStage(user, 'yes');
-
-    // Slot round 1's own prediction battle (pre-existing mechanism, untouched) — skip through it.
     await user.click(screen.getByText(ui.predictionSkip));
     await pickClearAndReachJudge(user);
     await passLayer0Gate(user);
@@ -295,53 +318,39 @@ describe('Mission 1 continuous stage (WO-24, AD-07 prototype)', () => {
     await reachRoot(user, 'yes');
     await readRootAndTip(user);
 
+    // Handoff: one prompt, one action, nothing else.
     await waitFor(() => {
       expect(screen.getByText(ui.stageHandoffPrompt)).toBeInTheDocument();
     });
     expect(screen.getByText(ui.stageHandoffGiven)).toBeInTheDocument();
-    expect(screen.queryByText(ui.handoffSkip)).not.toBeInTheDocument(); // AD-07 §4D: one action only
-    expect(screen.queryByText(chanto.teachBack)).not.toBeInTheDocument(); // moved to beat 15, not shown here
-  });
-
-  it('beat 15: the parent\'s own teach-back turn — clean register, one prompt, one action, feeds the real M2b attestation, then returns to the child', async () => {
-    const user = userEvent.setup();
-    renderShell();
-    await enterStage(user, 'yes');
-    await user.click(screen.getByText(ui.predictionSkip));
-    await pickClearAndReachJudge(user);
-    await passLayer0Gate(user);
-    await deepenLayer0(user);
-    await reachRoot(user, 'yes');
-    await readRootAndTip(user);
-    await waitFor(() => {
-      expect(screen.getByText(ui.stageHandoffGiven)).toBeInTheDocument();
-    });
+    expect(screen.queryByText(ui.handoffSkip)).not.toBeInTheDocument();
     await user.click(screen.getByText(ui.stageHandoffGiven));
 
-    // Clean parent register: the mission's own authored teach-back line, plus おうちトーク as
-    // read-only context, ONE dedicated action — never the generic handoffContinue/m2ConfirmAction.
+    // Parent register: one prompt, one primary action — never the dense dashboard's own
+    // secondary controls (Toolbox/Bank/M0/M5) competing with it.
     await waitFor(() => {
       expect(screen.getByText(chanto.teachBack)).toBeInTheDocument();
     });
-    expect(screen.getByText(chanto.ouchiTalk)).toBeInTheDocument();
     expect(screen.getByText(ui.stageParentGotItLabel)).toBeInTheDocument();
-    const parentRegister = screen.getByText(chanto.teachBack).closest('.mission-shell__wrapper--parent');
-    expect(parentRegister).not.toBeNull();
-
+    expect(screen.queryByText(ui.toolboxHeading)).not.toBeInTheDocument();
+    expect(screen.queryByText(ui.bankHubButton)).not.toBeInTheDocument();
+    expect(screen.queryByText(ui.m5Prompt)).not.toBeInTheDocument();
     let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
-    expect(saved.profiles[0].milestones?.M2).toBeUndefined(); // not yet confirmed
-
+    expect(saved.profiles[0].milestones?.M2).toBeUndefined();
     await user.click(screen.getByText(ui.stageParentGotItLabel));
 
-    // -> explicit return to the child register: the ordinary parent screen, M2b already
-    // confirmed by that one なるほど！ tap (the real applyM2Confirmed path, not a new mechanism).
-    expect(screen.getByText(ui.parentScreenHeading)).toBeInTheDocument();
-    expect(screen.getByText(ui.m2ConfirmedMessage)).toBeInTheDocument();
-    expect(screen.queryByText(ui.m2ConfirmAction)).not.toBeInTheDocument();
+    // -> persistent, single "give it back" action — real M2b attestation already recorded.
+    expect(screen.getByText(ui.stageReturnToChild)).toBeInTheDocument();
+    expect(screen.queryByText(ui.parentScreenHeading)).not.toBeInTheDocument(); // never the dashboard
     saved = JSON.parse(localStorage.getItem('m-app.v1')!);
     expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: expect.any(Number) });
-  });
 
+    await user.click(screen.getByText(ui.stageReturnToChild));
+    expect(screen.getByText(ui.completeHeading)).toBeInTheDocument();
+  });
+});
+
+describe('Mission 1 continuous stage — completion and map return', () => {
   it('completion returns to the map: the finished depth shows the root marker, the next depth becomes current', async () => {
     const user = userEvent.setup();
     renderShell();
@@ -352,11 +361,9 @@ describe('Mission 1 continuous stage (WO-24, AD-07 prototype)', () => {
     await reachRoot(user, 'solo');
     await readRootAndTip(user);
 
-    // Solo landed on the parent screen; its own final action uses Mission 1's "return to child" copy.
     await waitFor(() => {
-      expect(screen.getByText(ui.stageReturnToChild)).toBeInTheDocument();
+      expect(screen.getByText(ui.completeHeading)).toBeInTheDocument();
     });
-    await user.click(screen.getByText(ui.stageReturnToChild));
     await user.click(screen.getByText(ui.completeBackToMapLabel));
 
     expect(screen.getByText(ui.courseHomeHeading)).toBeInTheDocument();
@@ -369,7 +376,7 @@ describe('Mission 1 continuous stage (WO-24, AD-07 prototype)', () => {
 });
 
 describe('Mission 1 stage — guidance (AD-07 §D per-verb thresholds, persisted per profile)', () => {
-  it('えらぶ steps SHOW -> NUDGE at its 1st use and persists across a reload', async () => {
+  it('えらぶ/みきわめる counts accumulate correctly and persist across a reload', async () => {
     const user = userEvent.setup();
     renderShell();
     await enterStage(user);
@@ -411,14 +418,12 @@ describe('Mission 1 stage — engine parity (mastery stays first-attempt only, n
       />,
     );
     await user.click(screen.getByText('『ちゃんと』って、どういういみ？'));
-    await user.click(screen.getByText('『ちゃんと』は、きちんとすることだよ。')); // slot resolution read
-    await user.click(screen.getByText('『ちゃんと』は、きちんとすることだよ。')); // layer 0's own opening read
+    await user.click(screen.getByText('『ちゃんと』は、きちんとすることだよ。')); // one tap -> JUDGE
     await user.click(screen.getByText(ui.judgeNotEnough));
     const [target] = document.querySelectorAll('.choice-tray .question-chip');
     await user.click(target as HTMLElement);
 
-    await user.click(screen.getByText('ロボは何がすき？')); // offtopic FIRST
-    await user.click(screen.getByText('ぼくは今『ちゃんと』の話をしてるよ。'));
+    await clickNonDeepenAndReadReply(user, 'ロボは何がすき？', 'ぼくは今『ちゃんと』の話をしてるよ。'); // offtopic FIRST
     await user.click(screen.getByText('どういうこと？')); // deepen SECOND — never the first play here
 
     await waitFor(() => {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type {
   DigCard, DigPhase, Mission, ModuleUiStrings, SlotAssemblyPhase, SlotId,
 } from '../engine/types';
@@ -116,6 +116,13 @@ export function MissionStage({
     sfx.playBubblePop();
     onGuidanceUse('yomu');
     if (isTerminalArchetype(slotResolved!.archetype.claims)) {
+      // WO-25 #1: chanto's own authored convention is that the slot resolution's terminal
+      // robotSays and dig layer 0's own opening robotSays are the SAME statement, re-opened for
+      // digging — treating them as two separately-tapped bubbles read as "nothing happened" on
+      // the first tap (the synthetic-child audit's exact finding). One tap on the resolved
+      // answer now advances all the way to whatever comes after layer 0's own context (JUDGE,
+      // or a prediction battle) — the child never has to tap the same line twice.
+      setAnswerRead(true);
       setPart('dig');
     } else {
       setSlotResolved(null);
@@ -135,17 +142,33 @@ export function MissionStage({
   const [state, setState] = useState<DigState>(() => initDig(digPhase));
   const [answerRead, setAnswerRead] = useState(false);
   const [flatReplyRead, setFlatReplyRead] = useState(false);
-  const [settledIds, setSettledIds] = useState<ReadonlySet<string>>(new Set());
+  /** WO-25 #4: cards that have hit a stone THIS layer — permanent (until the layer changes),
+   *  visible, disabled, badged. Never filtered out of the tray's own item list (that was the
+   *  bug: filtering by this same set before the settle animation ever got a chance to render
+   *  it made a played card look like it simply vanished). */
+  const [blockedIds, setBlockedIds] = useState<ReadonlySet<string>>(new Set());
+  /** WO-25 #4: the ONE card currently mid-impact (the brief settle bounce, between driving down
+   *  and becoming permanently `blocked`) — transient, cleared once it joins blockedIds. */
+  const [impactingId, setImpactingId] = useState<string | null>(null);
+  /** WO-25 #4: true for the short settle beat right after a non-deepen impact, before the
+   *  robot's own flatReply dialogue actually appears — so the child sees the chip hit the stone
+   *  BEFORE being asked to read anything, instead of both happening in the same instant. */
+  const [flatReplyPending, setFlatReplyPending] = useState(false);
   const [battledLayers, setBattledLayers] = useState<ReadonlySet<number>>(new Set());
   const [descending, setDescending] = useState(false);
+  /** WO-25 #3/#4: a brief, synchronized flash on the world itself at the exact moment a dig
+   *  action resolves — 'deepen' (the ground cracking open) or 'stone' (a dull, blocked thud) —
+   *  so the world's own reaction reads as caused BY the chip's action, not as an unrelated
+   *  background change that merely happens to follow it. */
+  const [worldImpact, setWorldImpact] = useState<'deepen' | 'stone' | null>(null);
   const [judgeStallKey, setJudgeStallKey] = useState(0);
   const [handStallKey, setHandStallKey] = useState(0);
-  const lastPlayedCardId = useRef<string | null>(null);
 
   useEffect(() => {
     setAnswerRead(false);
-    setSettledIds(new Set());
-    lastPlayedCardId.current = null;
+    setBlockedIds(new Set());
+    setImpactingId(null);
+    setFlatReplyPending(false);
   }, [state.layer, state.atRoot]);
   useEffect(() => {
     setFlatReplyRead(false);
@@ -153,23 +176,21 @@ export function MissionStage({
 
   const [drivingCardId, setDrivingCardId] = useState<string | null>(null);
 
-  /** AD-07 §B/F: "the question is the shovel." A deepen pick visibly drives into the soil
-   *  BEFORE the world descends — commitHandCard (the actual state transition) runs only once
-   *  that drive animation has had time to play. A non-deepen pick settles immediately; its own
-   *  animation runs on the settled (already-committed) chip instead, exactly as before. */
+  /** WO-24/25 (AD-07 §B/F): "the question is the shovel." EVERY hand pick — deepen or not —
+   *  drives visibly toward the soil first (~260ms, still fully in view, never an instant fade)
+   *  before anything commits. Only once that drive completes does the outcome resolve: a
+   *  deepen play cracks the world open and descends; a non-deepen play hits stone, settles,
+   *  and stays visible with its own badge — no outcome is ever revealed before the child has
+   *  seen the chip actually reach the ground. */
   function playHandCard(cardId: string) {
     const layer = digPhase.layers[state.layer];
     const card = layer?.hand.find((c) => c.id === cardId);
-    if (!card || drivingCardId) return;
-    if (card.tag === 'deepen') {
-      setDrivingCardId(cardId);
-      setTimeout(() => {
-        setDrivingCardId(null);
-        commitHandCard(card);
-      }, 260);
-    } else {
+    if (!card || drivingCardId || impactingId) return;
+    setDrivingCardId(cardId);
+    setTimeout(() => {
+      setDrivingCardId(null);
       commitHandCard(card);
-    }
+    }, 260);
   }
 
   function commitHandCard(card: DigCard) {
@@ -185,16 +206,28 @@ export function MissionStage({
     if (next.finished) {
       track('root_reached');
       sfx.playRootChime();
+      setWorldImpact('deepen');
+      setTimeout(() => setWorldImpact(null), 250);
     } else if (next.layer !== prevLayer) {
+      // Deepen: impact -> the world itself cracks open and descends, synchronized.
       track('dig_layer_reached', { layer: next.layer + 1 });
       sfx.playDeepen();
+      setWorldImpact('deepen');
       setDescending(true);
+      setTimeout(() => setWorldImpact(null), 250);
       setTimeout(() => setDescending(false), 400);
     } else {
-      // Non-deepen: the chip hits stone and settles out of the tray (AD-07 §5).
-      lastPlayedCardId.current = card.id;
+      // Non-deepen: impact -> a visible stone, not a vanishing chip (AD-07 §5/WO-25 #4).
       sfx.playStone();
-      setSettledIds((prev) => new Set(prev).add(card.id));
+      setWorldImpact('stone');
+      setTimeout(() => setWorldImpact(null), 250);
+      setImpactingId(card.id);
+      setFlatReplyPending(true);
+      setTimeout(() => {
+        setImpactingId(null);
+        setBlockedIds((prev) => new Set(prev).add(card.id));
+        setFlatReplyPending(false);
+      }, 300);
     }
     onGuidanceUse('erabu');
     setHandStallKey((k) => k + 1);
@@ -299,6 +332,9 @@ export function MissionStage({
     } else {
       tray = (
         <div className="stage__hand-tray">
+          {/* WO-25 #2: names the decision explicitly (L2 context) — the choice group below
+             stays the single L1; guidance may spotlight the group, never one chip over another. */}
+          <p className="stage__tray-prompt">{ui.stageQuestionPrompt}</p>
           <GuidancePulse level={slotStalled ? 'show' : slotGuidance} />
           {slotPhase.slots.map((slot) => (
             <ChoiceTray
@@ -317,19 +353,24 @@ export function MissionStage({
     if (state.challenge) {
       world = <SpeechBubble speaker={state.challenge.challenger} text={state.challenge.asks} onAdvance={dismissChallenge} />;
     } else if (!answerRead) {
-      // AD-07 §13/beat 11: "the root has a clear reveal" — the one moment the bubble itself
-      // carries the reveal motion, on top of the world's own soil-color depth change.
+      // AD-07 §13/beat 11 + WO-25 #5: the root gets its own explicit discovery label — "found
+      // it", not just a colour change — on top of the bubble's own reveal motion.
       world = (
-        <SpeechBubble
-          speaker={ui.stageRobotName}
-          text={currentAnswer(digPhase, state)}
-          onAdvance={() => {
-            if (state.atRoot) { onRootRead(); return; }
-            onGuidanceUse('yomu');
-            setAnswerRead(true);
-          }}
-          className={state.atRoot ? 'stage__root-reveal' : undefined}
-        />
+        <>
+          {state.atRoot && (
+            <p className="stage__root-discovery stage__root-reveal">{ui.stageRootDiscoveryLabel}</p>
+          )}
+          <SpeechBubble
+            speaker={ui.stageRobotName}
+            text={currentAnswer(digPhase, state)}
+            onAdvance={() => {
+              if (state.atRoot) { onRootRead(); return; }
+              onGuidanceUse('yomu');
+              setAnswerRead(true);
+            }}
+            className={state.atRoot ? 'stage__root-reveal' : undefined}
+          />
+        </>
       );
     } else if (digPendingBattle) {
       world = (
@@ -367,14 +408,20 @@ export function MissionStage({
       );
     } else if (state.gate === 'gapNaming') {
       tray = (
-        <ChoiceTray
-          items={state.gapChoices!.map((c, i) => ({ id: String(i), text: c.text }))}
-          onSelect={(id) => gapChosen(Number(id))}
-        />
+        <div className="stage__hand-tray">
+          {/* WO-25 #2: "何が まだ わからない？" — names the Gap Naming decision explicitly. */}
+          <p className="stage__tray-prompt">{ui.stageGapPrompt}</p>
+          <ChoiceTray
+            items={state.gapChoices!.map((c, i) => ({ id: String(i), text: c.text }))}
+            onSelect={(id) => gapChosen(Number(id))}
+          />
+        </div>
       );
     } else if (state.gate === 'blindCommit') {
       tray = <ChoiceTray items={[{ id: 'commit', text: ui.blindCommit }]} onSelect={blindCommitTapped} />;
-    } else if (state.flatReply && !flatReplyRead) {
+    } else if (state.flatReply && !flatReplyRead && !flatReplyPending) {
+      // WO-25 #4: the settle/impact beat (below) has already played by the time this shows —
+      // the robot's own authored reply, never a red X / 不正解 verdict.
       world = (
         <SpeechBubble
           speaker={ui.stageRobotName}
@@ -388,6 +435,9 @@ export function MissionStage({
     } else {
       tray = (
         <div className="stage__hand-tray">
+          {/* WO-25 #2: ui.stageQuestionPrompt names the hand decision explicitly, every time
+             the tray is showing (first reveal AND after a stone recovery). */}
+          <p className="stage__tray-prompt">{ui.stageQuestionPrompt}</p>
           <GuidancePulse level={handStalled ? 'show' : handGuidance} />
           {state.awaitingSelfReport && (
             <ChoiceTray
@@ -399,14 +449,21 @@ export function MissionStage({
               onSelect={(id) => selfReportTapped(id as SelfReportKind)}
             />
           )}
+          {/* WO-25 #4: every hand card stays in the tray, even once blocked — a stone-hit chip
+             is a visible, disabled, badged marker of "already tried," never removed. */}
           <ChoiceTray
-            items={digPhase.layers[state.layer]!.hand
-              .filter((c) => !settledIds.has(c.id))
-              .map((c) => ({ id: c.id, text: c.text }))}
+            items={digPhase.layers[state.layer]!.hand.map((c) => ({ id: c.id, text: c.text }))}
             onSelect={playHandCard}
-            settlingId={lastPlayedCardId.current}
+            settlingId={impactingId}
             drivingId={drivingCardId}
+            blockedIds={blockedIds}
           />
+          {blockedIds.size > 0 && flatReplyRead && (
+            // WO-25 #4's own "short neutral recovery cue" — the SAME continuation nudge WO-23
+            // already introduced for this exact moment (existing UI-string architecture, no new
+            // field needed), now shown alongside the tray it's inviting another pick from.
+            <p className="stage__continue-prompt">{ui.digContinuePrompt}</p>
+          )}
         </div>
       );
     }
@@ -429,7 +486,14 @@ export function MissionStage({
 
   return (
     <div className={`stage${entering ? ' is-diving' : ''}${rising ? ' is-rising' : ''}`}>
-      <div className={`stage__world${descending ? ' is-descending' : ''}`} data-depth={depthAttr}>
+      <div
+        className={[
+          'stage__world',
+          descending ? 'is-descending' : '',
+          worldImpact ? `is-impact-${worldImpact}` : '',
+        ].filter(Boolean).join(' ')}
+        data-depth={depthAttr}
+      >
         {part !== 'tip' && (
           <ol className="stage__meter" aria-label="depth">
             {Array.from({ length: depthTotal }, (_, i) => (

@@ -90,7 +90,10 @@
     "stageJudgeStallPrompt": "きみは どう おもう？",
     "stageRobotName": "ロボ",
     "stageNextLabel": "つぎへ",
-    "stageParentGotItLabel": "なるほど！"
+    "stageParentGotItLabel": "なるほど！",
+    "stageGapPrompt": "なにが まだ わからない？",
+    "stageQuestionPrompt": "どの しつもんで ほる？",
+    "stageRootDiscoveryLabel": "ねっこを はっけん！"
   },
   "cardTypes": {
     "odai": {

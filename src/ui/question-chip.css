@@ -50,6 +50,8 @@ button.question-chip {
 
 .question-chip.is-selected { outline: 3px solid var(--ink, #1c1c1c); outline-offset: 2px; }
 .question-chip.is-disabled { opacity: 0.45; cursor: default; }
+.question-chip__badge { flex: none; font-size: 1rem; line-height: 1; }
+.question-chip.is-blocked { opacity: 0.55; cursor: default; background: #efe6d8; }
 
 @media (max-width: 480px) {
   .question-chip { min-height: 64px; font-size: 0.95rem; }

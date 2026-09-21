@@ -249,6 +249,16 @@ export interface ModuleUiStrings {
   // AD-07 beat 15: the parent's own dedicated teach-back attestation, distinct from
   // handoffContinue/m2ConfirmAction — never reused for anything else.
   stageParentGotItLabel: string;
+  // WO-25 #2: names the GAP-naming decision explicitly — L2 context sitting above the choice
+  // group (the group itself stays the single L1). Fixes the audit's "child could infer the
+  // task, but the interface never named it" finding.
+  stageGapPrompt: string;
+  // WO-25 #2: names the question/hand-selection decision explicitly, same L2 role. Reused for
+  // both the very first question choice and every dig-layer hand.
+  stageQuestionPrompt: string;
+  // WO-25 #5: the explicit "you found it" label at ROOT — discovery itself is the reward, never
+  // a score/star/streak. Shown alongside the root's own reveal motion, before 今日のコツ.
+  stageRootDiscoveryLabel: string;
 }
 
 /**

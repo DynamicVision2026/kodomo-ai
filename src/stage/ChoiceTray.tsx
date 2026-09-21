@@ -11,13 +11,18 @@ export interface ChoiceTrayItem {
 export interface ChoiceTrayProps {
   items: ChoiceTrayItem[];
   onSelect: (id: string) => void;
-  /** AD-07 §5: a card that just resolved non-deepen plays its settle animation here, then
-   *  disappears from the tray on the caller's own next render — never a red X, never removed
-   *  mid-animation (which would cut the feedback off). */
+  /** AD-07 §5/WO-25 #4: a card that just resolved non-deepen plays its settle/impact animation
+   *  here, right before it becomes permanently `blocked` — never removed from the tray (WO-25's
+   *  own "used QuestionChip settles at/near the stone as already tried" — a persistent marker,
+   *  not a disappearance). */
   settlingId?: string | null;
-  /** AD-07 §B/F: "the question is the shovel" — the just-tapped deepen card drives down into
-   *  the soil before the world itself descends a layer. */
+  /** WO-24/25 §B/F: "the question is the shovel" — the just-tapped card drives toward the soil
+   *  before the world (deepen) or a stone (non-deepen) responds. */
   drivingId?: string | null;
+  /** WO-25 #4: cards that have already hit a stone this layer — kept visible, disabled, badged,
+   *  never removed from the array (fixes the earlier bug where a settled card was filtered out
+   *  of `items` before its own settle animation ever had a chance to render). */
+  blockedIds?: ReadonlySet<string>;
 }
 
 /**
@@ -26,21 +31,27 @@ export interface ChoiceTrayProps {
  * moment in Mission 1's stage: the initial question pick, Gap Naming, the dig hand, and
  * Blind-first's single-button commit tray.
  */
-export function ChoiceTray({ items, onSelect, settlingId, drivingId }: ChoiceTrayProps) {
+export function ChoiceTray({ items, onSelect, settlingId, drivingId, blockedIds }: ChoiceTrayProps) {
   return (
     <div className="choice-tray stage__beat-enter">
-      {items.map((item) => (
-        <QuestionChip
-          key={item.id}
-          kind={item.kind ?? 'dig'}
-          text={item.text}
-          disabled={settlingId === item.id || drivingId === item.id}
-          className={
-            settlingId === item.id ? 'is-settling' : drivingId === item.id ? 'is-driving' : undefined
-          }
-          onClick={() => onSelect(item.id)}
-        />
-      ))}
+      {items.map((item) => {
+        const blocked = blockedIds?.has(item.id) ?? false;
+        const settling = settlingId === item.id;
+        const driving = drivingId === item.id;
+        return (
+          <QuestionChip
+            key={item.id}
+            kind={item.kind ?? 'dig'}
+            text={item.text}
+            disabled={blocked || settling || driving}
+            badge={blocked ? '🪨' : undefined}
+            className={
+              settling ? 'is-settling' : driving ? 'is-driving' : blocked ? 'is-blocked' : undefined
+            }
+            onClick={() => onSelect(item.id)}
+          />
+        );
+      })}
     </div>
   );
 }

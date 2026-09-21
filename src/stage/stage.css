@@ -36,6 +36,23 @@
 .stage__world[data-depth='3'] { background: var(--soil-3, #a6845c); color: #fff; }
 .stage__world[data-depth='root'] { background: var(--root, #c8922e); color: #fff; }
 
+/* WO-25 #3/#4: the world's own reaction at the exact instant a dig action resolves — makes the
+ * background change read as CAUSED by the chip, not merely something that happens afterward. */
+@keyframes stage-impact-deepen {
+  0%   { box-shadow: inset 0 0 0 0 rgba(255, 255, 255, 0); }
+  30%  { box-shadow: inset 0 0 60px 10px rgba(255, 255, 255, 0.55); }
+  100% { box-shadow: inset 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+@keyframes stage-impact-stone {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-3px); }
+  40%  { transform: translateX(3px); }
+  60%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+.stage__world.is-impact-deepen { animation: stage-impact-deepen 250ms ease-out both; }
+.stage__world.is-impact-stone { animation: stage-impact-stone 250ms ease-out both; }
+
 .stage__meter {
   display: flex;
   gap: var(--space-2, 8px);
@@ -69,6 +86,25 @@
   background: var(--surface, #f7f3ec);
   color: var(--ink, #2b2622);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* WO-25 #2: L2 context naming the decision the tray below is asking for — never itself a
+ * choice, never part of the L1 group. */
+.stage__tray-prompt {
+  margin: 0 0 var(--space-2, 8px);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink-soft, #6b5d4f);
+  text-align: center;
+}
+/* WO-25 #4: the short recovery nudge (ui.digContinuePrompt) shown once a stone-blocked chip is
+ * visible and its own recovery line has been read — inviting another pick, never a verdict. */
+.stage__continue-prompt {
+  margin: var(--space-2, 8px) 0 0;
+  font-size: 0.85rem;
+  color: var(--root, #c8922e);
+  font-weight: 700;
+  text-align: center;
 }
 
 /* ---- dive (Map -> Mission, ~500ms) --------------------------------------------------------- */
@@ -116,6 +152,17 @@
   to   { opacity: 1; transform: scale(1); }
 }
 .stage__root-reveal { animation: stage-reveal 800ms ease both; }
+
+/* WO-25 #5: "ねっこを はっけん！" — the explicit discovery moment. No score, no star, no
+ * confetti; the label itself, plainly, is the reward. */
+.stage__root-discovery {
+  max-width: 28rem;
+  margin: 0 auto var(--space-2, 8px);
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
 
 /* ---- enter (tray/bubble, 150-200ms) ------------------------------------------------------------ */
 @keyframes beat-enter {
@@ -215,7 +262,8 @@
   .stage.is-diving, .stage.is-rising, .stage__world.is-descending,
   .question-chip.is-settling, .question-chip.is-driving,
   .stage__root-reveal, .stage__beat-enter, .stage__pulse,
-  .stage__judge-buttons--show .stage__judge-button {
+  .stage__judge-buttons--show .stage__judge-button,
+  .stage__world.is-impact-deepen, .stage__world.is-impact-stone {
     animation: none !important;
   }
 }
