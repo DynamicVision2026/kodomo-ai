@@ -1,19 +1,37 @@
 import { useEffect, useRef, useState } from 'react';
 import './guidance.css';
 
-/** AD-07 §9: SHOW -> NUDGE -> FADE -> INDEPENDENT, per verb. Session-local for this prototype —
- *  not yet written into the profile's own storage (see docs/family-test-mode.md-style note in
- *  MissionStage's own header comment; reported as a deviation, not silently dropped). */
+/** AD-07 §9: SHOW -> NUDGE -> FADE -> INDEPENDENT, per verb, per profile. */
 export type GuidanceLevel = 'show' | 'nudge' | 'fade' | 'independent';
 
-const LEVELS: GuidanceLevel[] = ['show', 'nudge', 'fade', 'independent'];
+/** AD-07 §D: the three non-diegetic-guided verbs Mission 1's stage exercises. わたす is excluded
+ *  — AD-07 gives it no SHOW/NUDGE/FADE curve ("always explicit... the instruction simply
+ *  shortens"), and it's a single one-time full-screen curtain, not a repeated decision. */
+export type StageVerb = 'yomu' | 'erabu' | 'mikiwameru';
 
-/** One successful, unprompted use of a verb steps its guidance down one level, permanently for
- *  this session (never back up — AD-07 never describes guidance re-escalating on its own,
- *  only the stall bump below, which is temporary). */
-export function useGuidanceLevel(uses: number): GuidanceLevel {
-  const idx = Math.min(uses, LEVELS.length - 1);
-  return LEVELS[idx]!;
+/** Persisted on the active profile (`Profile.guidance`, src/engine/storage.ts) — how many times
+ *  this profile has completed each verb, ever. A plain count, not itself a level: the level is
+ *  always re-derived from it via `guidanceLevelFor`, so nothing here needs migrating if AD-07's
+ *  own thresholds ever change. */
+export type GuidanceUses = Partial<Record<StageVerb, number>>;
+
+/** AD-07 §D's own advancement table — SHOW ends at the Nth use, NUDGE at the Mth, FADE at the
+ *  Pth, INDEPENDENT after. [N, M, P] per verb. */
+const THRESHOLDS: Record<StageVerb, readonly [number, number, number]> = {
+  yomu: [1, 3, 6],
+  erabu: [1, 3, 5],
+  mikiwameru: [1, 2, 4],
+};
+
+/** Derives the current guidance level for one verb from this profile's own use count — never
+ *  steps back down except via the temporary stall bump `useStall` reports separately. */
+export function guidanceLevelFor(verb: StageVerb, uses: GuidanceUses): GuidanceLevel {
+  const n = uses[verb] ?? 0;
+  const [nudgeAt, fadeAt, independentAt] = THRESHOLDS[verb];
+  if (n < nudgeAt) return 'show';
+  if (n < fadeAt) return 'nudge';
+  if (n < independentAt) return 'fade';
+  return 'independent';
 }
 
 /**

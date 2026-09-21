@@ -93,6 +93,14 @@
 }
 .stage__world.is-descending { animation: stage-descend 400ms ease both; }
 
+/* ---- drive (the selected chip drives down into the soil before a deepen descent, ~260ms) ------
+ * AD-07's own central metaphor: "the question is the shovel." */
+@keyframes chip-drive {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(18px) scale(0.85); opacity: 0; }
+}
+.question-chip.is-driving { animation: chip-drive 260ms ease-in both; pointer-events: none; }
+
 /* ---- settle (a chip hits stone, ~250ms) ------------------------------------------------------ */
 @keyframes chip-settle {
   0%   { transform: translateX(0) rotate(0deg); }
@@ -124,6 +132,31 @@
   line-height: 1.6;
   opacity: 0.85;
 }
+
+/* AD-07 beat 13: "one line, large" — not a dialogue bubble, the one non-dialogue moment that
+ * keeps a real button (.stage__next-button, in the tray below). */
+.stage__tip-line {
+  max-width: 28rem;
+  margin: var(--space-6, 24px) auto 0;
+  padding: 0 var(--space-4, 16px);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.6;
+  text-align: center;
+}
+.stage__next-button {
+  align-self: center;
+  min-height: 56px;
+  padding: var(--space-3, 12px) var(--space-8, 32px);
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--root, #c8922e);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+.stage__next-button:disabled { opacity: 0.6; cursor: default; }
 
 .stage__hand-tray {
   position: relative;
@@ -160,6 +193,17 @@
   text-align: center;
 }
 
+/* AD-07 §4C/§9: SHOW — both JUDGE buttons pulse, out of phase with each other, so neither is
+ * ever the one that looks "more active." NUDGE — a plain static glow, no motion. FADE/
+ * INDEPENDENT — no non-diegetic decoration (the buttons themselves are enough by then). */
+.stage__judge-buttons--show .stage__judge-button {
+  animation: stage-pulse 1.4s ease-in-out infinite;
+}
+.stage__judge-buttons--show .stage__judge-button--no { animation-delay: 0.7s; }
+.stage__judge-buttons--nudge .stage__judge-button {
+  box-shadow: 0 0 0 3px rgba(200, 146, 46, 0.25);
+}
+
 /* ---- pulse (guidance only — never on a specific answer, see Guidance.tsx) --------------------- */
 @keyframes stage-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(200, 146, 46, 0.45); }
@@ -169,7 +213,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .stage.is-diving, .stage.is-rising, .stage__world.is-descending,
-  .question-chip.is-settling, .stage__root-reveal, .stage__beat-enter, .stage__pulse {
+  .question-chip.is-settling, .question-chip.is-driving,
+  .stage__root-reveal, .stage__beat-enter, .stage__pulse,
+  .stage__judge-buttons--show .stage__judge-button {
     animation: none !important;
   }
 }

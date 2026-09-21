@@ -18,6 +18,20 @@
   line-height: 1.7;
 }
 
+/* WO-24 (AD-07 beat 15/H): the parent register — white/clean, no soil, distinct within one
+ * second of the child's own soil-toned stage. */
+.mission-shell__wrapper--parent {
+  background: var(--parent-surface, #fff);
+  color: var(--parent-ink, #2b2622);
+  min-height: 100dvh;
+  padding-top: 3rem;
+  font-family: var(--font-parent, system-ui), sans-serif;
+}
+.mission-shell__stage-teachback-ouchi {
+  font-size: 0.95rem;
+  color: var(--ink-soft, #6b5d4f);
+}
+
 .mission-shell__wrapper button,
 .mission-shell__coop-choices button {
   padding: 0.6rem 1.4rem;

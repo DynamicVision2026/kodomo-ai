@@ -19,7 +19,6 @@ import { Dig, type UseEvidence, type BlindSelfReportEvidence, type DigResult } f
 import { Handoff } from '../templates/handoff';
 import { Ruby } from '../engine/ruby';
 import { MissionStage } from '../stage/MissionStage';
-import { SpeechBubble } from '../stage/SpeechBubble';
 import './mission-shell.css';
 
 /** Every mission a module ships (any stage) + the order `pickNextMission` walks. Optional: a
@@ -86,6 +85,9 @@ type Screen =
   | { kind: 'ouchi' }
   | { kind: 'perspective' }
   | { kind: 'handoff' }
+  /** WO-24 (AD-07 beat 15): Mission 1's own parent-turn teach-back — reached only from the
+   *  Mission-1 co-play 'handoff' screen's own continue action. */
+  | { kind: 'stage-teachback' }
   | { kind: 'parent' }
   | { kind: 'complete' }
   | { kind: 'bank-select' };
@@ -245,6 +247,18 @@ export function MissionShell({
     });
   }
 
+  /** WO-24 (AD-07 §D): one verb inside Mission 1's continuous stage completed unprompted —
+   *  steps that verb's own guidance use count up by one, persisted on the profile
+   *  (Profile.guidance, src/engine/storage.ts). The stage itself re-derives SHOW/NUDGE/FADE/
+   *  INDEPENDENT from this count on every render (src/stage/Guidance.tsx's guidanceLevelFor) —
+   *  nothing here decides a level, this only ever counts. */
+  function guidanceUsed(verb: string) {
+    persistProfile((current) => ({
+      ...current,
+      guidance: { ...current.guidance, [verb]: (current.guidance?.[verb] ?? 0) + 1 },
+    }));
+  }
+
   /** WO-04 (Correction 01): a follow-up card was played — every tag, including sideways/repeat/
    *  offtopic, which establish play order (so a later deepen at the same layer correctly fails
    *  apt_use) but carry no move of their own. Only evidence with an attributable move is
@@ -385,16 +399,17 @@ export function MissionShell({
     }
   }
 
-  /** WO-24 (AD-07): MissionStage's own completion — fires once ROOT and 今日のコツ have both
-   *  been read inside the continuous scene, the same moment `completePhase(digResult)` +
-   *  advancing past the old 'tip' screen used to fire together. Marks the mission done exactly
-   *  as before; then, AD-07 §4D ("solo mode skips this sequence completely") — solo play goes
-   *  straight to the parent screen, co-play still walks the existing shared teach-back/おうちト
-   *  ーク/handoff screens unchanged (WO-24 §7's own sanctioned Child<->Parent hard transition). */
+  // WO-24 (AD-07): MissionStage's own completion — fires once ROOT and the tip beat have both
+  // been read inside the continuous scene, the same moment completePhase(digResult) plus
+  // advancing past the old tip screen used to fire together. Marks the mission done exactly as
+  // before; then, per AD-07 section 4D/beat 14 (solo mode skips this sequence completely) —
+  // solo play goes straight to the parent screen; co-play goes straight to the Mission-1-only
+  // handoff curtain, tip beat straight into HANDOFF, no separate teach-back/ouchi-talk screens
+  // in between (see the stage-teachback screen below for where teach-back moved to).
   function stageCompleted(digResult: DigResult) {
     digPhaseCompleted(digResult);
     markDone();
-    setScreen(solo ? { kind: 'parent' } : { kind: 'teachback' });
+    setScreen(solo ? { kind: 'parent' } : { kind: 'handoff' });
   }
 
   /** Mission Complete's own primary action — resolves the active profile's now-updated next
@@ -497,6 +512,8 @@ export function MissionShell({
         ui={ui}
         solo={solo}
         moveProgress={profile?.moveProgress ?? {}}
+        guidanceUses={profile?.guidance ?? {}}
+        onGuidanceUse={guidanceUsed}
         onMoveRendered={moveRendered}
         onUse={moveUsed}
         onBlindCommit={blindCommitted}
@@ -540,22 +557,16 @@ export function MissionShell({
     );
   }
 
+  // WO-24 (AD-07 beat 13/14): Mission 1's own tip->handoff transition skips 'teachback'/'ouchi'
+  // entirely (stageCompleted routes co-play straight to 'handoff') — its teach-back moment now
+  // lives on the parent's own turn instead (see 'stage-teachback' below). Every other mission's
+  // sequence through these two screens is unaffected.
   if (screen.kind === 'teachback') {
     const advance = () => {
       addStamp();
       track('teachback_done');
       setScreen({ kind: 'ouchi' });
     };
-    // WO-24 (AD-07 §4A よむ): Mission 1 only — the dialogue bubble itself is the interaction
-    // target, no つづける/skip button pair. Every other mission keeps the original two-button
-    // wrapper screen below, completely unchanged.
-    if (mission.id === continuousStageMissionId) {
-      return (
-        <div className="mission-shell__wrapper">
-          <SpeechBubble text={mission.teachBack} onAdvance={advance} />
-        </div>
-      );
-    }
     return (
       <div className="mission-shell__wrapper">
         <p><Ruby text={mission.teachBack} /></p>
@@ -578,13 +589,6 @@ export function MissionShell({
 
   if (screen.kind === 'ouchi') {
     const advance = () => setScreen({ kind: mission.perspective ? 'perspective' : 'handoff' });
-    if (mission.id === continuousStageMissionId) {
-      return (
-        <div className="mission-shell__wrapper">
-          <SpeechBubble text={mission.ouchiTalk} onAdvance={advance} />
-        </div>
-      );
-    }
     return (
       <div className="mission-shell__wrapper">
         <p><Ruby text={mission.ouchiTalk} /></p>
@@ -614,16 +618,18 @@ export function MissionShell({
       track('parent_screen_view');
       setScreen({ kind: 'parent' });
     };
-    // WO-24 (AD-07 §4D わたす): Mission 1 only — "child sees only [the prompt] and one action."
-    // Solo already never reaches this screen for Mission 1 (stageCompleted routes solo straight
-    // to 'parent'), so there is nothing to skip here; every other mission keeps the original
-    // generic Handoff (prompt + continue + skip) below, completely unchanged.
+    // WO-24 (AD-07 §4D わたす / beat 14-15): Mission 1 only — "child sees only [the prompt] and
+    // one action." Solo already never reaches this screen for Mission 1 (stageCompleted routes
+    // solo straight to 'parent'). The continue action goes to the Mission-1-only parent-turn
+    // teach-back beat, not straight to the ordinary parent screen — every other mission keeps
+    // the original generic Handoff (prompt + continue + skip, straight to 'parent') below,
+    // completely unchanged.
     if (mission.id === continuousStageMissionId) {
       return (
         <Handoff
           prompt={ui.stageHandoffPrompt}
           continueLabel={ui.stageHandoffGiven}
-          onContinue={toParent}
+          onContinue={() => setScreen({ kind: 'stage-teachback' })}
         />
       );
     }
@@ -635,6 +641,32 @@ export function MissionShell({
         onContinue={toParent}
         onSkip={toParent}
       />
+    );
+  }
+
+  // WO-24 (AD-07 beat 15): the parent's own turn — clean parent register, ONE teach-back
+  // prompt (the mission's own authored teachBack line, preserved verbatim — the ouchiTalk line
+  // sits alongside it as read-only context, not a second decision), ONE dedicated action. That
+  // action is the real M2b attestation (src/engine/milestones.ts's applyM2Confirmed, via the
+  // exact same confirmM2b() every mission's parent screen already uses) — a parent hearing
+  // their child teach it back IS the M2b moment AD-07 describes, not a new mechanism. Reached
+  // only from Mission 1's own co-play 'handoff' screen.
+  if (screen.kind === 'stage-teachback') {
+    const gotIt = () => {
+      addStamp();
+      track('teachback_done');
+      confirmM2b();
+      track('parent_screen_view');
+      setScreen({ kind: 'parent' });
+    };
+    return (
+      <div className="mission-shell__wrapper mission-shell__wrapper--parent">
+        <p><Ruby text={mission.teachBack} /></p>
+        <p className="mission-shell__stage-teachback-ouchi"><Ruby text={mission.ouchiTalk} /></p>
+        <button type="button" onClick={gotIt}>
+          {ui.stageParentGotItLabel}
+        </button>
+      </div>
     );
   }
 

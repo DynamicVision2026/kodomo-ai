@@ -15,6 +15,9 @@ export interface ChoiceTrayProps {
    *  disappears from the tray on the caller's own next render — never a red X, never removed
    *  mid-animation (which would cut the feedback off). */
   settlingId?: string | null;
+  /** AD-07 §B/F: "the question is the shovel" — the just-tapped deepen card drives down into
+   *  the soil before the world itself descends a layer. */
+  drivingId?: string | null;
 }
 
 /**
@@ -23,7 +26,7 @@ export interface ChoiceTrayProps {
  * moment in Mission 1's stage: the initial question pick, Gap Naming, the dig hand, and
  * Blind-first's single-button commit tray.
  */
-export function ChoiceTray({ items, onSelect, settlingId }: ChoiceTrayProps) {
+export function ChoiceTray({ items, onSelect, settlingId, drivingId }: ChoiceTrayProps) {
   return (
     <div className="choice-tray stage__beat-enter">
       {items.map((item) => (
@@ -31,8 +34,10 @@ export function ChoiceTray({ items, onSelect, settlingId }: ChoiceTrayProps) {
           key={item.id}
           kind={item.kind ?? 'dig'}
           text={item.text}
-          disabled={settlingId === item.id}
-          className={settlingId === item.id ? 'is-settling' : undefined}
+          disabled={settlingId === item.id || drivingId === item.id}
+          className={
+            settlingId === item.id ? 'is-settling' : drivingId === item.id ? 'is-driving' : undefined
+          }
           onClick={() => onSelect(item.id)}
         />
       ))}

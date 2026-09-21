@@ -243,6 +243,12 @@ export interface ModuleUiStrings {
   // (DigLayer.earlyOk.challenger); the robot has no such field, so its name is fixed UI
   // chrome here instead (CI gate 3: no child-facing string lives in component code).
   stageRobotName: string;
+  // AD-07 beat 13: the large, non-dialogue きょうのコツ moment's one permitted generic
+  // continuation action — the sole surviving つぎへ, everywhere else replaced by tap-to-read.
+  stageNextLabel: string;
+  // AD-07 beat 15: the parent's own dedicated teach-back attestation, distinct from
+  // handoffContinue/m2ConfirmAction — never reused for anything else.
+  stageParentGotItLabel: string;
 }
 
 /**

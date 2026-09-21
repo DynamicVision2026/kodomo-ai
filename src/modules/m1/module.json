@@ -88,7 +88,9 @@
     "stageHandoffGiven": "わたした！",
     "stageReturnToChild": "こどもに もどす",
     "stageJudgeStallPrompt": "きみは どう おもう？",
-    "stageRobotName": "ロボ"
+    "stageRobotName": "ロボ",
+    "stageNextLabel": "つぎへ",
+    "stageParentGotItLabel": "なるほど！"
   },
   "cardTypes": {
     "odai": {

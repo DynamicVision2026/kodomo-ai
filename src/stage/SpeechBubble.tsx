@@ -7,6 +7,8 @@ export interface SpeechBubbleProps {
   /** Ruby markup allowed: {漢字|かんじ} */
   text: string;
   onAdvance: () => void;
+  /** Extra class(es) for the root element — e.g. the root-reveal motion. Never used for copy. */
+  className?: string;
 }
 
 /**
@@ -14,9 +16,13 @@ export interface SpeechBubbleProps {
  * on it advances. No 「つぎへ」/「続ける」 button ever sits next to it; the blinking ▼ is the only
  * affordance telling the child there's more to do here.
  */
-export function SpeechBubble({ speaker, text, onAdvance }: SpeechBubbleProps) {
+export function SpeechBubble({ speaker, text, onAdvance, className }: SpeechBubbleProps) {
   return (
-    <button type="button" className="speech-bubble stage__beat-enter" onClick={onAdvance}>
+    <button
+      type="button"
+      className={`speech-bubble stage__beat-enter${className ? ` ${className}` : ''}`}
+      onClick={onAdvance}
+    >
       {speaker && <span className="speech-bubble__speaker">{speaker}</span>}
       <span className="speech-bubble__text"><Ruby text={text} /></span>
       <span className="speech-bubble__more" aria-hidden="true">▼</span>

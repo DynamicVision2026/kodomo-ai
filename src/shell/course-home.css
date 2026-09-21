@@ -79,6 +79,19 @@
 .course-home__depth-robot {
   flex: none;
   font-size: 1.1rem;
+  display: inline-block;
+  /* WO-24 (AD-07 §E/§5): minimal current-site idle — a small foot-tap, never full character
+   * animation (deferred, see the mascot's own doc comment). Settling in at a NEW depth (the
+   * key change on React's own reconciliation) also replays this from its 0% state, reading as
+   * "moved here and is now idle" without needing a literal slide-between-depths animation. */
+  animation: course-home-robot-idle 1.6s ease-in-out infinite;
+}
+@keyframes course-home-robot-idle {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .course-home__depth-robot { animation: none; }
 }
 
 /* Depth colour deepens with progress through the shaft — soil-1 near the surface, soil-4 deep. */

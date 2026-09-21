@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type {
-  DigPhase, Mission, ModuleUiStrings, SlotAssemblyPhase, SlotId,
+  DigCard, DigPhase, Mission, ModuleUiStrings, SlotAssemblyPhase, SlotId,
 } from '../engine/types';
 import type { CardKind } from '../ui/cardKinds';
 import {
@@ -15,7 +15,7 @@ import { Ruby } from '../engine/ruby';
 import { Mascot, type MascotState } from '../shell/Mascot';
 import { SpeechBubble } from './SpeechBubble';
 import { ChoiceTray } from './ChoiceTray';
-import { GuidancePulse, useGuidanceLevel, useStall } from './Guidance';
+import { GuidancePulse, guidanceLevelFor, useStall, type GuidanceUses } from './Guidance';
 import { useStageSfx } from './audioHooks';
 import { PredictionBattle } from '../templates/prediction-battle';
 import type { DigResult, UseEvidence, BlindSelfReportEvidence } from '../templates/dig';
@@ -26,6 +26,12 @@ export interface MissionStageProps {
   ui: ModuleUiStrings;
   solo: boolean;
   moveProgress: MoveProgressMap;
+  /** AD-07 §D: this profile's own per-verb guidance use counts (Profile.guidance,
+   *  src/engine/storage.ts) — read-only here, SHOW/NUDGE/FADE/INDEPENDENT is re-derived from it
+   *  every render via `guidanceLevelFor`. */
+  guidanceUses: GuidanceUses;
+  /** A verb (よむ/えらぶ/みきわめる) was just completed unprompted — bump its persisted count. */
+  onGuidanceUse: (verb: 'yomu' | 'erabu' | 'mikiwameru') => void;
   onMoveRendered: (move: string) => void;
   onUse: (evidence: UseEvidence) => void;
   onBlindCommit: (move: string) => void;
@@ -61,8 +67,8 @@ function isTerminalArchetype(claims: string[]): boolean {
  * persisted to the profile's own storage.
  */
 export function MissionStage({
-  mission, ui, solo, moveProgress, onMoveRendered, onUse, onBlindCommit, onBlindSelfReport,
-  onGapNamed, onComplete,
+  mission, ui, solo, moveProgress, guidanceUses, onGuidanceUse, onMoveRendered, onUse,
+  onBlindCommit, onBlindSelfReport, onGapNamed, onComplete,
 }: MissionStageProps) {
   const slotPhase = mission.phases.find((p) => p.template === 'slot-assembly') as SlotAssemblyPhase | undefined;
   const digPhase = mission.phases.find((p) => p.template === 'dig') as DigPhase;
@@ -75,6 +81,13 @@ export function MissionStage({
     return () => clearTimeout(t);
   }, []);
 
+  // ---- RISE (leaving the stage after 今日のコツ, ~500ms, AD-07 §13/§16) ----------------------
+  const [rising, setRising] = useState(false);
+  function riseThenComplete(result: DigResult) {
+    setRising(true);
+    setTimeout(() => onComplete(result), 480);
+  }
+
   // ---- part: which beat-group is live right now ----------------------------------------------
   const [part, setPart] = useState<'slot' | 'dig' | 'tip'>(slotPhase ? 'slot' : 'dig');
 
@@ -85,7 +98,6 @@ export function MissionStage({
   const [slotResolved, setSlotResolved] = useState<{ key: string; archetype: { robotSays: string; claims: string[] } } | null>(null);
   const [slotAttempt, setSlotAttempt] = useState(1);
   const [slotBattled, setSlotBattled] = useState<ReadonlySet<number>>(new Set());
-  const [slotUses, setSlotUses] = useState(0);
   const [slotStallKey, setSlotStallKey] = useState(0);
 
   function pickSlotCard(slot: SlotId, cardId: string) {
@@ -96,12 +108,13 @@ export function MissionStage({
     const resolved = resolveArchetype(slotPhase!, next);
     setSlotResolved(resolved);
     setSlotAttempt((n) => n + 1);
-    setSlotUses((n) => n + 1);
+    onGuidanceUse('erabu');
     track('round_complete', { archetype: resolved.key, retries: slotAttempt - 1 });
   }
 
   function slotDialogueRead() {
     sfx.playBubblePop();
+    onGuidanceUse('yomu');
     if (isTerminalArchetype(slotResolved!.archetype.claims)) {
       setPart('dig');
     } else {
@@ -113,7 +126,7 @@ export function MissionStage({
   const slotPendingBattle = slotPhase?.predictions?.find(
     (p) => p.beforeRound === slotAttempt && !slotBattled.has(slotAttempt),
   );
-  const slotGuidance = useGuidanceLevel(slotUses);
+  const slotGuidance = guidanceLevelFor('erabu', guidanceUses);
   const slotStalled = useStall(part === 'slot' && !slotResolved && !slotPendingBattle, slotStallKey, 6000);
 
   // ======================================================================================
@@ -125,7 +138,6 @@ export function MissionStage({
   const [settledIds, setSettledIds] = useState<ReadonlySet<string>>(new Set());
   const [battledLayers, setBattledLayers] = useState<ReadonlySet<number>>(new Set());
   const [descending, setDescending] = useState(false);
-  const [handUses, setHandUses] = useState(0);
   const [judgeStallKey, setJudgeStallKey] = useState(0);
   const [handStallKey, setHandStallKey] = useState(0);
   const lastPlayedCardId = useRef<string | null>(null);
@@ -139,10 +151,28 @@ export function MissionStage({
     setFlatReplyRead(false);
   }, [state.flatReply]);
 
+  const [drivingCardId, setDrivingCardId] = useState<string | null>(null);
+
+  /** AD-07 §B/F: "the question is the shovel." A deepen pick visibly drives into the soil
+   *  BEFORE the world descends — commitHandCard (the actual state transition) runs only once
+   *  that drive animation has had time to play. A non-deepen pick settles immediately; its own
+   *  animation runs on the settled (already-committed) chip instead, exactly as before. */
   function playHandCard(cardId: string) {
     const layer = digPhase.layers[state.layer];
     const card = layer?.hand.find((c) => c.id === cardId);
-    if (!card) return;
+    if (!card || drivingCardId) return;
+    if (card.tag === 'deepen') {
+      setDrivingCardId(cardId);
+      setTimeout(() => {
+        setDrivingCardId(null);
+        commitHandCard(card);
+      }, 260);
+    } else {
+      commitHandCard(card);
+    }
+  }
+
+  function commitHandCard(card: DigCard) {
     const prevLayer = state.layer;
     const playIndexAtLayer = state.misses[state.layer] ?? 0;
     const next = playCard(digPhase, state, card);
@@ -166,25 +196,29 @@ export function MissionStage({
       sfx.playStone();
       setSettledIds((prev) => new Set(prev).add(card.id));
     }
-    setHandUses((n) => n + 1);
+    onGuidanceUse('erabu');
     setHandStallKey((k) => k + 1);
   }
 
   function onRootRead() {
     track('early_ok_tapped');
+    onGuidanceUse('yomu');
     setPart('tip');
   }
 
   function judgeGotIt() {
     track('early_ok_tapped');
+    onGuidanceUse('mikiwameru');
     setJudgeStallKey((k) => k + 1);
     setState((s) => tapEarlyOk(digPhase, s));
   }
   function judgeNotYet() {
+    onGuidanceUse('mikiwameru');
     setJudgeStallKey((k) => k + 1);
     setState((s) => judgeNotEnough(digPhase, s));
   }
   function dismissChallenge() {
+    onGuidanceUse('yomu');
     setState((s) => (s.challenge ? { ...s, challenge: null } : s));
   }
 
@@ -201,25 +235,29 @@ export function MissionStage({
     const moves = currentLayerDeepenMoves();
     for (const move of moves) onMoveRendered(move);
     const eligible = moves.length === 1 && isAtLeast(moveProgress[moves[0]!]?.rung ?? 'mihakken', 'tsukaeru');
+    onGuidanceUse('erabu');
     setState((s) => chooseGap(s, eligible));
   }
 
   function blindCommitTapped() {
     const move = currentLayerDeepenMoves()[0];
     if (move) onBlindCommit(move);
+    onGuidanceUse('erabu');
     setState((s) => commitBlind(s));
   }
 
   function selfReportTapped(classification: SelfReportKind) {
     const move = currentLayerDeepenMoves()[0];
     if (move) onBlindSelfReport({ move, missionId: mission.id, layerIndex: state.layer, classification });
+    onGuidanceUse('erabu');
     setState((s) => giveSelfReport(s));
   }
 
   const currentLayer = state.atRoot ? undefined : digPhase.layers[state.layer];
   const digPendingBattle = currentLayer?.prediction && !battledLayers.has(state.layer) ? currentLayer.prediction : null;
   const judgeStalled = useStall(part === 'dig' && !state.challenge && answerRead && state.gate === 'gate', judgeStallKey, 12000);
-  const handGuidance = useGuidanceLevel(handUses);
+  const judgeGuidance = guidanceLevelFor('mikiwameru', guidanceUses);
+  const handGuidance = guidanceLevelFor('erabu', guidanceUses);
   const handStalled = useStall(
     part === 'dig' && state.gate === 'open' && !(state.flatReply && !flatReplyRead), handStallKey, 6000,
   );
@@ -279,11 +317,18 @@ export function MissionStage({
     if (state.challenge) {
       world = <SpeechBubble speaker={state.challenge.challenger} text={state.challenge.asks} onAdvance={dismissChallenge} />;
     } else if (!answerRead) {
+      // AD-07 §13/beat 11: "the root has a clear reveal" — the one moment the bubble itself
+      // carries the reveal motion, on top of the world's own soil-color depth change.
       world = (
         <SpeechBubble
           speaker={ui.stageRobotName}
           text={currentAnswer(digPhase, state)}
-          onAdvance={() => (state.atRoot ? onRootRead() : setAnswerRead(true))}
+          onAdvance={() => {
+            if (state.atRoot) { onRootRead(); return; }
+            onGuidanceUse('yomu');
+            setAnswerRead(true);
+          }}
+          className={state.atRoot ? 'stage__root-reveal' : undefined}
         />
       );
     } else if (digPendingBattle) {
@@ -305,7 +350,11 @@ export function MissionStage({
       world = <p className="stage__judge-context"><Ruby text={currentAnswer(digPhase, state)} /></p>;
       tray = (
         <div className="stage__judge stage__beat-enter">
-          <div className="stage__judge-buttons">
+          {/* AD-07 §4C/§9: "both buttons pulse alternately, never one alone" at SHOW; a plain
+             glow at NUDGE; nothing non-diegetic once FADE/INDEPENDENT. This level is NEVER
+             boosted by the 12s JUDGE stall (that raises only Pon太's whisper below, per AD-07
+             §10's own explicit "never step back on JUDGE for thinking time" rule). */}
+          <div className={`stage__judge-buttons stage__judge-buttons--${judgeGuidance}`}>
             <button type="button" className="stage__judge-button stage__judge-button--yes" onClick={judgeGotIt}>
               {ui.earlyOk}
             </button>
@@ -326,7 +375,16 @@ export function MissionStage({
     } else if (state.gate === 'blindCommit') {
       tray = <ChoiceTray items={[{ id: 'commit', text: ui.blindCommit }]} onSelect={blindCommitTapped} />;
     } else if (state.flatReply && !flatReplyRead) {
-      world = <SpeechBubble speaker={ui.stageRobotName} text={state.flatReply} onAdvance={() => setFlatReplyRead(true)} />;
+      world = (
+        <SpeechBubble
+          speaker={ui.stageRobotName}
+          text={state.flatReply}
+          onAdvance={() => {
+            onGuidanceUse('yomu');
+            setFlatReplyRead(true);
+          }}
+        />
+      );
     } else {
       tray = (
         <div className="stage__hand-tray">
@@ -347,21 +405,30 @@ export function MissionStage({
               .map((c) => ({ id: c.id, text: c.text }))}
             onSelect={playHandCard}
             settlingId={lastPlayedCardId.current}
+            drivingId={drivingCardId}
           />
         </div>
       );
     }
   } else if (part === 'tip') {
-    world = (
-      <SpeechBubble
-        text={mission.tip}
-        onAdvance={() => onComplete({ misses: state.misses, layerCount: digPhase.layers.length })}
-      />
+    // AD-07 beat 13: "one line, large... 「つぎへ」 (no bubble here, so a button)" — the one
+    // place よむ's usual tap-to-read bubble is deliberately NOT used; this is the sole
+    // surviving 「つぎへ」, everywhere else replaced by dialogue taps.
+    world = <p className="stage__tip-line"><Ruby text={mission.tip} /></p>;
+    tray = (
+      <button
+        type="button"
+        className="stage__next-button stage__beat-enter"
+        disabled={rising}
+        onClick={() => riseThenComplete({ misses: state.misses, layerCount: digPhase.layers.length })}
+      >
+        {ui.stageNextLabel}
+      </button>
     );
   }
 
   return (
-    <div className={`stage${entering ? ' is-diving' : ''}`}>
+    <div className={`stage${entering ? ' is-diving' : ''}${rising ? ' is-rising' : ''}`}>
       <div className={`stage__world${descending ? ' is-descending' : ''}`} data-depth={depthAttr}>
         {part !== 'tip' && (
           <ol className="stage__meter" aria-label="depth">

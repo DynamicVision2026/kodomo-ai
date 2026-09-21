@@ -25,6 +25,13 @@ export interface Profile {
   m2Evidence?: M2Evidence;
   /** WO-08: durable, first-occurrence memory moments. */
   memories?: MemoryMomentMap;
+  /** WO-24 (AD-07 §D): per-verb guidance use counts for the Mission 1 continuous stage
+   *  (src/stage/Guidance.tsx) — SHOW/NUDGE/FADE/INDEPENDENT is always re-derived from this, never
+   *  stored as a level itself. Deliberately untyped here (plain string keys) rather than
+   *  importing src/stage's own StageVerb union — storage.ts is engine-layer infrastructure and
+   *  never depends on the presentation layer; the stage module narrows this when it reads it.
+   *  Absent on every profile before this WO, treated the same as `{}`. */
+  guidance?: Partial<Record<string, number>>;
 }
 export interface AppState {
   profiles: Profile[];
