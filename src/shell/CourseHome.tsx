@@ -56,61 +56,70 @@ export function CourseHome({
 
   return (
     <div className="course-home">
-      <div className="course-home__header">
-        <Mascot state="curious" />
-        <p className="course-home__heading">{ui.courseHomeHeading}</p>
+      <div className="course-home__scroll">
+        <div className="course-home__header">
+          <Mascot state="curious" />
+          <p className="course-home__heading">{ui.courseHomeHeading}</p>
+        </div>
+
+        <Toolbox
+          followMoves={followMoves}
+          cardTypes={cardTypes}
+          moveProgress={moveProgress}
+          heading={ui.courseHomeGrowthLabel}
+        />
+
+        <ol className="course-home__shaft" aria-label={ui.courseHomeHeading}>
+          {missionOrder.map((id, i) => {
+            const m = missions[id];
+            if (!m) return null;
+            const done = progress[id]?.done ?? false;
+            const isCurrent = id === currentMissionId;
+            const cls = [
+              'course-home__depth',
+              done ? 'is-done' : '',
+              isCurrent ? 'is-current' : '',
+              !done && !isCurrent ? 'is-ahead' : '',
+            ].filter(Boolean).join(' ');
+            return (
+              <li key={id} ref={isCurrent ? currentRef : undefined} className={cls}>
+                <button type="button" className="course-home__depth-button" onClick={() => onSelectMission(id)}>
+                  <span className="course-home__depth-index">{i + 1}</span>
+                  <span className="course-home__depth-title"><Ruby text={m.title} /></span>
+                  {done && <span className="course-home__depth-mark">{ui.courseHomeDoneLabel}</span>}
+                  {!done && !isCurrent && <span className="course-home__depth-mark course-home__depth-mark--ahead">{ui.courseHomeNotYetLabel}</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
       </div>
 
-      <Toolbox
-        followMoves={followMoves}
-        cardTypes={cardTypes}
-        moveProgress={moveProgress}
-        heading={ui.courseHomeGrowthLabel}
-      />
-
-      <ol className="course-home__shaft" aria-label={ui.courseHomeHeading}>
-        {missionOrder.map((id, i) => {
-          const m = missions[id];
-          if (!m) return null;
-          const done = progress[id]?.done ?? false;
-          const isCurrent = id === currentMissionId;
-          const cls = [
-            'course-home__depth',
-            done ? 'is-done' : '',
-            isCurrent ? 'is-current' : '',
-            !done && !isCurrent ? 'is-ahead' : '',
-          ].filter(Boolean).join(' ');
-          return (
-            <li key={id} ref={isCurrent ? currentRef : undefined} className={cls}>
-              <button type="button" className="course-home__depth-button" onClick={() => onSelectMission(id)}>
-                <span className="course-home__depth-index">{i + 1}</span>
-                <span className="course-home__depth-title"><Ruby text={m.title} /></span>
-                {done && <span className="course-home__depth-mark">{ui.courseHomeDoneLabel}</span>}
-                {!done && !isCurrent && <span className="course-home__depth-mark course-home__depth-mark--ahead">{ui.courseHomeNotYetLabel}</span>}
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-
-      {currentMission && (
-        <button type="button" className="course-home__continue" onClick={onContinue}>
-          {ui.courseHomeContinueLabel}
-        </button>
-      )}
-
-      <div className="course-home__bottom-bar">
-        {hasBank && (
-          <button type="button" className="course-home__nav-item" onClick={onOpenBank}>
-            {ui.courseHomeBankLabel}
+      {/* WO-23 WP-3 (AD-06 D7 thumb zone): a fixed-height footer, never part of the scrollable
+         shaft above — the one thing a 390x844 Playwright walkthrough caught: with 8 depths
+         listed, the continue action fell ~200px below the fold when it was just the last item
+         in normal document flow. Capping .course-home to 100dvh and giving only .course-home__scroll
+         its own overflow keeps this footer on-screen at every viewport, no scrolling required. */}
+      <div className="course-home__footer">
+        {currentMission && (
+          <button type="button" className="course-home__continue" onClick={onContinue}>
+            {ui.courseHomeContinueLabel}
           </button>
         )}
-        <button type="button" className="course-home__nav-item" onClick={onOpenParent}>
-          {ui.parentScreenHeading}
-        </button>
-        <button type="button" className="course-home__nav-item" onClick={onOpenKit}>
-          {ui.courseHomeKitLabel}
-        </button>
+
+        <div className="course-home__bottom-bar">
+          {hasBank && (
+            <button type="button" className="course-home__nav-item" onClick={onOpenBank}>
+              {ui.courseHomeBankLabel}
+            </button>
+          )}
+          <button type="button" className="course-home__nav-item" onClick={onOpenParent}>
+            {ui.parentScreenHeading}
+          </button>
+          <button type="button" className="course-home__nav-item" onClick={onOpenKit}>
+            {ui.courseHomeKitLabel}
+          </button>
+        </div>
       </div>
     </div>
   );

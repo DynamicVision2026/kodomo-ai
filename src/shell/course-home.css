@@ -1,14 +1,21 @@
-/* WO-23 WP-4 (AD-06 D4/D7): the earth cross-section, scrolling downward. Mobile-first — scroll
- * is for reading/browsing the shaft, never for reaching the one primary decision (the continue
- * button stays pinned near the bottom thumb zone). */
+/* WO-23 WP-4/WP-3 (AD-06 D4/D7): the earth cross-section, scrolling downward. Mobile-first —
+ * .course-home is capped to the viewport (100dvh) and only .course-home__scroll below actually
+ * scrolls, so the footer (continue action + bottom nav) always stays on screen whatever the
+ * shaft's own length — a real 390x844 walkthrough caught this: with all 8 depths listed, the
+ * continue button used to land ~200px below the fold when it was just the last item in flow. */
 .course-home {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
   background: var(--surface, #f7f3ec);
   color: var(--ink, #2b2622);
   font-family: var(--font-child, system-ui), sans-serif;
-  padding-bottom: var(--thumb-zone, 120px);
+}
+
+.course-home__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .course-home__header {
@@ -78,9 +85,18 @@
 /* Not-dug-yet: visible, dimmed — never a denial/dead-end affordance (AD-06 D2/D4). */
 .course-home__depth.is-ahead .course-home__depth-button { opacity: 0.55; }
 
+.course-home__footer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: var(--surface, #f7f3ec);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 .course-home__continue {
   align-self: center;
-  margin-top: var(--space-6, 24px);
+  margin: var(--space-4, 16px) 0 0;
   min-height: 56px;
   padding: var(--space-3, 12px) var(--space-8, 32px);
   border: none;
@@ -93,15 +109,10 @@
 }
 
 .course-home__bottom-bar {
-  margin-top: auto;
-  position: sticky;
-  bottom: 0;
   display: flex;
   justify-content: space-around;
   gap: var(--space-2, 8px);
   padding: var(--space-3, 12px) var(--space-4, 16px);
-  background: var(--surface, #f7f3ec);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 .course-home__nav-item {
   flex: 1;

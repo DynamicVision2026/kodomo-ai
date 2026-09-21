@@ -44,6 +44,16 @@
   font-style: italic;
 }
 
+/* WO-23 WP-1 (AD-06 RC-2): the explicit "still open, try another card" cue after a
+ * non-advancing play — never styled as an error/warning, just a plain continuation nudge. */
+.dig__continue-prompt {
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--root, #c8922e);
+  margin: 0;
+}
+
 .dig__hand {
   display: flex;
   flex-wrap: wrap;
