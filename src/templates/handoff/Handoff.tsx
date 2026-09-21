@@ -5,11 +5,15 @@ export interface HandoffProps {
   /** Fixed UI copy from module.json — templates never hard-code child-facing text (CI gate 3). */
   prompt: string;
   continueLabel: string;
-  skipLabel: string;
+  /** Omit to render only the one handoff action — WO-24 (AD-07 §4D): "child sees only [the
+   *  prompt] and one action." Every existing caller still passes this and keeps its skip
+   *  button exactly as before. */
+  skipLabel?: string;
   /** Called once the adult has the device and taps through. */
   onContinue: () => void;
-  /** Solo play / opting out of this handoff. Spec v0.5 pillar 5: co-play is never required. */
-  onSkip: () => void;
+  /** Solo play / opting out of this handoff. Spec v0.5 pillar 5: co-play is never required.
+   *  Unused (and may be omitted) when `skipLabel` is omitted. */
+  onSkip?: () => void;
 }
 
 /**
@@ -26,9 +30,11 @@ export function Handoff({ prompt, continueLabel, skipLabel, onContinue, onSkip }
       <button type="button" className="handoff__continue" onClick={onContinue}>
         {continueLabel}
       </button>
-      <button type="button" className="handoff__skip" onClick={onSkip}>
-        {skipLabel}
-      </button>
+      {skipLabel && (
+        <button type="button" className="handoff__skip" onClick={onSkip}>
+          {skipLabel}
+        </button>
+      )}
     </div>
   );
 }

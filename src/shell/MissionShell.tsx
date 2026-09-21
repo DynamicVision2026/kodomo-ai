@@ -18,6 +18,8 @@ import { SlotAssembly } from '../templates/slot-assembly';
 import { Dig, type UseEvidence, type BlindSelfReportEvidence, type DigResult } from '../templates/dig';
 import { Handoff } from '../templates/handoff';
 import { Ruby } from '../engine/ruby';
+import { MissionStage } from '../stage/MissionStage';
+import { SpeechBubble } from '../stage/SpeechBubble';
 import './mission-shell.css';
 
 /** Every mission a module ships (any stage) + the order `pickNextMission` walks. Optional: a
@@ -59,6 +61,15 @@ export interface MissionShellProps {
    *  purchase. Every real production build passes `false`/omits this prop entirely — see
    *  src/main.tsx's own `VITE_FAMILY_TEST_MODE` wiring and docs/family-test-mode.md. */
   familyTestMode?: boolean;
+  /** WO-24 (AD-07 v0.7a prototype): the ONE mission id, if any, that should play through the new
+   *  continuous MissionStage instead of the original screen-by-screen SlotAssembly/Dig/wrapper
+   *  sequence. Deliberately an explicit id supplied by the caller, not inferred from content —
+   *  the archived pre-chanto fixture ("bread", module m1's own topics dir) still carries the
+   *  SAME id Mission 1-1 now uses ("m1-s2-1-1"), so matching on id alone without an opt-in
+   *  would wrongly catch it too. src/main.tsx passes its own real chanto mission's id; every
+   *  other caller (including every existing test) omits this prop and gets the original
+   *  behaviour unchanged. */
+  continuousStageMissionId?: string;
 }
 
 type Screen =
@@ -67,6 +78,9 @@ type Screen =
   | { kind: 'course-home' }
   | { kind: 'coop' }
   | { kind: 'phase'; index: number }
+  /** WO-24 (AD-07): Mission 1's own continuous scene — replaces the 'phase'/'tip' sequence, only
+   *  when `continuousStageMissionId` matches the active mission. */
+  | { kind: 'stage' }
   | { kind: 'tip' }
   | { kind: 'teachback' }
   | { kind: 'ouchi' }
@@ -88,7 +102,7 @@ type Screen =
  */
 export function MissionShell({
   moduleId, freeMissionIds, mission: defaultMission, ui, missionLibrary, bankLibrary,
-  followMoves = [], cardTypes = {}, familyTestMode = false,
+  followMoves = [], cardTypes = {}, familyTestMode = false, continuousStageMissionId,
 }: MissionShellProps) {
   const [appState, setAppState] = useState<AppState>(() => load());
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -197,7 +211,7 @@ export function MissionShell({
     setSolo(!isCoop);
     track('coop_selected', { coop: isCoop });
     track('m1_start');
-    setScreen({ kind: 'phase', index: 0 });
+    setScreen(mission.id === continuousStageMissionId ? { kind: 'stage' } : { kind: 'phase', index: 0 });
   }
 
   function markDone() {
@@ -371,6 +385,18 @@ export function MissionShell({
     }
   }
 
+  /** WO-24 (AD-07): MissionStage's own completion — fires once ROOT and 今日のコツ have both
+   *  been read inside the continuous scene, the same moment `completePhase(digResult)` +
+   *  advancing past the old 'tip' screen used to fire together. Marks the mission done exactly
+   *  as before; then, AD-07 §4D ("solo mode skips this sequence completely") — solo play goes
+   *  straight to the parent screen, co-play still walks the existing shared teach-back/おうちト
+   *  ーク/handoff screens unchanged (WO-24 §7's own sanctioned Child<->Parent hard transition). */
+  function stageCompleted(digResult: DigResult) {
+    digPhaseCompleted(digResult);
+    markDone();
+    setScreen(solo ? { kind: 'parent' } : { kind: 'teachback' });
+  }
+
   /** Mission Complete's own primary action — resolves the active profile's now-updated next
    *  mission (the one just finished no longer counts) and enters it directly, the same way
    *  Course Home's own depth taps do. */
@@ -464,6 +490,23 @@ export function MissionShell({
     );
   }
 
+  if (screen.kind === 'stage') {
+    return (
+      <MissionStage
+        mission={mission}
+        ui={ui}
+        solo={solo}
+        moveProgress={profile?.moveProgress ?? {}}
+        onMoveRendered={moveRendered}
+        onUse={moveUsed}
+        onBlindCommit={blindCommitted}
+        onBlindSelfReport={selfReported}
+        onGapNamed={gapNamed}
+        onComplete={stageCompleted}
+      />
+    );
+  }
+
   if (screen.kind === 'phase') {
     const phase = mission.phases[screen.index]!;
     if (phase.template === 'slot-assembly') {
@@ -498,17 +541,25 @@ export function MissionShell({
   }
 
   if (screen.kind === 'teachback') {
+    const advance = () => {
+      addStamp();
+      track('teachback_done');
+      setScreen({ kind: 'ouchi' });
+    };
+    // WO-24 (AD-07 §4A よむ): Mission 1 only — the dialogue bubble itself is the interaction
+    // target, no つづける/skip button pair. Every other mission keeps the original two-button
+    // wrapper screen below, completely unchanged.
+    if (mission.id === continuousStageMissionId) {
+      return (
+        <div className="mission-shell__wrapper">
+          <SpeechBubble text={mission.teachBack} onAdvance={advance} />
+        </div>
+      );
+    }
     return (
       <div className="mission-shell__wrapper">
         <p><Ruby text={mission.teachBack} /></p>
-        <button
-          type="button"
-          onClick={() => {
-            addStamp();
-            track('teachback_done');
-            setScreen({ kind: 'ouchi' });
-          }}
-        >
+        <button type="button" onClick={advance}>
           {ui.handoffContinue}
         </button>
         <button
@@ -526,13 +577,18 @@ export function MissionShell({
   }
 
   if (screen.kind === 'ouchi') {
+    const advance = () => setScreen({ kind: mission.perspective ? 'perspective' : 'handoff' });
+    if (mission.id === continuousStageMissionId) {
+      return (
+        <div className="mission-shell__wrapper">
+          <SpeechBubble text={mission.ouchiTalk} onAdvance={advance} />
+        </div>
+      );
+    }
     return (
       <div className="mission-shell__wrapper">
         <p><Ruby text={mission.ouchiTalk} /></p>
-        <button
-          type="button"
-          onClick={() => setScreen({ kind: mission.perspective ? 'perspective' : 'handoff' })}
-        >
+        <button type="button" onClick={advance}>
           {ui.handoffContinue}
         </button>
       </div>
@@ -558,6 +614,19 @@ export function MissionShell({
       track('parent_screen_view');
       setScreen({ kind: 'parent' });
     };
+    // WO-24 (AD-07 §4D わたす): Mission 1 only — "child sees only [the prompt] and one action."
+    // Solo already never reaches this screen for Mission 1 (stageCompleted routes solo straight
+    // to 'parent'), so there is nothing to skip here; every other mission keeps the original
+    // generic Handoff (prompt + continue + skip) below, completely unchanged.
+    if (mission.id === continuousStageMissionId) {
+      return (
+        <Handoff
+          prompt={ui.stageHandoffPrompt}
+          continueLabel={ui.stageHandoffGiven}
+          onContinue={toParent}
+        />
+      );
+    }
     return (
       <Handoff
         prompt={ui.handoffPrompt}
@@ -640,8 +709,10 @@ export function MissionShell({
       {/* WO-23 §7 (AD-06 RC-1): the one thing this screen never had — a way onward. Every prior
          action on this screen (M0/M2b/M5/Bank) stays exactly as it was; this just adds the
          missing next step, so a family never needs to reload /play/ to continue. */}
+      {/* WO-24 (AD-07 §4D): Mission 1's own ui.stageReturnToChild copy — the explicit return-
+         to-child-register action AD-07 names. Every other mission keeps the generic label. */}
       <button type="button" className="mission-shell__to-complete" onClick={() => setScreen({ kind: 'complete' })}>
-        {ui.handoffContinue}
+        {mission.id === continuousStageMissionId ? ui.stageReturnToChild : ui.handoffContinue}
       </button>
     </div>
   );

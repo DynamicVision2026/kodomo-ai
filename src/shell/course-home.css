@@ -71,6 +71,15 @@
   color: var(--root, #c8922e);
 }
 .course-home__depth-mark--ahead { color: var(--ink-soft, #6b5d4f); }
+.course-home__depth-root {
+  flex: none;
+  font-size: 0.9rem;
+  color: var(--root, #c8922e);
+}
+.course-home__depth-robot {
+  flex: none;
+  font-size: 1.1rem;
+}
 
 /* Depth colour deepens with progress through the shaft — soil-1 near the surface, soil-4 deep. */
 .course-home__depth:nth-child(4n+1) .course-home__depth-button { background: var(--soil-1, #e8dcc8); }

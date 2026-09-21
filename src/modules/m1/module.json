@@ -83,7 +83,12 @@
     "completeCourseFinishedLabel": "ぜんぶの ミッションを ほりおえたよ！",
     "completeNextMissionLabel": "つぎの ミッション",
     "completeBackToMapLabel": "ちずに もどる",
-    "completeTryOutsideLabel": "おうちで やってみる"
+    "completeTryOutsideLabel": "おうちで やってみる",
+    "stageHandoffPrompt": "おうちの人に わたしてね",
+    "stageHandoffGiven": "わたした！",
+    "stageReturnToChild": "こどもに もどす",
+    "stageJudgeStallPrompt": "きみは どう おもう？",
+    "stageRobotName": "ロボ"
   },
   "cardTypes": {
     "odai": {

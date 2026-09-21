@@ -1,0 +1,175 @@
+/**
+ * WO-24 (AD-07 v0.7a prototype): the persistent Mission 1 stage. One continuous world — engine
+ * state changes what appears INSIDE this container, never which page/route is showing. Mobile-
+ * first (390x844 primary target, AD-07 §11): capped to the viewport, the dialogue/answer region
+ * scrolls if it must, the interactive tray stays pinned in the bottom thumb zone.
+ *
+ * Motion primitives (AD-07 §13) — semantic only, applied via one class per beat, never stacked
+ * gratuitously. Durations are approximate per AD-07: dive ~500ms, descend ~400ms, settle ~250ms,
+ * root reveal ~800ms, rise ~500ms, tray/bubble enter 150-200ms.
+ */
+.stage {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background: var(--surface, #f7f3ec);
+  color: var(--ink, #2b2622);
+  font-family: var(--font-child, system-ui), sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
+/* IP-1: stable anchors. Depth deepens the soil colour only — never a route change. */
+.stage__world {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4, 16px);
+  padding-bottom: var(--space-2, 8px);
+  overflow-y: auto;
+  background: var(--soil-1, #e8dcc8);
+  transition: background-color 400ms ease;
+}
+.stage__world[data-depth='1'] { background: var(--soil-1, #e8dcc8); }
+.stage__world[data-depth='2'] { background: var(--soil-2, #c9b08a); }
+.stage__world[data-depth='3'] { background: var(--soil-3, #a6845c); color: #fff; }
+.stage__world[data-depth='root'] { background: var(--root, #c8922e); color: #fff; }
+
+.stage__meter {
+  display: flex;
+  gap: var(--space-2, 8px);
+  list-style: none;
+  margin: 0 0 var(--space-3, 12px);
+  padding: 0;
+  justify-content: center;
+}
+.stage__meter-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.15);
+}
+.stage__meter-dot.is-filled { background: var(--root, #c8922e); }
+
+/* L1/L2/L3 attention hierarchy anchors (AD-07 §8): robot up top (L2 context once a decision is
+ * live), the answer/dialogue below it, the tray pinned at the bottom (L1 — the one thing the
+ * child can do right now). Irrelevant elements are unmounted by MissionStage, never dimmed. */
+.stage__actor-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3, 12px);
+  flex: none;
+}
+
+.stage__tray-anchor {
+  flex: none;
+  padding: var(--space-3, 12px) var(--space-4, 16px) var(--space-4, 16px);
+  background: var(--surface, #f7f3ec);
+  color: var(--ink, #2b2622);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* ---- dive (Map -> Mission, ~500ms) --------------------------------------------------------- */
+@keyframes stage-dive {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.stage.is-diving { animation: stage-dive 500ms ease both; }
+
+/* ---- rise (Mission -> Map, ~500ms) ---------------------------------------------------------- */
+@keyframes stage-rise {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-16px); }
+}
+.stage.is-rising { animation: stage-rise 500ms ease both; }
+
+/* ---- descend (one layer deeper, ~400ms) ------------------------------------------------------ */
+@keyframes stage-descend {
+  0%   { transform: translateY(-6px); }
+  60%  { transform: translateY(4px); }
+  100% { transform: translateY(0); }
+}
+.stage__world.is-descending { animation: stage-descend 400ms ease both; }
+
+/* ---- settle (a chip hits stone, ~250ms) ------------------------------------------------------ */
+@keyframes chip-settle {
+  0%   { transform: translateX(0) rotate(0deg); }
+  30%  { transform: translateX(-4px) rotate(-2deg); }
+  60%  { transform: translateX(3px) rotate(1deg); }
+  100% { transform: translateX(0) rotate(0deg); opacity: 0.35; }
+}
+.question-chip.is-settling { animation: chip-settle 250ms ease both; pointer-events: none; }
+
+/* ---- reveal (root, ~800ms) -------------------------------------------------------------------- */
+@keyframes stage-reveal {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.stage__root-reveal { animation: stage-reveal 800ms ease both; }
+
+/* ---- enter (tray/bubble, 150-200ms) ------------------------------------------------------------ */
+@keyframes beat-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stage__beat-enter { animation: beat-enter 180ms ease both; }
+
+.stage__judge-context {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  font-size: 1rem;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.stage__hand-tray {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+}
+
+.stage__judge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+.stage__judge-buttons {
+  display: flex;
+  gap: var(--space-3, 12px);
+  width: 100%;
+}
+.stage__judge-button {
+  flex: 1;
+  min-height: 56px;
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.stage__judge-button--yes { background: var(--root, #c8922e); color: #fff; }
+.stage__judge-button--no { background: #fff; border: 2px solid var(--ink-soft, #6b5d4f); color: var(--ink, #2b2622); }
+.stage__judge-stall {
+  font-size: 0.85rem;
+  color: var(--ink-soft, #6b5d4f);
+  text-align: center;
+}
+
+/* ---- pulse (guidance only — never on a specific answer, see Guidance.tsx) --------------------- */
+@keyframes stage-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 146, 46, 0.45); }
+  50%      { box-shadow: 0 0 0 8px rgba(200, 146, 46, 0); }
+}
+.stage__pulse { animation: stage-pulse 1400ms ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stage.is-diving, .stage.is-rising, .stage__world.is-descending,
+  .question-chip.is-settling, .stage__root-reveal, .stage__beat-enter, .stage__pulse {
+    animation: none !important;
+  }
+}

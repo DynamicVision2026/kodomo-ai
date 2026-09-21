@@ -22,13 +22,16 @@ export interface QuestionChipProps {
   selected?: boolean;
   disabled?: boolean;
   onClick?: () => void;
+  /** Extra class(es) a caller needs on the root element — e.g. a motion state class. Never used
+   *  to smuggle in child-facing text; still no styling decisions live outside question-chip.css. */
+  className?: string;
 }
 
-export function QuestionChip({ kind, label, text, selected, disabled, onClick }: QuestionChipProps) {
+export function QuestionChip({ kind, label, text, selected, disabled, onClick, className }: QuestionChipProps) {
   const meta = CARD_KIND_META[kind];
   const cls = [
     'question-chip', `question-chip--${kind}`, `question-chip--corner-${meta.corner}`,
-    selected ? 'is-selected' : '', disabled ? 'is-disabled' : '',
+    selected ? 'is-selected' : '', disabled ? 'is-disabled' : '', className ?? '',
   ].filter(Boolean).join(' ');
 
   const body = (

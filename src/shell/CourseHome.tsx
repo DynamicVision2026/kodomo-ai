@@ -86,8 +86,15 @@ export function CourseHome({
                 <button type="button" className="course-home__depth-button" onClick={() => onSelectMission(id)}>
                   <span className="course-home__depth-index">{i + 1}</span>
                   <span className="course-home__depth-title"><Ruby text={m.title} /></span>
+                  {/* WO-24 (AD-07 §12): "completed Mission 1 -> gold root becomes visible." A
+                     plain visual marker alongside the existing text label, never replacing it —
+                     no percentage, no score, just the world itself showing progress. */}
+                  {done && <span className="course-home__depth-root" aria-hidden="true">◆</span>}
                   {done && <span className="course-home__depth-mark">{ui.courseHomeDoneLabel}</span>}
                   {!done && !isCurrent && <span className="course-home__depth-mark course-home__depth-mark--ahead">{ui.courseHomeNotYetLabel}</span>}
+                  {/* WO-24 (AD-07 §12): "Robot stands at the current dig site" — a small, plain
+                     positional cue, not a second mascot with its own reactive state. */}
+                  {isCurrent && !done && <span className="course-home__depth-robot" aria-hidden="true">🤖</span>}
                 </button>
               </li>
             );

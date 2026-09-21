@@ -40,6 +40,11 @@
 // `hasAccess()` call entirely (see MissionShellProps.familyTestMode's own doc comment) so a
 // QA/family-test build can reach all 8 Story Missions and all 12 Bank Digs without a real
 // purchase. Documented in docs/family-test-mode.md.
+//
+// WO-24 (AD-07 v0.7a prototype): `continuousStageMissionId={chantoMission.id}` routes Mission
+// 1-1 only through the new continuous MissionStage (src/stage/MissionStage.tsx) — Missions
+// 1-2 through 1-8 and every Bank Dig below are unaffected, still playing through the original
+// SlotAssembly/Dig template screens.
 import { createRoot } from 'react-dom/client';
 import './styles/tokens.css';
 import type { Mission, ModuleUiStrings } from './engine/types';
@@ -108,5 +113,6 @@ createRoot(document.getElementById('root')!).render(
     followMoves={moduleJson.followMoves}
     cardTypes={moduleJson.cardTypes}
     familyTestMode={familyTestMode}
+    continuousStageMissionId={chantoMission.id}
   />,
 );

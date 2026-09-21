@@ -220,6 +220,29 @@ export interface ModuleUiStrings {
   completeBackToMapLabel: string;
   /** Mission Complete's optional third action — try it outside, at home. */
   completeTryOutsideLabel: string;
+
+  // --- WO-24 (AD-07 v0.7a prototype): Mission 1 continuous scene, verb D (わたす) copy ---------
+  /** Stage's own handoff prompt — the ONE thing the child sees during a full-screen context
+   *  switch to the parent, distinct from the shared `handoffPrompt` used by PredictionBattle's
+   *  own mid-round handoff (unchanged) and every other mission's end-of-mission handoff screen
+   *  (also unchanged). Mission-1-Stage-only. */
+  stageHandoffPrompt: string;
+  /** Stage's own single handoff action — "I gave it to them." No skip button sits beside it
+   *  (AD-07 §4D: "Child sees only... and one action"); solo play never reaches this screen at
+   *  all (MissionShell skips straight to the parent screen for Mission 1 in solo mode). */
+  stageHandoffGiven: string;
+  /** Stage's own return-to-child action, replacing the generic `completeNextMissionLabel`-
+   *  adjacent `handoffContinue` label on the parent screen's own advance-to-Mission-Complete
+   *  button, for Mission 1 only. */
+  stageReturnToChild: string;
+  /** AD-07 §10: Pon太's own gentle ~12s JUDGE stall nudge — never a pointer toward either
+   *  answer, just an invitation to keep thinking. Mission-1-Stage-only. */
+  stageJudgeStallPrompt: string;
+  // The robot's own speaker name, shown above its dialogue bubbles in the Stage. The
+  // challenger character's own name already comes from the mission's own authored content
+  // (DigLayer.earlyOk.challenger); the robot has no such field, so its name is fixed UI
+  // chrome here instead (CI gate 3: no child-facing string lives in component code).
+  stageRobotName: string;
 }
 
 /**
