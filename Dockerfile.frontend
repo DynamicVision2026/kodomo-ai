@@ -1,0 +1,51 @@
+# WO-22B: frontend static site for Cloud Run — a SEPARATE Cloud Run service from the backend
+# (kodomo-ai-backend, untouched by this file). Serves the Vite production build (dist/): the LP
+# at /, the app at /play/, family-code redemption at /play/unlock/, the printable deck/kit at
+# /print/deck/ and /print/kit/, legal pages at /legal/tokushoho/ and /legal/privacy/ — every real
+# route from vite.config.ts's own multi-page `input` map, each with its own real index.html.
+#
+# This is a MULTI-PAGE static site, not a client-side-routed single-page app — there is no
+# client-side router anywhere in this codebase. The one thing that would break it is a SPA
+# catch-all rewrite ("send every unknown path to index.html"): that would silently serve the
+# landing page for /play/, /print/kit/, etc. instead of their own real pages — exactly the
+# mistake docs/launch-runbook.md's own Firebase Hosting config comment already warns against for
+# this same app. `serve` (below) is run WITHOUT its `-s`/`--single` SPA-rewrite flag for exactly
+# that reason: it serves each route's own real file/directory index.html, and correctly 404s on
+# a genuinely unknown path, matching the Firebase Hosting behavior this replaces (WO-22B: Firebase
+# CLI auth is blocked on the deployment machine, so this packages the same build for Cloud Run
+# instead — no product/content/behavior change, packaging only).
+
+# ---- 1. build the production frontend -----------------------------------------------------
+FROM node:22-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+# VITE_UNLOCK_API_URL must be supplied at BUILD time, not runtime — Vite inlines
+# import.meta.env.VITE_UNLOCK_API_URL into the static bundle at build time (see
+# src/parent/unlock/UnlockPage.tsx), so it has to be a build arg here, never a container env var.
+# Omit it and the build ships the existing, already-shipped honest "not configured" fallback
+# (src/parent/unlock/redeemCode.ts) instead of silently pointing at nothing.
+ARG VITE_UNLOCK_API_URL
+ENV VITE_UNLOCK_API_URL=$VITE_UNLOCK_API_URL
+RUN npm run build
+
+# ---- 2. runtime — static file server only: no Node build tools, no source, no Firebase ----
+FROM node:22-slim
+WORKDIR /app
+ENV NODE_ENV=production
+# `serve` (Vercel's static file server) — the only runtime dependency this image needs. No
+# Firebase package anywhere in this image or its dependency tree.
+RUN npm install --global serve@14
+COPY --from=build /app/dist ./dist
+
+# Cloud Run injects PORT at runtime (default 8080 if unset, matching backend/server/index.ts's
+# own fallback convention); EXPOSE here is documentation only, Cloud Run does not read it.
+EXPOSE 8080
+
+# Official node:*-slim images already ship a low-privilege "node" user — no need to create one
+# (same choice the existing backend Dockerfile already makes).
+USER node
+
+# No -s/--single: see the file-level comment above for why that flag must never be added here.
+CMD ["sh", "-c", "serve -l tcp://0.0.0.0:${PORT:-8080} dist"]
