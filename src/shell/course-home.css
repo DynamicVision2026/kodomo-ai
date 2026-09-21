@@ -141,8 +141,10 @@
   cursor: pointer;
 }
 
-/* WO-26A: the Module 1 completed state, replacing the continue CTA in the same footer slot. */
-.course-home__module-complete {
+/* WO-26A/WO-27: a fixed message in place of the continue CTA, in the same footer slot — either
+   the Module 1 completed state, or (WO-27) a purchase-needed state for a sequentially-next
+   Story the family hasn't unlocked. */
+.course-home__footer-note {
   align-self: center;
   margin: var(--space-4, 16px) 0 0;
   padding: var(--space-3, 12px) var(--space-8, 32px);

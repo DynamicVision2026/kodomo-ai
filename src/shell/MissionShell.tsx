@@ -90,7 +90,18 @@ type Screen =
   /** WO-24 (AD-07 beat 15): Mission 1's own parent-turn teach-back — reached only from the
    *  Mission-1 co-play 'handoff' screen's own continue action. */
   | { kind: 'stage-teachback' }
-  | { kind: 'parent' }
+  /** WO-27: `afterMission` distinguishes the two genuinely different ways this screen is
+   *  reached. `true` — a real mission handoff just finished (`toParent()`/the Mission-1
+   *  handoff flow): `mission` is legitimately "what was just played," and the screen's own
+   *  final action correctly continues into that mission's own MissionComplete. `false` — the
+   *  parent opened this screen independently, any time, via Course Home's own standing
+   *  「おうちの方へ」 button (`onOpenParent`): there is no just-finished mission here at all,
+   *  `mission` is only Course Home's own CURRENT-highlight (which may be a Story the family
+   *  has never even entered), and the final action must return to Course Home directly instead
+   *  of fabricating a completion screen for content nobody played. Root cause of the reported
+   *  "Story 2 completion screen with no Story 2 play" defect: this screen's final button used
+   *  to route to `{ kind: 'complete' }` unconditionally either way. */
+  | { kind: 'parent'; afterMission: boolean }
   | { kind: 'complete' }
   | { kind: 'bank-select' };
 
@@ -160,14 +171,31 @@ export function MissionShell({
   /** WO-23 (AD-06 §8): the one place both real production entitlement gating and the isolated
    *  family-test bypass meet. `hasAccess()` itself is never touched — `familyTestMode` only
    *  skips calling it here, and only when a caller explicitly opted this whole shell into that
-   *  mode (never true in a real production build). */
+   *  mode (never true in a real production build).
+   *
+   *  WO-27 root cause: this used to call `setMission(m)` BEFORE the entitlement check, so a
+   *  REJECTED entry attempt still permanently overwrote the shared `mission` state to the
+   *  blocked target. Any screen reached afterward without its own explicit mission — most
+   *  visibly the parent dashboard opened directly from Course Home's own standing button, and
+   *  whatever it routes to next (`screen.kind === 'complete'`, which renders MissionComplete for
+   *  whatever `mission` currently is, with no check that it was actually just finished) — then
+   *  silently inherited that blocked mission's identity. `mission` is now only ever set once
+   *  entry is actually authorized, so a locked attempt leaves every other screen's context
+   *  exactly as it was. */
   function enterMission(m: Mission) {
-    setMission(m);
     if (!familyTestMode && !hasAccess(appState.entitlements, moduleId, m.id, freeMissionIds)) {
       setScreen({ kind: 'locked' });
       return;
     }
+    setMission(m);
     setScreen({ kind: 'coop' });
+  }
+
+  /** WO-27: the SAME authorization `enterMission` itself checks, exposed as a pure predicate so
+   *  Course Home's own CURRENT display can agree with it instead of computing "current" purely
+   *  from sequence (CURRENT => ENTERABLE). */
+  function isStoryEntitled(missionId: string): boolean {
+    return familyTestMode || hasAccess(appState.entitlements, moduleId, missionId, freeMissionIds);
   }
 
   /** WO-23 WP-4 (AD-06 D1): every journey — new profile or returning — lands on Course Home
@@ -481,6 +509,7 @@ export function MissionShell({
         missions={missionLibrary?.missions ?? { [mission.id]: mission }}
         progress={profile.progress}
         currentMissionId={mission.id}
+        isStoryEntitled={isStoryEntitled}
         moveProgress={profile.moveProgress ?? {}}
         followMoves={followMoves}
         cardTypes={cardTypes}
@@ -488,7 +517,7 @@ export function MissionShell({
         onContinue={() => enterMission(mission)}
         onSelectMission={selectStoryMission}
         onOpenBank={() => setScreen({ kind: 'bank-select' })}
-        onOpenParent={() => setScreen({ kind: 'parent' })}
+        onOpenParent={() => setScreen({ kind: 'parent', afterMission: false })}
         onOpenKit={() => window.open('/print/kit/', '_blank', 'noopener')}
       />
     );
@@ -644,7 +673,7 @@ export function MissionShell({
   if (screen.kind === 'handoff') {
     const toParent = () => {
       track('parent_screen_view');
-      setScreen({ kind: 'parent' });
+      setScreen({ kind: 'parent', afterMission: true });
     };
     // WO-24/25 (AD-07 §4D わたす / beat 14-15): Mission 1 only — "child sees only [the prompt]
     // and one action." Solo already never reaches this screen for Mission 1 (stageCompleted
@@ -736,7 +765,7 @@ export function MissionShell({
         nextMission={nextUndoneMission()}
         onNext={goToNextMission}
         onBackToMap={goToCourseHome}
-        onTryOutside={() => setScreen({ kind: 'parent' })}
+        onTryOutside={() => setScreen({ kind: 'parent', afterMission: true })}
       />
     );
   }
@@ -745,56 +774,73 @@ export function MissionShell({
   const m0Achieved = profile?.milestones?.M0?.achieved ?? false;
   return (
     <div className="mission-shell__parent">
-      <p className="mission-shell__parent-heading">{ui.parentScreenHeading}</p>
-      <Toolbox
-        followMoves={followMoves}
-        cardTypes={cardTypes}
-        moveProgress={profile?.moveProgress ?? {}}
-        heading={ui.toolboxHeading}
-      />
-      {m0Achieved ? (
-        <p className="mission-shell__m0-sealed">{ui.m0SealedMessage}</p>
-      ) : (
-        <div className="mission-shell__m0">
-          <p>{ui.m0Prompt}</p>
-          <button type="button" onClick={sealM0}>{ui.m0Action}</button>
-        </div>
-      )}
-      {m2Achieved ? (
-        <p className="mission-shell__m2-confirmed">{ui.m2ConfirmedMessage}</p>
-      ) : (
-        <div className="mission-shell__m2">
-          <p>{ui.m2ConfirmPrompt}</p>
-          <button type="button" onClick={confirmM2b}>{ui.m2ConfirmAction}</button>
-        </div>
-      )}
-      {followMoves.length > 0 && (
-        <div className="mission-shell__m5">
-          <p>{ui.m5Prompt}</p>
-          <div className="mission-shell__m5-moves">
-            {followMoves.map((move) => (
-              <button key={move} type="button" onClick={() => logOutsideUse(move)}>
-                {cardTypes[move]?.label ?? move}
-              </button>
-            ))}
+      {/* WO-27 §11: the same fixed-footer split Course Home already uses (its own WO-23 §7
+         "continue action fell below the fold" fix) — M0/M2b/M5/Bank stay in the scrollable
+         region exactly as authored, only the final action moves into its own always-visible
+         footer, so a parent who just completed M0/M2b never has to scroll to find their way
+         back to the child at 390×844. No reordering, no new content, no visual redesign. */}
+      <div className="mission-shell__parent-scroll">
+        <p className="mission-shell__parent-heading">{ui.parentScreenHeading}</p>
+        <Toolbox
+          followMoves={followMoves}
+          cardTypes={cardTypes}
+          moveProgress={profile?.moveProgress ?? {}}
+          heading={ui.toolboxHeading}
+        />
+        {m0Achieved ? (
+          <p className="mission-shell__m0-sealed">{ui.m0SealedMessage}</p>
+        ) : (
+          <div className="mission-shell__m0">
+            <p>{ui.m0Prompt}</p>
+            <button type="button" onClick={sealM0}>{ui.m0Action}</button>
           </div>
-        </div>
-      )}
-      {bankLibrary && (
-        <div className="mission-shell__bank-hub">
-          <button type="button" onClick={() => setScreen({ kind: 'bank-select' })}>
-            {ui.bankHubButton}
-          </button>
-        </div>
-      )}
+        )}
+        {m2Achieved ? (
+          <p className="mission-shell__m2-confirmed">{ui.m2ConfirmedMessage}</p>
+        ) : (
+          <div className="mission-shell__m2">
+            <p>{ui.m2ConfirmPrompt}</p>
+            <button type="button" onClick={confirmM2b}>{ui.m2ConfirmAction}</button>
+          </div>
+        )}
+        {followMoves.length > 0 && (
+          <div className="mission-shell__m5">
+            <p>{ui.m5Prompt}</p>
+            <div className="mission-shell__m5-moves">
+              {followMoves.map((move) => (
+                <button key={move} type="button" onClick={() => logOutsideUse(move)}>
+                  {cardTypes[move]?.label ?? move}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {bankLibrary && (
+          <div className="mission-shell__bank-hub">
+            <button type="button" onClick={() => setScreen({ kind: 'bank-select' })}>
+              {ui.bankHubButton}
+            </button>
+          </div>
+        )}
+      </div>
       {/* WO-23 §7 (AD-06 RC-1): the one thing this screen never had — a way onward. Every prior
          action on this screen (M0/M2b/M5/Bank) stays exactly as it was; this just adds the
          missing next step, so a family never needs to reload /play/ to continue. */}
       {/* WO-24 (AD-07 §4D): Mission 1's own ui.stageReturnToChild copy — the explicit return-
          to-child-register action AD-07 names. Every other mission keeps the generic label. */}
-      <button type="button" className="mission-shell__to-complete" onClick={() => setScreen({ kind: 'complete' })}>
-        {continuousStageMissionIds?.has(mission.id) ? ui.stageReturnToChild : ui.handoffContinue}
-      </button>
+      <div className="mission-shell__parent-footer">
+        {/* WO-27: only a real mission handoff ends in that mission's own completion screen —
+           the parent opened this screen independently (Course Home's own standing button, no
+           just-finished mission at all) goes back to Course Home directly instead, never
+           fabricating a completion screen for content nobody played. */}
+        <button
+          type="button"
+          className="mission-shell__to-complete"
+          onClick={() => (screen.kind === 'parent' && screen.afterMission ? setScreen({ kind: 'complete' }) : goToCourseHome())}
+        >
+          {continuousStageMissionIds?.has(mission.id) ? ui.stageReturnToChild : ui.handoffContinue}
+        </button>
+      </div>
     </div>
   );
 }

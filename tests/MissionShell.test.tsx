@@ -359,9 +359,20 @@ describe('MissionShell', () => {
     const user = userEvent.setup();
     // Not in freeMissionIds, and the default AppState has no "m1:full" entitlement.
     render(<MissionShell moduleId="m1" freeMissionIds={[]} mission={mission} ui={ui} />);
-    await createAndSelectProfile(user);
+    await user.click(screen.getByText(ui.profileCreateLabel));
+    await user.click(screen.getByText('🦊'));
+    await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.profileConfirm));
 
+    // WO-27: CURRENT => ENTERABLE — Course Home itself never offers the ordinary continue CTA
+    // for a mission the real entry gate would refuse; the same locked message shows directly,
+    // with no "flash of failure" through a coop question that then turns out to be blocked.
+    expect(screen.queryByText(ui.courseHomeContinueLabel)).not.toBeInTheDocument();
     expect(screen.getByText(ui.lockedMessage)).toBeInTheDocument();
+    expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument();
+
+    // Tapping the depth itself is equally consistent: still no navigation, never starting it.
+    await user.click(screen.getByText(mission.title));
     expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument();
   });
 

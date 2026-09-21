@@ -18,6 +18,12 @@ export interface CourseHomeProps {
   /** The active profile's own next-undone mission — highlighted and auto-scrolled-to on open
    *  (AD-06 D2/J3: "returning child... home opens at current depth, scrolled to it"). */
   currentMissionId: string;
+  /** WO-27: whether `missionId` is actually enterable right now — the real entry authorization
+   *  (`hasAccess()`/`familyTestMode`, resolved by the caller, MissionShell), never re-derived
+   *  here. The sequentially-next Story Mission is not always a PURCHASED one; Course Home's own
+   *  CURRENT display must never claim it's playable when the real entry gate would refuse it
+   *  (CURRENT => ENTERABLE). Bank access is unaffected — this only governs the Story shaft. */
+  isStoryEntitled: (missionId: string) => boolean;
   moveProgress: MoveProgressMap;
   followMoves: string[];
   cardTypes: Record<string, { label: string }>;
@@ -43,8 +49,8 @@ export interface CourseHomeProps {
  * check, unchanged, decides whether it's actually playable).
  */
 export function CourseHome({
-  ui, missionOrder, missions, progress, currentMissionId, moveProgress, followMoves, cardTypes,
-  hasBank, onContinue, onSelectMission, onOpenBank, onOpenParent, onOpenKit,
+  ui, missionOrder, missions, progress, currentMissionId, isStoryEntitled, moveProgress,
+  followMoves, cardTypes, hasBank, onContinue, onSelectMission, onOpenBank, onOpenParent, onOpenKit,
 }: CourseHomeProps) {
   const currentRef = useRef<HTMLLIElement>(null);
   /** WO-26 §7: a Story ahead of CURRENT is LOCKED — tapping it never navigates away. Instead it
@@ -70,9 +76,10 @@ export function CourseHome({
    *  indistinguishable from finishing that one mission, so it keeps its prior replay behavior. */
   const storyIds = missionOrder.filter((id) => missions[id]);
   const moduleComplete = storyIds.length > 1 && storyIds.every((id) => progress[id]?.done);
+  const currentEntitled = isStoryEntitled(currentMissionId);
 
-  function tapDepth(id: string, state: ReturnType<typeof storyState>) {
-    if (state === 'locked') {
+  function tapDepth(id: string, locked: boolean) {
+    if (locked) {
       setLockedTapId(id);
       currentRef.current?.scrollIntoView?.({ block: 'center' });
       return;
@@ -102,8 +109,16 @@ export function CourseHome({
             if (!m) return null;
             const state = storyState(id, progress, currentMissionId);
             const done = state === 'completed';
-            const isCurrent = state === 'current';
-            const locked = state === 'locked';
+            const sequentiallyCurrent = state === 'current';
+            // WO-27: CURRENT => ENTERABLE — a sequentially-next Story the family hasn't
+            // purchased access to is never presented as playable (no robot, no "is-current").
+            // It renders and behaves exactly like a LOCKED depth instead, just with the real
+            // entitlement message on tap (the SAME message MissionShell's own real entry check
+            // would show), never the sequencing one — this isn't "not reached yet", it's
+            // "reached, needs a purchase".
+            const needsPurchase = sequentiallyCurrent && !currentEntitled;
+            const isCurrent = sequentiallyCurrent && currentEntitled;
+            const locked = state === 'locked' || needsPurchase;
             const cls = [
               'course-home__depth',
               done ? 'is-done' : '',
@@ -111,8 +126,8 @@ export function CourseHome({
               locked ? 'is-ahead is-locked' : '',
             ].filter(Boolean).join(' ');
             return (
-              <li key={id} ref={isCurrent ? currentRef : undefined} className={cls}>
-                <button type="button" className="course-home__depth-button" onClick={() => tapDepth(id, state)}>
+              <li key={id} ref={isCurrent || needsPurchase ? currentRef : undefined} className={cls}>
+                <button type="button" className="course-home__depth-button" onClick={() => tapDepth(id, locked)}>
                   <span className="course-home__depth-index">{i + 1}</span>
                   <span className="course-home__depth-title"><Ruby text={m.title} /></span>
                   {/* WO-24 (AD-07 §12): "completed Mission 1 -> gold root becomes visible." A
@@ -125,10 +140,15 @@ export function CourseHome({
                      positional cue, not a second mascot with its own reactive state. */}
                   {isCurrent && <span className="course-home__depth-robot" aria-hidden="true">🤖</span>}
                 </button>
-                {/* WO-26 §7: LOCKED must "not look broken" — a short diegetic explanation right
-                   where the tap happened, never a browser-style error, never a navigation. */}
+                {/* WO-26 §7 / WO-27: LOCKED must "not look broken" — a short diegetic
+                   explanation right where the tap happened, never a browser-style error, never
+                   a navigation. `needsPurchase` reuses the SAME message the real entry gate
+                   shows, so tapping here is never inconsistent with what actually entering it
+                   would show. */}
                 {locked && lockedTapId === id && (
-                  <p className="course-home__depth-locked-note"><Ruby text={ui.courseHomeSequentialLockedMessage} /></p>
+                  <p className="course-home__depth-locked-note">
+                    <Ruby text={needsPurchase ? ui.lockedMessage : ui.courseHomeSequentialLockedMessage} />
+                  </p>
                 )}
               </li>
             );
@@ -145,9 +165,15 @@ export function CourseHome({
         {/* WO-26A: once every Story Mission is done, there is no genuine CURRENT to continue
            into — show the existing Module 1 completed state instead of the ordinary main-story
            continue CTA (whose fallback would otherwise silently replay Story 1). Bank access
-           (below) and each COMPLETED depth's own replay affordance are both unaffected. */}
+           (below) and each COMPLETED depth's own replay affordance are both unaffected.
+           WO-27: a sequentially-next Story the family hasn't purchased is the same story —
+           never the ordinary continue CTA (which would silently hit the real entry gate and
+           flash to the locked screen), the same real entitlement message instead, always
+           visible here rather than requiring a tap on the now-dimmed shaft item. */}
         {moduleComplete ? (
-          <p className="course-home__module-complete">{ui.completeCourseFinishedLabel}</p>
+          <p className="course-home__footer-note">{ui.completeCourseFinishedLabel}</p>
+        ) : currentMission && !currentEntitled ? (
+          <p className="course-home__footer-note"><Ruby text={ui.lockedMessage} /></p>
         ) : (
           currentMission && (
             <button type="button" className="course-home__continue" onClick={onContinue}>

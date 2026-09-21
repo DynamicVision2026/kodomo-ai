@@ -1,7 +1,6 @@
 .mission-shell__locked,
 .mission-shell__wrapper,
-.mission-shell__coop,
-.mission-shell__parent {
+.mission-shell__coop {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,6 +9,39 @@
   margin: 0 auto;
   padding: 2rem 1rem;
   text-align: center;
+}
+
+/* WO-27 §11: same fixed-viewport-height + scrollable-content + fixed-footer split Course Home
+ * already uses (WO-23 §7) — a real 390x844 walkthrough found the parent dashboard's own final
+ * "back to the child" action landing below the fold once M0/M2b had both rendered their own
+ * confirmed-state text above it. */
+.mission-shell__parent {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  text-align: center;
+}
+
+.mission-shell__parent-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.mission-shell__parent-footer {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .mission-shell__wrapper p,

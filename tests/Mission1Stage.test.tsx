@@ -492,7 +492,7 @@ describe('WO-25B (G8) — every mid-mission co-play parent turn uses the full ha
 });
 
 describe('Mission 1 continuous stage — completion and map return', () => {
-  it('completion returns to the map: the finished depth shows the root marker, the next depth becomes current', async () => {
+  it('completion returns to the map: the finished depth shows the root marker; the sequentially-next depth is NOT falsely offered as current since it is genuinely unentitled (WO-27: CURRENT => ENTERABLE) — only chanto is in freeMissionIds here, exactly like real production', async () => {
     const user = userEvent.setup();
     renderShell();
     await enterStage(user, 'solo');
@@ -511,8 +511,15 @@ describe('Mission 1 continuous stage — completion and map return', () => {
     const chantoDepth = screen.getByText(chanto.title).closest('.course-home__depth')!;
     expect(chantoDepth.className).toContain('is-done');
     expect(within(chantoDepth as HTMLElement).getByText('◆')).toBeInTheDocument(); // the gold root marker
+    // WO-27: genkan is sequentially next, but not in freeMissionIds and there is no purchase —
+    // it must never render as "is-current" (that would claim it's freely enterable when it
+    // isn't). It gets the same locked treatment as a genuinely future Story, and the ordinary
+    // continue CTA is gone (replaced by the real entitlement message).
     const genkanDepth = screen.getByText(genkan.title).closest('.course-home__depth')!;
-    expect(genkanDepth.className).toContain('is-current');
+    expect(genkanDepth.className).not.toContain('is-current');
+    expect(genkanDepth.className).toContain('is-locked');
+    expect(screen.queryByText(ui.courseHomeContinueLabel)).not.toBeInTheDocument();
+    expect(screen.getByText(ui.lockedMessage)).toBeInTheDocument();
   });
 });
 
