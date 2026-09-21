@@ -59,6 +59,17 @@ export function CourseHome({
   }, [currentMissionId]);
 
   const currentMission = missions[currentMissionId];
+  /** WO-26A: `currentMissionId` falls back to the caller's own default mission (Story 1) once
+   *  every Story Mission is done (MissionShell.resolveMission has nothing undone left to
+   *  return) — so `currentMission` above stays truthy even with no genuine CURRENT, and the
+   *  ordinary continue CTA would otherwise both show and silently replay Story 1. Computed
+   *  directly from `progress`, independent of that fallback: true only once every Story Mission
+   *  this shaft actually lists is done. Requires more than one Story Mission in the shaft — a
+   *  caller with no real `missionLibrary` (MissionShell's own single-mission fallback, still
+   *  used by several existing tests) has exactly one, and finishing "the whole course" there is
+   *  indistinguishable from finishing that one mission, so it keeps its prior replay behavior. */
+  const storyIds = missionOrder.filter((id) => missions[id]);
+  const moduleComplete = storyIds.length > 1 && storyIds.every((id) => progress[id]?.done);
 
   function tapDepth(id: string, state: ReturnType<typeof storyState>) {
     if (state === 'locked') {
@@ -131,10 +142,18 @@ export function CourseHome({
          in normal document flow. Capping .course-home to 100dvh and giving only .course-home__scroll
          its own overflow keeps this footer on-screen at every viewport, no scrolling required. */}
       <div className="course-home__footer">
-        {currentMission && (
-          <button type="button" className="course-home__continue" onClick={onContinue}>
-            {ui.courseHomeContinueLabel}
-          </button>
+        {/* WO-26A: once every Story Mission is done, there is no genuine CURRENT to continue
+           into — show the existing Module 1 completed state instead of the ordinary main-story
+           continue CTA (whose fallback would otherwise silently replay Story 1). Bank access
+           (below) and each COMPLETED depth's own replay affordance are both unaffected. */}
+        {moduleComplete ? (
+          <p className="course-home__module-complete">{ui.completeCourseFinishedLabel}</p>
+        ) : (
+          currentMission && (
+            <button type="button" className="course-home__continue" onClick={onContinue}>
+              {ui.courseHomeContinueLabel}
+            </button>
+          )
         )}
 
         <div className="course-home__bottom-bar">
