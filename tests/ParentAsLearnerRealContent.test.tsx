@@ -50,7 +50,9 @@ describe('Parent-as-Learner — every accepted requirement, exercised through re
 
   it('minna (1-5), played in real coop mode: child predicts, hands off, the parent sees the real Parent-Unknown reassurance and may pick a different (wrong) option with no judgment shown, then real teach-back and a real Perspective moment follow', async () => {
     localStorage.setItem('m-app.v1', JSON.stringify({
-      profiles: [], entitlements: ['m1:full'], founder: false, abVariant: 'A', deviceId: 'd1',
+      // WO-30 §0: a real purchase now also requires the code itself, not just the derived
+      // entitlement tag — see src/engine/entitlements.ts's reconcileEntitlements().
+      profiles: [], entitlements: ['m1:full'], redeemedCode: 'NAZE-TEST-TEST', founder: false, abVariant: 'A', deviceId: 'd1',
     }));
     const user = userEvent.setup();
     render(

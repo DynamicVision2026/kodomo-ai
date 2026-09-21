@@ -59,6 +59,9 @@ describe('UnlockPage', () => {
 
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
     expect(saved.entitlements).toContain('m1:full');
+    // WO-30 §0: the credential itself, not just the derived tag — reconcileEntitlements()
+    // (src/engine/entitlements.ts) refuses to trust `entitlements` at all without this.
+    expect(saved.redeemedCode).toBe('NAZE-ABCD-EFGH');
   });
 
   it('on an unknown code, shows an error and never touches storage', async () => {

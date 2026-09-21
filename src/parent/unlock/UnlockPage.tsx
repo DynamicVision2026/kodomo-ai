@@ -39,7 +39,11 @@ export function UnlockPage() {
     track('code_redeemed', { success: result.ok });
 
     if (result.ok) {
-      save(applyRedemption(state, result));
+      // Stored normalized (trim + uppercase) — the same shape the backend itself normalizes
+      // to (backend/src/codes.ts's normalizeCode) — so the boot-time re-verification this code
+      // later feeds (src/shell/MissionShell.tsx) sends back exactly what the backend expects,
+      // not whatever casing/whitespace the family happened to type.
+      save(applyRedemption(state, code.trim().toUpperCase(), result));
     }
   }
 

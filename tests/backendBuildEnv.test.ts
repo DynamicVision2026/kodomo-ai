@@ -61,4 +61,33 @@ describe('buildEnv', () => {
     expect(env.SHOPIFY_SHOP_DOMAIN).toBeUndefined();
     expect(env.SHOPIFY_ADMIN_API_TOKEN).toBeUndefined();
   });
+
+  // WO-30 §10: "known historical placeholder values must NOT be accepted for release" — the
+  // exact literal text docs/launch-runbook.md's own setup commands use as a stand-in.
+  describe('placeholder secret rejection', () => {
+    it('refuses to start with the runbook\'s own literal "<placeholder for now>" webhook secret', () => {
+      process.env.ADMIN_TOKEN = 'test-admin';
+      process.env.SHOPIFY_WEBHOOK_SECRET = '<placeholder for now>';
+      expect(() => buildEnv()).toThrow(/SHOPIFY_WEBHOOK_SECRET.*placeholder/is);
+    });
+
+    it('refuses an admin token still carrying the runbook\'s own "<...>" template text', () => {
+      process.env.ADMIN_TOKEN = '<a long random string YOU generate>';
+      process.env.SHOPIFY_WEBHOOK_SECRET = 'test-webhook';
+      expect(() => buildEnv()).toThrow(/ADMIN_TOKEN/);
+    });
+
+    it('refuses a Shopify Admin API token left as "changeme"', () => {
+      process.env.ADMIN_TOKEN = 'test-admin';
+      process.env.SHOPIFY_WEBHOOK_SECRET = 'test-webhook';
+      process.env.SHOPIFY_ADMIN_API_TOKEN = 'changeme';
+      expect(() => buildEnv()).toThrow(/SHOPIFY_ADMIN_API_TOKEN/);
+    });
+
+    it('still accepts an ordinary short local-dev value — this is a placeholder-wording check, not a length/entropy check', () => {
+      process.env.ADMIN_TOKEN = 'test-admin';
+      process.env.SHOPIFY_WEBHOOK_SECRET = 'test-webhook';
+      expect(() => buildEnv()).not.toThrow();
+    });
+  });
 });

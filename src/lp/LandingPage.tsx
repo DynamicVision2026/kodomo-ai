@@ -3,6 +3,16 @@ import { load, save } from '../engine/storage';
 import { track, setVariant } from '../engine/analytics';
 import './landing-page.css';
 
+// WO-30 §3/§4: the real Shopify product/checkout URL (docs/launch-runbook.md Part 3 step 1 —
+// SKU kodomo-ai-m1 on https://soul-id-2.myshopify.com/), set at BUILD time once the Founder has
+// actually created that listing. Undefined today — this repo has never had a live Shopify
+// listing or deployment (launch-runbook.md's own opening line) — same honest-not-yet-configured
+// convention as VITE_UNLOCK_API_URL (src/parent/unlock/UnlockPage.tsx): the primary CTA below
+// links straight to it once set, and shows a clearly-labelled "not yet available" state instead
+// of a dead `href="#"` until then. Never guess/fabricate a URL here — a wrong link sends a
+// family somewhere that isn't a real checkout.
+const SHOPIFY_PRODUCT_URL: string | undefined = import.meta.env.VITE_SHOPIFY_PRODUCT_URL;
+
 /**
  * Parent-voice landing page. Spec v0.5 §10. Child-facing copy rules do NOT apply here —
  * src/lp is deliberately excluded from gate:no-hardcoded-copy (spec v0.5 §7, pillar 6:
@@ -236,9 +246,22 @@ export function LandingPage() {
           <li>30日間返金保証</li>
           <li>創設ファミリー特典（冬休みスペシャルシート 全9枚 を含む）</li>
         </ul>
-        <a className="lp__cta lp__cta--primary" href="#" onClick={() => track('cta_buy_click')}>
-          創設ファミリーとして申し込む
-        </a>
+        {SHOPIFY_PRODUCT_URL ? (
+          <a
+            className="lp__cta lp__cta--primary"
+            href={SHOPIFY_PRODUCT_URL}
+            onClick={() => track('cta_buy_click')}
+          >
+            創設ファミリーとして申し込む
+          </a>
+        ) : (
+          // WO-30 §3: never a dead `href="#"` — an honest, clearly-labelled not-yet-available
+          // state instead, same pattern /play/unlock already uses for its own not-configured
+          // backend. Still fires the same click event, so demand can be measured before launch.
+          <p className="lp__cta lp__cta--primary lp__cta--pending" onClick={() => track('cta_buy_click')}>
+            お申し込みは近日公開予定です
+          </p>
+        )}
       </section>
 
       <section className="lp__section lp__faq">

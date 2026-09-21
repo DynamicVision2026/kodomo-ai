@@ -52,6 +52,14 @@
   color: #2f6fb0;
   border: 1px solid #2f6fb0;
 }
+/* WO-30 §3: the honest not-yet-available state — visually distinct from a real, clickable CTA
+   (no pointer cursor, muted tone) rather than looking broken or identical to a working link. */
+.lp__cta--pending {
+  background: #e8e8e8;
+  color: #666;
+  cursor: default;
+  margin: 0;
+}
 
 .lp__trust {
   margin: 0 0 1rem;

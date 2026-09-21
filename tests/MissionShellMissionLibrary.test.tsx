@@ -22,6 +22,7 @@ function seed(stage: 2 | 3) {
   const state: AppState = {
     profiles: [{ id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage, progress: {} }],
     entitlements: ['m1:free'],
+    redeemedCode: null,
     founder: false,
     abVariant: 'A',
     deviceId: 'device-seed-1',

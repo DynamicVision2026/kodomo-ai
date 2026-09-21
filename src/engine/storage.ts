@@ -35,7 +35,20 @@ export interface Profile {
 }
 export interface AppState {
   profiles: Profile[];
+  /** WO-30 §0: a CACHE only, never the authority — see src/engine/entitlements.ts's own
+   *  reconcileEntitlements(). A `${moduleId}:full` entry here is trustworthy only alongside a
+   *  matching `redeemedCode`; read this field directly and the browser IS the authority, which
+   *  is exactly the thing WO-30 forbids. Every real caller reads reconcileEntitlements(state)
+   *  instead of this field. */
   entitlements: string[];
+  /** WO-30 §5/§0: the actual family code this device redeemed (backend/src/handlers/unlock.ts),
+   *  null until a real /play/unlock redemption succeeds. This — not `entitlements` — is the
+   *  credential: it is what MissionShell re-presents to the backend on every app boot to refresh
+   *  `entitlements`, and its mere presence is what reconcileEntitlements() requires before it
+   *  will trust any `:full` tag in `entitlements` at all. Never set directly; only
+   *  applyRedemption() (itself only ever called after a genuine successful backend response)
+   *  writes it. */
+  redeemedCode: string | null;
   founder: boolean;
   abVariant: 'A' | 'B';
   /** Opaque, non-PII, per-device id — never a person's identity. Only used to count
@@ -54,6 +67,7 @@ function newDeviceId(): string {
 const empty = (): AppState => ({
   profiles: [],
   entitlements: ['m1:free'],
+  redeemedCode: null,
   founder: false,
   abVariant: Math.random() < 0.5 ? 'A' : 'B',
   deviceId: newDeviceId(),

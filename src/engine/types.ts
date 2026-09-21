@@ -131,6 +131,15 @@ export interface ModuleUiStrings {
    *  ありません" — a co-player, not an examiner. Optional so existing module fixtures without it
    *  keep working unchanged; when present, MissionShell renders it right under the heading. */
   parentReassuranceLine?: string;
+  /** WO-30 §6: an optional purchase-recovery link shown on the parent dashboard, only while the
+   *  module itself is still unentitled on this device — "already bought it on another device?
+   *  here's where to re-enter your code" (/play/unlock, the existing multi-device redemption
+   *  screen — device changes/cleared storage are exactly what its soft device cap already
+   *  supports, no new backend surface). Optional so existing module fixtures keep working
+   *  unchanged; hidden entirely (never shown as a dead/mismatched link) once the module IS
+   *  entitled on this device. */
+  parentUnlockPrompt?: string;
+  parentUnlockLinkLabel?: string;
   lockedMessage: string;
   /** WO-02: the 「これでOK？」 judgment gate's "not enough" response, opposite of earlyOk. */
   judgeNotEnough: string;

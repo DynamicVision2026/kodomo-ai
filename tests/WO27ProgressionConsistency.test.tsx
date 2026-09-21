@@ -77,10 +77,14 @@ async function createProfile(user: ReturnType<typeof userEvent.setup>) {
 
 /** Grants a real `m1:full` purchase entitlement to the just-created profile's own AppState —
  *  the same shape `applyRedemption` (src/engine/entitlements.ts) writes after a real Shopify
- *  redemption, never a familyTestMode bypass. */
+ *  redemption, never a familyTestMode bypass. WO-30 §0: also sets `redeemedCode`, now the actual
+ *  credential reconcileEntitlements() requires before it will trust the `:full` tag at all — a
+ *  bare `entitlements: ['m1:full']` with no code is exactly the forged-localStorage case WO-30
+ *  closes, so this helper must supply both to still mean "a real purchase happened here". */
 function grantFullEntitlement() {
   const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
   saved.entitlements = ['m1:full'];
+  saved.redeemedCode = 'NAZE-TEST-TEST';
   localStorage.setItem('m-app.v1', JSON.stringify(saved));
 }
 

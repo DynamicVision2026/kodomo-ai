@@ -111,6 +111,20 @@
   color: var(--ink-soft, #6b5d4f);
 }
 
+/* WO-30 §6: purchase recovery — a quiet utility note, not another call-to-action competing with
+   M0/M2b/M5/Bank above it. */
+.mission-shell__unlock-recovery {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.85rem;
+  color: var(--ink-soft, #6b5d4f);
+}
+.mission-shell__unlock-recovery a {
+  color: var(--root, #c8922e);
+  font-weight: 700;
+}
+
 .mission-shell__m2 {
   display: flex;
   flex-direction: column;

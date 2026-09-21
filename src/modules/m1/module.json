@@ -52,6 +52,8 @@
     "teachbackSkip": "あとでやる",
     "parentScreenHeading": "おうちの方へ",
     "parentReassuranceLine": "これは テストではありません。いっしょに あそぶ ページです。",
+    "parentUnlockPrompt": "ほかの端末で すでに ご購入いただいている場合は、家族用コードをこの端末でも登録できます。",
+    "parentUnlockLinkLabel": "家族用コードを登録する",
     "lockedMessage": "ここは まだ ほっていないよ。おうちの人に きいてみてね。",
     "judgeNotEnough": "もうちょっと聞く",
     "toolboxHeading": "といの どうぐばこ",

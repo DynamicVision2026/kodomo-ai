@@ -94,7 +94,9 @@ describe('WO-23 §15 — family-test regression suite', () => {
 
   it('2. Mission Complete always exposes a next-navigation action when a next mission exists', async () => {
     localStorage.setItem('m-app.v1', JSON.stringify({
-      profiles: [], entitlements: ['m1:full'], founder: false, abVariant: 'A', deviceId: 'd1',
+      // WO-30 §0: a real purchase now also requires the code itself, not just the derived
+      // entitlement tag — see src/engine/entitlements.ts's reconcileEntitlements().
+      profiles: [], entitlements: ['m1:full'], redeemedCode: 'NAZE-TEST-TEST', founder: false, abVariant: 'A', deviceId: 'd1',
     }));
     const user = userEvent.setup();
     render(

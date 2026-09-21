@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Mission, ModuleUiStrings } from '../engine/types';
 import { load, save, MAX_PROFILES, type AppState, type Profile } from '../engine/storage';
-import { hasAccess } from '../engine/entitlements';
+import { hasAccess, reconcileEntitlements, applyRedemption, revokeUnrecognizedCode } from '../engine/entitlements';
+import { redeemFamilyCode } from '../parent/unlock/redeemCode';
 import { applyMoveRendered, applyAptUse, applyBlindCommit, applyOutsideUse } from '../engine/scaffold';
 import {
   evaluateM1, evaluateM3, evaluateM4, evaluateM5, addM2ProxyMission, applyM2Confirmed,
@@ -60,6 +61,15 @@ export interface MissionShellProps {
    *  purchase. Every real production build passes `false`/omits this prop entirely — see
    *  src/main.tsx's own `VITE_FAMILY_TEST_MODE` wiring and docs/family-test-mode.md. */
   familyTestMode?: boolean;
+  /** WO-30 §5: the deployed backend's base URL (src/main.tsx's own VITE_UNLOCK_API_URL,
+   *  same env var /play/unlock's redemption screen already reads) — undefined until the
+   *  backend is actually deployed, same honest-not-configured convention as everywhere else
+   *  this URL is threaded through. When present, MissionShell re-presents any stored
+   *  `redeemedCode` to the backend once per mount to refresh the cached entitlement a forged
+   *  or stale localStorage value could otherwise keep claiming forever — see the boot-time
+   *  effect below and reconcileEntitlements() in src/engine/entitlements.ts for the full
+   *  security model (WO-30 §0). */
+  unlockApiBaseUrl?: string;
   /** WO-24 (AD-07 v0.7a prototype) / WO-26 (Module 1 rollout): the set of mission ids, if any,
    *  that should play through the new continuous MissionStage instead of the original
    *  screen-by-screen SlotAssembly/Dig/wrapper sequence. Deliberately explicit ids supplied by
@@ -118,8 +128,51 @@ type Screen =
 export function MissionShell({
   moduleId, freeMissionIds, mission: defaultMission, ui, missionLibrary, bankLibrary,
   followMoves = [], cardTypes = {}, familyTestMode = false, continuousStageMissionIds,
+  unlockApiBaseUrl,
 }: MissionShellProps) {
   const [appState, setAppState] = useState<AppState>(() => load());
+
+  /** WO-30 §0/§5: the one place a stored `redeemedCode` is re-presented to the backend this
+   *  session, so a long-lived cached `entitlements` value can't outlive what the backend itself
+   *  still recognizes. Fires once per mount (not per render — refreshing on every keystroke
+   *  would be wasteful and gains nothing over once-per-app-open); `/unlock` is idempotent
+   *  (backend/src/handlers/unlock.ts already just re-adds the same deviceId), so calling it
+   *  again here is always safe, never a second "activation".
+   *
+   *  Outcomes: a genuine, still-valid code refreshes `entitlements`/`founder` (harmless no-op
+   *  if nothing changed since the last redemption). An explicit `not_found` — the ONE response
+   *  that unambiguously means "the backend has never heard of this code" — revokes it
+   *  (revokeUnrecognizedCode): this is what actually closes the gap a devtools user could
+   *  otherwise open by fabricating BOTH `redeemedCode` and a matching `entitlements` value by
+   *  hand, since a made-up code can never pass this check. `not_configured`/`network`/`server`
+   *  failures do nothing — a family with no internet this moment, or before the backend is even
+   *  deployed, keeps whatever cached entitlement it already had (WO-30 §5: "reload/browser
+   *  restart safe"); only the backend's own explicit rejection ever revokes access. */
+  useEffect(() => {
+    const code = appState.redeemedCode;
+    if (!code) return;
+    let cancelled = false;
+    redeemFamilyCode(unlockApiBaseUrl, code, appState.deviceId).then((result) => {
+      if (cancelled) return;
+      if (result.ok) {
+        setAppState((prev) => {
+          if (prev.redeemedCode !== code) return prev; // redeemed a DIFFERENT code meanwhile
+          const next = applyRedemption(prev, code, result);
+          save(next);
+          return next;
+        });
+      } else if (result.reason === 'not_found') {
+        setAppState((prev) => {
+          if (prev.redeemedCode !== code) return prev;
+          const next = revokeUnrecognizedCode(prev);
+          save(next);
+          return next;
+        });
+      }
+      // 'not_configured' / 'network' / 'server': leave the cached entitlement untouched.
+    });
+    return () => { cancelled = true; };
+  }, []); // intentionally once-per-mount only — see the doc comment above.
   const [profile, setProfile] = useState<Profile | null>(null);
   const [solo, setSolo] = useState(false);
   const [screen, setScreen] = useState<Screen>({ kind: 'profile' });
@@ -183,7 +236,10 @@ export function MissionShell({
    *  entry is actually authorized, so a locked attempt leaves every other screen's context
    *  exactly as it was. */
   function enterMission(m: Mission) {
-    if (!familyTestMode && !hasAccess(appState.entitlements, moduleId, m.id, freeMissionIds)) {
+    // WO-30 §0: reconcileEntitlements(), never appState.entitlements directly — a `:full` tag
+    // with no backing redeemedCode is never trusted, so hand-editing localStorage alone cannot
+    // authorize entry here. See src/engine/entitlements.ts's own doc comment.
+    if (!familyTestMode && !hasAccess(reconcileEntitlements(appState), moduleId, m.id, freeMissionIds)) {
       setScreen({ kind: 'locked' });
       return;
     }
@@ -193,9 +249,9 @@ export function MissionShell({
 
   /** WO-27: the SAME authorization `enterMission` itself checks, exposed as a pure predicate so
    *  Course Home's own CURRENT display can agree with it instead of computing "current" purely
-   *  from sequence (CURRENT => ENTERABLE). */
+   *  from sequence (CURRENT => ENTERABLE). WO-30: reconciled, not raw — see enterMission above. */
   function isStoryEntitled(missionId: string): boolean {
-    return familyTestMode || hasAccess(appState.entitlements, moduleId, missionId, freeMissionIds);
+    return familyTestMode || hasAccess(reconcileEntitlements(appState), moduleId, missionId, freeMissionIds);
   }
 
   /** WO-23 WP-4 (AD-06 D1): every journey — new profile or returning — lands on Course Home
@@ -827,6 +883,19 @@ export function MissionShell({
               {ui.bankHubButton}
             </button>
           </div>
+        )}
+        {/* WO-30 §6: purchase recovery — only surfaced while THIS device genuinely isn't
+           entitled yet (a family that already redeemed here has no reason to see it), and only
+           when the caller's ui strings actually carry it (existing module fixtures without the
+           two new optional strings render nothing here, unchanged). Points at the same
+           /play/unlock screen a family's purchase-confirmation email already directs them to —
+           no new backend surface, just discoverability from inside the app itself. */}
+        {!familyTestMode && !reconcileEntitlements(appState).includes(`${moduleId}:full`)
+          && ui.parentUnlockPrompt && ui.parentUnlockLinkLabel && (
+          <p className="mission-shell__unlock-recovery">
+            {ui.parentUnlockPrompt}{' '}
+            <a href="/play/unlock">{ui.parentUnlockLinkLabel}</a>
+          </p>
         )}
       </div>
       {/* WO-23 §7 (AD-06 RC-1): the one thing this screen never had — a way onward. Every prior

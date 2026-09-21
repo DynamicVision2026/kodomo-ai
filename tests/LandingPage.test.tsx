@@ -14,6 +14,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   delete window.plausible;
+  vi.unstubAllEnvs();
 });
 
 describe('LandingPage', () => {
@@ -53,6 +54,24 @@ describe('LandingPage', () => {
 
     await user.click(screen.getByText('創設ファミリーとして申し込む ¥4,980'));
     expect(plausible).toHaveBeenCalledWith('cta_buy_click', expect.anything());
+  });
+
+  // WO-30 §3: "No dead purchase button" — the price section's own CTA, distinct from the hero's
+  // #price anchor-scroll button above, must never be a bare href="#".
+  it('the price section CTA is an honest "not yet available" state, never a dead href="#", when no Shopify URL is configured', () => {
+    render(<LandingPage />);
+    const cta = screen.getByText('お申し込みは近日公開予定です');
+    expect(cta.tagName).not.toBe('A'); // not a link at all, so there's nothing dead to click
+  });
+
+  it('the price section CTA links straight to the real Shopify product once VITE_SHOPIFY_PRODUCT_URL is configured', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_SHOPIFY_PRODUCT_URL', 'https://soul-id-2.myshopify.com/products/naze-m1');
+    const { LandingPage: LandingPageWithShopifyUrl } = await import('../src/lp/LandingPage');
+    render(<LandingPageWithShopifyUrl />);
+
+    const cta = screen.getByText('創設ファミリーとして申し込む', { selector: 'a.lp__cta--primary' });
+    expect(cta).toHaveAttribute('href', 'https://soul-id-2.myshopify.com/products/naze-m1');
   });
 
   it('renders all four section 1A alignment rows, each with its own source link', () => {
