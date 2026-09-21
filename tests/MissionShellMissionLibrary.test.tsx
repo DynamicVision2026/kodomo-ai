@@ -54,6 +54,7 @@ describe('MissionShell + missionLibrary: mission selection follows the profile\'
     );
 
     await user.click(screen.getByText('たぬき')); // selects the seeded Stage 3 profile
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     // The Stage 3 dummy mission's own "check" card, not bread's slot-assembly card.
     expect(screen.getByText('これで ただしいか みなおしてみよう')).toBeInTheDocument();
@@ -73,6 +74,7 @@ describe('MissionShell + missionLibrary: mission selection follows the profile\'
     );
 
     await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     expect(screen.getByText('パンが ふくらむのは なぜ？')).toBeInTheDocument();
   });
@@ -83,6 +85,7 @@ describe('MissionShell + missionLibrary: mission selection follows the profile\'
     render(<MissionShell moduleId="m1" freeMissionIds={freeMissionIds} mission={stage2Mission} ui={ui} />);
 
     await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     expect(screen.getByText('パンが ふくらむのは なぜ？')).toBeInTheDocument();
   });

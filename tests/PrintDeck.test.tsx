@@ -51,16 +51,17 @@ describe('PrintDeck', () => {
     const sheets = container.querySelectorAll('.print-deck__sheet');
     expect(sheets).toHaveLength(1);
 
-    const cards = container.querySelectorAll('.card--print');
+    const cards = container.querySelectorAll('.print-card');
     expect(cards).toHaveLength(9);
     for (const c of deck.cards) {
       expect(container.textContent).toContain(c.text);
     }
   });
 
-  it('renders every card as non-interactive (a div, not a button) — print mode', () => {
+  it('renders every card as non-interactive (a div, not a button) — WO-23: PrintCard has no interactive path at all, not just a print-mode flag', () => {
     const { container } = render(<PrintDeck deck={deck} cardTypes={cardTypes} />);
-    expect(container.querySelectorAll('.card--print button')).toHaveLength(0);
+    expect(container.querySelectorAll('.print-card button')).toHaveLength(0);
+    expect(container.querySelectorAll('button.print-card')).toHaveLength(0);
   });
 
   it('renders from whatever deck + cardTypes it is given, not a fixed stage-2 import (Sprint 1-A §2.5)', () => {
@@ -83,7 +84,7 @@ describe('PrintDeck', () => {
     const { container } = render(<PrintDeck deck={fullDeck} cardTypes={cardTypes} />);
     const sheets = container.querySelectorAll('.print-deck__sheet');
     expect(sheets).toHaveLength(5); // ceil(45 / 9)
-    expect(container.querySelectorAll('.card--print')).toHaveLength(45);
+    expect(container.querySelectorAll('.print-card')).toHaveLength(45);
     for (const c of fullDeck.cards) expect(container.textContent).toContain(c.text);
   });
 });

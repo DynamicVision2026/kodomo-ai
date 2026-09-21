@@ -44,7 +44,21 @@
     "m0Action": "ふうとうを とじる",
     "m0SealedMessage": "ふうとうを とじたよ。",
     "m5Prompt": "おうちの そとでも、この といを つかっているのを 見かけたら、おしえてください。",
-    "predictionParentPrompt": "わからなくても だいじょうぶ。こたえを 知っているかより、いっしょに よそうしてみることが たいせつだよ。"
+    "predictionParentPrompt": "わからなくても だいじょうぶ。こたえを 知っているかより、いっしょに よそうしてみることが たいせつだよ。",
+    "digContinuePrompt": "べつの カードで きく",
+    "courseHomeContinueLabel": "つづきを ほる",
+    "courseHomeHeading": "ホリのちず",
+    "courseHomeBankLabel": "ちかみち",
+    "courseHomeGrowthLabel": "あつめたもの",
+    "courseHomeKitLabel": "いんさつキット",
+    "courseHomeDoneLabel": "ほったよ",
+    "courseHomeNotYetLabel": "まだ ほっていない",
+    "completeHeading": "ミッション かんりょう！",
+    "completeToolLabel": "つかった どうぐ",
+    "completeCourseFinishedLabel": "ぜんぶの ミッションを ほりおえたよ！",
+    "completeNextMissionLabel": "つぎの ミッション",
+    "completeBackToMapLabel": "ちずに もどる",
+    "completeTryOutsideLabel": "おうちで やってみる"
   },
   "cardTypes": {
     "check": {

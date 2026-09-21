@@ -28,6 +28,7 @@ describe('stage1-test extensibility fixture', () => {
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
 
     expect(screen.getByText(ui.coopQuestion)).toBeInTheDocument();
     await user.click(screen.getByText(ui.coopSolo));
@@ -43,6 +44,7 @@ describe('stage1-test extensibility fixture', () => {
     await user.click(screen.getByText('🐰'));
     await user.click(screen.getByText('うさぎ'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('おしえて ほしいな'));
 

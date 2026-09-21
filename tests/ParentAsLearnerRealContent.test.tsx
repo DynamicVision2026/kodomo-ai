@@ -44,7 +44,7 @@ describe('Parent-as-Learner — every accepted requirement, exercised through re
     const plainSegments = rawText.split(/\{[^{}|]+\|[^{}|]+\}/);
     const needle = plainSegments.reduce((a, b) => (b.length > a.length ? b : a), '');
     const el = screen.getByText((_content, element) =>
-      element?.className === 'card__text' && needle.length > 0 && (element.textContent ?? '').includes(needle));
+      element?.className === 'question-chip__text' && needle.length > 0 && (element.textContent ?? '').includes(needle));
     await user.click(el.closest('button')!);
   }
 
@@ -64,6 +64,7 @@ describe('Parent-as-Learner — every accepted requirement, exercised through re
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
 
     // Same-answer co-play starts here: choosing はい (co-op), not solo, is what makes the
     // prediction battle run at all — solo mode auto-skips it entirely (spec v0.5 pillar 5).

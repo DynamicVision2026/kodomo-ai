@@ -1,0 +1,69 @@
+/**
+ * WO-23 (AD-06 D6): the minimum coherent v0.7a visual system — 土と根 (soil and roots).
+ * Warm, Japanese, calm; not babyish, not neon-AI. visual-kit.html is the reference this session
+ * drew the palette/type direction from — its card PROPORTIONS are deliberately not adopted here
+ * (see src/ui/QuestionChip.tsx's own doc comment, AD-06 RC-3) but its colour family and the
+ * "warm paper, not SaaS-white" feel are.
+ *
+ * These are the ONLY visual tokens this sprint defines. Individual components may add their own
+ * local CSS, but colour/spacing/radius should come from here, not a new one-off value, so the
+ * whole product reads as one system rather than a set of independently implemented features —
+ * the exact failure mode AD-06 §0 and its closing "product test" describe.
+ */
+:root {
+  /* Ground/surface, child-facing screens. */
+  --surface: #f7f3ec;
+  --ink: #2b2622;
+  --ink-soft: #6b5d4f;
+
+  /* Soil depth scale — progressively darker with depth, never used for anything but the dig
+     progression itself (Course Home's shaft, the depth gauge). */
+  --soil-1: #e8dcc8;
+  --soil-2: #c9b08a;
+  --soil-3: #a6845c;
+  --soil-4: #7a5c3a;
+
+  /* ねっこ gold — reserved for a reached root only. Scarcity is what makes it a moment. */
+  --root: #c8922e;
+
+  /* The four questioning-tool identities — shared between QuestionChip and PrintCard (identity
+     tokens only, never dimensions, per AD-06 RC-3/D5). */
+  --tool-tsumari: #2f6fb0;
+  --tool-tatoeba: #b0632f;
+  --tool-naze: #2f8f6b;
+  --tool-hokaniwa: #7a4fb0;
+
+  /* Parent mode: lighter, flatter, no soil — one of the three signals (with typography and the
+     absent depth gauge) that tell a parent within one second a screen is theirs (AD-06 D6/D8). */
+  --parent-surface: #ffffff;
+  --parent-ink: #2b2622;
+
+  --radius-chip: 0.85rem;
+  --radius-pill: 999px;
+
+  /* 4px base spacing scale. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* D7: bottom thumb zone reserved for the primary action on mobile. */
+  --thumb-zone: 120px;
+
+  --font-child: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Yu Gothic', 'Noto Sans JP',
+    system-ui, sans-serif;
+  --font-parent: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --surface: #2b2622;
+    --ink: #f7f3ec;
+    --ink-soft: #cdb9a8;
+    --parent-surface: #211d19;
+    --parent-ink: #f7f3ec;
+  }
+}

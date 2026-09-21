@@ -16,8 +16,9 @@ afterEach(() => cleanup());
  * Spec v0.5 §13 acceptance criterion: "A dummy /modules/m2-test with one new card type and a
  * dummy s3.json both render without touching /engine." src/modules/m2-test/ introduces a new
  * card kind ("check") and a stage-3 mission. The only non-content changes this needed were in
- * src/ui/Card.tsx (a new icon/corner entry) — nothing under src/engine (types, resolver,
- * digMachine, storage, entitlements, analytics, predictions) changed to support it. This test
+ * src/ui/cardKinds.ts (a new icon/corner entry, shared by QuestionChip/PrintCard since WO-23
+ * WP-2) — nothing under src/engine (types, resolver, digMachine, storage, entitlements,
+ * analytics, predictions) changed to support it. This test
  * proves it actually renders and plays through MissionShell unmodified, not just that the JSON
  * parses.
  */
@@ -30,14 +31,17 @@ describe('m2-test extensibility fixture', () => {
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
 
     // hasAccess passes (m2-test-dummy is in freeMissionIds) straight to the coop question.
     expect(screen.getByText(ui.coopQuestion)).toBeInTheDocument();
     await user.click(screen.getByText(ui.coopSolo));
 
-    // The new "check" kind card renders, styled distinctly (Card.tsx's new icon/corner entry).
+    // The new "check" kind card renders, styled distinctly (cardKinds.ts's new icon/corner
+    // entry, shared by QuestionChip — WO-23 WP-2 split the old Card.tsx into QuestionChip
+    // (digital) and PrintCard (physical); this fixture exercises the digital path).
     const card = screen.getByText('これで ただしいか みなおしてみよう').closest('button')!;
-    expect(card.className).toContain('card--check');
+    expect(card.className).toContain('question-chip--check');
 
     // This dummy fixture has only one phase, so completing it goes straight to the tip screen
     // in the same tick (the archetype's own response never gets a separate visible frame here
@@ -54,6 +58,7 @@ describe('m2-test extensibility fixture', () => {
     await user.click(screen.getByText('🐰'));
     await user.click(screen.getByText('うさぎ'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('これで ただしいか みなおしてみよう'));
 

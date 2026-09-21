@@ -195,6 +195,7 @@ describe('Story Missions — full interactive playthroughs prove the real UI sti
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     const clearCard = (mission.phases[0] as SlotAssemblyPhase).cards.find((c) => c.tag === 'clear')!;
     await user.click(screen.getByText(clearCard.text));
@@ -222,6 +223,7 @@ describe('Story Missions — full interactive playthroughs prove the real UI sti
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     const clearCard = (mission.phases[0] as SlotAssemblyPhase).cards.find((c) => c.tag === 'clear')!;
     await user.click(screen.getByText(clearCard.text));

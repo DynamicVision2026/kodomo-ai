@@ -250,6 +250,7 @@ describe('rouka (1-3) — playable end to end (たのむ -> ほる x3 -> wrapper
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 
     const clearCard = (roukaMission.phases[0]! as Extract<typeof roukaMission.phases[0], { template: 'slot-assembly' }>)

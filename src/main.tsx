@@ -32,7 +32,16 @@
 // from the parent screen. Order below matches docs/AD-04-bank-topics.md's accepted B01-B12
 // numbering exactly (display order only — spec's "pickable in any order" is the family's own
 // choice, not an enforced sequence, so this is not a second missionOrder).
+//
+// WO-23 (AD-06 §8): `familyTestMode` is a build-time opt-in (`VITE_FAMILY_TEST_MODE=1`),
+// completely isolated from real entitlement logic — `hasAccess()` (src/engine/entitlements.ts)
+// is never touched, never bypassed at the engine level, and every real production build ships
+// with this env var unset. When set, MissionShell's two entitlement checkpoints skip the
+// `hasAccess()` call entirely (see MissionShellProps.familyTestMode's own doc comment) so a
+// QA/family-test build can reach all 8 Story Missions and all 12 Bank Digs without a real
+// purchase. Documented in docs/family-test-mode.md.
 import { createRoot } from 'react-dom/client';
+import './styles/tokens.css';
 import type { Mission, ModuleUiStrings } from './engine/types';
 import { MissionShell } from './shell';
 import chantoMissionJson from './modules/m1/topics/chanto/s2.json';
@@ -86,6 +95,8 @@ const bankMissionsById: Record<string, Mission> = Object.fromEntries(
   bankMissions.map((m) => [m.id, m]),
 );
 
+const familyTestMode = import.meta.env.VITE_FAMILY_TEST_MODE === '1';
+
 createRoot(document.getElementById('root')!).render(
   <MissionShell
     moduleId={moduleJson.id}
@@ -96,5 +107,6 @@ createRoot(document.getElementById('root')!).render(
     ui={ui}
     followMoves={moduleJson.followMoves}
     cardTypes={moduleJson.cardTypes}
+    familyTestMode={familyTestMode}
   />,
 );

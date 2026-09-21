@@ -6,7 +6,7 @@ import {
 } from '../../engine/digMachine';
 import { isAptUse, isAtLeast, type MoveProgressMap, type SelfReportKind } from '../../engine/scaffold';
 import { resolveDigLayerPredictionOptions } from '../../engine/predictions';
-import { Card } from '../../ui/Card';
+import { QuestionChip } from '../../ui/QuestionChip';
 import { Ruby } from '../../engine/ruby';
 import { track } from '../../engine/analytics';
 import { PredictionBattle } from '../prediction-battle';
@@ -300,9 +300,16 @@ export function Dig({
                     </button>
                   </div>
                 )}
+                {state.flatReply && (
+                  // WO-23 WP-1 (AD-06 RC-2): the hand below was already open and clickable —
+                  // digMachine.ts's playCard() never closes it on a non-advancing play — but
+                  // nothing said so explicitly, which is the systemic dead end the audit found
+                  // across every story. This is that explicit cue, never a "wrong answer" label.
+                  <p className="dig__continue-prompt">{ui.digContinuePrompt}</p>
+                )}
                 <div className="dig__hand">
                   {phase.layers[state.layer]!.hand.map((c) => (
-                    <Card key={c.id} kind="dig" text={c.text} onClick={() => playHandCard(c.id)} />
+                    <QuestionChip key={c.id} kind="dig" text={c.text} onClick={() => playHandCard(c.id)} />
                   ))}
                 </div>
               </>

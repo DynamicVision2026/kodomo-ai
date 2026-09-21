@@ -113,6 +113,7 @@ describe('ice topic — playable end to end, and completing it triggers the exis
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 
     // Layer 0: gate -> Gap Naming -> the layer's own deepen card.

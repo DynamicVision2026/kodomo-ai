@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { Archetype, ModuleUiStrings, SlotAssemblyPhase, SlotId } from '../../engine/types';
 import { resolveArchetype } from '../../engine/resolver';
 import { resolveSlotAssemblyPredictionOptions } from '../../engine/predictions';
-import { Card, type CardKind } from '../../ui/Card';
+import { QuestionChip } from '../../ui/QuestionChip';
+import type { CardKind } from '../../ui/cardKinds';
 import { Ruby } from '../../engine/ruby';
 import { track } from '../../engine/analytics';
 import { PredictionBattle } from '../prediction-battle';
@@ -91,7 +92,7 @@ export function SlotAssembly({ phase, ui, solo, onComplete }: SlotAssemblyProps)
           {phase.cards
             .filter((c) => c.slot === slot)
             .map((c) => (
-              <Card
+              <QuestionChip
                 key={c.id}
                 kind={slot as CardKind}
                 text={c.text}

@@ -184,6 +184,42 @@ export interface ModuleUiStrings {
    *  a plain completion marker (matches `progress[id].done`), never a score or correctness
    *  claim. */
   bankDoneLabel: string;
+
+  // --- WO-23 (AD-06 v0.7a): continuation contract, Course Home, Mission Complete -------------
+  /** WP-1: shown whenever a played card was non-advancing (sideways/repeat/offtopic) — the
+   *  hand was already still open and clickable (digMachine.ts never closes it), but nothing
+   *  said so explicitly. This is that explicit continuation cue — never a "wrong answer"
+   *  label, just "the hand is still here, try another card." */
+  digContinuePrompt: string;
+  /** Course Home's own primary CTA into the active profile's current (next-undone) mission. */
+  courseHomeContinueLabel: string;
+  /** Course Home's heading. */
+  courseHomeHeading: string;
+  /** Course Home's Bank section label — AD-06 D4's "ちかみち" (side tunnels off the main shaft). */
+  courseHomeBankLabel: string;
+  /** Course Home's growth/tools section label — AD-06 D4's "あつめたもの". */
+  courseHomeGrowthLabel: string;
+  /** Course Home's Home Kit entry label. */
+  courseHomeKitLabel: string;
+  /** Shown next to a depth (Story Mission) the active profile has already completed — a plain
+   *  completion marker, never a score, matching `bankDoneLabel`'s own convention. */
+  courseHomeDoneLabel: string;
+  /** Shown on a depth ahead of the current one — AD-06 D2/D4: "not dug yet", never a
+   *  denial/dead-end message. */
+  courseHomeNotYetLabel: string;
+  /** Mission Complete screen heading. */
+  completeHeading: string;
+  /** Mission Complete: label introducing the tool(s) practiced this mission. */
+  completeToolLabel: string;
+  /** Mission Complete: shown when no further mission is undone — the course itself is complete,
+   *  never phrased as a dead end. */
+  completeCourseFinishedLabel: string;
+  /** Mission Complete's primary CTA — the next undone mission. */
+  completeNextMissionLabel: string;
+  /** Mission Complete's secondary CTA — back to Course Home. */
+  completeBackToMapLabel: string;
+  /** Mission Complete's optional third action — try it outside, at home. */
+  completeTryOutsideLabel: string;
 }
 
 /**

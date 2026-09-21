@@ -87,6 +87,7 @@ describe('Growth Journey M0-M5 — reachable end to end through only real, relea
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
 
     // --- Mission 1: rouka (1-3, real 3-layer chain, domain 社会とひと for follow-naze) -------
     await user.click(screen.getByText(ui.coopSolo));

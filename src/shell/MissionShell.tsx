@@ -12,6 +12,8 @@ import { ProfilePicker } from './ProfilePicker';
 import { pickNextMission } from './missionLibrary';
 import { Toolbox } from './Toolbox';
 import { BankSelect } from './BankSelect';
+import { CourseHome } from './CourseHome';
+import { MissionComplete } from './MissionComplete';
 import { SlotAssembly } from '../templates/slot-assembly';
 import { Dig, type UseEvidence, type BlindSelfReportEvidence, type DigResult } from '../templates/dig';
 import { Handoff } from '../templates/handoff';
@@ -50,11 +52,19 @@ export interface MissionShellProps {
    *  a second hard-coded move list or label source. Omit for a module with no follow moves. */
   followMoves?: string[];
   cardTypes?: Record<string, { label: string }>;
+  /** WO-23 (AD-06 §8): a build-time-only QA/family-test opt-in, isolated from real entitlement
+   *  logic — `hasAccess()` (src/engine/entitlements.ts) is never touched or bypassed at the
+   *  engine level; this only skips the two call sites in this component that would otherwise
+   *  call it, so all 8 Story Missions and all 12 Bank Digs can be reached without a real
+   *  purchase. Every real production build passes `false`/omits this prop entirely — see
+   *  src/main.tsx's own `VITE_FAMILY_TEST_MODE` wiring and docs/family-test-mode.md. */
+  familyTestMode?: boolean;
 }
 
 type Screen =
   | { kind: 'profile' }
   | { kind: 'locked' }
+  | { kind: 'course-home' }
   | { kind: 'coop' }
   | { kind: 'phase'; index: number }
   | { kind: 'tip' }
@@ -63,6 +73,7 @@ type Screen =
   | { kind: 'perspective' }
   | { kind: 'handoff' }
   | { kind: 'parent' }
+  | { kind: 'complete' }
   | { kind: 'bank-select' };
 
 /**
@@ -77,7 +88,7 @@ type Screen =
  */
 export function MissionShell({
   moduleId, freeMissionIds, mission: defaultMission, ui, missionLibrary, bankLibrary,
-  followMoves = [], cardTypes = {},
+  followMoves = [], cardTypes = {}, familyTestMode = false,
 }: MissionShellProps) {
   const [appState, setAppState] = useState<AppState>(() => load());
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -124,15 +135,48 @@ export function MissionShell({
     return (pickedId && missionLibrary.missions[pickedId]) || defaultMission;
   }
 
-  function afterProfileChosen(p: Profile) {
-    const resolved = resolveMission(p);
-    setMission(resolved);
-    setProfile(p);
-    if (!hasAccess(appState.entitlements, moduleId, resolved.id, freeMissionIds)) {
+  /** WO-23 (AD-06 §8): the one place both real production entitlement gating and the isolated
+   *  family-test bypass meet. `hasAccess()` itself is never touched — `familyTestMode` only
+   *  skips calling it here, and only when a caller explicitly opted this whole shell into that
+   *  mode (never true in a real production build). */
+  function enterMission(m: Mission) {
+    setMission(m);
+    if (!familyTestMode && !hasAccess(appState.entitlements, moduleId, m.id, freeMissionIds)) {
       setScreen({ kind: 'locked' });
       return;
     }
     setScreen({ kind: 'coop' });
+  }
+
+  /** WO-23 WP-4 (AD-06 D1): every journey — new profile or returning — lands on Course Home
+   *  first, never straight into a mission. `mission` state is still resolved here (Course
+   *  Home's own "current depth" highlight and its primary continue action both read it), just
+   *  not entered automatically; the actual entitlement check only runs once the family taps
+   *  something (AD-06 D2 S02: "Undug depths shown dimmed, never a dead end"). */
+  function afterProfileChosen(p: Profile) {
+    const resolved = resolveMission(p);
+    setMission(resolved);
+    setProfile(p);
+    setScreen({ kind: 'course-home' });
+  }
+
+  /** Re-resolves the active profile's current mission and returns to Course Home — used both
+   *  for the initial entry and for every "back to the map" action afterward, since completing a
+   *  mission changes which one is now current. */
+  function goToCourseHome() {
+    setProfile((prev) => {
+      if (prev) setMission(resolveMission(prev));
+      return prev;
+    });
+    setScreen({ kind: 'course-home' });
+  }
+
+  /** Course Home's own depth taps and its primary "continue" action both resolve through here —
+   *  a depth ahead of the current one is exactly as reachable as the current one; the ONLY thing
+   *  that can stop it is the same real entitlement check every mission has always gone through. */
+  function selectStoryMission(missionId: string) {
+    const picked = missionLibrary?.missions[missionId];
+    if (picked) enterMission(picked);
   }
 
   /** WO-21 Phase 1: a family picked a specific Bank Dig from the free-pick list. Reuses the
@@ -140,13 +184,7 @@ export function MissionShell({
    *  goes through — a Bank Dig is not a second, differently-gated kind of content. */
   function selectBankMission(missionId: string) {
     const picked = bankLibrary?.missions[missionId];
-    if (!picked) return;
-    setMission(picked);
-    if (!hasAccess(appState.entitlements, moduleId, picked.id, freeMissionIds)) {
-      setScreen({ kind: 'locked' });
-      return;
-    }
-    setScreen({ kind: 'coop' });
+    if (picked) enterMission(picked);
   }
 
   function createProfile(p: Profile) {
@@ -333,6 +371,24 @@ export function MissionShell({
     }
   }
 
+  /** Mission Complete's own primary action — resolves the active profile's now-updated next
+   *  mission (the one just finished no longer counts) and enters it directly, the same way
+   *  Course Home's own depth taps do. */
+  function goToNextMission() {
+    if (!profile) return;
+    const resolved = resolveMission(profile);
+    enterMission(resolved);
+  }
+
+  /** The active profile's own next-undone mission, resolved fresh on every render Mission
+   *  Complete needs it for — never stale, since `progress` just changed. `null` (not the
+   *  fallback default mission) means the whole course is genuinely done. */
+  function nextUndoneMission(): Mission | null {
+    if (!profile || !missionLibrary) return null;
+    const pickedId = pickNextMission(missionLibrary.missionOrder, missionLibrary.missions, profile);
+    return (pickedId && missionLibrary.missions[pickedId]) || null;
+  }
+
   if (screen.kind === 'profile') {
     return (
       <ProfilePicker
@@ -346,10 +402,34 @@ export function MissionShell({
   }
 
   if (screen.kind === 'locked') {
+    // WO-23 (AD-06 RC-1): "locked state is a dead end" — the one thing missing here was any way
+    // back at all. The lock/entitlement decision itself is unchanged (hasAccess, real).
     return (
-      <p className="mission-shell__locked">
-        <Ruby text={ui.lockedMessage} />
-      </p>
+      <div className="mission-shell__locked">
+        <p><Ruby text={ui.lockedMessage} /></p>
+        <button type="button" onClick={goToCourseHome}>{ui.completeBackToMapLabel}</button>
+      </div>
+    );
+  }
+
+  if (screen.kind === 'course-home' && profile) {
+    return (
+      <CourseHome
+        ui={ui}
+        missionOrder={missionLibrary?.missionOrder ?? [mission.id]}
+        missions={missionLibrary?.missions ?? { [mission.id]: mission }}
+        progress={profile.progress}
+        currentMissionId={mission.id}
+        moveProgress={profile.moveProgress ?? {}}
+        followMoves={followMoves}
+        cardTypes={cardTypes}
+        hasBank={!!bankLibrary}
+        onContinue={() => enterMission(mission)}
+        onSelectMission={selectStoryMission}
+        onOpenBank={() => setScreen({ kind: 'bank-select' })}
+        onOpenParent={() => setScreen({ kind: 'parent' })}
+        onOpenKit={() => window.open('/print/kit/', '_blank', 'noopener')}
+      />
     );
   }
 
@@ -361,7 +441,7 @@ export function MissionShell({
         progress={profile?.progress ?? {}}
         ui={ui}
         onSelect={selectBankMission}
-        onBack={() => setScreen({ kind: 'parent' })}
+        onBack={goToCourseHome}
       />
     );
   }
@@ -489,10 +569,28 @@ export function MissionShell({
     );
   }
 
-  // screen.kind === 'parent'. Parent-voice kit/price/guarantee copy is Task 7/8's own, still
-  // pending the legal wording check (spec v0.5 §16) — the Toolbox (WO-05) and the M2b
-  // confirmation (WO-14) are this screen's own, separate concerns: read-only growth over the
-  // active profile's own moveProgress, and one binary parent attestation over its milestones.
+  // screen.kind === 'parent' (or 'complete', handled just after). Parent-voice kit/price/
+  // guarantee copy is Task 7/8's own, still pending the legal wording check (spec v0.5 §16) —
+  // the Toolbox (WO-05) and the M2b confirmation (WO-14) are this screen's own, separate
+  // concerns: read-only growth over the active profile's own moveProgress, and one binary
+  // parent attestation over its milestones.
+  if (screen.kind === 'complete') {
+    // WO-23 §7 (AD-06 D3 COMPLETE): the real completion state the audit's "completion lacks
+    // navigation" finding names directly — reached from the parent screen's own final action,
+    // never a replacement for it.
+    return (
+      <MissionComplete
+        ui={ui}
+        mission={mission}
+        cardTypes={cardTypes}
+        nextMission={nextUndoneMission()}
+        onNext={goToNextMission}
+        onBackToMap={goToCourseHome}
+        onTryOutside={() => setScreen({ kind: 'parent' })}
+      />
+    );
+  }
+
   const m2Achieved = profile?.milestones?.M2?.achieved ?? false;
   const m0Achieved = profile?.milestones?.M0?.achieved ?? false;
   return (
@@ -539,6 +637,12 @@ export function MissionShell({
           </button>
         </div>
       )}
+      {/* WO-23 §7 (AD-06 RC-1): the one thing this screen never had — a way onward. Every prior
+         action on this screen (M0/M2b/M5/Bank) stays exactly as it was; this just adds the
+         missing next step, so a family never needs to reload /play/ to continue. */}
+      <button type="button" className="mission-shell__to-complete" onClick={() => setScreen({ kind: 'complete' })}>
+        {ui.handoffContinue}
+      </button>
     </div>
   );
 }

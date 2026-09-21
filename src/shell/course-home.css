@@ -1,0 +1,119 @@
+/* WO-23 WP-4 (AD-06 D4/D7): the earth cross-section, scrolling downward. Mobile-first — scroll
+ * is for reading/browsing the shaft, never for reaching the one primary decision (the continue
+ * button stays pinned near the bottom thumb zone). */
+.course-home {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--surface, #f7f3ec);
+  color: var(--ink, #2b2622);
+  font-family: var(--font-child, system-ui), sans-serif;
+  padding-bottom: var(--thumb-zone, 120px);
+}
+
+.course-home__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px);
+}
+.course-home__heading {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.course-home__shaft {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-4, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+}
+
+.course-home__depth-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  min-height: 56px;
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border: none;
+  border-radius: var(--radius-chip, 0.85rem);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
+}
+.course-home__depth-index {
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.08);
+}
+.course-home__depth-title { flex: 1; }
+.course-home__depth-mark {
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--root, #c8922e);
+}
+.course-home__depth-mark--ahead { color: var(--ink-soft, #6b5d4f); }
+
+/* Depth colour deepens with progress through the shaft — soil-1 near the surface, soil-4 deep. */
+.course-home__depth:nth-child(4n+1) .course-home__depth-button { background: var(--soil-1, #e8dcc8); }
+.course-home__depth:nth-child(4n+2) .course-home__depth-button { background: var(--soil-2, #c9b08a); }
+.course-home__depth:nth-child(4n+3) .course-home__depth-button { background: var(--soil-3, #a6845c); color: #fff; }
+.course-home__depth:nth-child(4n+4) .course-home__depth-button { background: var(--soil-4, #7a5c3a); color: #fff; }
+
+.course-home__depth.is-current .course-home__depth-button {
+  outline: 3px solid var(--root, #c8922e);
+  outline-offset: 2px;
+}
+/* Not-dug-yet: visible, dimmed — never a denial/dead-end affordance (AD-06 D2/D4). */
+.course-home__depth.is-ahead .course-home__depth-button { opacity: 0.55; }
+
+.course-home__continue {
+  align-self: center;
+  margin-top: var(--space-6, 24px);
+  min-height: 56px;
+  padding: var(--space-3, 12px) var(--space-8, 32px);
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--root, #c8922e);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.course-home__bottom-bar {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: space-around;
+  gap: var(--space-2, 8px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  background: var(--surface, #f7f3ec);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+.course-home__nav-item {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  border-radius: var(--radius-chip, 0.85rem);
+  background: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .course-home { max-width: 40rem; margin: 0 auto; }
+}

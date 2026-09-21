@@ -1,0 +1,56 @@
+/* WO-23 WP-2/WP-3 (AD-06 RC-3/D7): the digital tap target's own real geometry — a row, not a
+ * miniature playing card. 64-80px tall, full width up to a comfortable line length, no mm units
+ * anywhere. Uses tokens.css's shared colour identities (D5: "share tokens, never layout"). */
+.question-chip {
+  --chip-accent: var(--ink-soft, #888);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 64px;
+  max-height: 80px;
+  padding: 0.6rem 1rem;
+  background: #fff;
+  color: var(--ink, #1c1c1c);
+  border: 2px solid var(--chip-accent);
+  border-radius: var(--radius-chip, 0.85rem);
+  font-family: var(--font-child, system-ui), sans-serif;
+  font-size: 1rem;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  /* D7 rule 6: tap targets >=48px, >=8px separation (handled by the hand's own gap). */
+}
+button.question-chip {
+  /* Reset default button chrome while keeping the row shape above. */
+  appearance: none;
+}
+
+.question-chip--corner-cut    { clip-path: polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%); }
+.question-chip--corner-notch  { clip-path: polygon(14px 0,100% 0,100% 100%,0 100%,0 14px); }
+
+.question-chip__icon  { font-size: 1.1rem; line-height: 1; flex: none; }
+.question-chip__label { font-size: 0.75rem; letter-spacing: 0.08em; color: var(--chip-accent); flex: none; }
+.question-chip__text  { font-weight: 600; flex: 1; }
+.question-chip rt      { font-size: 0.55em; font-weight: 400; }
+
+.question-chip--what     { --chip-accent: var(--tool-tsumari, #2f6fb0); }
+.question-chip--why      { --chip-accent: var(--tool-tatoeba, #b0632f); }
+.question-chip--who      { --chip-accent: var(--tool-naze, #2f8f6b); }
+.question-chip--format   { --chip-accent: var(--tool-hokaniwa, #7a4fb0); }
+.question-chip--follow-tsumari  { --chip-accent: var(--tool-tsumari, #2f6fb0); }
+.question-chip--follow-tatoeba  { --chip-accent: var(--tool-tatoeba, #b0632f); }
+.question-chip--follow-naze     { --chip-accent: var(--tool-naze, #2f8f6b); }
+.question-chip--follow-hokaniwa { --chip-accent: var(--tool-hokaniwa, #7a4fb0); }
+.question-chip--odai     { --chip-accent: #444; }
+.question-chip--himitsu  { --chip-accent: #c02b2b; }
+.question-chip--reaction { --chip-accent: #888; }
+.question-chip--check    { --chip-accent: #0f8a8a; }
+
+.question-chip.is-selected { outline: 3px solid var(--ink, #1c1c1c); outline-offset: 2px; }
+.question-chip.is-disabled { opacity: 0.45; cursor: default; }
+
+@media (max-width: 480px) {
+  .question-chip { min-height: 64px; font-size: 0.95rem; }
+}

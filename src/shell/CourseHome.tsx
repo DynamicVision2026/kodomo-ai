@@ -1,0 +1,117 @@
+import { useEffect, useRef } from 'react';
+import type { Mission, ModuleUiStrings } from '../engine/types';
+import type { Progress } from '../engine/storage';
+import type { MoveProgressMap } from '../engine/scaffold';
+import { Toolbox } from './Toolbox';
+import { Mascot } from './Mascot';
+import { Ruby } from '../engine/ruby';
+import './course-home.css';
+
+export interface CourseHomeUi extends ModuleUiStrings {}
+
+export interface CourseHomeProps {
+  ui: CourseHomeUi;
+  missionOrder: string[];
+  missions: Record<string, Mission>;
+  progress: Record<string, Progress>;
+  /** The active profile's own next-undone mission — highlighted and auto-scrolled-to on open
+   *  (AD-06 D2/J3: "returning child... home opens at current depth, scrolled to it"). */
+  currentMissionId: string;
+  moveProgress: MoveProgressMap;
+  followMoves: string[];
+  cardTypes: Record<string, { label: string }>;
+  hasBank: boolean;
+  onContinue: () => void;
+  onSelectMission: (missionId: string) => void;
+  onOpenBank: () => void;
+  onOpenParent: () => void;
+  onOpenKit: () => void;
+}
+
+/**
+ * WO-23 WP-4 (AD-06 D4/RC-1): the central navigation shell — "does the earth cross-section,
+ * scrolling downward" metaphor the product's own vocabulary (掘る/ねっこ/ふかさメーター) already
+ * implies. This is the single highest-value new screen in the sprint: before it existed, nothing
+ * in the running app could reach Missions 2-8 or any of the 12 Bank Digs except by completing
+ * every prior mission in a fixed, unstoppable sequence with no way back — the RC-1 finding this
+ * closes.
+ *
+ * Deliberately NOT an LMS dashboard: no percentage, no score, no progress bar, no table. A depth
+ * ahead of the current one is shown dimmed — "not dug yet" — never a locked/denied affordance;
+ * tapping it still works exactly like tapping the current depth (the caller's own entitlement
+ * check, unchanged, decides whether it's actually playable).
+ */
+export function CourseHome({
+  ui, missionOrder, missions, progress, currentMissionId, moveProgress, followMoves, cardTypes,
+  hasBank, onContinue, onSelectMission, onOpenBank, onOpenParent, onOpenKit,
+}: CourseHomeProps) {
+  const currentRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    // jsdom (the test DOM) doesn't implement scrollIntoView — guard so tests don't crash.
+    currentRef.current?.scrollIntoView?.({ block: 'center' });
+  }, [currentMissionId]);
+
+  const currentMission = missions[currentMissionId];
+
+  return (
+    <div className="course-home">
+      <div className="course-home__header">
+        <Mascot state="curious" />
+        <p className="course-home__heading">{ui.courseHomeHeading}</p>
+      </div>
+
+      <Toolbox
+        followMoves={followMoves}
+        cardTypes={cardTypes}
+        moveProgress={moveProgress}
+        heading={ui.courseHomeGrowthLabel}
+      />
+
+      <ol className="course-home__shaft" aria-label={ui.courseHomeHeading}>
+        {missionOrder.map((id, i) => {
+          const m = missions[id];
+          if (!m) return null;
+          const done = progress[id]?.done ?? false;
+          const isCurrent = id === currentMissionId;
+          const cls = [
+            'course-home__depth',
+            done ? 'is-done' : '',
+            isCurrent ? 'is-current' : '',
+            !done && !isCurrent ? 'is-ahead' : '',
+          ].filter(Boolean).join(' ');
+          return (
+            <li key={id} ref={isCurrent ? currentRef : undefined} className={cls}>
+              <button type="button" className="course-home__depth-button" onClick={() => onSelectMission(id)}>
+                <span className="course-home__depth-index">{i + 1}</span>
+                <span className="course-home__depth-title"><Ruby text={m.title} /></span>
+                {done && <span className="course-home__depth-mark">{ui.courseHomeDoneLabel}</span>}
+                {!done && !isCurrent && <span className="course-home__depth-mark course-home__depth-mark--ahead">{ui.courseHomeNotYetLabel}</span>}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+
+      {currentMission && (
+        <button type="button" className="course-home__continue" onClick={onContinue}>
+          {ui.courseHomeContinueLabel}
+        </button>
+      )}
+
+      <div className="course-home__bottom-bar">
+        {hasBank && (
+          <button type="button" className="course-home__nav-item" onClick={onOpenBank}>
+            {ui.courseHomeBankLabel}
+          </button>
+        )}
+        <button type="button" className="course-home__nav-item" onClick={onOpenParent}>
+          {ui.parentScreenHeading}
+        </button>
+        <button type="button" className="course-home__nav-item" onClick={onOpenKit}>
+          {ui.courseHomeKitLabel}
+        </button>
+      </div>
+    </div>
+  );
+}

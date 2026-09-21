@@ -157,6 +157,7 @@ describe('Bank Digs — full interactive playthroughs prove the real UI plays a 
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 
     // Straight to the dig layer's own opening robotSays — no slot cards to pick.
@@ -188,6 +189,7 @@ describe('Bank Digs — full interactive playthroughs prove the real UI plays a 
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 
     for (const layer of dig.layers) {

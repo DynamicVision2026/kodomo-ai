@@ -217,6 +217,7 @@ describe('genkan (1-2) — playable end to end (たのむ -> ほる -> wrapper s
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 
     const clearCard = (genkanMission.phases[0]! as Extract<typeof genkanMission.phases[0], { template: 'slot-assembly' }>)

@@ -49,6 +49,7 @@ describe('Bank hub — reachable and playable from the real product surface', ()
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 
     const digPhase = chantoMission.phases[1] as DigPhase;

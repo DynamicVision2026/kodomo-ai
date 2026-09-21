@@ -33,6 +33,7 @@ describe('Perspective (WO-19 Phase 3C) — the mechanism, proven against a synth
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(m2Ui.profileConfirm));
+    await user.click(screen.getByText(m2Ui.courseHomeContinueLabel));
     await user.click(screen.getByText(m2Ui.coopSolo));
     await user.click(screen.getByText('これで ただしいか みなおしてみよう'));
     await user.click(screen.getByText(m2Ui.handoffContinue)); // tip -> teach-back
@@ -73,6 +74,7 @@ describe('Perspective (WO-19 Phase 3C) — the mechanism, proven against a synth
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     const clearCard = (chantoMission.phases[0]! as Extract<typeof chantoMission.phases[0], { template: 'slot-assembly' }>)
       .cards.find((c) => c.tag === 'clear')!;

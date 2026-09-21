@@ -181,6 +181,7 @@ describe('chanto (1-1) — playable end to end (たのむ -> ほる -> wrapper s
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 
     // たのむ: the clear card asks the mission's own opening question.

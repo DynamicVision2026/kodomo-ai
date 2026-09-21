@@ -36,6 +36,7 @@ async function createAndSelectProfile(user: ReturnType<typeof userEvent.setup>) 
   await user.click(screen.getByText('🦊'));
   await user.click(screen.getByText('たぬき'));
   await user.click(screen.getByText(ui.profileConfirm));
+  await user.click(screen.getByText(ui.courseHomeContinueLabel));
 }
 
 /** WO-02/WO-03: every Dig layer's hand sits behind 「これでOK？」 -> Gap Naming (any of the
@@ -194,6 +195,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await passGate(user);
@@ -250,6 +252,7 @@ describe('MissionShell', () => {
       />,
     );
     await user.click(screen.getByText('たぬき')); // selects the seeded (already-existing) profile directly
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await user.click(screen.getByText(ui.judgeNotEnough));
@@ -290,6 +293,7 @@ describe('MissionShell', () => {
       />,
     );
     await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await user.click(screen.getByText(ui.judgeNotEnough));
@@ -325,6 +329,7 @@ describe('MissionShell', () => {
       />,
     );
     await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await user.click(screen.getByText(ui.judgeNotEnough));
@@ -463,6 +468,7 @@ describe('MissionShell', () => {
 
     render(<MissionShell moduleId="m1" freeMissionIds={[missionB.id]} mission={missionB} ui={ui} />);
     await user.click(screen.getByText('たぬき')); // same seeded profile
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText(ui.judgeNotEnough)); // missionB's single dig phase, no slot-assembly
     const [choice] = document.querySelectorAll('.dig__gap-naming-option');
@@ -528,6 +534,7 @@ describe('MissionShell', () => {
     const user = userEvent.setup();
     render(<MissionShell moduleId="m1" freeMissionIds={moduleJson.freeMissionIds} mission={mission} ui={ui} />);
     await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await user.click(screen.getByText(ui.judgeNotEnough));
@@ -628,6 +635,7 @@ describe('MissionShell', () => {
       />,
     );
     await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await playThroughToParentScreen(user);
 
     expect(screen.getByText(ui.m2ConfirmPrompt)).toBeInTheDocument(); // still unconfirmed
@@ -684,6 +692,7 @@ describe('MissionShell', () => {
       />,
     );
     await user.click(screen.getByText('たぬき')); // the same, now-existing profile
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await playThroughToParentScreen(user);
 
     // Already confirmed: the button never reappears, so a second tap isn't even reachable
@@ -746,6 +755,7 @@ describe('MissionShell', () => {
       />,
     );
     await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await user.click(screen.getByText(ui.judgeNotEnough)); // layer 0, Blind-first eligible
@@ -845,6 +855,7 @@ describe('MissionShell', () => {
       />,
     );
     await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await playThroughToParentScreen(user);
     expect(screen.getByText(ui.m0SealedMessage)).toBeInTheDocument();
     expect(screen.queryByText(ui.m0Action)).not.toBeInTheDocument();
