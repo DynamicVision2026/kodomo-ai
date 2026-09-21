@@ -1,4 +1,5 @@
 .mission-complete {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -9,6 +10,7 @@
   text-align: center;
   background: var(--surface, #f7f3ec);
   min-height: 100dvh;
+  border: 3px solid transparent;
   font-family: var(--font-child, system-ui), sans-serif;
 }
 .mission-complete__heading {
@@ -17,8 +19,21 @@
 }
 .mission-complete__discovered {
   background: #fff;
-  border-radius: var(--radius-chip, 0.85rem);
+  border-radius: var(--radius-card, 1.1rem);
+  box-shadow: var(--shadow-low, none);
   padding: var(--space-4, 16px);
+}
+
+/* WO-28 §8: Module 1's own finish line — a journey artifact, not a score. A warm bordered
+ * "certificate" frame around the SAME content (no new copy, no percentage, no stars); a single
+ * seal glyph above the mascot is the only added element. `nextMission === null` (unchanged
+ * completion logic) is all that decides this — no new prop, no new state. */
+.mission-complete--course-complete {
+  border-color: var(--root, #c8922e);
+}
+.mission-complete__seal {
+  font-size: 2.4rem;
+  color: var(--root, #c8922e);
 }
 .mission-complete__discovered-text { line-height: 1.7; }
 

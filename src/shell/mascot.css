@@ -2,12 +2,16 @@
   width: 72px;
   height: 90px;
   display: block;
+  /* WO-28 §5: a soft ambient shadow off the page — the mascot as a small warm presence, not a
+     flat icon. Reduced (not removed) under prefers-reduced-motion since a static filter isn't
+     motion, but kept minimal there for consistency with the rest of the product's restraint. */
+  filter: drop-shadow(0 2px 3px rgba(43, 38, 34, 0.18));
 }
 .mascot__shadow { fill: var(--ink, #2b2622); opacity: 0.12; }
-.mascot__body { fill: #fff2d6; stroke: var(--soil-3, #a6845c); stroke-width: 2; }
+.mascot__body { fill: url(#mascot-body-gradient); stroke: var(--soil-3, #a6845c); stroke-width: 2; }
 .mascot__eye { stroke: var(--ink, #2b2622); }
 .mascot__curl { stroke: var(--root, #c8922e); }
 .mascot__curl-dot { fill: var(--root, #c8922e); }
 
-.mascot--discovery .mascot__body { fill: #fff6e0; stroke: var(--root, #c8922e); }
+.mascot--discovery .mascot__body { stroke: var(--root, #c8922e); }
 .mascot--challenge .mascot__body { fill: #fdeee0; }

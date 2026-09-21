@@ -34,7 +34,14 @@
 .stage__world[data-depth='1'] { background: var(--soil-1, #e8dcc8); }
 .stage__world[data-depth='2'] { background: var(--soil-2, #c9b08a); }
 .stage__world[data-depth='3'] { background: var(--soil-3, #a6845c); color: #fff; }
-.stage__world[data-depth='root'] { background: var(--root, #c8922e); color: #fff; }
+/* WO-28 §4: root discovery = "the emotional payoff," never confetti — a soft warm glow radiating
+   from the centre of the world itself, as if the buried thing is now lit from within. */
+.stage__world[data-depth='root'] {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 244, 214, 0.55) 0%, transparent 55%),
+    var(--root, #c8922e);
+  color: #fff;
+}
 
 /* WO-25 #3/#4: the world's own reaction at the exact instant a dig action resolves — makes the
  * background change read as CAUSED by the chip, not merely something that happens afterward. */
@@ -153,8 +160,9 @@
 }
 .stage__root-reveal { animation: stage-reveal 800ms ease both; }
 
-/* WO-25 #5: "ねっこを はっけん！" — the explicit discovery moment. No score, no star, no
- * confetti; the label itself, plainly, is the reward. */
+/* WO-25 #5 / WO-28 §4: "ねっこを はっけん！" — the explicit discovery moment, "Ah — THAT was
+ * underneath," not a score or a star. A warm text-shadow glow rides on the SAME 800ms reveal
+ * timing above rather than adding a second, competing animation. */
 .stage__root-discovery {
   max-width: 28rem;
   margin: 0 auto var(--space-2, 8px);
@@ -162,6 +170,7 @@
   font-size: 1.15rem;
   font-weight: 900;
   letter-spacing: 0.02em;
+  text-shadow: 0 0 18px rgba(255, 244, 214, 0.9);
 }
 
 /* ---- enter (tray/bubble, 150-200ms) ------------------------------------------------------------ */

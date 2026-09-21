@@ -48,6 +48,14 @@ export function Mascot({ state, label }: MascotProps) {
       aria-label={label}
       aria-hidden={label ? undefined : true}
     >
+      {/* WO-28 §5: a soft gradient in place of a flat fill — pure visual polish, referenced only
+         from mascot.css (`fill: url(#mascot-body-gradient)`), never changes what state means. */}
+      <defs>
+        <radialGradient id="mascot-body-gradient" cx="35%" cy="30%" r="75%">
+          <stop offset="0%" stopColor="#fffaf0" />
+          <stop offset="100%" stopColor="#fbe4b8" />
+        </radialGradient>
+      </defs>
       <ellipse cx="0" cy="34" rx="20" ry="3" className="mascot__shadow" />
       <path d={CURL[state]} className="mascot__curl" fill="none" strokeLinecap="round" strokeWidth="3" />
       {state === 'discovery' && <circle cx="0" cy="-49" r="2.4" className="mascot__curl-dot" />}

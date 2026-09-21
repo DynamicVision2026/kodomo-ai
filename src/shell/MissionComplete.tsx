@@ -38,8 +38,13 @@ function practicedMoves(mission: Mission): string[] {
  */
 export function MissionComplete({ ui, mission, cardTypes, nextMission, onNext, onBackToMap, onTryOutside }: MissionCompleteProps) {
   const moves = practicedMoves(mission);
+  // WO-28 §8: nextMission === null already means "the whole course is done" (the caller resolves
+  // this, unchanged) — reused here only to pick a visual treatment, no new completion logic.
+  const courseComplete = nextMission === null;
+  const cls = ['mission-complete', courseComplete ? 'mission-complete--course-complete' : ''].filter(Boolean).join(' ');
   return (
-    <div className="mission-complete">
+    <div className={cls}>
+      {courseComplete && <span className="mission-complete__seal" aria-hidden="true">◆</span>}
       <Mascot state="discovery" />
       <p className="mission-complete__heading">{ui.completeHeading}</p>
 

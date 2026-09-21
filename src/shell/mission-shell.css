@@ -9,17 +9,27 @@
   margin: 0 auto;
   padding: 2rem 1rem;
   text-align: center;
+  background: var(--surface, #f7f3ec);
+  color: var(--ink, #2b2622);
+  font-family: var(--font-child, system-ui), sans-serif;
 }
 
 /* WO-27 §11: same fixed-viewport-height + scrollable-content + fixed-footer split Course Home
  * already uses (WO-23 §7) — a real 390x844 walkthrough found the parent dashboard's own final
  * "back to the child" action landing below the fold once M0/M2b had both rendered their own
  * confirmed-state text above it. */
+/* WO-28 §6: "これは親のテストではありません" — the parent dashboard reads as a distinctly
+ * different, calmer register within one second of the child's own soil-toned stage (AD-06 D6/D8's
+ * established white/flat/no-soil parent signal, already used by .mission-shell__wrapper--parent
+ * below; applied here too so the generic dashboard matches it). */
 .mission-shell__parent {
   display: flex;
   flex-direction: column;
   height: 100dvh;
   text-align: center;
+  background: var(--parent-surface, #fff);
+  color: var(--parent-ink, #2b2622);
+  font-family: var(--font-parent, system-ui), sans-serif;
 }
 
 .mission-shell__parent-scroll {
@@ -66,10 +76,12 @@
 
 .mission-shell__wrapper button,
 .mission-shell__coop-choices button {
+  min-height: 48px;
   padding: 0.6rem 1.4rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill, 999px);
   border: none;
-  background: #2f6fb0;
+  background: var(--root, #c8922e);
+  box-shadow: var(--shadow-mid, none);
   color: #fff;
   font-weight: 700;
   cursor: pointer;
@@ -83,7 +95,7 @@
 .mission-shell__skip {
   border: none;
   background: none;
-  color: #888;
+  color: var(--ink-soft, #888);
   text-decoration: underline;
   cursor: pointer;
   font-size: 0.9rem;
@@ -92,6 +104,11 @@
 .mission-shell__parent-heading {
   font-size: 1.2rem;
   font-weight: 700;
+}
+.mission-shell__parent-reassurance {
+  margin-top: -0.5rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft, #6b5d4f);
 }
 
 .mission-shell__m2 {
@@ -110,10 +127,11 @@
 }
 
 .mission-shell__m2 button {
+  min-height: 48px;
   padding: 0.6rem 1.4rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill, 999px);
   border: none;
-  background: #2f6fb0;
+  background: var(--root, #c8922e);
   color: #fff;
   font-weight: 700;
   cursor: pointer;
@@ -122,7 +140,8 @@
 .mission-shell__m2-confirmed {
   margin-top: 1.5rem;
   font-size: 1rem;
-  color: #2f6fb0;
+  color: var(--root, #c8922e);
+  font-weight: 700;
 }
 
 .mission-shell__m0 {
@@ -141,10 +160,11 @@
 }
 
 .mission-shell__m0 button {
+  min-height: 48px;
   padding: 0.6rem 1.4rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill, 999px);
   border: none;
-  background: #2f6fb0;
+  background: var(--root, #c8922e);
   color: #fff;
   font-weight: 700;
   cursor: pointer;
@@ -153,7 +173,8 @@
 .mission-shell__m0-sealed {
   margin-top: 1.5rem;
   font-size: 1rem;
-  color: #2f6fb0;
+  color: var(--root, #c8922e);
+  font-weight: 700;
 }
 
 .mission-shell__m5 {
@@ -183,11 +204,12 @@
 }
 
 .mission-shell__m5-moves button {
+  min-height: 48px;
   padding: 0.5rem 1rem;
-  border-radius: 999px;
-  border: 1px solid #2f6fb0;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--root, #c8922e);
   background: #fff;
-  color: #2f6fb0;
+  color: var(--root, #c8922e);
   font-weight: 700;
   cursor: pointer;
 }

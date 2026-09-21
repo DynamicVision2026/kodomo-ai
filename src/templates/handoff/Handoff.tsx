@@ -24,6 +24,7 @@ export interface HandoffProps {
 export function Handoff({ prompt, continueLabel, skipLabel, onContinue, onSkip }: HandoffProps) {
   return (
     <div className="handoff">
+      <span className="handoff__icon" aria-hidden="true">📱</span>
       <p className="handoff__prompt">
         <Ruby text={prompt} />
       </p>

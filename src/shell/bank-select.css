@@ -1,12 +1,20 @@
+/* WO-28 §3/§12: Bank Digs read as side tunnels branching off the main Story shaft — a distinct
+ * "opening in the earth" treatment (dashed border, warm soil tint), never the Story shaft's own
+ * solid soil-banded card look, so the two never get mistaken for one continuous list. */
 .bank-select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4, 16px);
+  min-height: 100dvh;
+  box-sizing: border-box;
   max-width: 28rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem;
+  padding: var(--space-6, 24px) var(--space-4, 16px);
   text-align: center;
+  background: var(--surface, #f7f3ec);
+  color: var(--ink, #2b2622);
+  font-family: var(--font-child, system-ui), sans-serif;
 }
 
 .bank-select__heading {
@@ -17,27 +25,37 @@
 .bank-select__grid {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-3, 12px);
   width: 100%;
 }
 
 .bank-select__topic {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.8rem 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid #ccc;
-  background: #fff;
+  gap: var(--space-3, 12px);
+  min-height: 56px;
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-radius: var(--radius-card, 1.1rem);
+  border: 2px dashed var(--soil-3, #a6845c);
+  background: var(--soil-1, #e8dcc8);
+  box-shadow: var(--shadow-low, none);
   font-size: 1rem;
   text-align: left;
   cursor: pointer;
+  transition: transform var(--motion-quick, 180ms) ease;
 }
+.bank-select__topic:not(.is-locked):active { transform: scale(0.98); }
+
+.bank-select__topic-icon {
+  flex: none;
+  font-size: 1.1rem;
+}
+.bank-select__title { flex: 1; }
 
 .bank-select__done {
   font-size: 0.8rem;
-  color: #2f6fb0;
+  font-weight: 700;
+  color: var(--root, #c8922e);
   white-space: nowrap;
 }
 
@@ -48,23 +66,26 @@
 /* WO-26 §5/§7: LOCKED — visible, dimmed, never hidden ("must not look broken"). */
 .bank-select__topic.is-locked {
   opacity: 0.55;
+  box-shadow: none;
 }
 
 .bank-select__locked-note {
   margin: 0.35rem 0.25rem 0;
   padding: 0.5rem 0.75rem;
   border-radius: 0.6rem;
-  background: #f1ece1;
+  background: var(--soil-1, #f1ece1);
   font-size: 0.85rem;
   line-height: 1.5;
   text-align: left;
 }
 
 .bank-select__back {
-  padding: 0.6rem 1.4rem;
-  border-radius: 999px;
-  border: 1px solid #ccc;
+  min-height: 48px;
+  padding: var(--space-3, 12px) var(--space-8, 32px);
+  border-radius: var(--radius-pill, 999px);
+  border: none;
   background: #fff;
+  box-shadow: var(--shadow-low, none);
   font-weight: 700;
   cursor: pointer;
 }

@@ -29,13 +29,40 @@
   font-weight: 700;
 }
 
+/* WO-28 §3: "the underground exploration map" — a single buried line running down the shaft,
+   threading each dig site together. It only needs to show in the gaps BETWEEN rows (each row's
+   own opaque background naturally covers it elsewhere), so a plain absolutely-positioned line
+   behind normal-flow content, with no z-index bookkeeping per row, is enough. Left offset is
+   derived from the shaft's own padding + the depth-button's own padding + half the index
+   circle's width, i.e. "under the index circle's centre" — not a magic number. */
 .course-home__shaft {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: 0 var(--space-4, 16px);
   display: flex;
   flex-direction: column;
   gap: var(--space-3, 12px);
+}
+.course-home__shaft::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--space-4, 16px) + var(--space-4, 16px) + 0.8rem);
+  width: 2px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--soil-3, #a6845c) 0,
+    var(--soil-3, #a6845c) 6px,
+    transparent 6px,
+    transparent 11px
+  );
+  opacity: 0.6;
+}
+
+.course-home__depth {
+  position: relative;
 }
 
 .course-home__depth-button {
@@ -46,11 +73,21 @@
   min-height: 56px;
   padding: var(--space-3, 12px) var(--space-4, 16px);
   border: none;
-  border-radius: var(--radius-chip, 0.85rem);
+  border-radius: var(--radius-card, 1.1rem);
+  box-shadow: var(--shadow-low, none);
   text-align: left;
   cursor: pointer;
   font-family: inherit;
   font-size: 1rem;
+  transition: transform var(--motion-quick, 180ms) ease, box-shadow var(--motion-quick, 180ms) ease;
+  /* WO-28: a faint speckle texture (layered radial-gradients, no image asset) so each soil band
+     reads as packed earth rather than a flat colour swatch. */
+  background-image:
+    radial-gradient(circle at 12% 30%, rgba(255, 255, 255, 0.35) 0, transparent 3%),
+    radial-gradient(circle at 78% 62%, rgba(43, 38, 34, 0.12) 0, transparent 3%),
+    radial-gradient(circle at 45% 85%, rgba(255, 255, 255, 0.25) 0, transparent 2.5%),
+    radial-gradient(circle at 90% 20%, rgba(43, 38, 34, 0.1) 0, transparent 2.5%);
+  background-repeat: no-repeat;
 }
 .course-home__depth-index {
   flex: none;
@@ -95,17 +132,39 @@
 }
 
 /* Depth colour deepens with progress through the shaft — soil-1 near the surface, soil-4 deep. */
-.course-home__depth:nth-child(4n+1) .course-home__depth-button { background: var(--soil-1, #e8dcc8); }
-.course-home__depth:nth-child(4n+2) .course-home__depth-button { background: var(--soil-2, #c9b08a); }
-.course-home__depth:nth-child(4n+3) .course-home__depth-button { background: var(--soil-3, #a6845c); color: #fff; }
-.course-home__depth:nth-child(4n+4) .course-home__depth-button { background: var(--soil-4, #7a5c3a); color: #fff; }
+.course-home__depth:nth-child(4n+1) .course-home__depth-button { background-color: var(--soil-1, #e8dcc8); }
+.course-home__depth:nth-child(4n+2) .course-home__depth-button { background-color: var(--soil-2, #c9b08a); }
+.course-home__depth:nth-child(4n+3) .course-home__depth-button { background-color: var(--soil-3, #a6845c); color: #fff; }
+.course-home__depth:nth-child(4n+4) .course-home__depth-button { background-color: var(--soil-4, #7a5c3a); color: #fff; }
 
+/* WO-28: the active dig site — the ONE dominant thing on this screen (AD-06 D4 / WO-28 §3's
+   "answers 'いま、どこをほればいい？' within ~2 seconds"). A warm glow rather than a thin outline,
+   plus a small lift off the page; a slow, restrained pulse (never continuous decorative motion —
+   it just breathes) draws the eye without demanding attention. */
 .course-home__depth.is-current .course-home__depth-button {
-  outline: 3px solid var(--root, #c8922e);
-  outline-offset: 2px;
+  box-shadow: var(--shadow-current, 0 0 0 3px rgba(200, 146, 46, 0.35));
+  transform: translateY(-1px) scale(1.015);
+  animation: course-home-current-breathe 2.4s ease-in-out infinite;
 }
-/* Not-dug-yet: visible, dimmed — never a denial/dead-end affordance (AD-06 D2/D4). */
-.course-home__depth.is-ahead .course-home__depth-button { opacity: 0.55; }
+@keyframes course-home-current-breathe {
+  0%, 100% { box-shadow: var(--shadow-current, 0 0 0 3px rgba(200, 146, 46, 0.35)); }
+  50% { box-shadow: 0 0 0 5px rgba(200, 146, 46, 0.3), 0 6px 18px rgba(200, 146, 46, 0.3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .course-home__depth.is-current .course-home__depth-button { animation: none; }
+}
+/* Not-dug-yet: visible, dimmed, visibly deeper (a soft darkening wash) — never a denial/dead-end
+   affordance (AD-06 D2/D4); the LOCKED note on tap still explains why, unchanged. */
+.course-home__depth.is-ahead .course-home__depth-button {
+  opacity: 0.55;
+  box-shadow: none;
+  background-image:
+    linear-gradient(rgba(43, 38, 34, 0.18), rgba(43, 38, 34, 0.18)),
+    radial-gradient(circle at 12% 30%, rgba(255, 255, 255, 0.35) 0, transparent 3%),
+    radial-gradient(circle at 78% 62%, rgba(43, 38, 34, 0.12) 0, transparent 3%),
+    radial-gradient(circle at 45% 85%, rgba(255, 255, 255, 0.25) 0, transparent 2.5%),
+    radial-gradient(circle at 90% 20%, rgba(43, 38, 34, 0.1) 0, transparent 2.5%);
+}
 
 /* WO-26 §7: LOCKED's own short diegetic explanation — appears only right after a locked depth
    is tapped, never a browser-style error, never blocking the shaft. */
@@ -135,11 +194,14 @@
   border: none;
   border-radius: var(--radius-pill, 999px);
   background: var(--root, #c8922e);
+  box-shadow: var(--shadow-mid, none);
   color: #fff;
   font-weight: 700;
   font-size: 1.05rem;
   cursor: pointer;
+  transition: transform var(--motion-quick, 180ms) ease;
 }
+.course-home__continue:active { transform: scale(0.97); }
 
 /* WO-26A/WO-27: a fixed message in place of the continue CTA, in the same footer slot — either
    the Module 1 completed state, or (WO-27) a purchase-needed state for a sequentially-next
@@ -166,9 +228,22 @@
   border: none;
   border-radius: var(--radius-chip, 0.85rem);
   background: #fff;
+  box-shadow: var(--shadow-low, none);
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
+}
+
+/* WO-28 §3: Bank Digs read as a side tunnel branching off the main shaft, not another item in
+   the same row of equally-weighted utility buttons — a dashed "opening in the earth" border and
+   soil colour, distinct from the plain white utility buttons either side of it. */
+.course-home__nav-item--bank {
+  background: var(--soil-1, #e8dcc8);
+  border: 2px dashed var(--soil-3, #a6845c);
+  color: var(--ink, #2b2622);
+}
+.course-home__nav-item-icon {
+  margin-right: var(--space-1, 4px);
 }
 
 @media (min-width: 768px) {

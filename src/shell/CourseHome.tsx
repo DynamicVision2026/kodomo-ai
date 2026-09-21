@@ -184,7 +184,10 @@ export function CourseHome({
 
         <div className="course-home__bottom-bar">
           {hasBank && (
-            <button type="button" className="course-home__nav-item" onClick={onOpenBank}>
+            // WO-28 §3: Bank Digs read as a side tunnel branching off the main Story shaft, not
+            // an equally-weighted nav item — same click behaviour, distinct visual treatment only.
+            <button type="button" className="course-home__nav-item course-home__nav-item--bank" onClick={onOpenBank}>
+              <span className="course-home__nav-item-icon" aria-hidden="true">⛏️</span>
               {ui.courseHomeBankLabel}
             </button>
           )}

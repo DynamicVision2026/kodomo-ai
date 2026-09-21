@@ -64,6 +64,7 @@ export function BankSelect({ bankOrder, missions, progress, storyMissionsInOrder
                 className={`bank-select__topic${locked ? ' is-locked' : ''}`}
                 onClick={() => tapTopic(mission.id, state)}
               >
+                <span className="bank-select__topic-icon" aria-hidden="true">🕳️</span>
                 <span className="bank-select__title"><Ruby text={mission.title} /></span>
                 {done && <span className="bank-select__done">{ui.bankDoneLabel}</span>}
               </button>

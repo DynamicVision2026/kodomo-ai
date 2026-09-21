@@ -1,20 +1,33 @@
 .speech-bubble {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.35rem;
   width: 100%;
   max-width: 28rem;
-  margin: 0 auto;
+  margin: var(--space-3, 12px) auto 0;
   padding: var(--space-4, 16px);
   border: none;
-  border-radius: var(--radius-chip, 0.85rem);
+  border-radius: var(--radius-card, 1.1rem);
   background: #fff;
   color: var(--ink, #2b2622);
   text-align: left;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-mid, 0 2px 0 rgba(0, 0, 0, 0.08));
+}
+/* WO-28 §4: a tail pointing up toward the mascot above (.stage__actor-row) — the ONE thing that
+   makes this read as "someone speaking" rather than a plain rounded card. */
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 2rem;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  clip-path: polygon(0 100%, 100% 100%, 50% 0);
 }
 .speech-bubble__speaker {
   font-size: 0.75rem;

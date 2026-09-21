@@ -15,22 +15,40 @@
   color: var(--ink, #1c1c1c);
   border: 2px solid var(--chip-accent);
   border-radius: var(--radius-chip, 0.85rem);
+  box-shadow: var(--shadow-low, none);
   font-family: var(--font-child, system-ui), sans-serif;
   font-size: 1rem;
   line-height: 1.4;
   text-align: left;
   cursor: pointer;
+  transition: transform var(--motion-quick, 180ms) ease, box-shadow var(--motion-quick, 180ms) ease;
   /* D7 rule 6: tap targets >=48px, >=8px separation (handled by the hand's own gap). */
 }
 button.question-chip {
   /* Reset default button chrome while keeping the row shape above. */
   appearance: none;
 }
+/* WO-28 §4: "choosing a shovel" — a tool in the hand, not a form radio. A small press response
+   so the chip itself feels handled, not just clicked. */
+button.question-chip:not(:disabled):active { transform: scale(0.97) translateY(1px); }
 
 .question-chip--corner-cut    { clip-path: polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%); }
 .question-chip--corner-notch  { clip-path: polygon(14px 0,100% 0,100% 100%,0 100%,0 14px); }
 
-.question-chip__icon  { font-size: 1.1rem; line-height: 1; flex: none; }
+/* WO-28: the icon sits on a small tool-coloured "head" — the shovel's own blade — rather than
+   floating loose on the white row, so the tool identity reads before the label text does. */
+.question-chip__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--chip-accent) 18%, transparent);
+}
 .question-chip__label { font-size: 0.75rem; letter-spacing: 0.08em; color: var(--chip-accent); flex: none; }
 .question-chip__text  { font-weight: 600; flex: 1; }
 .question-chip rt      { font-size: 0.55em; font-weight: 400; }
@@ -48,10 +66,13 @@ button.question-chip {
 .question-chip--reaction { --chip-accent: #888; }
 .question-chip--check    { --chip-accent: #0f8a8a; }
 
-.question-chip.is-selected { outline: 3px solid var(--ink, #1c1c1c); outline-offset: 2px; }
-.question-chip.is-disabled { opacity: 0.45; cursor: default; }
+.question-chip.is-selected {
+  border-color: var(--chip-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip-accent) 35%, transparent), var(--shadow-mid, none);
+}
+.question-chip.is-disabled { opacity: 0.45; cursor: default; box-shadow: none; }
 .question-chip__badge { flex: none; font-size: 1rem; line-height: 1; }
-.question-chip.is-blocked { opacity: 0.55; cursor: default; background: #efe6d8; }
+.question-chip.is-blocked { opacity: 0.55; cursor: default; background: var(--soil-1, #efe6d8); box-shadow: none; }
 
 @media (max-width: 480px) {
   .question-chip { min-height: 64px; font-size: 0.95rem; }

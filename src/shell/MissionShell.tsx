@@ -781,6 +781,9 @@ export function MissionShell({
          back to the child at 390×844. No reordering, no new content, no visual redesign. */}
       <div className="mission-shell__parent-scroll">
         <p className="mission-shell__parent-heading">{ui.parentScreenHeading}</p>
+        {ui.parentReassuranceLine && (
+          <p className="mission-shell__parent-reassurance">{ui.parentReassuranceLine}</p>
+        )}
         <Toolbox
           followMoves={followMoves}
           cardTypes={cardTypes}

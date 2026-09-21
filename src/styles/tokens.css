@@ -39,7 +39,23 @@
   --parent-ink: #2b2622;
 
   --radius-chip: 0.85rem;
+  --radius-card: 1.1rem;
   --radius-pill: 999px;
+
+  /* WO-28: a single shared elevation scale — replaces the handful of one-off box-shadow values
+     each component had been writing for itself, so "how far off the paper does this sit" reads
+     consistently everywhere (speech bubbles, question chips, the Course Home shaft). Warm,
+     low-contrast shadows (a soft brown, not pure black) — paper/soil, never a SaaS drop-shadow. */
+  --shadow-low: 0 2px 0 rgba(43, 38, 34, 0.08);
+  --shadow-mid: 0 4px 10px rgba(43, 38, 34, 0.12);
+  --shadow-current: 0 0 0 3px rgba(200, 146, 46, 0.35), 0 4px 14px rgba(200, 146, 46, 0.25);
+
+  /* WO-28: named durations for the existing motion primitives (AD-07 §13) — components already
+     hard-code these ms values in their own @keyframes; this just gives the SAME numbers a name
+     so new/adjusted motion stays on the same scale rather than inventing its own pace. */
+  --motion-quick: 180ms;
+  --motion-settle: 260ms;
+  --motion-scene: 500ms;
 
   /* 4px base spacing scale. */
   --space-1: 4px;

@@ -127,6 +127,10 @@ export interface ModuleUiStrings {
   coopSolo: string;
   teachbackSkip: string;
   parentScreenHeading: string;
+  /** WO-28 §6: an optional line under the parent heading communicating "これは親のテストでは
+   *  ありません" — a co-player, not an examiner. Optional so existing module fixtures without it
+   *  keep working unchanged; when present, MissionShell renders it right under the heading. */
+  parentReassuranceLine?: string;
   lockedMessage: string;
   /** WO-02: the 「これでOK？」 judgment gate's "not enough" response, opposite of earlyOk. */
   judgeNotEnough: string;

@@ -1,64 +1,95 @@
+/* WO-28 §7: "だれが ほる？" not account creation — large, warm, tappable avatar tiles instead of
+ * a form. Token-driven throughout (no one-off greys/blues) so this reads as the same product as
+ * everything else, not a leftover placeholder screen. */
 .profile-picker {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-6, 24px);
+  min-height: 100dvh;
   max-width: 28rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem;
+  padding: var(--space-8, 32px) var(--space-4, 16px);
   text-align: center;
+  background: var(--surface, #f7f3ec);
+  color: var(--ink, #2b2622);
+  font-family: var(--font-child, system-ui), sans-serif;
+  box-sizing: border-box;
 }
 
 .profile-picker__title {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 900;
 }
 
 .profile-picker__grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: var(--space-3, 12px);
   justify-content: center;
 }
 
+/* Existing profiles + the in-progress avatar/nickname choices share the same large tactile tile —
+ * a thing you pick up, not a form field you fill in. */
 .profile-picker__profile,
 .profile-picker__choice {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.6rem 0.9rem;
-  border-radius: 0.75rem;
-  border: 1px solid #ccc;
+  justify-content: center;
+  gap: var(--space-1, 4px);
+  width: 84px;
+  min-height: 84px;
+  padding: var(--space-2, 8px);
+  border-radius: var(--radius-card, 1.1rem);
+  border: 2px solid transparent;
   background: #fff;
-  font-size: 1.4rem;
+  box-shadow: var(--shadow-low, none);
+  font-size: 2rem;
+  line-height: 1;
   cursor: pointer;
+  transition: transform var(--motion-quick, 180ms) ease, box-shadow var(--motion-quick, 180ms) ease;
+}
+.profile-picker__choice:active,
+.profile-picker__profile:active {
+  transform: scale(0.96);
 }
 .profile-picker__choice[aria-pressed='true'] {
-  border-color: #2f6fb0;
-  background: #eaf2fa;
+  border-color: var(--root, #c8922e);
+  background: var(--soil-1, #eaf2fa);
+  box-shadow: var(--shadow-current, none);
+}
+
+.profile-picker__avatar {
+  font-size: 2.2rem;
+  line-height: 1;
 }
 .profile-picker__nickname {
-  font-size: 0.8rem;
-  color: #444;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-soft, #6b5d4f);
 }
 
 .profile-picker__create,
 .profile-picker__confirm {
-  padding: 0.6rem 1.4rem;
-  border-radius: 999px;
+  min-height: 56px;
+  padding: var(--space-3, 12px) var(--space-8, 32px);
+  border-radius: var(--radius-pill, 999px);
   border: none;
-  background: #2f6fb0;
+  background: var(--root, #c8922e);
+  box-shadow: var(--shadow-mid, none);
   color: #fff;
   font-weight: 700;
+  font-size: 1.05rem;
   cursor: pointer;
 }
 .profile-picker__confirm:disabled {
   opacity: 0.4;
   cursor: default;
+  box-shadow: none;
 }
 
 .profile-picker__max {
-  color: #888;
+  color: var(--ink-soft, #6b5d4f);
   font-size: 0.9rem;
 }
