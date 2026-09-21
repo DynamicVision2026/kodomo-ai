@@ -48,12 +48,17 @@ function isTerminalArchetype(claims: string[]): boolean {
 }
 
 /**
- * WO-24 (AD-07): Mission 1's own continuous digging scene. "STATES ARE NOT SCREENS" — this one
+ * WO-24 (AD-07): the continuous digging scene, validated against Mission 1 and now (WO-26) the
+ * golden interaction grammar for the entire module. "STATES ARE NOT SCREENS" — this one
  * component owns the whole child-side journey from DIVE through 今日のコツ, choreographing the
  * SAME state machine Dig.tsx/SlotAssembly.tsx already use (engine unchanged, imported directly:
  * digMachine.ts, resolver.ts, predictions.ts, scaffold.ts) inside one persistent DOM tree instead
- * of a sequence of screen swaps. Mission-1-only — every other mission still renders through the
- * original SlotAssembly/Dig template components, untouched.
+ * of a sequence of screen swaps. Content-agnostic by construction: `slotPhase` is only present
+ * when `mission.phases` actually has a slot-assembly phase (every Story Mission), and is simply
+ * `undefined` for a dig-phase-only Bank Dig — the same generic `Mission`/`Phase` shape both kinds
+ * of content already shared under the original SlotAssembly/Dig template components, which
+ * remain in the codebase, untouched, for any caller that doesn't opt a mission id into this
+ * component (see MissionShell's `continuousStageMissionIds`).
  *
  * Layout is two fixed regions (never a route change between them): `.stage__world` (mascot,
  * depth meter, the current dialogue/context — L2/L3) and `.stage__tray-anchor` (the one live

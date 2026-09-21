@@ -42,7 +42,7 @@ function renderShell() {
       ui={ui}
       followMoves={moduleJson.followMoves}
       cardTypes={moduleJson.cardTypes}
-      continuousStageMissionId={chanto.id}
+      continuousStageMissionIds={new Set([chanto.id])}
     />,
   );
 }

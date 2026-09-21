@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Mission, ModuleUiStrings } from '../engine/types';
 import type { Progress } from '../engine/storage';
 import type { MoveProgressMap } from '../engine/scaffold';
+import { storyState } from './progression';
 import { Toolbox } from './Toolbox';
 import { Mascot } from './Mascot';
 import { Ruby } from '../engine/ruby';
@@ -46,6 +47,11 @@ export function CourseHome({
   hasBank, onContinue, onSelectMission, onOpenBank, onOpenParent, onOpenKit,
 }: CourseHomeProps) {
   const currentRef = useRef<HTMLLIElement>(null);
+  /** WO-26 §7: a Story ahead of CURRENT is LOCKED — tapping it never navigates away. Instead it
+   *  shows a short diegetic explanation right there and redirects attention back to CURRENT
+   *  (never a browser-style error, never a silently-broken button). One id at a time — tapping
+   *  a different locked depth, or CURRENT itself, replaces/clears it. */
+  const [lockedTapId, setLockedTapId] = useState<string | null>(null);
 
   useEffect(() => {
     // jsdom (the test DOM) doesn't implement scrollIntoView — guard so tests don't crash.
@@ -53,6 +59,16 @@ export function CourseHome({
   }, [currentMissionId]);
 
   const currentMission = missions[currentMissionId];
+
+  function tapDepth(id: string, state: ReturnType<typeof storyState>) {
+    if (state === 'locked') {
+      setLockedTapId(id);
+      currentRef.current?.scrollIntoView?.({ block: 'center' });
+      return;
+    }
+    setLockedTapId(null);
+    onSelectMission(id);
+  }
 
   return (
     <div className="course-home">
@@ -73,17 +89,19 @@ export function CourseHome({
           {missionOrder.map((id, i) => {
             const m = missions[id];
             if (!m) return null;
-            const done = progress[id]?.done ?? false;
-            const isCurrent = id === currentMissionId;
+            const state = storyState(id, progress, currentMissionId);
+            const done = state === 'completed';
+            const isCurrent = state === 'current';
+            const locked = state === 'locked';
             const cls = [
               'course-home__depth',
               done ? 'is-done' : '',
               isCurrent ? 'is-current' : '',
-              !done && !isCurrent ? 'is-ahead' : '',
+              locked ? 'is-ahead is-locked' : '',
             ].filter(Boolean).join(' ');
             return (
               <li key={id} ref={isCurrent ? currentRef : undefined} className={cls}>
-                <button type="button" className="course-home__depth-button" onClick={() => onSelectMission(id)}>
+                <button type="button" className="course-home__depth-button" onClick={() => tapDepth(id, state)}>
                   <span className="course-home__depth-index">{i + 1}</span>
                   <span className="course-home__depth-title"><Ruby text={m.title} /></span>
                   {/* WO-24 (AD-07 §12): "completed Mission 1 -> gold root becomes visible." A
@@ -91,11 +109,16 @@ export function CourseHome({
                      no percentage, no score, just the world itself showing progress. */}
                   {done && <span className="course-home__depth-root" aria-hidden="true">◆</span>}
                   {done && <span className="course-home__depth-mark">{ui.courseHomeDoneLabel}</span>}
-                  {!done && !isCurrent && <span className="course-home__depth-mark course-home__depth-mark--ahead">{ui.courseHomeNotYetLabel}</span>}
+                  {locked && <span className="course-home__depth-mark course-home__depth-mark--ahead">{ui.courseHomeNotYetLabel}</span>}
                   {/* WO-24 (AD-07 §12): "Robot stands at the current dig site" — a small, plain
                      positional cue, not a second mascot with its own reactive state. */}
-                  {isCurrent && !done && <span className="course-home__depth-robot" aria-hidden="true">🤖</span>}
+                  {isCurrent && <span className="course-home__depth-robot" aria-hidden="true">🤖</span>}
                 </button>
+                {/* WO-26 §7: LOCKED must "not look broken" — a short diegetic explanation right
+                   where the tap happened, never a browser-style error, never a navigation. */}
+                {locked && lockedTapId === id && (
+                  <p className="course-home__depth-locked-note"><Ruby text={ui.courseHomeSequentialLockedMessage} /></p>
+                )}
               </li>
             );
           })}

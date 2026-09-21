@@ -60,15 +60,17 @@ export interface MissionShellProps {
    *  purchase. Every real production build passes `false`/omits this prop entirely — see
    *  src/main.tsx's own `VITE_FAMILY_TEST_MODE` wiring and docs/family-test-mode.md. */
   familyTestMode?: boolean;
-  /** WO-24 (AD-07 v0.7a prototype): the ONE mission id, if any, that should play through the new
-   *  continuous MissionStage instead of the original screen-by-screen SlotAssembly/Dig/wrapper
-   *  sequence. Deliberately an explicit id supplied by the caller, not inferred from content —
-   *  the archived pre-chanto fixture ("bread", module m1's own topics dir) still carries the
-   *  SAME id Mission 1-1 now uses ("m1-s2-1-1"), so matching on id alone without an opt-in
-   *  would wrongly catch it too. src/main.tsx passes its own real chanto mission's id; every
-   *  other caller (including every existing test) omits this prop and gets the original
+  /** WO-24 (AD-07 v0.7a prototype) / WO-26 (Module 1 rollout): the set of mission ids, if any,
+   *  that should play through the new continuous MissionStage instead of the original
+   *  screen-by-screen SlotAssembly/Dig/wrapper sequence. Deliberately explicit ids supplied by
+   *  the caller, not inferred from content — the archived pre-chanto fixture ("bread", module
+   *  m1's own topics dir) still carries the SAME id Mission 1-1 now uses ("m1-s2-1-1"), so
+   *  matching on id alone without an opt-in would wrongly catch it too. src/main.tsx passes
+   *  every real Story Mission's and Bank Dig's own id (WO-26: the golden interaction grammar,
+   *  validated on Mission 1, is now the whole module's interaction model); every other caller
+   *  (including every existing test that omits this prop) gets the original screen-by-screen
    *  behaviour unchanged. */
-  continuousStageMissionId?: string;
+  continuousStageMissionIds?: ReadonlySet<string>;
 }
 
 type Screen =
@@ -104,7 +106,7 @@ type Screen =
  */
 export function MissionShell({
   moduleId, freeMissionIds, mission: defaultMission, ui, missionLibrary, bankLibrary,
-  followMoves = [], cardTypes = {}, familyTestMode = false, continuousStageMissionId,
+  followMoves = [], cardTypes = {}, familyTestMode = false, continuousStageMissionIds,
 }: MissionShellProps) {
   const [appState, setAppState] = useState<AppState>(() => load());
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -217,7 +219,7 @@ export function MissionShell({
     setSolo(!isCoop);
     track('coop_selected', { coop: isCoop });
     track('m1_start');
-    setScreen(mission.id === continuousStageMissionId ? { kind: 'stage' } : { kind: 'phase', index: 0 });
+    setScreen(continuousStageMissionIds?.has(mission.id) ? { kind: 'stage' } : { kind: 'phase', index: 0 });
   }
 
   function markDone() {
@@ -419,6 +421,14 @@ export function MissionShell({
   function stageCompleted(digResult: DigResult) {
     digPhaseCompleted(digResult);
     markDone();
+    // WO-26 §14: a mission that declares a perspective-shift moment (e.g. Mission 1-5/minna)
+    // still shows it — child-facing, before any solo/coop split — exactly where the original
+    // screen-by-screen flow placed it (after おうちトーク, before handoff). Preserved content,
+    // not mechanically dropped just because the continuous stage skips the old wrapper screens.
+    if (mission.perspective) {
+      setScreen({ kind: 'perspective' });
+      return;
+    }
     setScreen(solo ? { kind: 'complete' } : { kind: 'handoff' });
   }
 
@@ -490,6 +500,11 @@ export function MissionShell({
         bankOrder={bankLibrary.bankOrder}
         missions={bankLibrary.missions}
         progress={profile?.progress ?? {}}
+        storyMissionsInOrder={
+          missionLibrary
+            ? missionLibrary.missionOrder.map((id) => missionLibrary.missions[id]).filter((m): m is Mission => !!m)
+            : []
+        }
         ui={ui}
         onSelect={selectBankMission}
         onBack={goToCourseHome}
@@ -612,11 +627,14 @@ export function MissionShell({
   // WO-19 Phase 3C: the perspective-shift moment, shown only when this mission declares one.
   // Reuses the exact tip/teachBack/おうちトーク wrapper-screen idiom — no new architecture.
   if (screen.kind === 'perspective' && mission.perspective) {
+    // WO-25 #6 / WO-26: shared by both the old screen-by-screen flow (reached from 'ouchi') and
+    // the continuous stage (reached from stageCompleted) — solo must never proceed into the
+    // handoff/parent sequence from here either, same P0 rule as everywhere else.
     return (
       <div className="mission-shell__wrapper">
         <p className="mission-shell__perspective-voice">{mission.perspective.voice}</p>
         <p><Ruby text={mission.perspective.text} /></p>
-        <button type="button" onClick={() => setScreen({ kind: 'handoff' })}>
+        <button type="button" onClick={() => setScreen(solo ? { kind: 'complete' } : { kind: 'handoff' })}>
           {ui.handoffContinue}
         </button>
       </div>
@@ -634,7 +652,7 @@ export function MissionShell({
     // parent-turn teach-back beat, never the dense multi-control parent dashboard — every other
     // mission keeps the original generic Handoff (prompt + continue + skip, straight to
     // 'parent') below, completely unchanged.
-    if (mission.id === continuousStageMissionId) {
+    if (continuousStageMissionIds?.has(mission.id)) {
       return (
         <Handoff
           prompt={ui.stageHandoffPrompt}
@@ -775,7 +793,7 @@ export function MissionShell({
       {/* WO-24 (AD-07 §4D): Mission 1's own ui.stageReturnToChild copy — the explicit return-
          to-child-register action AD-07 names. Every other mission keeps the generic label. */}
       <button type="button" className="mission-shell__to-complete" onClick={() => setScreen({ kind: 'complete' })}>
-        {mission.id === continuousStageMissionId ? ui.stageReturnToChild : ui.handoffContinue}
+        {continuousStageMissionIds?.has(mission.id) ? ui.stageReturnToChild : ui.handoffContinue}
       </button>
     </div>
   );

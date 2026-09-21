@@ -41,6 +41,25 @@
   white-space: nowrap;
 }
 
+.bank-select__cell {
+  width: 100%;
+}
+
+/* WO-26 §5/§7: LOCKED — visible, dimmed, never hidden ("must not look broken"). */
+.bank-select__topic.is-locked {
+  opacity: 0.55;
+}
+
+.bank-select__locked-note {
+  margin: 0.35rem 0.25rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.6rem;
+  background: #f1ece1;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
 .bank-select__back {
   padding: 0.6rem 1.4rem;
   border-radius: 999px;

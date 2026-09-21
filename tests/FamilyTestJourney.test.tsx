@@ -160,21 +160,44 @@ describe('WO-23 §15 — family-test regression suite', () => {
     expect(document.querySelectorAll('.course-home__depth')).toHaveLength(8);
   });
 
-  it('4. all 8 Story Missions are navigable in family-test mode — none show the locked screen', async () => {
-    for (let i = 0; i < storyMissions.length; i++) {
+  /** WO-26 §3.1/§5: seeds the just-created profile's own `progress` directly in storage (the
+   *  same shape MissionShell itself persists to), marking the first `doneCount` Story Missions
+   *  done — the only way to legitimately reach a later Story/Bank in a single test now that
+   *  free-skipping is gone. Requires a profile to already exist in storage. */
+  function seedStoryProgress(doneCount: number) {
+    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const profile = saved.profiles[0];
+    profile.progress = {};
+    for (let j = 0; j < doneCount; j++) {
+      profile.progress[storyMissions[j]!.id] = { done: true, stamps: 0, coop: false };
+    }
+    localStorage.setItem('m-app.v1', JSON.stringify(saved));
+  }
+
+  function renderShellWithBank() {
+    return render(
+      <MissionShell
+        moduleId="m1" freeMissionIds={[]} mission={chantoMission}
+        missionLibrary={missionLibrary} bankLibrary={bankLibrary} ui={ui} familyTestMode
+        followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
+      />,
+    );
+  }
+
+  it('4. all 8 Story Missions are reachable, IN SEQUENCE, in family-test mode — none show the entitlement-locked screen once their own prerequisite Stories are done', async () => {
+    // One profile, created once; each iteration seeds it straight to the needed point instead
+    // of actually re-playing 0..i-1 Stories — WO-26 §3.1 only forbids skipping via the real UI.
+    {
       const user = userEvent.setup();
-      const { unmount } = render(
-        <MissionShell
-          moduleId="m1" freeMissionIds={[]} mission={chantoMission}
-          missionLibrary={missionLibrary} ui={ui} familyTestMode
-          followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
-        />,
-      );
-      if (i === 0) {
-        await createProfile(user);
-      } else {
-        await user.click(screen.getByText('たぬき')); // the same, now-seeded profile
-      }
+      const { unmount } = renderShellWithBank();
+      await createProfile(user);
+      unmount();
+    }
+    for (let i = 0; i < storyMissions.length; i++) {
+      seedStoryProgress(i); // Stories 0..i-1 done -> Story i is now CURRENT
+      const user = userEvent.setup();
+      const { unmount } = renderShellWithBank();
+      await user.click(screen.getByText('たぬき')); // the same, seeded profile
       const depthButtons = document.querySelectorAll('.course-home__depth-button');
       expect(depthButtons).toHaveLength(8);
       await user.click(depthButtons[i] as HTMLElement);
@@ -185,21 +208,20 @@ describe('WO-23 §15 — family-test regression suite', () => {
     }
   });
 
-  it('5. all 12 Bank Digs are navigable in family-test mode — none show the locked screen', async () => {
+  it('5. all 12 Bank Digs are reachable in family-test mode once the Story spine is complete — none show the entitlement-locked screen', async () => {
+    {
+      const user = userEvent.setup();
+      const { unmount } = renderShellWithBank();
+      await createProfile(user);
+      unmount();
+    }
+    // WO-26 §5: every Bank Dig unlocks once the Story spine is complete (the most conservative
+    // unlock point any of them requires) — seeded once, satisfies all 12 iterations below.
+    seedStoryProgress(storyMissions.length);
     for (let i = 0; i < bankMissions.length; i++) {
       const user = userEvent.setup();
-      const { unmount } = render(
-        <MissionShell
-          moduleId="m1" freeMissionIds={[]} mission={chantoMission}
-          missionLibrary={missionLibrary} bankLibrary={bankLibrary} ui={ui} familyTestMode
-          followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
-        />,
-      );
-      if (i === 0) {
-        await createProfile(user);
-      } else {
-        await user.click(screen.getByText('たぬき'));
-      }
+      const { unmount } = renderShellWithBank();
+      await user.click(screen.getByText('たぬき'));
       await user.click(screen.getByText(ui.courseHomeBankLabel));
       const topicButtons = document.querySelectorAll('.bank-select__topic');
       expect(topicButtons).toHaveLength(12);
@@ -252,7 +274,12 @@ describe('WO-23 §15 — family-test regression suite', () => {
     expect(screen.getByText(ui.handoffContinue).closest('.mission-shell__to-complete')).toBeTruthy();
   });
 
-  it('9. no locked/dead-end state exists anywhere in a family-test journey through both Story and Bank content', async () => {
+  // WO-26 §3.1/§7 revises this scenario's own premise: a depth ahead of CURRENT is no longer
+  // "exactly as reachable" — it is deliberately LOCKED (Story Missions must not be freely
+  // skipped). What the original RC-1 finding actually demanded still holds: a locked depth must
+  // never look broken, never show a raw/denied screen, and CURRENT must remain fully reachable
+  // with no dead end anywhere.
+  it('9. a locked depth never shows a broken/dead-end state — a short diegetic explanation instead, on Course Home, never "ACCESS DENIED" — and CURRENT stays fully reachable', async () => {
     const user = userEvent.setup();
     render(
       <MissionShell
@@ -264,9 +291,17 @@ describe('WO-23 §15 — family-test regression suite', () => {
     await createProfile(user);
     expect(document.querySelector('.mission-shell__locked')).not.toBeInTheDocument();
 
-    // A depth ahead of the current one is exactly as reachable — never "ACCESS DENIED".
+    // The LAST story, deliberately not the current one, is LOCKED — tapping it stays on Course
+    // Home with a short diegetic explanation, never a browser-style error, never a navigation.
     const depthButtons = document.querySelectorAll('.course-home__depth-button');
-    await user.click(depthButtons[7] as HTMLElement); // the LAST story, deliberately not the current one
+    await user.click(depthButtons[7] as HTMLElement);
+    expect(document.querySelector('.mission-shell__locked')).not.toBeInTheDocument();
+    expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument(); // never entered
+    expect(screen.getByText(ui.courseHomeSequentialLockedMessage)).toBeInTheDocument();
+    expect(screen.getByText(ui.courseHomeHeading)).toBeInTheDocument(); // still on Course Home
+
+    // CURRENT itself remains exactly as reachable as ever.
+    await user.click(depthButtons[0] as HTMLElement);
     expect(document.querySelector('.mission-shell__locked')).not.toBeInTheDocument();
     expect(screen.getByText(ui.coopQuestion)).toBeInTheDocument();
   });

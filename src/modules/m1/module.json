@@ -95,7 +95,9 @@
     "stageQuestionPrompt": "どの しつもんで ほる？",
     "stageRootDiscoveryLabel": "ねっこを はっけん！",
     "stagePredictionParentTask": "どれが ロボの こたえに ちかいか、よそうしてね",
-    "stageHandbackPrompt": "こどもに もどしてね"
+    "stageHandbackPrompt": "こどもに もどしてね",
+    "courseHomeSequentialLockedMessage": "ここは まだ さきの ばしょだよ。今の ばしょから じゅんばんに ほろう。",
+    "bankLockedMessage": "この あなは まだ ほれないよ。ものがたりを すすめると、ほれるように なるよ。"
   },
   "cardTypes": {
     "odai": {

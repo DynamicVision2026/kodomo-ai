@@ -107,6 +107,17 @@
 /* Not-dug-yet: visible, dimmed — never a denial/dead-end affordance (AD-06 D2/D4). */
 .course-home__depth.is-ahead .course-home__depth-button { opacity: 0.55; }
 
+/* WO-26 §7: LOCKED's own short diegetic explanation — appears only right after a locked depth
+   is tapped, never a browser-style error, never blocking the shaft. */
+.course-home__depth-locked-note {
+  margin: 0.4rem 0.25rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.6rem;
+  background: var(--soil-1, #e8dcc8);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .course-home__footer {
   flex: none;
   display: flex;

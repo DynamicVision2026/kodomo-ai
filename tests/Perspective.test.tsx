@@ -27,20 +27,20 @@ afterEach(() => cleanup());
  * mechanism ticket.
  */
 describe('Perspective (WO-19 Phase 3C) — the mechanism, proven against a synthetic fixture', () => {
-  async function playDummyToOuchi(user: ReturnType<typeof userEvent.setup>) {
+  async function playDummyToOuchi(user: ReturnType<typeof userEvent.setup>, coop: 'solo' | 'yes' = 'solo') {
     render(<MissionShell moduleId="m2-test" freeMissionIds={m2ModuleJson.freeMissionIds} mission={dummyMission} ui={m2Ui} />);
     await user.click(screen.getByText(m2Ui.profileCreateLabel));
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(m2Ui.profileConfirm));
     await user.click(screen.getByText(m2Ui.courseHomeContinueLabel));
-    await user.click(screen.getByText(m2Ui.coopSolo));
+    await user.click(screen.getByText(coop === 'solo' ? m2Ui.coopSolo : m2Ui.coopYes));
     await user.click(screen.getByText('これで ただしいか みなおしてみよう'));
     await user.click(screen.getByText(m2Ui.handoffContinue)); // tip -> teach-back
     await user.click(screen.getByText(m2Ui.teachbackSkip)); // -> おうちトーク
   }
 
-  it('a mission that declares `perspective` shows it after おうちトーク and before handoff, with the other voice\'s text, then continues to handoff on tap', async () => {
+  it('a mission that declares `perspective` shows it after おうちトーク and before the solo/coop split, with the other voice\'s text, then continues on tap (SOLO here, so straight to the child-facing completion screen — WO-25 #6\'s P0 safety rule applies at this screen exactly as everywhere else)', async () => {
     const user = userEvent.setup();
     await playDummyToOuchi(user);
 
@@ -50,7 +50,18 @@ describe('Perspective (WO-19 Phase 3C) — the mechanism, proven against a synth
     expect(screen.getByText(dummyMission.perspective!.voice)).toBeInTheDocument();
     expect(screen.getByText(dummyMission.perspective!.text)).toBeInTheDocument();
 
-    await user.click(screen.getByText(m2Ui.handoffContinue)); // perspective -> handoff
+    await user.click(screen.getByText(m2Ui.handoffContinue)); // perspective -> solo/coop split
+    expect(screen.getByText(m2Ui.completeHeading)).toBeInTheDocument();
+    expect(screen.queryByText(m2Ui.handoffPrompt)).not.toBeInTheDocument();
+    expect(screen.queryByText(m2Ui.parentScreenHeading)).not.toBeInTheDocument();
+  });
+
+  it('the same mission in CO-PLAY still continues from perspective into the handoff curtain, unaffected by the SOLO fix above', async () => {
+    const user = userEvent.setup();
+    await playDummyToOuchi(user, 'yes');
+    await user.click(screen.getByText(m2Ui.handoffContinue)); // おうちトーク -> perspective
+    expect(screen.getByText(dummyMission.perspective!.text)).toBeInTheDocument();
+    await user.click(screen.getByText(m2Ui.handoffContinue)); // perspective -> handoff (coop)
     expect(screen.getByText(m2Ui.handoffPrompt)).toBeInTheDocument();
   });
 

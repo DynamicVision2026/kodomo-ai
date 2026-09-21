@@ -266,6 +266,17 @@ export interface ModuleUiStrings {
   // before any child-facing control reappears — paired with the existing stageReturnToChild
   // ("こどもに もどす") as its one action, reused rather than duplicated.
   stageHandbackPrompt: string;
+
+  // --- WO-26: Module 1 rollout, Course Location States (§7) ---------------------------------
+  /** Shown when a Story Mission ahead of `current` is tapped — a short diegetic explanation,
+   *  never a browser-style error, redirecting attention back to the current dig site (§3.1/§7:
+   *  "Story Missions MUST NOT be freely skipped... must not look broken"). Distinct from the
+   *  entitlement `lockedMessage` above — this is a sequencing rule, not a purchase gate. */
+  courseHomeSequentialLockedMessage: string;
+  /** Shown when a not-yet-unlocked Bank Dig is tapped (§5/§7) — same diegetic-explanation
+   *  contract as `courseHomeSequentialLockedMessage`, for the Bank's own staged unlock instead
+   *  of the Story spine's strict sequence. */
+  bankLockedMessage: string;
 }
 
 /**

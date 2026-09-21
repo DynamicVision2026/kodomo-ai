@@ -41,10 +41,18 @@
 // QA/family-test build can reach all 8 Story Missions and all 12 Bank Digs without a real
 // purchase. Documented in docs/family-test-mode.md.
 //
-// WO-24 (AD-07 v0.7a prototype): `continuousStageMissionId={chantoMission.id}` routes Mission
+// WO-24 (AD-07 v0.7a prototype): `continuousStageMissionId={chantoMission.id}` routed Mission
 // 1-1 only through the new continuous MissionStage (src/stage/MissionStage.tsx) — Missions
-// 1-2 through 1-8 and every Bank Dig below are unaffected, still playing through the original
-// SlotAssembly/Dig template screens.
+// 1-2 through 1-8 and every Bank Dig played through the original SlotAssembly/Dig template
+// screens.
+//
+// WO-26 (Module 1 rollout): Mission 1's interaction grammar passed independent live acceptance
+// and is now the GOLDEN REFERENCE for the whole module — `continuousStageMissionIds` below is
+// every Story Mission's and every Bank Dig's own id, all 20, so the entire module plays through
+// MissionStage. The original screen-by-screen engine (MissionShell's 'phase'/'tip'/'teachback'/
+// 'ouchi'/'handoff'/'parent' screens) is untouched and still exercised by its own existing tests
+// (tests/ChantoTopic.test.tsx, tests/StoryMissions1to8.test.tsx, tests/BankDigs.test.tsx, none of
+// which pass this prop) — just no longer reachable from this real production entry point.
 import { createRoot } from 'react-dom/client';
 import './styles/tokens.css';
 import type { Mission, ModuleUiStrings } from './engine/types';
@@ -102,6 +110,11 @@ const bankMissionsById: Record<string, Mission> = Object.fromEntries(
 
 const familyTestMode = import.meta.env.VITE_FAMILY_TEST_MODE === '1';
 
+const continuousStageMissionIds = new Set<string>([
+  ...Object.keys(missions),
+  ...bankMissions.map((m) => m.id),
+]);
+
 createRoot(document.getElementById('root')!).render(
   <MissionShell
     moduleId={moduleJson.id}
@@ -113,6 +126,6 @@ createRoot(document.getElementById('root')!).render(
     followMoves={moduleJson.followMoves}
     cardTypes={moduleJson.cardTypes}
     familyTestMode={familyTestMode}
-    continuousStageMissionId={chantoMission.id}
+    continuousStageMissionIds={continuousStageMissionIds}
   />,
 );
