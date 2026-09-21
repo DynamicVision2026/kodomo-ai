@@ -24,10 +24,24 @@ export interface PredictionBattleProps {
    *  reassuring them they don't need to know the right answer. Fixed UI chrome (module.json's
    *  `ui.predictionParentPrompt`), never mission content. */
   parentPrompt: string;
+  /** WO-25B (G8): names what the parent's own choice actually IS ("guess which one is closest
+   *  to the robot's real answer") — `parentPrompt` above is reassurance, never a task
+   *  description on its own, which the audit's own live evidence found left the parent unsure
+   *  what to do with the options. Optional and additive: every existing caller that omits it
+   *  keeps exactly its old parent-turn copy (just `parentPrompt`), unchanged. */
+  parentTaskPrompt?: string;
+  /** WO-25B (G8): when supplied together with `handbackActionLabel`, the parent's pick no
+   *  longer hands control back to the child immediately — an explicit "give the device back"
+   *  screen (this prompt + one button) sits between the parent's own choice and whatever
+   *  child-facing UI comes next, so a family is never surprised by child controls appearing
+   *  right under the parent's thumb. Optional and additive: omitting both keeps every existing
+   *  caller's original parent-pick -> onComplete() behaviour exactly as it was. */
+  handbackPrompt?: string;
+  handbackActionLabel?: string;
   onComplete: (result: PredictionResult) => void;
 }
 
-type Stage = 'child' | 'handoff' | 'parent';
+type Stage = 'child' | 'handoff' | 'parent' | 'handback';
 
 /**
  * よそうバトル. Overlay before a reveal: the child predicts, the device is handed off, the
@@ -42,10 +56,14 @@ export function PredictionBattle({
   handoffContinueLabel,
   handoffSkipLabel,
   parentPrompt,
+  parentTaskPrompt,
+  handbackPrompt,
+  handbackActionLabel,
   onComplete,
 }: PredictionBattleProps) {
   const [stage, setStage] = useState<Stage>('child');
   const [childPick, setChildPick] = useState<string | null>(null);
+  const [parentPick, setParentPick] = useState<string | null>(null);
 
   useEffect(() => {
     if (solo) onComplete({ skipped: true });
@@ -63,6 +81,11 @@ export function PredictionBattle({
 
   function pickParent(key: string) {
     track('prediction_made', { who: 'parent', pick: key });
+    if (handbackPrompt && handbackActionLabel) {
+      setParentPick(key);
+      setStage('handback');
+      return;
+    }
     onComplete({ skipped: false, childPick: childPick ?? undefined, parentPick: key });
   }
 
@@ -82,12 +105,29 @@ export function PredictionBattle({
     );
   }
 
+  if (stage === 'handback') {
+    return (
+      <Handoff
+        prompt={handbackPrompt!}
+        continueLabel={handbackActionLabel!}
+        onContinue={() => onComplete({ skipped: false, childPick: childPick ?? undefined, parentPick: parentPick ?? undefined })}
+      />
+    );
+  }
+
   return (
     <div className="prediction-battle">
       {stage === 'parent' && (
-        <p className="prediction-battle__parent-prompt">
-          <Ruby text={parentPrompt} />
-        </p>
+        <>
+          {parentTaskPrompt && (
+            <p className="prediction-battle__parent-task">
+              <Ruby text={parentTaskPrompt} />
+            </p>
+          )}
+          <p className="prediction-battle__parent-prompt">
+            <Ruby text={parentPrompt} />
+          </p>
+        </>
       )}
       <div className="prediction-battle__options">
         {options.map((o) => (

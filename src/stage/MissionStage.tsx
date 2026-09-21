@@ -99,17 +99,36 @@ export function MissionStage({
   const [slotAttempt, setSlotAttempt] = useState(1);
   const [slotBattled, setSlotBattled] = useState<ReadonlySet<number>>(new Set());
   const [slotStallKey, setSlotStallKey] = useState(0);
+  const [slotDrivingId, setSlotDrivingId] = useState<string | null>(null);
+  /** WO-25B (G5): the initial question choice is exactly as much a "dig attempt" as a hand
+   *  card — a card that doesn't lead anywhere (VAGUE/OFFTOPIC) must stay visible, blocked, and
+   *  badged, never silently reappear as a fresh option. Diagnosed root cause: only the dig
+   *  hand had this treatment; picking again here used to wipe `slotChosen`/`slotResolved` back
+   *  to a blank tray with no memory of what was already tried — the exact live defect the
+   *  audit reproduced. */
+  const [slotBlockedIds, setSlotBlockedIds] = useState<ReadonlySet<string>>(new Set());
+  const [lastSlotPickId, setLastSlotPickId] = useState<string | null>(null);
 
   function pickSlotCard(slot: SlotId, cardId: string) {
+    if (slotDrivingId) return;
     const next = { ...slotChosen, [slot]: cardId };
     setSlotChosen(next);
     setSlotStallKey((k) => k + 1);
     if (!slotPhase!.slots.every((s) => next[s])) return;
-    const resolved = resolveArchetype(slotPhase!, next);
-    setSlotResolved(resolved);
-    setSlotAttempt((n) => n + 1);
-    onGuidanceUse('erabu');
-    track('round_complete', { archetype: resolved.key, retries: slotAttempt - 1 });
+    setSlotDrivingId(cardId);
+    setTimeout(() => {
+      setSlotDrivingId(null);
+      const resolved = resolveArchetype(slotPhase!, next);
+      setSlotResolved(resolved);
+      setLastSlotPickId(cardId);
+      setSlotAttempt((n) => n + 1);
+      onGuidanceUse('erabu');
+      track('round_complete', { archetype: resolved.key, retries: slotAttempt - 1 });
+      const terminal = isTerminalArchetype(resolved.archetype.claims);
+      setWorldImpact(terminal ? 'deepen' : 'stone');
+      setTimeout(() => setWorldImpact(null), 250);
+      if (terminal) sfx.playDeepen(); else sfx.playStone();
+    }, 260);
   }
 
   function slotDialogueRead() {
@@ -125,6 +144,10 @@ export function MissionStage({
       setAnswerRead(true);
       setPart('dig');
     } else {
+      // WO-25B (G5): the picked card joins the PERMANENT blocked set — it is never returned to
+      // the tray as an apparently-fresh option again. `slotChosen` still clears so the next
+      // pick can resolve a new round.
+      if (lastSlotPickId) setSlotBlockedIds((prev) => new Set(prev).add(lastSlotPickId));
       setSlotResolved(null);
       setSlotChosen({});
     }
@@ -324,6 +347,9 @@ export function MissionStage({
           handoffContinueLabel={ui.handoffContinue}
           handoffSkipLabel={ui.handoffSkip}
           parentPrompt={ui.predictionParentPrompt}
+          parentTaskPrompt={ui.stagePredictionParentTask}
+          handbackPrompt={ui.stageHandbackPrompt}
+          handbackActionLabel={ui.stageReturnToChild}
           onComplete={() => setSlotBattled((s) => new Set(s).add(slotAttempt))}
         />
       );
@@ -344,8 +370,15 @@ export function MissionStage({
               // mapping here — out of WO-24's scope (Mission 1 only).
               items={slotPhase!.cards.filter((c) => c.slot === slot).map((c) => ({ id: c.id, text: c.text, kind: slot as CardKind }))}
               onSelect={(id) => pickSlotCard(slot, id)}
+              drivingId={slotDrivingId}
+              blockedIds={slotBlockedIds}
             />
           ))}
+          {slotBlockedIds.size > 0 && (
+            // WO-25B (G5): the same short neutral continuation nudge the dig hand already
+            // uses — existing UI-string architecture, no new mechanic.
+            <p className="stage__continue-prompt">{ui.digContinuePrompt}</p>
+          )}
         </div>
       );
     }
@@ -382,6 +415,9 @@ export function MissionStage({
           handoffContinueLabel={ui.handoffContinue}
           handoffSkipLabel={ui.handoffSkip}
           parentPrompt={ui.predictionParentPrompt}
+          parentTaskPrompt={ui.stagePredictionParentTask}
+          handbackPrompt={ui.stageHandbackPrompt}
+          handbackActionLabel={ui.stageReturnToChild}
           onComplete={() => setBattledLayers((s) => new Set(s).add(state.layer))}
         />
       );

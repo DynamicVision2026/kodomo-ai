@@ -35,6 +35,14 @@
   text-align: center;
 }
 
+/* WO-25B (G8): names the parent's own task explicitly, above the reassurance line. */
+.prediction-battle__parent-task {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.6;
+  text-align: center;
+}
+
 .prediction-battle__skip {
   border: none;
   background: none;

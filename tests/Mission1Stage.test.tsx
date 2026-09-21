@@ -67,6 +67,10 @@ async function enterStage(user: ReturnType<typeof userEvent.setup>, coop: 'solo'
  *  separately-tapped bubbles was the "first tap does nothing" defect the audit found). */
 async function pickClearAndReachJudge(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText('『ちゃんと』って、どういういみ？'));
+  // WO-25B (G5): the slot pick now drives (~260ms) before it resolves, same as a hand card.
+  await waitFor(() => {
+    expect(screen.getByText('『ちゃんと』は、きちんとすることだよ。')).toBeInTheDocument();
+  });
   await user.click(screen.getByText('『ちゃんと』は、きちんとすることだよ。'));
 }
 
@@ -128,6 +132,9 @@ describe('WO-25 #1 — one tap advances exactly once, everywhere', () => {
     renderShell();
     await enterStage(user);
     await user.click(screen.getByText('『ちゃんと』って、どういういみ？'));
+    await waitFor(() => {
+      expect(screen.getByText('『ちゃんと』は、きちんとすることだよ。')).toBeInTheDocument();
+    });
 
     const bubble = screen.getByText('『ちゃんと』は、きちんとすることだよ。').closest('button')!;
     expect(bubble.className).toContain('speech-bubble');
@@ -350,6 +357,140 @@ describe('WO-25 #6 (P0) — parent handoff repair', () => {
   });
 });
 
+describe('WO-25B (G5) — the exact reported live path: a non-deepen SLOT pick recovers as a visible, permanent stone, never a silent reset', () => {
+  it('SOLO -> the VAGUE card -> shallow reply -> ONE tap -> the picked card stays visibly blocked, never returns as a fresh option, and the untried cards remain the live choices', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await enterStage(user, 'solo');
+
+    // The exact reported path: the VAGUE card ("ちゃんとって、よくきくよね"), not the CLEAR one.
+    await user.click(screen.getByText('ちゃんとって、よくきくよね'));
+    const drivingChip = screen.getByText('ちゃんとって、よくきくよね').closest('.question-chip')!;
+    expect(drivingChip.className).toContain('is-driving'); // still visible mid-drive, never an instant fade
+
+    // The robot's own shallow (VAGUE) reply — never a verdict.
+    await waitFor(() => {
+      expect(screen.getByText('『ちゃんと』の話、いっぱいあるよ！')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('不正解')).not.toBeInTheDocument();
+
+    // ONE tap on that bubble — the reported defect was that blockedIds/settled state never
+    // appeared after this exact tap.
+    await user.click(screen.getByText('『ちゃんと』の話、いっぱいあるよ！'));
+
+    // The settled screen: the attempted card stays VISIBLE, badged, disabled — it can never come
+    // back as an apparently-untried option again.
+    await waitFor(() => {
+      expect(screen.getByText('ちゃんとって、よくきくよね').closest('.question-chip')!.className).toContain('is-blocked');
+    });
+    const blockedChip = screen.getByText('ちゃんとって、よくきくよね').closest('.question-chip') as HTMLButtonElement;
+    expect(within(blockedChip).getByText('🪨')).toBeInTheDocument();
+    expect(blockedChip.disabled).toBe(true);
+    // Short neutral recovery cue — no punishment semantics anywhere.
+    expect(screen.getByText(ui.digContinuePrompt)).toBeInTheDocument();
+    expect(screen.queryByText(/不正解|ざんねん|まちがい/)).not.toBeInTheDocument();
+
+    // Nothing was removed: all 3 original cards are still present, and the untried ones are live.
+    expect(document.querySelectorAll('.stage__hand-tray .question-chip')).toHaveLength(3);
+    const clearChip = screen.getByText('『ちゃんと』って、どういういみ？').closest('.question-chip') as HTMLButtonElement;
+    const offtopicChip = screen.getByText('ロボは何がすき？').closest('.question-chip') as HTMLButtonElement;
+    expect(clearChip.disabled).toBe(false);
+    expect(offtopicChip.disabled).toBe(false);
+
+    // A real recovery, not a dead end: picking a remaining card resolves normally.
+    await user.click(clearChip);
+    await waitFor(() => {
+      expect(screen.getByText('『ちゃんと』は、きちんとすることだよ。')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('WO-25B (G8) — every mid-mission co-play parent turn uses the full handoff/parent-task/handback grammar, never a direct parent-choice -> child-control jump', () => {
+  it('the FIRST prediction battle (slot round, beforeRound 1): child pick -> handoff -> explicit parent task -> parent pick -> explicit handback -> only then child UI', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await enterStage(user, 'yes');
+
+    // Child's own turn.
+    await waitFor(() => {
+      expect(screen.getByText('『ちゃんと』って、どういういみ？')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(ui.stagePredictionParentTask)).not.toBeInTheDocument(); // not the parent's screen yet
+    await user.click(screen.getByText('『ちゃんと』って、どういういみ？'));
+
+    // -> explicit handoff (one prompt, one action).
+    await waitFor(() => {
+      expect(screen.getByText(ui.handoffPrompt)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(ui.stagePredictionParentTask)).not.toBeInTheDocument();
+    await user.click(screen.getByText(ui.handoffContinue));
+
+    // -> parent's own turn: the task is named explicitly, above the reassurance line.
+    await waitFor(() => {
+      expect(screen.getByText(ui.stagePredictionParentTask)).toBeInTheDocument();
+    });
+    expect(screen.getByText(ui.predictionParentPrompt)).toBeInTheDocument();
+    expect(screen.queryByText(ui.stageHandbackPrompt)).not.toBeInTheDocument();
+    await user.click(screen.getByText('『ちゃんと』って、どういういみ？')); // parent's own pick
+
+    // -> explicit handback: ONE prompt, ONE action — no child-facing controls underneath it yet.
+    await waitFor(() => {
+      expect(screen.getByText(ui.stageHandbackPrompt)).toBeInTheDocument();
+    });
+    expect(screen.getByText(ui.stageReturnToChild)).toBeInTheDocument();
+    expect(document.querySelectorAll('.choice-tray .question-chip')).toHaveLength(0); // never a direct jump
+    await user.click(screen.getByText(ui.stageReturnToChild));
+
+    // Only NOW does the child's own next decision (the slot cards) reappear.
+    await waitFor(() => {
+      expect(screen.getByText('『ちゃんと』って、どういういみ？').closest('.question-chip')).toBeTruthy();
+    });
+  });
+
+  it('the SECOND prediction battle (dig layer 1, beforeRound 2): the exact same full grammar, no shortcuts', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await enterStage(user, 'yes');
+    await user.click(screen.getByText(ui.predictionSkip)); // round-1 battle grammar already proven above
+    await pickClearAndReachJudge(user);
+    await passLayer0Gate(user);
+    await clickNonDeepenAndReadReply(user, 'ロボは何がすき？', 'ぼくは今『ちゃんと』の話をしてるよ。');
+    await deepenLayer0(user);
+    await user.click(screen.getByText((_c, el) => el?.tagName === 'BUTTON' && (el.textContent ?? '').includes('かたづけるとき')));
+
+    // Layer 1 opens directly into its own beforeRound:2 battle — child's own turn.
+    await waitFor(() => {
+      expect(screen.getByText('たとえば、食べるときは？')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(ui.stagePredictionParentTask)).not.toBeInTheDocument();
+    await user.click(screen.getByText('たとえば、食べるときは？'));
+
+    await waitFor(() => {
+      expect(screen.getByText(ui.handoffPrompt)).toBeInTheDocument();
+    });
+    await user.click(screen.getByText(ui.handoffContinue));
+
+    await waitFor(() => {
+      expect(screen.getByText(ui.stagePredictionParentTask)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(ui.stageHandbackPrompt)).not.toBeInTheDocument();
+    await user.click(screen.getByText('『ちゃんと』ってことば、すき？')); // parent's own pick
+
+    await waitFor(() => {
+      expect(screen.getByText(ui.stageHandbackPrompt)).toBeInTheDocument();
+    });
+    expect(screen.getByText(ui.stageReturnToChild)).toBeInTheDocument();
+    // No direct jump: the next child decision (JUDGE) isn't rendered yet.
+    expect(screen.queryByText(ui.judgeNotEnough)).not.toBeInTheDocument();
+    await user.click(screen.getByText(ui.stageReturnToChild));
+
+    // Only now does the next child decision (JUDGE) appear.
+    await waitFor(() => {
+      expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument();
+    });
+  });
+});
+
 describe('Mission 1 continuous stage — completion and map return', () => {
   it('completion returns to the map: the finished depth shows the root marker, the next depth becomes current', async () => {
     const user = userEvent.setup();
@@ -418,6 +559,9 @@ describe('Mission 1 stage — engine parity (mastery stays first-attempt only, n
       />,
     );
     await user.click(screen.getByText('『ちゃんと』って、どういういみ？'));
+    await waitFor(() => {
+      expect(screen.getByText('『ちゃんと』は、きちんとすることだよ。')).toBeInTheDocument();
+    });
     await user.click(screen.getByText('『ちゃんと』は、きちんとすることだよ。')); // one tap -> JUDGE
     await user.click(screen.getByText(ui.judgeNotEnough));
     const [target] = document.querySelectorAll('.choice-tray .question-chip');

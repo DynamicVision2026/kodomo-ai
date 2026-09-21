@@ -93,7 +93,9 @@
     "stageParentGotItLabel": "なるほど！",
     "stageGapPrompt": "なにが まだ わからない？",
     "stageQuestionPrompt": "どの しつもんで ほる？",
-    "stageRootDiscoveryLabel": "ねっこを はっけん！"
+    "stageRootDiscoveryLabel": "ねっこを はっけん！",
+    "stagePredictionParentTask": "どれが ロボの こたえに ちかいか、よそうしてね",
+    "stageHandbackPrompt": "こどもに もどしてね"
   },
   "cardTypes": {
     "odai": {

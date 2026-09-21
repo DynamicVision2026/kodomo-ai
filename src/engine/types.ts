@@ -259,6 +259,13 @@ export interface ModuleUiStrings {
   // WO-25 #5: the explicit "you found it" label at ROOT — discovery itself is the reward, never
   // a score/star/streak. Shown alongside the root's own reveal motion, before 今日のコツ.
   stageRootDiscoveryLabel: string;
+  // WO-25B (G8): names the parent's own task during a mid-mission prediction battle — what the
+  // existing ui.predictionParentPrompt reassurance never states on its own.
+  stagePredictionParentTask: string;
+  // WO-25B (G8): the explicit "give the device back" prompt shown after the parent's own pick,
+  // before any child-facing control reappears — paired with the existing stageReturnToChild
+  // ("こどもに もどす") as its one action, reused rather than duplicated.
+  stageHandbackPrompt: string;
 }
 
 /**
