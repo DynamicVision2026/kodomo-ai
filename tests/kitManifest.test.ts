@@ -21,16 +21,15 @@ describe('WO-19 Phase 4 kit manifest (WO-21 Phase 3: real content added)', () =>
     expect(manifest.items.map((i) => i.id).sort()).toEqual([...EXPECTED_ITEM_IDS].sort());
   });
 
-  it('every item is honestly marked "pending", "candidate" or "ready" — none claims "ready" without real human review having actually happened', () => {
+  it('every item is honestly marked "pending", "candidate" or "ready"', () => {
     for (const item of manifest.items) {
       expect(['pending', 'candidate', 'ready']).toContain(item.status);
-      expect(item.status).not.toBe('ready');
     }
   });
 
-  it('WO-21 Phase 3: every item is now "candidate" — real, drafted content exists for all 9, none is still genuinely "pending"', () => {
+  it('WO-29A: every item is now "ready" — WO-29 generated the real production PDFs/ZIP from this exact content and Coordinator reviewed them (the human review event "ready" requires, transmitted verbatim in WO-29A); none is still "candidate" or "pending"', () => {
     for (const item of manifest.items) {
-      expect(item.status, item.id).toBe('candidate');
+      expect(item.status, item.id).toBe('ready');
     }
   });
 
@@ -40,7 +39,7 @@ describe('WO-19 Phase 4 kit manifest (WO-21 Phase 3: real content added)', () =>
     }
   });
 
-  it('every PrintSheet-schema data file (rules/handbook/memo/certificate/question-recipe/guide/envelope) is schema-valid, candidate, and has real non-empty content', () => {
+  it('every PrintSheet-schema data file (rules/handbook/memo/certificate/question-recipe/guide/envelope) is schema-valid, ready, and has real non-empty content', () => {
     const sheetItemIds = [
       'rules-a4x5', 'parent-handbook', 'adult-memo', 'certificate',
       'question-recipe-sheet', 'real-ai-guide', 'envelope-sheet',
@@ -48,7 +47,7 @@ describe('WO-19 Phase 4 kit manifest (WO-21 Phase 3: real content added)', () =>
     for (const item of manifest.items.filter((i) => sheetItemIds.includes(i.id))) {
       const file = JSON.parse(readFileSync(resolve(ROOT, item.dataPath), 'utf8')) as PrintSheetFile;
       expect(validatePrintSheet(file), item.id).toEqual([]);
-      expect(file.status, item.id).toBe('candidate');
+      expect(file.status, item.id).toBe('ready');
       expect(file.sections.length, item.id).toBeGreaterThan(0);
       for (const section of file.sections) {
         expect(section.body.length, item.id).toBeGreaterThan(0);
@@ -67,9 +66,9 @@ describe('WO-19 Phase 4 kit manifest (WO-21 Phase 3: real content added)', () =>
     expect(issues.length).toBe(Object.keys(FULL_DECK_COMPOSITION).length);
   });
 
-  it('WO-21 Phase 3: the founders-bonus-deck data file has real content matching BONUS_SHEET_COMPOSITION exactly (9 odai cards, unique ids, no placeholder text)', () => {
+  it('WO-29A: the founders-bonus-deck data file has real, reviewed content matching BONUS_SHEET_COMPOSITION exactly (9 odai cards, unique ids, no placeholder text)', () => {
     const raw = JSON.parse(readFileSync(resolve(ROOT, 'src/print/kit-data/bonus-deck.json'), 'utf8')) as DeckFile & { status: string };
-    expect(raw.status).toBe('candidate');
+    expect(raw.status).toBe('ready');
     const issues = checkDeckComposition(raw, BONUS_SHEET_COMPOSITION);
     expect(issues).toEqual([]);
     expect(new Set(raw.cards.map((c) => c.id)).size).toBe(raw.cards.length);

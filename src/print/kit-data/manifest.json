@@ -4,7 +4,7 @@
     {
       "id": "full-45-card-deck",
       "label": "Full 45-card printable deck",
-      "status": "candidate",
+      "status": "ready",
       "renderPath": "PrintDeck (src/print/deck/PrintDeck.tsx), fed by src/print/kit/deriveFullDeck.ts — same component the existing 9-card sampler already uses",
       "dataPath": "src/print/kit-data/full-deck.json",
       "schemaPath": "pipeline/lib/kitDeckComposition.ts (FULL_DECK_COMPOSITION, checkDeckComposition)",
@@ -13,7 +13,7 @@
     {
       "id": "rules-a4x5",
       "label": "Rules A4 x5",
-      "status": "candidate",
+      "status": "ready",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/rules.json",
       "schemaPath": "src/print/sheet/schema.ts",
@@ -22,7 +22,7 @@
     {
       "id": "parent-handbook",
       "label": "Parent Handbook",
-      "status": "candidate",
+      "status": "ready",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/parent-handbook.json",
       "schemaPath": "src/print/sheet/schema.ts",
@@ -31,7 +31,7 @@
     {
       "id": "adult-memo",
       "label": "Adult Memo x3",
-      "status": "candidate",
+      "status": "ready",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/adult-memo.json",
       "schemaPath": "src/print/sheet/schema.ts",
@@ -40,7 +40,7 @@
     {
       "id": "certificate",
       "label": "Parent/child certificate",
-      "status": "candidate",
+      "status": "ready",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/certificate.json",
       "schemaPath": "src/print/sheet/schema.ts",
@@ -49,7 +49,7 @@
     {
       "id": "question-recipe-sheet",
       "label": "Question Recipe Sheet (質問レシピシート)",
-      "status": "candidate",
+      "status": "ready",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/question-recipe-sheet.json",
       "schemaPath": "src/print/sheet/schema.ts",
@@ -58,7 +58,7 @@
     {
       "id": "real-ai-guide",
       "label": "Real-AI family session guide",
-      "status": "candidate",
+      "status": "ready",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/real-ai-guide.json",
       "schemaPath": "src/print/sheet/schema.ts",
@@ -67,7 +67,7 @@
     {
       "id": "envelope-sheet",
       "label": "First-question / envelope sheet",
-      "status": "candidate",
+      "status": "ready",
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/envelope-sheet.json",
       "schemaPath": "src/print/sheet/schema.ts",
@@ -76,7 +76,7 @@
     {
       "id": "founders-bonus-deck",
       "label": "Founders' winter bonus x9",
-      "status": "candidate",
+      "status": "ready",
       "renderPath": "PrintDeck (src/print/deck/PrintDeck.tsx) — same component the existing 9-card sampler already uses",
       "dataPath": "src/print/kit-data/bonus-deck.json",
       "schemaPath": "pipeline/lib/kitDeckComposition.ts (BONUS_SHEET_COMPOSITION, checkDeckComposition)",
