@@ -1,6 +1,164 @@
 {
   "missionId": "m1-s2-1-4",
   "role": "CHECKPOINT",
-  "audioStatus": "pending-production",
-  "robotLine": "おやつは、300円までって、きまってるんだよ。"
+  "audioStatus": "ready",
+  "robotLine": "おやつは、300円までって、きまってるんだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太も、同じところを ほってみたんだって。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん！　遠足のおやつの話。「バナナは、おやつに入りますか？」ってやつ。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ロボは、さいしょ何て言った？",
+      "audioUrl": "/audio/m1/1-4-oyatsu/02-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「おやつは、300円までって、きまってるんだよ」って。だから、わかった！って思ったの。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そのとき、自分に聞いたことば、おぼえてる？　「これで、ほんとうに……」",
+      "audioUrl": "/audio/m1/1-4-oyatsu/04-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……わかった？」って。そしたらね、ぜんぜんわかってなかったの。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どうして？",
+      "audioUrl": "/audio/m1/1-4-oyatsu/06-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "だって、300円までって言われても、バナナがおやつなのかどうか、わかんないんだもん。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/07-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "なるほど。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/08-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それでね、はじめ「バナナって、何円？」って聞いちゃった。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/09-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "うん。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/10-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "でも、それじゃ、ぜんぜんほれなかった。バナナが何円でも、おやつかどうかは、わからないから。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/11-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そういうこと、あるよね。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/12-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そのあと、自分に何て聞いた？　「まだ わからないのは……」",
+      "audioUrl": "/audio/m1/1-4-oyatsu/13-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……どこ？」　わからないのは、「なにがおやつで、なにがおやつじゃないか」だって思ったの。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/14-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "それで、つぎは？　「じゃあ、つぎに……」",
+      "audioUrl": "/audio/m1/1-4-oyatsu/15-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……何を きけば いい？」　それでね、「どういうこと？」って聞いてみたの。そしたら、バナナは くだものだから、べつあつかいなんだって。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/16-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "なるほど。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/17-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それから「ほかにもある？」って聞いたら、おやつに するかは、クラスや学校でも ちがうって。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/18-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "へえ。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/19-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "さいごに「なんで、ちがうの？」って聞いたら……ねっこに ついたんだ。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/20-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみも、ねっこについたよね。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/21-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "でも、ねっこまでの道は、どうだった？　ポン太と、同じだった？　ちがった？",
+      "audioUrl": "/audio/m1/1-4-oyatsu/22-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも、いいんだよ。同じねっこでも、ほる道は、いろいろあるからね。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/23-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "へえ。きみはどんなふうにほったのかな。聞いてみたいな。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/24-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど、ほかのきまりでも、「これは、きまりに入る？　入らない？」って、考えてみてね。",
+      "audioUrl": "/audio/m1/1-4-oyatsu/25-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
 }

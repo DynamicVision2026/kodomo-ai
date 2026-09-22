@@ -1,6 +1,116 @@
 {
   "missionId": "m1-s2-1-2",
   "role": "GUIDED",
-  "audioStatus": "pending-production",
-  "robotLine": "外のくつは、よごれているから、ぬぐんだよ。"
+  "audioStatus": "ready",
+  "robotLine": "外のくつは、よごれているから、ぬぐんだよ。",
+  "lines": [
+    {
+      "speaker": "PONTA",
+      "text": "ただいまー！",
+      "audioUrl": "/audio/m1/1-2-genkan/00-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "おかえり、ポン太。",
+      "audioUrl": "/audio/m1/1-2-genkan/01-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ねえロボ、なんで、げんかんでくつをぬぐの？",
+      "audioUrl": "/audio/m1/1-2-genkan/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "ROBOT",
+      "text": "外のくつは、よごれているから、ぬぐんだよ。",
+      "audioUrl": "/audio/m1/1-2-genkan/03-robot.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "そっか、わかった！",
+      "audioUrl": "/audio/m1/1-2-genkan/04-ponta.mp3",
+      "pauseAfterMs": 1000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "これで、ほんとうに わかった？",
+      "audioUrl": "/audio/m1/1-2-genkan/05-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。外はよごれてて、きたないから、でしょ？",
+      "audioUrl": "/audio/m1/1-2-genkan/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "うん。……ねえポン太。きのう買ってもらった、あたらしいくつ、あるよね。",
+      "audioUrl": "/audio/m1/1-2-genkan/07-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん、青いやつ！",
+      "audioUrl": "/audio/m1/1-2-genkan/08-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "あれ、まだ一回も、外ではいてないよね。",
+      "audioUrl": "/audio/m1/1-2-genkan/09-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。まだ、ぴかぴか。",
+      "audioUrl": "/audio/m1/1-2-genkan/10-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "あのくつで、おうちに入るときは？",
+      "audioUrl": "/audio/m1/1-2-genkan/11-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "え？　そりゃ、ぬぐよ。……あれ？",
+      "audioUrl": "/audio/m1/1-2-genkan/12-ponta.mp3",
+      "pauseAfterMs": 2000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "あたらしくて、よごれてないのに……ぬぐ。",
+      "audioUrl": "/audio/m1/1-2-genkan/13-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "おもしろいね。",
+      "audioUrl": "/audio/m1/1-2-genkan/14-guide.mp3",
+      "pauseAfterMs": 1000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "まだ わからないのは、どこ？",
+      "audioUrl": "/audio/m1/1-2-genkan/15-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うーん……。",
+      "audioUrl": "/audio/m1/1-2-genkan/16-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、考えてるみたい。……聞いているきみは、どこだと思う？　ここから先は、きみのばんだよ。",
+      "audioUrl": "/audio/m1/1-2-genkan/17-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
 }
