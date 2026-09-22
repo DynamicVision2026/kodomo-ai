@@ -20,7 +20,13 @@ const freeMissionIds = [stage2Mission.id, stage3Mission.id];
 
 function seed(stage: 2 | 3) {
   const state: AppState = {
-    profiles: [{ id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage, progress: {} }],
+    // milestones.M0 pre-seeded achieved — this fixture proves stage-based mission selection, not
+    // the M0 ritual (tests/CompletionRitual.test.tsx's own concern); a fresh profile without it
+    // would land on the 'm0-ritual' screen instead of Course Home.
+    profiles: [{
+      id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage, progress: {},
+      milestones: { M0: { achieved: true, achievedAt: 0 } },
+    }],
     entitlements: ['m1:free'],
     redeemedCode: null,
     founder: false,

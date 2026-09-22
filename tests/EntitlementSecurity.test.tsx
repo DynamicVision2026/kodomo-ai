@@ -18,6 +18,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import { PrintCentre } from '../src/print/centre/PrintCentre';
 import { homeKitPackage } from '../src/print/kit-data/homeKitPackage';
 import printCentreUi from '../src/print/kit-data/print-centre-ui.json';
@@ -60,7 +61,11 @@ function renderRealShell(unlockApiBaseUrl?: string) {
  *  — never the separate "not reached yet" sequential lock. */
 function seedWithStory1Done(overrides: Partial<AppState>) {
   const state: AppState = {
-    profiles: [{ id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: { [chantoJson.id]: { done: true, stamps: 1, coop: false } } }],
+    profiles: [{
+      id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2,
+      progress: { [chantoJson.id]: { done: true, stamps: 1, coop: false } },
+      milestones: { M0: { achieved: true, achievedAt: 0 } },
+    }],
     entitlements: ['m1:free'],
     redeemedCode: null,
     founder: false,
@@ -83,6 +88,7 @@ describe('WO-30 §11 A — FREE family', () => {
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     expect(screen.getByText(ui.coopQuestion)).toBeInTheDocument(); // reached the real mission, not the locked screen
   });
@@ -190,7 +196,11 @@ describe('WO-30 §11 F/G — recovery, and never another family\'s entitlement',
     // Give the just-redeemed profile Story 1 done too (matching a family that had already
     // played Story 1 before losing local state) so Story 2 is the sequentially-current depth.
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
-    saved.profiles = [{ id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: { [chantoJson.id]: { done: true, stamps: 1, coop: false } } }];
+    saved.profiles = [{
+      id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2,
+      progress: { [chantoJson.id]: { done: true, stamps: 1, coop: false } },
+      milestones: { M0: { achieved: true, achievedAt: 0 } },
+    }];
     localStorage.setItem('m-app.v1', JSON.stringify(saved));
 
     // A fresh MissionShell mount (the "device restored" moment) reads the SAME localStorage key

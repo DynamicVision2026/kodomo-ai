@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import { parseRootType } from '../scripts/lib/rootType';
 import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
 import b01 from '../src/modules/m1/topics/bank-atode/s2.json';
@@ -157,6 +158,7 @@ describe('Bank Digs — full interactive playthroughs prove the real UI plays a 
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 
@@ -189,6 +191,7 @@ describe('Bank Digs — full interactive playthroughs prove the real UI plays a 
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 

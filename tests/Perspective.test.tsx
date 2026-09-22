@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
 import dummyMissionJson from '../src/modules/m2-test/topics/dummy/s3.json';
 import m2ModuleJson from '../src/modules/m2-test/module.json';
@@ -33,6 +34,7 @@ describe('Perspective (WO-19 Phase 3C) — the mechanism, proven against a synth
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(m2Ui.profileConfirm));
+    await skipM0RitualIfPresent(user, m2Ui);
     await user.click(screen.getByText(m2Ui.courseHomeContinueLabel));
     await user.click(screen.getByText(coop === 'solo' ? m2Ui.coopSolo : m2Ui.coopYes));
     await user.click(screen.getByText('これで ただしいか みなおしてみよう'));
@@ -85,6 +87,7 @@ describe('Perspective (WO-19 Phase 3C) — the mechanism, proven against a synth
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     const clearCard = (chantoMission.phases[0]! as Extract<typeof chantoMission.phases[0], { template: 'slot-assembly' }>)

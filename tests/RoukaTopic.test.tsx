@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import { pickNextMission } from '../src/shell/missionLibrary';
 import { parseRootType } from '../scripts/lib/rootType';
 import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
@@ -250,6 +251,7 @@ describe('rouka (1-3) — playable end to end (たのむ -> ほる x3 -> wrapper
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 

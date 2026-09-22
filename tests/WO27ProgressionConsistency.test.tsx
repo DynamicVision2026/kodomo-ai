@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
-import { playMissionScreenToCompletion, skipPrePracticeAudioIfPresent } from './helpers/stageConformance';
+import { playMissionScreenToCompletion, skipPrePracticeAudioIfPresent, skipM0RitualIfPresent } from './helpers/stageConformance';
 import { titleMatcher } from './helpers/titleText';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
@@ -74,6 +74,7 @@ async function createProfile(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText('🦊'));
   await user.click(screen.getByText('たぬき'));
   await user.click(screen.getByText(ui.profileConfirm));
+  await skipM0RitualIfPresent(user, ui);
 }
 
 /** Grants a real `m1:full` purchase entitlement to the just-created profile's own AppState —
@@ -162,7 +163,7 @@ describe('WO-27 — real production entitlement (no purchase): CURRENT => ENTERA
     expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument();
   });
 
-  it('TEST E — parent isolation: completing Story 1\'s own parent follow-up (M0 seal, M2b confirm) after a blocked Story 2 entry attempt never creates a false Story 2 completion context', async () => {
+  it('TEST E — parent isolation: completing Story 1\'s own parent follow-up (M2b confirm — M0 now seals at profile creation, before this screen is ever reached) after a blocked Story 2 entry attempt never creates a false Story 2 completion context', async () => {
     const user = userEvent.setup();
     renderRealShell();
     await createProfile(user);
@@ -178,8 +179,10 @@ describe('WO-27 — real production entitlement (no purchase): CURRENT => ENTERA
     await user.click(screen.getByText(ui.completeBackToMapLabel));
 
     // Open the parent dashboard directly from Course Home (never through Story 2 at all).
+    // M0 is already sealed — createProfile's own skipM0RitualIfPresent sealed it right after
+    // profile creation, so this screen shows ui.m0SealedMessage, not the seal button.
     await user.click(screen.getByText(ui.parentScreenHeading));
-    await user.click(screen.getByText(ui.m0Action)); // ふうとうを とじる
+    expect(screen.getByText(ui.m0SealedMessage)).toBeInTheDocument();
     await user.click(screen.getByText(ui.m2ConfirmAction)); // はい、そう 言えていました
     await user.click(screen.getByText(ui.stageReturnToChild)); // こどもに もどす
 

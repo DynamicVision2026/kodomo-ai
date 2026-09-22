@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import { pickNextMission } from '../src/shell/missionLibrary';
 import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
 import iceMissionJson from '../src/modules/m1/topics/ice/s2.json';
@@ -113,6 +114,7 @@ describe('ice topic — playable end to end, and completing it triggers the exis
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 

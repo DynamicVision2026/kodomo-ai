@@ -71,7 +71,7 @@
       "renderPath": "PrintSheet (src/print/sheet/PrintSheet.tsx)",
       "dataPath": "src/print/kit-data/envelope-sheet.json",
       "schemaPath": "src/print/sheet/schema.ts",
-      "note": "WO-21 Phase 3: reuses the real in-app M0 prompt (ui.m0Prompt, src/modules/m1/module.json — the same words the digital Day-1 seal moment already shows) rather than inventing separate wording, framed as an adventure, never a test."
+      "note": "Architect-resolved completion ritual: the ひみつふうとう physical sheet, carrying the exact same canonical baseline prompt and parent instructions as src/shell/M0Ritual.tsx / CompletionRitual.tsx (ui.m0ChildPrompt / m0ParentIntro / m0ParentStep1-4 / m0ParentForward, src/modules/m1/module.json) — never separately authored wording. Same physical sheet/wording used at both M0 and completion, per the Architect's own \"the exact same baseline topic used at M0 returns at completion\"."
     },
     {
       "id": "founders-bonus-deck",

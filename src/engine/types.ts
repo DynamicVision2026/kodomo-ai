@@ -336,6 +336,50 @@ export interface ModuleUiStrings {
    *  「おうちの方へ」kit button already uses — reused, never rewritten, by this ticket's own
    *  instruction. */
   realAiLabGuideLinkLabel?: string;
+
+  // --- Architect-resolved completion ritual (M0 baseline envelope + the required completion
+  // ritual after Story 1-8) — the eight approved behaviours: M0 at first entry, before any
+  // teaching; optional Real AI Lab -> required ritual after Story 1-8; skipping Real AI Lab
+  // still reaches the ritual; the same baseline topic returns at completion; child and parent
+  // each write it again on paper, nothing captured; only then does the app prompt them to open
+  // the M0 envelope and compare all four questions themselves, on paper, no scoring/judgement;
+  // 親子認定証 issued at completion with one handwritten-only blank; Real AI Lab never populates
+  // that blank and never counts as M5. All child/parent-facing strings below are the Architect's
+  // own canonical wording, reused verbatim by both src/shell/M0Ritual.tsx (M0, and the parent-
+  // screen's own pre-existing M0 fallback) and src/shell/CompletionRitual.tsx (the ritual after
+  // Story 1-8) — never re-authored per screen. -----------------------------------------------
+  /** The canonical baseline question prompt — identical at BOTH M0 and completion (Architect
+   *  decision: "the exact same baseline topic used at M0 returns at completion"). Child-facing:
+   *  asks the child to write, on paper, one question they'd want to ask a friend who just
+   *  recommended a book. Nothing about this is ever captured by the app — see M0Ritual.tsx /
+   *  CompletionRitual.tsx, neither of which contains any text input (gate:no-free-text). */
+  m0ChildPrompt?: string;
+  /** Parent-facing: why this question is being written (a baseline of "today's child", kept for
+   *  later comparison, never fed back to the child as feedback). */
+  m0ParentIntro?: string;
+  /** Parent-facing instruction 1/4: read the prompt once, plainly, no explanation or examples. */
+  m0ParentStep1?: string;
+  /** Parent-facing instruction 2/4: never praise or correct what the child writes. */
+  m0ParentStep2?: string;
+  /** Parent-facing instruction 3/4: the one allowed answer to "what should I write?". */
+  m0ParentStep3?: string;
+  /** Parent-facing instruction 4/4: once the child is done, the parent writes their own question
+   *  on the back, then seals it — the action M0Ritual's own seal button (`m0Action`) performs. */
+  m0ParentStep4?: string;
+  /** Parent-facing: what happens at completion — the same prompt, each writes one again, THEN
+   *  (only then) open the M0 envelope and compare all four questions themselves; no judging which
+   *  is better. Shown at M0 as forward context, and again at completion as CompletionRitual's own
+   *  compare-step instruction — the exact same Architect-given sentence both times. */
+  m0ParentForward?: string;
+  /** 親子認定証 — the certificate's own name, issued at completion (CompletionRitual.tsx's final
+   *  step; the certificate itself is the pre-existing Print Centre item,
+   *  src/print/kit-data/certificate.json, opened via `courseHomeKitLabel`, never rendered as
+   *  content in this app). */
+  certificateHeading?: string;
+  /** The certificate's one blank line, shown verbatim — its own ○○ and ＿＿ are never filled in
+   *  by this app; only a parent, by hand, ever writes on the printed certificate. Real AI Lab
+   *  never populates this line either (Architect decision #8). */
+  certificateBlankLabel?: string;
 }
 
 /**

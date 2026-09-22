@@ -6,7 +6,7 @@ import type { MissionLibrary } from '../src/shell/MissionShell';
 import { MissionStage } from '../src/stage/MissionStage';
 import type { DigResult, UseEvidence } from '../src/templates/dig';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
-import { skipPrePracticeAudioIfPresent } from './helpers/stageConformance';
+import { skipPrePracticeAudioIfPresent, skipM0RitualIfPresent } from './helpers/stageConformance';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
 import moduleJson from '../src/modules/m1/module.json';
@@ -53,6 +53,7 @@ async function createProfile(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText('🦊'));
   await user.click(screen.getByText('たぬき'));
   await user.click(screen.getByText(ui.profileConfirm));
+  await skipM0RitualIfPresent(user, ui);
 }
 
 /** Profile -> Course Home -> coop question -> the stage's own initial choose tray. */

@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
-import { playMissionScreenToCompletion, skipCheckpointAudioIfPresent } from './helpers/stageConformance';
+import { playMissionScreenToCompletion, skipCheckpointAudioIfPresent, skipM0RitualIfPresent, skipCompletionRitualIfPresent } from './helpers/stageConformance';
 import randoseruJson from '../src/modules/m1/topics/randoseru/s2.json';
 import kashiteJson from '../src/modules/m1/topics/kashite/s2.json';
 import moduleJson from '../src/modules/m1/module.json';
@@ -20,6 +20,7 @@ async function createProfile(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText('🦊'));
   await user.click(screen.getByText('たぬき'));
   await user.click(screen.getByText(ui.profileConfirm));
+  await skipM0RitualIfPresent(user, ui);
 }
 
 function renderSingleMission(mission: Mission) {
@@ -91,6 +92,11 @@ describe('WO-34 — Real AI Lab: placement (after Story 1-8, before course-compl
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await playMissionScreenToCompletion(user, randoseru, ui);
+    // Architect completion ritual: solo play reaches the required ritual directly (no Real AI
+    // Lab, since that stays co-play only — solo never reaches 'stage-teachback' at all).
+    await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());
+    expect(document.querySelector('.mission-shell__real-ai-lab-heading')).not.toBeInTheDocument();
+    await skipCompletionRitualIfPresent(user, ui);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
     expect(document.querySelector('.mission-shell__real-ai-lab-heading')).not.toBeInTheDocument();
   });
@@ -103,6 +109,8 @@ describe('WO-34 — Real AI Lab: optional, never blocks course completion', () =
     await playToReturnToChild(user, randoseru);
     await waitFor(() => expect(screen.getByText(ui.realAiLabHeading!)).toBeInTheDocument());
     await user.click(screen.getByText(ui.handoffContinue));
+    await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());
+    await skipCompletionRitualIfPresent(user, ui);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
   });
 
@@ -112,6 +120,8 @@ describe('WO-34 — Real AI Lab: optional, never blocks course completion', () =
     await playToReturnToChild(user, randoseru);
     await waitFor(() => expect(screen.getByText(ui.realAiLabHeading!)).toBeInTheDocument());
     await user.click(screen.getByText(ui.handoffSkip));
+    await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());
+    await skipCompletionRitualIfPresent(user, ui);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
     // Course completion itself is entirely unaffected either way — the whole point of "optional".
     expect(screen.getByText(ui.completeCourseFinishedLabel)).toBeInTheDocument();
@@ -171,6 +181,8 @@ describe('WO-34 — invariants: no stored AI content, no M5, at most one parent-
     const m5Before = before.profiles[0].milestones?.M5;
 
     await user.click(screen.getByText(ui.handoffContinue));
+    await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());
+    await skipCompletionRitualIfPresent(user, ui);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
 
     const after = JSON.parse(localStorage.getItem('m-app.v1')!);

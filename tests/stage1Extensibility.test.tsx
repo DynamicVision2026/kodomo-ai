@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
 import missionJson from '../src/modules/stage1-test/topics/dummy/s1.json';
 import moduleJson from '../src/modules/stage1-test/module.json';
@@ -28,6 +29,7 @@ describe('stage1-test extensibility fixture', () => {
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
 
     expect(screen.getByText(ui.coopQuestion)).toBeInTheDocument();
@@ -44,6 +46,7 @@ describe('stage1-test extensibility fixture', () => {
     await user.click(screen.getByText('🐰'));
     await user.click(screen.getByText('うさぎ'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('おしえて ほしいな'));

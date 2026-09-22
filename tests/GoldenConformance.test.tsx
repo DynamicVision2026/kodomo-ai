@@ -6,7 +6,7 @@ import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
 import {
   playMissionStageToCompletion, playMissionScreenToCompletion, skipCheckpointAudioIfPresent,
-  skipRealAiLabIfPresent,
+  skipRealAiLabIfPresent, skipCompletionRitualIfPresent, skipM0RitualIfPresent,
 } from './helpers/stageConformance';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
@@ -122,6 +122,7 @@ async function createProfile(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText('🦊'));
   await user.click(screen.getByText('たぬき'));
   await user.click(screen.getByText(ui.profileConfirm));
+  await skipM0RitualIfPresent(user, ui);
 }
 
 function renderShell() {
@@ -166,6 +167,13 @@ describe('WO-26 §26/§27 — sampled solo-safety + co-play ownership transition
       await freshUser.click(screen.getByText(ui.coopSolo));
       await playMissionScreenToCompletion(freshUser, mission, ui);
 
+      // WO-34/Architect completion ritual: randoseru (1-8) solo goes straight from its own dig
+      // completion into the required completion ritual (no Real AI Lab in solo) — a no-op for
+      // the other 5 sampled missions.
+      await waitFor(() => {
+        expect(screen.queryByText(ui.completeHeading) ?? document.querySelector('.mission-shell__completion-ritual')).toBeTruthy();
+      });
+      await skipCompletionRitualIfPresent(freshUser, ui);
       await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
       expect(screen.queryByText(ui.parentScreenHeading)).not.toBeInTheDocument();
       expect(screen.queryByText(ui.stageHandoffPrompt)).not.toBeInTheDocument();
@@ -203,8 +211,11 @@ describe('WO-26 §26/§27 — sampled solo-safety + co-play ownership transition
       // WO-34: randoseru (1-8) has its own optional Real AI Lab here, same slot — a no-op for
       // the other 5 sampled missions.
       await skipRealAiLabIfPresent(freshUser, ui);
+      // Architect completion ritual: randoseru (1-8) then reaches the required ritual — a no-op
+      // for the other 5 sampled missions.
+      await skipCompletionRitualIfPresent(freshUser, ui);
 
-      expect(screen.getByText(ui.completeHeading)).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
     });
   }
 });

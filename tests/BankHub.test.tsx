@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import type { BankLibrary } from '../src/shell/MissionShell';
 import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
 import chantoMissionJson from '../src/modules/m1/topics/chanto/s2.json';
@@ -49,6 +50,7 @@ describe('Bank hub — reachable and playable from the real product surface', ()
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
 

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
 import missionJson from '../src/modules/m1/topics/bread/s2.json';
 import moduleJson from '../src/modules/m1/module.json';
@@ -36,6 +37,7 @@ async function createAndSelectProfile(user: ReturnType<typeof userEvent.setup>) 
   await user.click(screen.getByText('🦊'));
   await user.click(screen.getByText('たぬき'));
   await user.click(screen.getByText(ui.profileConfirm));
+  await skipM0RitualIfPresent(user, ui);
   await user.click(screen.getByText(ui.courseHomeContinueLabel));
 }
 
@@ -195,6 +197,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
@@ -240,6 +243,7 @@ describe('MissionShell', () => {
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
+        milestones: { M0: { achieved: true, achievedAt: 0 } },
       }],
       entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
     }));
@@ -281,6 +285,7 @@ describe('MissionShell', () => {
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
+        milestones: { M0: { achieved: true, achievedAt: 0 } },
       }],
       entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
     }));
@@ -317,6 +322,7 @@ describe('MissionShell', () => {
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         moveProgress: { 'follow-naze': { rung: 'hitoride', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
+        milestones: { M0: { achieved: true, achievedAt: 0 } },
       }],
       entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
     }));
@@ -363,6 +369,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
 
     // WO-27: CURRENT => ENTERABLE — Course Home itself never offers the ordinary continue CTA
     // for a mission the real entry gate would refuse; the same locked message shows directly,
@@ -538,6 +545,7 @@ describe('MissionShell', () => {
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
+        milestones: { M0: { achieved: true, achievedAt: 0 } },
       }],
       entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
     }));
@@ -635,6 +643,7 @@ describe('MissionShell', () => {
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         m2Evidence: { proxyMissionIds: ['other-mission-a', 'other-mission-b'] }, // hasM2Proxy() true
+        milestones: { M0: { achieved: true, achievedAt: 0 } },
       }],
       entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
     }));
@@ -755,6 +764,7 @@ describe('MissionShell', () => {
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
+        milestones: { M0: { achieved: true, achievedAt: 0 } },
       }],
       entitlements: ['m1:free'], founder: false, abVariant: 'A', deviceId: 'd1',
     }));
@@ -819,7 +829,7 @@ describe('MissionShell', () => {
 
   // --- WO-19: M0 (Day-1 envelope) + M5 (そとで つかった) ------------------------------------
 
-  it('WO-19: the parent screen shows an unconfirmed M0 envelope prompt on a profile\'s first visit', async () => {
+  it('Architect completion ritual #1: a profile\'s first entry shows the M0 baseline-question ritual, before Course Home and before any teaching', async () => {
     const user = userEvent.setup();
     render(
       <MissionShell
@@ -827,15 +837,16 @@ describe('MissionShell', () => {
         followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
       />,
     );
-    await createAndSelectProfile(user);
-    await playThroughToParentScreen(user);
+    await user.click(screen.getByText(ui.profileCreateLabel));
+    await user.click(screen.getByText('🦊'));
+    await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.profileConfirm));
 
-    expect(screen.getByText(ui.m0Prompt)).toBeInTheDocument();
     expect(screen.getByText(ui.m0Action)).toBeInTheDocument();
-    expect(screen.queryByText(ui.m0SealedMessage)).not.toBeInTheDocument();
+    expect(screen.queryByText(ui.courseHomeContinueLabel)).not.toBeInTheDocument(); // before Course Home
   });
 
-  it('WO-19: focused interaction — sealing M0 persists it, monotonically, and survives a reload', async () => {
+  it('Architect completion ritual #1: sealing M0 persists it, monotonically, survives a reload, and leads straight into Course Home', async () => {
     const user = userEvent.setup();
     const { unmount } = render(
       <MissionShell
@@ -843,21 +854,22 @@ describe('MissionShell', () => {
         followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
       />,
     );
-    await createAndSelectProfile(user);
-    await playThroughToParentScreen(user);
+    await user.click(screen.getByText(ui.profileCreateLabel));
+    await user.click(screen.getByText('🦊'));
+    await user.click(screen.getByText('たぬき'));
+    await user.click(screen.getByText(ui.profileConfirm));
 
     let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
     expect(saved.profiles[0].milestones?.M0).toBeUndefined();
 
     await user.click(screen.getByText(ui.m0Action));
-    expect(screen.getByText(ui.m0SealedMessage)).toBeInTheDocument();
-    expect(screen.queryByText(ui.m0Action)).not.toBeInTheDocument();
+    expect(screen.getByText(ui.courseHomeHeading)).toBeInTheDocument();
     saved = JSON.parse(localStorage.getItem('m-app.v1')!);
     const firstAchievedAt = saved.profiles[0].milestones.M0.achievedAt;
     expect(saved.profiles[0].milestones.M0).toEqual({ achieved: true, achievedAt: expect.any(Number) });
 
     // Reload: a fresh MissionShell instance reading the same localStorage from scratch. The
-    // button never reappears — a second seal isn't even reachable through the UI.
+    // ritual never reappears — selecting the now-sealed profile goes straight to Course Home.
     unmount();
     render(
       <MissionShell
@@ -866,12 +878,17 @@ describe('MissionShell', () => {
       />,
     );
     await user.click(screen.getByText('たぬき'));
+    expect(screen.queryByText(ui.m0Action)).not.toBeInTheDocument();
+    expect(screen.getByText(ui.courseHomeHeading)).toBeInTheDocument();
+    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    expect(saved.profiles[0].milestones.M0).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // unchanged
+
+    // The parent screen's own M0 fallback (for the edge case where it's somehow still
+    // unsealed) correctly shows the sealed message now, never the seal button again.
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await playThroughToParentScreen(user);
     expect(screen.getByText(ui.m0SealedMessage)).toBeInTheDocument();
     expect(screen.queryByText(ui.m0Action)).not.toBeInTheDocument();
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
-    expect(saved.profiles[0].milestones.M0).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // unchanged
   });
 
   it('WO-19: the parent screen offers a move button per accepted follow move, to record real-world outside use — no free-text input anywhere', async () => {
@@ -954,15 +971,15 @@ describe('MissionShell', () => {
         followMoves={moduleJson.followMoves} cardTypes={moduleJson.cardTypes}
       />,
     );
-    await createAndSelectProfile(user);
-    // Child progression completes normally, all the way to the parent screen, with neither M0
-    // sealed nor any outside use recorded — proving neither gates the other's play.
+    await createAndSelectProfile(user); // seals M0 at first entry, before any teaching
+    // Child progression completes normally, all the way to the parent screen — M0 already
+    // sealed, no outside use recorded yet — proving neither gates the other's play.
     await playThroughToParentScreen(user);
     let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
     expect(saved.profiles[0].progress[mission.id].done).toBe(true);
+    expect(saved.profiles[0].milestones.M0.achieved).toBe(true); // sealed at first entry
     expect(saved.profiles[0].milestones.M1.achieved).toBe(true);
 
-    await user.click(screen.getByText(ui.m0Action));
     await user.click(screen.getByText(ui.m2ConfirmAction));
     const nazeButton = within(document.querySelector('.mission-shell__m5-moves')!)
       .getByText(moduleJson.cardTypes['follow-naze'].label);

@@ -5,7 +5,7 @@ import { MissionShell } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
 import {
   playMissionStageToCompletion, playMissionScreenToCompletion,
-  skipPrePracticeAudioIfPresent, skipCheckpointAudioIfPresent,
+  skipPrePracticeAudioIfPresent, skipCheckpointAudioIfPresent, skipM0RitualIfPresent,
 } from './helpers/stageConformance';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
@@ -25,6 +25,7 @@ async function createProfile(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText('🦊'));
   await user.click(screen.getByText('たぬき'));
   await user.click(screen.getByText(ui.profileConfirm));
+  await skipM0RitualIfPresent(user, ui);
 }
 
 /** Renders a single mission directly (no library), matching tests/Mission1Stage.test.tsx's own

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import type { DigPhase, Mission, ModuleUiStrings, SlotAssemblyPhase } from '../src/engine/types';
 import minnaMissionJson from '../src/modules/m1/topics/minna/s2.json';
 import moduleJson from '../src/modules/m1/module.json';
@@ -66,6 +67,7 @@ describe('Parent-as-Learner — every accepted requirement, exercised through re
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
 
     // Same-answer co-play starts here: choosing はい (co-op), not solo, is what makes the

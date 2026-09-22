@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { MissionShell } from '../src/shell/MissionShell';
 import type { BankLibrary, MissionLibrary } from '../src/shell/MissionShell';
 import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
 import roukaJson from '../src/modules/m1/topics/rouka/s2.json';
@@ -53,6 +54,7 @@ async function createProfile(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText('🦊'));
   await user.click(screen.getByText('たぬき'));
   await user.click(screen.getByText(ui.profileConfirm));
+  await skipM0RitualIfPresent(user, ui);
 }
 
 /**

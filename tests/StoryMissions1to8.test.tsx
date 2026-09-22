@@ -3,6 +3,7 @@ import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import { pickNextMission } from '../src/shell/missionLibrary';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import { parseRootType } from '../scripts/lib/rootType';
 import type { DigPhase, Mission, ModuleUiStrings, SlotAssemblyPhase } from '../src/engine/types';
 import chantoMissionJson from '../src/modules/m1/topics/chanto/s2.json';
@@ -195,6 +196,7 @@ describe('Story Missions — full interactive playthroughs prove the real UI sti
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     const clearCard = (mission.phases[0] as SlotAssemblyPhase).cards.find((c) => c.tag === 'clear')!;
@@ -223,6 +225,7 @@ describe('Story Missions — full interactive playthroughs prove the real UI sti
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     const clearCard = (mission.phases[0] as SlotAssemblyPhase).cards.find((c) => c.tag === 'clear')!;

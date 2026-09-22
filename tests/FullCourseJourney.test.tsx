@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
-import { playMissionScreenToCompletion } from './helpers/stageConformance';
+import { playMissionScreenToCompletion, skipCompletionRitualIfPresent, skipM0RitualIfPresent } from './helpers/stageConformance';
 import { titleMatcher } from './helpers/titleText';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
@@ -78,6 +78,7 @@ async function createProfile(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText('🦊'));
   await user.click(screen.getByText('たぬき'));
   await user.click(screen.getByText(ui.profileConfirm));
+  await skipM0RitualIfPresent(user, ui);
 }
 
 /** Real reload behavior: unmount, re-render a fresh MissionShell, pick the same (now-persisted)
@@ -215,6 +216,10 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + Bank unlo
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await playMissionScreenToCompletion(user, STORY[7]!, ui);
+    // Architect completion ritual: Story 8 (randoseru) solo play reaches the required ritual
+    // before the course-complete screen (no Real AI Lab in solo play).
+    await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());
+    await skipCompletionRitualIfPresent(user, ui);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
     expect(screen.getByText(ui.completeCourseFinishedLabel)).toBeInTheDocument();
     expect(screen.queryByText(ui.completeNextMissionLabel)).not.toBeInTheDocument();

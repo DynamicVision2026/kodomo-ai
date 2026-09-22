@@ -24,6 +24,8 @@ import { MissionStage } from '../stage/MissionStage';
 import { AudioScene } from '../stage/AudioScene';
 import { audioScriptFor } from '../audio/registry';
 import { RealAiLab } from './RealAiLab';
+import { M0Ritual } from './M0Ritual';
+import { CompletionRitual } from './CompletionRitual';
 import './mission-shell.css';
 
 /**
@@ -98,6 +100,11 @@ export interface MissionShellProps {
 
 type Screen =
   | { kind: 'profile' }
+  /** Architect-resolved completion-ritual behaviour #1: M0, the Day-1 baseline-question
+   *  envelope — reached ONLY right after a profile is chosen/created, before Course Home, and
+   *  only when that profile hasn't sealed M0 yet (`afterProfileChosen` below). Never any other
+   *  way, so it can never appear after any teaching content, Story 1-1's own audio included. */
+  | { kind: 'm0-ritual' }
   | { kind: 'locked' }
   | { kind: 'course-home' }
   | { kind: 'coop' }
@@ -114,6 +121,13 @@ type Screen =
    *  return-to-child action, and only for REAL_AI_LAB_MISSION_ID (Story 1-8), same "after
    *  teach-back and M2b, never any other way" guarantee CHECKPOINT audio already has above. */
   | { kind: 'real-ai-lab' }
+  /** Architect-resolved completion-ritual behaviours #2-#7: the required ritual after Story 1-8
+   *  — reached only from the optional Real AI Lab's own onContinue (either outcome, tried or
+   *  skipped — behaviour #3: "skipping Real AI Lab must reach the completion ritual directly")
+   *  and from `stageCompleted`'s own solo branch for REAL_AI_LAB_MISSION_ID specifically (solo
+   *  play never reaches 'real-ai-lab' at all, same as it never reaches 'stage-teachback'). Never
+   *  any other mission, never any other way. */
+  | { kind: 'completion-ritual' }
   | { kind: 'tip' }
   | { kind: 'teachback' }
   | { kind: 'ouchi' }
@@ -285,7 +299,11 @@ export function MissionShell({
     const resolved = resolveMission(p);
     setMission(resolved);
     setProfile(p);
-    setScreen({ kind: 'course-home' });
+    // Architect-resolved completion-ritual behaviour #1: M0 occurs at first entry, before any
+    // teaching — this is the one place "first entry" means, for a profile that hasn't sealed it
+    // yet (new or returning). A profile that already has M0 skips straight to Course Home,
+    // exactly as before this ticket.
+    setScreen(p.milestones?.M0?.achieved ? { kind: 'course-home' } : { kind: 'm0-ritual' });
   }
 
   /** Re-resolves the active profile's current mission and returns to Course Home — used both
@@ -544,7 +562,15 @@ export function MissionShell({
       setScreen({ kind: 'perspective' });
       return;
     }
-    setScreen(solo ? { kind: 'complete' } : { kind: 'handoff' });
+    if (solo) {
+      // Architect-resolved completion-ritual behaviours #2/#3: solo play never reaches
+      // 'stage-teachback' (WO-25 #6), so it never reaches 'real-ai-lab' either — but the
+      // required completion ritual still applies. Every other mission's solo completion is
+      // unchanged.
+      setScreen(mission.id === REAL_AI_LAB_MISSION_ID ? { kind: 'completion-ritual' } : { kind: 'complete' });
+      return;
+    }
+    setScreen({ kind: 'handoff' });
   }
 
   /** Mission Complete's own primary action — resolves the active profile's now-updated next
@@ -574,6 +600,21 @@ export function MissionShell({
         onSelect={afterProfileChosen}
         onCreate={createProfile}
       />
+    );
+  }
+
+  if (screen.kind === 'm0-ritual') {
+    return (
+      <div className="mission-shell__wrapper mission-shell__wrapper--parent mission-shell__m0-ritual">
+        <p>{ui.m0Prompt}</p>
+        <M0Ritual
+          ui={ui}
+          onSeal={() => {
+            sealM0();
+            setScreen({ kind: 'course-home' });
+          }}
+        />
+      </div>
     );
   }
 
@@ -663,7 +704,13 @@ export function MissionShell({
   }
 
   if (screen.kind === 'real-ai-lab') {
-    return <RealAiLab ui={ui} onContinue={() => setScreen({ kind: 'complete' })} />;
+    // Architect-resolved completion-ritual behaviour #3: tried or skipped, Real AI Lab always
+    // leads to the required completion ritual next — never straight to 'complete' any more.
+    return <RealAiLab ui={ui} onContinue={() => setScreen({ kind: 'completion-ritual' })} />;
+  }
+
+  if (screen.kind === 'completion-ritual') {
+    return <CompletionRitual ui={ui} onDone={() => setScreen({ kind: 'complete' })} />;
   }
 
   if (screen.kind === 'stage') {
@@ -914,7 +961,11 @@ export function MissionShell({
         ) : (
           <div className="mission-shell__m0">
             <p>{ui.m0Prompt}</p>
-            <button type="button" onClick={sealM0}>{ui.m0Action}</button>
+            {/* Fallback only — in practice M0 is already sealed by the time anyone reaches this
+               screen, since afterProfileChosen now routes every profile through the dedicated
+               'm0-ritual' screen first. Kept for a profile that somehow reaches here without it
+               (e.g. navigated away mid-ritual); reuses the exact same canonical content. */}
+            <M0Ritual ui={ui} onSeal={sealM0} />
           </div>
         )}
         {m2Achieved ? (

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import type { BankLibrary } from '../src/shell/MissionShell';
 import type { DigPhase, Mission, ModuleUiStrings, SlotAssemblyPhase } from '../src/engine/types';
 import roukaMissionJson from '../src/modules/m1/topics/rouka/s2.json';
@@ -90,6 +91,7 @@ describe('Growth Journey M0-M5 — reachable end to end through only real, relea
     await user.click(screen.getByText('🦊'));
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
+    await skipM0RitualIfPresent(user, ui);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
 
     // --- Mission 1: rouka (1-3, real 3-layer chain, domain 社会とひと for follow-naze) -------
@@ -101,9 +103,9 @@ describe('Growth Journey M0-M5 — reachable end to end through only real, relea
     expect(plausible).toHaveBeenCalledWith('m1_complete', expect.anything());
     await throughWrapperScreensToParent(user);
 
-    // M0: the Day-1 envelope, real content, first time the parent screen is genuinely reached.
-    expect(screen.getByText(ui.m0Prompt)).toBeInTheDocument();
-    await user.click(screen.getByText(ui.m0Action));
+    // M0: the Day-1 envelope — Architect completion ritual #1 now seals this at first entry,
+    // before any teaching (skipM0RitualIfPresent above), so the parent screen already shows it
+    // sealed by the time it's genuinely reached here.
     expect(screen.getByText(ui.m0SealedMessage)).toBeInTheDocument();
 
     // M2b: the parent's own attestation, available because rouka's Gap Naming already recorded

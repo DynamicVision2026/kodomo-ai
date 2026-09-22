@@ -220,6 +220,19 @@ async function dismissAudioScene(user: ReturnType<typeof userEvent.setup>) {
 }
 
 /**
+ * Architect-resolved completion-ritual behaviour #1: M0 now fires automatically right after
+ * every profile is created/chosen, before Course Home — src/shell/MissionShell.tsx's
+ * `afterProfileChosen`. Every existing test's own profile-creation flow needs this tap to reach
+ * Course Home at all; exported so each test file's own local `createProfile` helper can call it
+ * right after the profile-confirm tap, same "one shared tap sequence" pattern as
+ * `skipPrePracticeAudioIfPresent`. A no-op if M0 is already sealed (nothing to tap).
+ */
+export async function skipM0RitualIfPresent(user: ReturnType<typeof userEvent.setup>, ui: ModuleUiStrings) {
+  const sealButton = screen.queryByText(ui.m0Action);
+  if (sealButton) await user.click(sealButton);
+}
+
+/**
  * WO-33 (AD-10 / Audio Reference Scripts rev.3): a mission with its own registered pre-practice
  * MODEL/GUIDED audio (src/audio/registry.ts, reached via `chooseCoop` for both solo and co-play)
  * shows that screen before the real practice stage ever appears. A no-op for every one of the
@@ -254,6 +267,25 @@ export async function skipCheckpointAudioIfPresent(user: ReturnType<typeof userE
 export async function skipRealAiLabIfPresent(user: ReturnType<typeof userEvent.setup>, ui: ModuleUiStrings) {
   if (!document.querySelector('.mission-shell__real-ai-lab-heading')) return;
   await user.click(screen.getByText(ui.handoffSkip));
+}
+
+/**
+ * Architect-resolved completion-ritual behaviours #2-#7: the required ritual after Story 1-8,
+ * reached from Real AI Lab's own onContinue (tried or skipped) or, in solo play, directly from
+ * `stageCompleted`. A no-op for every other mission. All three of its steps ('write' / 'compare'
+ * / 'certificate') share the same `ui.handoffContinue` advance action — this drives through all
+ * three in order, waiting for each step's own distinctive content before the next tap, same
+ * "content-agnostic, one shared tap sequence" pattern as this file's other skip*IfPresent
+ * helpers. Leaves the caller on whatever `onDone` leads to (the existing course-complete
+ * `MissionComplete` screen, unchanged).
+ */
+export async function skipCompletionRitualIfPresent(user: ReturnType<typeof userEvent.setup>, ui: ModuleUiStrings) {
+  if (!document.querySelector('.mission-shell__completion-ritual')) return;
+  await user.click(screen.getByText(ui.handoffContinue)); // 'write' -> 'compare'
+  await waitFor(() => expect(screen.getByText(ui.m0ParentForward ?? '')).toBeInTheDocument());
+  await user.click(screen.getByText(ui.handoffContinue)); // 'compare' -> 'certificate'
+  await waitFor(() => expect(screen.getByText(ui.certificateHeading ?? '')).toBeInTheDocument());
+  await user.click(screen.getByText(ui.handoffContinue)); // 'certificate' -> onDone
 }
 
 /**

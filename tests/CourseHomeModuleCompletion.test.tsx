@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
+import { skipM0RitualIfPresent } from './helpers/stageConformance';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
 import roukaJson from '../src/modules/m1/topics/rouka/s2.json';
@@ -40,6 +41,7 @@ async function createProfileWithDoneStories(user: ReturnType<typeof userEvent.se
   await user.click(screen.getByText('🦊'));
   await user.click(screen.getByText('たぬき'));
   await user.click(screen.getByText(ui.profileConfirm));
+  await skipM0RitualIfPresent(user, ui);
 
   if (doneCount > 0) {
     const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
