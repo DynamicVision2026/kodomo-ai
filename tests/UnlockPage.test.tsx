@@ -96,7 +96,9 @@ describe('UnlockPage', () => {
     await user.type(screen.getByLabelText('家族用コード'), 'NAZE-ABCD-EFGH');
     await user.click(screen.getByRole('button', { name: '登録する' }));
 
-    expect(await screen.findByText(/複数の端末で使われています/)).toBeInTheDocument();
+    // WO-31: the overCap note now states the real trigger (the actual 5-device cap) and a real
+    // support contact, instead of the vaguer "複数の端末" (which merely meant "more than one").
+    expect(await screen.findByText(/上限（5台）をこえて使われています/)).toBeInTheDocument();
     expect(screen.getByText('ミッションを始める')).toBeInTheDocument(); // still succeeds
   });
 

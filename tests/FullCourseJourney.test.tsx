@@ -5,6 +5,7 @@ import { MissionShell } from '../src/shell/MissionShell';
 import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
 import { playMissionScreenToCompletion } from './helpers/stageConformance';
+import { titleMatcher } from './helpers/titleText';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
 import roukaJson from '../src/modules/m1/topics/rouka/s2.json';
@@ -99,7 +100,7 @@ async function playCurrentStoryToMap(user: ReturnType<typeof userEvent.setup>, m
 
 async function playBankToCompletion(user: ReturnType<typeof userEvent.setup>, mission: Mission) {
   await user.click(screen.getByText(ui.courseHomeBankLabel));
-  await user.click(screen.getByText(mission.title));
+  await user.click(screen.getByText(titleMatcher(mission.title)));
   await user.click(screen.getByText(ui.coopSolo));
   await playMissionScreenToCompletion(user, mission, ui);
   await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
@@ -155,11 +156,11 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + staged Ba
     // Tier 1 (めあて) Bank Digs are now AVAILABLE (Story 3 done); Tier 2 (わかれ) still LOCKED.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const bank of BANK_TIER1_MEATE) {
-      const btn = screen.getByText(bank.title).closest('button')!;
+      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
       expect(btn.className).not.toContain('is-locked');
     }
     for (const bank of BANK_TIER2_WAKARE) {
-      const btn = screen.getByText(bank.title).closest('button')!;
+      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
       expect(btn.className).toContain('is-locked');
     }
     await user.click(screen.getByText(ui.bankBackButton));
@@ -183,7 +184,7 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + staged Ba
     // Tier 2 (わかれ) Bank Digs are now AVAILABLE too (Story 5 just completed).
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const bank of BANK_TIER2_WAKARE) {
-      const btn = screen.getByText(bank.title).closest('button')!;
+      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
       expect(btn.className).not.toContain('is-locked');
     }
     await user.click(screen.getByText(ui.bankBackButton));

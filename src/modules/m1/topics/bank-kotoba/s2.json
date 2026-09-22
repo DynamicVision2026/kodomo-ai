@@ -3,7 +3,7 @@
   "contentClass": "release",
   "rootType": "わかれ",
   "stage": 2,
-  "title": "同じ言葉なのに、言う人によってちがって聞こえる",
+  "title": "同じ{言葉|ことば}なのに、言う人によってちがって聞こえる",
   "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
   "phases": [
     {
@@ -24,16 +24,16 @@
           ],
           "replies": {
             "offtopic": "うーん、それはべつの話だよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "なんで、きこえかたが ちがうのかな？" }
         },
         {
-          "robotSays": "こわい 顔で 言うと、いんしょうが かわるよね。",
+          "robotSays": "こわい 顔で 言うと、きこえかたが かわるよね。",
           "claims": ["c2"],
           "gap": "ほかにも、きこえかたが かわることが あるのか、わからない",
           "gapDistractors": [
-            { "text": "顔で いんしょうが かわることは、わかった", "kind": "answered" },
+            { "text": "顔で きこえかたが かわることは、わかった", "kind": "answered" },
             { "text": "なんで、きこえかたが ちがうのか、わからない", "kind": "other-layer" }
           ],
           "hand": [
@@ -43,7 +43,7 @@
           ],
           "replies": {
             "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、きこえかたは かわるかな？" },
           "prediction": { "beforeRound": 2, "options": ["bko4card", "bko5card", "bko6card"] }

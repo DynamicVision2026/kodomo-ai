@@ -28,10 +28,12 @@ describe('TokushohoPage', () => {
     expect(screen.getByText(/ご請求いただければ/)).toBeInTheDocument();
   });
 
-  it('states the 30-day refund guarantee and the household licence, matching spec v0.5 §9', () => {
+  it('states the 30-day refund guarantee (plus the pre-order period, spec v0.5 §9) and the household licence in natural Japanese, matching spec v0.5 §9', () => {
     render(<TokushohoPage />);
     expect(screen.getByText(/30日間/)).toBeInTheDocument();
-    expect(screen.getByText(/household licence/)).toBeInTheDocument();
+    expect(screen.getByText(/お届け前はいつでも/)).toBeInTheDocument();
+    expect(screen.getByText(/世帯ライセンス/)).toBeInTheDocument();
+    expect(screen.queryByText(/household licence/)).not.toBeInTheDocument();
   });
 });
 

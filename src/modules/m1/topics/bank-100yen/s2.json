@@ -24,7 +24,7 @@
           ],
           "replies": {
             "offtopic": "うーん、それはべつの話だよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "じぶんの ものに しちゃ ダメなのかな？" }
         },
@@ -43,7 +43,7 @@
           ],
           "replies": {
             "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "とどけたあと、どうなるのかな？" },
           "prediction": { "beforeRound": 2, "options": ["b4yen", "b5yen", "b6yen"] }

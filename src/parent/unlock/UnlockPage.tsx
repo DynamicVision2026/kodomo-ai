@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { load, save } from '../../engine/storage';
 import { applyRedemption } from '../../engine/entitlements';
 import { track } from '../../engine/analytics';
+import { COMPANY } from '../../legal/company';
 import { redeemFamilyCode, type RedeemFailure, type RedeemResult } from './redeemCode';
 import './unlock.css';
 
@@ -12,11 +13,14 @@ const API_BASE_URL: string | undefined = import.meta.env.VITE_UNLOCK_API_URL;
 
 type Status = { kind: 'idle' } | { kind: 'loading' } | { kind: 'done'; result: RedeemResult };
 
+/** WO-31: none of these offered an escape hatch — a family stuck here had nowhere to go. Every
+ *  failure now ends with the same real support contact the legal pages already use. */
+const SUPPORT_SUFFIX = `解決しない場合は、${COMPANY.email} までご連絡ください。`;
 const REASON_MESSAGE: Record<RedeemFailure['reason'], string> = {
-  not_configured: 'この機能はまだ準備中です。しばらくしてから、もう一度お試しください。',
-  not_found: 'コードが見つかりませんでした。入力内容をご確認のうえ、もう一度お試しください。',
-  network: '通信エラーが発生しました。しばらくしてから、もう一度お試しください。',
-  server: 'エラーが発生しました。しばらくしてから、もう一度お試しください。',
+  not_configured: `この機能はまだ準備中です。しばらくしてから、もう一度お試しください。`,
+  not_found: `コードが見つかりませんでした。入力内容をご確認のうえ、もう一度お試しください。${SUPPORT_SUFFIX}`,
+  network: `通信エラーが発生しました。しばらくしてから、もう一度お試しください。${SUPPORT_SUFFIX}`,
+  server: `エラーが発生しました。しばらくしてから、もう一度お試しください。${SUPPORT_SUFFIX}`,
 };
 
 /**
@@ -80,8 +84,8 @@ export function UnlockPage() {
           {status.result.overCap && (
             <span className="unlock__overcap-note">
               {' '}
-              （このコードは複数の端末で使われています。ご家庭以外での共有にお気づきの場合は、
-              サポートまでご連絡ください。）
+              （このコードは、同時に使える端末の上限（5台）をこえて使われています。ご家庭以外での共有にお気づきの場合は、
+              {COMPANY.email} までご連絡ください。）
             </span>
           )}
         </p>

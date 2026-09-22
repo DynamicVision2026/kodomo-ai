@@ -3,7 +3,7 @@
   "contentClass": "release",
   "rootType": "めあて",
   "stage": 2,
-  "title": "玄関で くつを ぬぐ",
+  "title": "げんかんで くつを ぬぐ",
   "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
   "review": { "by": "酒井先生", "date": "2026-09-20" },
   "phases": [
@@ -58,7 +58,7 @@
           ],
           "replies": {
             "offtopic": "うーん、それは今の話じゃないね。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "新しいくつも、ぬぐのかな？" }
         },
@@ -77,7 +77,7 @@
           ],
           "replies": {
             "sideways": "さあ、いろいろだね。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "よごれてなくても、なんでぬぐのかな？" },
           "prediction": { "beforeRound": 2, "options": ["g4card", "g5card", "g6card"] }

@@ -2,7 +2,7 @@
   "id": "m2-test-dummy",
   "contentClass": "synthetic",
   "stage": 3,
-  "title": "かくちょうせいの テスト",
+  "title": "かくちょうせいの ためし",
   "sources": ["d1"],
   "phases": [
     {

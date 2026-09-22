@@ -3,7 +3,7 @@
   "contentClass": "release",
   "rootType": "めあて",
   "stage": 2,
-  "title": "じゃんけんで順番を決める",
+  "title": "じゃんけんで じゅんばんを きめる",
   "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
   "phases": [
     {
@@ -24,7 +24,7 @@
           ],
           "replies": {
             "offtopic": "うーん、それはべつの話だよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "なんで、じゃんけんで きめるのかな？" }
         },
@@ -43,7 +43,7 @@
           ],
           "replies": {
             "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、こうへいな きめかたは ないかな？" },
           "prediction": { "beforeRound": 2, "options": ["bj4card", "bj5card", "bj6card"] }

@@ -3,7 +3,7 @@
   "contentClass": "release",
   "rootType": "めあて",
   "stage": 2,
-  "title": "4月1日と4月2日で、どうして学年が変わる？",
+  "title": "4月1日と4月2日で、どうして学年が{変|か}わる？",
   "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
   "phases": [
     {
@@ -15,7 +15,7 @@
           "gap": "なんで、その日で 分かれるのか、わからない",
           "gapDistractors": [
             { "text": "学年が ちがうことは、わかった", "kind": "answered" },
-            { "text": "ほかの国でも、同じ日なのか、わからない", "kind": "other-layer" }
+            { "text": "なんで、その日に せんを 引いたのか、わからない", "kind": "other-layer" }
           ],
           "hand": [
             { "id": "bg1card", "text": "なんで、その日で 分かれるの？", "tag": "deepen", "move": "follow-naze", "domain": "社会とひと" },
@@ -24,14 +24,14 @@
           ],
           "replies": {
             "offtopic": "うーん、それはべつの話だよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "なんで、その日で 分かれるのかな？" }
         },
         {
           "robotSays": "学年を くぎるには、どこかで 線を 引く ひつようが あるからだよ。",
           "claims": ["c2"],
-          "gap": "ほかの国でも、同じ日なのか、わからない",
+          "gap": "なんで、その日に せんを 引いたのか、わからない",
           "gapDistractors": [
             { "text": "線を 引く ひつようが あることは、わかった", "kind": "answered" },
             { "text": "なんで、その日で 分かれるのか、わからない", "kind": "other-layer" }
@@ -43,9 +43,9 @@
           ],
           "replies": {
             "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
-          "earlyOk": { "challenger": "ポン太", "asks": "ほかの国でも、同じ日なのかな？" },
+          "earlyOk": { "challenger": "ポン太", "asks": "なんで、その日に せんを 引いたのかな？" },
           "prediction": { "beforeRound": 2, "options": ["bg4card", "bg5card", "bg6card"] }
         }
       ],

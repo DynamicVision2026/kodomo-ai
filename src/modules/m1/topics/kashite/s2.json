@@ -57,7 +57,7 @@
           ],
           "replies": {
             "offtopic": "うーん、それはべつの話だよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "いつでも、かさなきゃ いけないのかな？" }
         },
@@ -75,7 +75,7 @@
             { "id": "k6card", "text": "もういちどいって", "tag": "repeat" }
           ],
           "replies": {
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "むりに かさなくても、いいのかな？" },
           "prediction": { "beforeRound": 2, "options": ["k4card", "k5card", "k6card"] }

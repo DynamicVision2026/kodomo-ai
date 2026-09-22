@@ -261,7 +261,7 @@ describe('WO-25 #3/#4 — the question is visibly the shovel, and a stone is a r
     // The rest are still live, still clickable.
     expect(screen.getByText('どういうこと？')).toBeInTheDocument();
     expect((screen.getByText('もういちどいって').closest('.question-chip') as HTMLButtonElement).disabled).toBe(false);
-    await clickNonDeepenAndReadReply(user, 'もういちどいって', 'うーん、さっきと同じ答えになっちゃった。');
+    await clickNonDeepenAndReadReply(user, 'もういちどいって', 'いっても、同じだよ。');
 
     // Only the deepen card remains active — progression is guaranteed by construction, and
     // every card is STILL in the tray (2 blocked, visible, + 1 active), none removed.

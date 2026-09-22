@@ -57,7 +57,7 @@
           ],
           "replies": {
             "offtopic": "うーん、それはべつの話だよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "パーツが かわっても、同じなのかな？" }
         },
@@ -76,7 +76,7 @@
           ],
           "replies": {
             "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "なんで、それでも 同じって 言えるのかな？" }
         },
@@ -95,7 +95,7 @@
           ],
           "replies": {
             "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、そういうものは ないかな？" },
           "prediction": { "beforeRound": 3, "options": ["r7card", "r8card", "r9card"] }

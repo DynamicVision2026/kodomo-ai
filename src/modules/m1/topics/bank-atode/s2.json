@@ -24,7 +24,7 @@
           ],
           "replies": {
             "offtopic": "うーん、それはべつの話だよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "すこしって、どれくらいかな？" }
         },
@@ -38,12 +38,12 @@
           ],
           "hand": [
             { "id": "ba4card", "text": "なんで、人によって ちがうの？", "tag": "deepen", "move": "follow-naze", "domain": "ことば" },
-            { "id": "ba5card", "text": "1時間は、なんぷん？", "tag": "sideways" },
+            { "id": "ba5card", "text": "1時間は、みじかい？　長い？", "tag": "sideways" },
             { "id": "ba6card", "text": "もういちどいって", "tag": "repeat" }
           ],
           "replies": {
             "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "なんで、人によって ちがうのかな？" },
           "prediction": { "beforeRound": 2, "options": ["ba4card", "ba5card", "ba6card"] }

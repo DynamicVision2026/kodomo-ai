@@ -9,6 +9,7 @@ import bankNedanJson from '../src/modules/m1/topics/bank-nedan/s2.json';
 import bankKotobaJson from '../src/modules/m1/topics/bank-kotoba/s2.json';
 import bankArigatouJson from '../src/modules/m1/topics/bank-arigatou/s2.json';
 import moduleJson from '../src/modules/m1/module.json';
+import { titleMatcher } from './helpers/titleText';
 
 const rouka = roukaMissionJson as unknown as Mission;
 const bankNedan = bankNedanJson as unknown as Mission;
@@ -120,7 +121,7 @@ describe('Growth Journey M0-M5 — reachable end to end through only real, relea
     // --- Mission 3: bank-kotoba (B09, real 2-layer chain, domain ことば — the 3rd distinct
     // domain, so follow-naze reaches tsukaeru partway through this mission's own layer 0). -----
     await user.click(screen.getByText(ui.bankHubButton));
-    await user.click(screen.getByText(bankKotoba.title));
+    await user.click(screen.getByText(titleMatcher(bankKotoba.title)));
     await user.click(screen.getByText(ui.coopSolo));
     await playDigChain(user, bankKotoba.phases[0] as DigPhase);
     await throughWrapperScreensToParent(user);

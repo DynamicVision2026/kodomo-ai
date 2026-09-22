@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readdirSync, existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { lintMission } from '../pipeline/04_lint';
 import { lintText } from '../pipeline/lib/lintText';
 import { loadGradeMap } from '../pipeline/lib/kanji';
@@ -359,6 +361,60 @@ describe('lintMission', () => {
       const genkanIssues = lintMission(genkanMission, 2, gradeOfReal, new Set(['c1', 'c2', 'c3']));
       expect(chantoIssues.filter((i) => i.rule === 'epistemic-leak')).toEqual([]);
       expect(genkanIssues.filter((i) => i.rule === 'epistemic-leak')).toEqual([]);
+    });
+  });
+
+  // WO-31 (AUDIT-JP-01 §E): `title` was never pushed into lintMission's check array — every one
+  // of the audit's 8 kanji-grade/ruby findings was in a title, and nowhere else. This closes that
+  // one-line tooling gap and proves it actually catches the exact defect class the audit found.
+  describe('WO-31: title field now gets the same kanji-grade/ruby checks as tip/teachBack/ouchiTalk', () => {
+    const withTitle = (title: string, contentClass?: string) => ({
+      id: 'x', stage: 2, ...(contentClass ? { contentClass } : {}),
+      title,
+      phases: [{ template: 'dig', layers: [], root: { robotSays: 'そう', claims: ['nonfactual'] } }],
+      tip: 'そう', teachBack: 'そう', ouchiTalk: 'そう',
+    });
+
+    it('flags a title kanji above the Stage-2 ceiling (the exact genkan/bank-escalator/bank-nedan P0 class — a 表外 or Grade 5/6 kanji, unrescuable by ruby)', () => {
+      const bad = withTitle('玄関で くつを ぬぐ'); // 玄 is not an elementary kyōiku kanji at all
+      const issues = lintMission(bad, 2, gradeOf, claimIds);
+      expect(issues).toContainEqual(expect.objectContaining({ rule: 'kanji-grade', text: bad.title }));
+    });
+
+    it("still flags that title's over-ceiling kanji even when annotated with ruby — ruby cannot rescue a banned grade", () => {
+      const bad = withTitle('{玄|げん}関で くつを ぬぐ');
+      const issues = lintMission(bad, 2, gradeOf, claimIds);
+      expect(issues).toContainEqual(expect.objectContaining({ rule: 'kanji-grade' }));
+    });
+
+    it('flags a title kanji within the ceiling but missing its required ruby (the bank-janken/bank-kotoba P1 class)', () => {
+      const bad = withTitle('同じ言葉なのに'); // 葉 is Grade 3 — within ceiling, needs ruby
+      const issues = lintMission(bad, 2, gradeOf, claimIds);
+      expect(issues).toContainEqual(expect.objectContaining({ rule: 'ruby-required', text: bad.title }));
+    });
+
+    it('accepts that same title once annotated with ruby', () => {
+      const ok = withTitle('同じ{言葉|ことば}なのに');
+      const issues = lintMission(ok, 2, gradeOf, claimIds);
+      expect(issues.some((i) => i.rule === 'ruby-required' || i.rule === 'kanji-grade')).toBe(false);
+    });
+
+    it('every real Stage-2 topic\'s title now passes kanji-grade/ruby-required cleanly — proof the 8 AUDIT-JP-01 title findings (P0 genkan/bank-escalator/bank-nedan; P1 bank-janken/bank-kotoba; P2 bank-gakunen/bank-hoshii) are fixed in content, not merely that the lint gap is closed', () => {
+      const gradeOfReal = loadGradeMap();
+      const dir = join(process.cwd(), 'src/modules/m1/topics');
+      let checked = 0;
+      for (const topic of readdirSync(dir)) {
+        const file = join(dir, topic, 's2.json');
+        if (!existsSync(file)) continue;
+        const parsed = JSON.parse(readFileSync(file, 'utf8')) as { title?: string };
+        checked++;
+        const issues = lintMission(parsed, 2, gradeOfReal, new Set());
+        const titleIssues = issues.filter(
+          (i) => i.text === parsed.title && (i.rule === 'kanji-grade' || i.rule === 'ruby-required'),
+        );
+        expect(titleIssues, `${topic}: ${JSON.stringify(titleIssues)}`).toEqual([]);
+      }
+      expect(checked).toBe(22); // 8 Story Missions + 12 Bank Digs + the 2 archived fixtures (bread/ice)
     });
   });
 });

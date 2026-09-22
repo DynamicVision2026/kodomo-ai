@@ -2,7 +2,7 @@
   "id": "stage1-test-dummy",
   "contentClass": "synthetic",
   "stage": 1,
-  "title": "ステージ１の テスト",
+  "title": "ステージ１の ためし",
   "sources": ["d1"],
   "phases": [
     {

@@ -5,6 +5,7 @@ import { MissionShell } from '../src/shell/MissionShell';
 import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
 import { playMissionScreenToCompletion } from './helpers/stageConformance';
+import { titleMatcher } from './helpers/titleText';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
 import roukaJson from '../src/modules/m1/topics/rouka/s2.json';
@@ -323,10 +324,10 @@ describe('WO-27 — real production entitlement, PURCHASED family: full Story pr
     const tier2 = [bankAtodeJson, bankTeamJson, bankNedanJson, bankHoshiiJson, bankKotobaJson];
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const b of tier1) {
-      expect(screen.getByText((b as unknown as Mission).title).closest('button')!.className).not.toContain('is-locked');
+      expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className).not.toContain('is-locked');
     }
     for (const b of tier2) {
-      expect(screen.getByText((b as unknown as Mission).title).closest('button')!.className).toContain('is-locked');
+      expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className).toContain('is-locked');
     }
     await user.click(screen.getByText(ui.bankBackButton));
 
@@ -335,7 +336,7 @@ describe('WO-27 — real production entitlement, PURCHASED family: full Story pr
 
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const b of [...tier1, ...tier2]) {
-      expect(screen.getByText((b as unknown as Mission).title).closest('button')!.className).not.toContain('is-locked');
+      expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className).not.toContain('is-locked');
     }
   }, 20000);
 });

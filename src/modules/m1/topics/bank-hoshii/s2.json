@@ -3,7 +3,7 @@
   "contentClass": "release",
   "rootType": "わかれ",
   "stage": 2,
-  "title": "みんなが持っているものが、ほしくなる",
+  "title": "みんなが{持|も}っているものが、ほしくなる",
   "sources": ["facts.yaml#c1", "facts.yaml#c2", "facts.yaml#c3"],
   "phases": [
     {
@@ -24,7 +24,7 @@
           ],
           "replies": {
             "offtopic": "うーん、それはべつの話だよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "それは、ひつようだから ほしいのかな？" }
         },
@@ -43,7 +43,7 @@
           ],
           "replies": {
             "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "なんで、こまらないのに ほしいのかな？" },
           "prediction": { "beforeRound": 2, "options": ["bh4card", "bh5card", "bh6card"] }

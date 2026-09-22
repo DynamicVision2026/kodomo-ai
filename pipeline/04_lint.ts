@@ -34,7 +34,7 @@ export interface MissionLintIssue {
 export function lintMission(mission: unknown, stage: number, gradeOf: GradeMap, claimIds: Set<string>): MissionLintIssue[] {
   const issues: MissionLintIssue[] = [];
   const m = mission as {
-    id?: string; stage?: number; phases?: unknown[];
+    id?: string; stage?: number; phases?: unknown[]; title?: string;
     tip?: string; teachBack?: string; ouchiTalk?: string; contentClass?: unknown;
   };
 
@@ -61,7 +61,11 @@ export function lintMission(mission: unknown, stage: number, gradeOf: GradeMap, 
     }
   };
 
-  const texts: string[] = [m.tip, m.teachBack, m.ouchiTalk].filter((t): t is string => Boolean(t));
+  // WO-31: `title` was never pushed into this check array — every kanji-grade violation the
+  // AUDIT-JP-01 language audit found was in a title, and nowhere else, because titles render
+  // live (Course Home, Bank Select, Mission Complete's "next mission" preview) but were never
+  // linted. One-line fix, per the audit's own root-cause finding.
+  const texts: string[] = [m.title, m.tip, m.teachBack, m.ouchiTalk].filter((t): t is string => Boolean(t));
 
   for (const phase of m.phases as Record<string, unknown>[]) {
     if (phase.template === 'slot-assembly') {

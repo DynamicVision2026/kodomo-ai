@@ -11,7 +11,7 @@
       "slots": ["what"],
       "cards": [
         { "id": "w1", "slot": "what", "text": "おやつの話、きいて", "tag": "vague" },
-        { "id": "w2", "slot": "what", "text": "バナナは、おやつに入りますか？", "tag": "clear" },
+        { "id": "w2", "slot": "what", "text": "バナナは、おやつに入る？", "tag": "clear" },
         { "id": "w3", "slot": "what", "text": "ロボは バナナ すき？", "tag": "offtopic" }
       ],
       "rules": [
@@ -57,7 +57,7 @@
           ],
           "replies": {
             "offtopic": "うーん、それはべつの話だよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "バナナも、おやつに入るのかな？" }
         },
@@ -76,7 +76,7 @@
           ],
           "replies": {
             "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "ほかにも、べつあつかいのものは ないかな？" }
         },
@@ -95,7 +95,7 @@
           ],
           "replies": {
             "sideways": "さあ、それはわからないな。でも、今の話とはべつだよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "なんで、ちがうのかな？" },
           "prediction": { "beforeRound": 3, "options": ["o7card", "o8card", "o9card"] }

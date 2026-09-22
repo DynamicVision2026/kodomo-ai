@@ -138,10 +138,16 @@ describe('LandingPage', () => {
     expect(text).toContain('印刷キット'); // digital app + printable kit, both mentioned
     expect(text).toContain('最大6人'); // MAX_PROFILES
     expect(text).toContain('最大5台'); // MAX_DEVICES
-    expect(text).toContain('30日間返金保証');
+    // WO-31: the refund window covers the pre-order period too (spec §9), not just
+    // "30日間" from purchase — the old, narrower wording is gone from both surfaces.
+    expect(text).toContain('お届け後30日間の返金保証');
+    expect(text).toContain('お届け前はいつでも、お届け後は30日間、返金保証をご利用いただけます。');
     expect(text).toContain('月額なし');
     expect(text).toContain('自動更新はありません'); // explicitly denied, never silently omitted
     expect(text).toContain('創設ファミリー特典');
-    expect(text).toContain('冬休みスペシャルシート');
+    // WO-31: 冬休みスペシャルシート no longer appears in the unconditional 届くもの list — it's
+    // gated to 創設ファミリー特典 only (in the price section, asserted above), never promised to
+    // every buyer.
+    expect(document.querySelector('.lp__price')?.textContent).toContain('冬休みスペシャルシート');
   });
 });

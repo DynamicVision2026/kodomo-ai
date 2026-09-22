@@ -58,7 +58,7 @@
           ],
           "replies": {
             "offtopic": "ぼくは今『ちゃんと』の話をしてるよ。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "「きちんと」って、何をすることなの？" }
         },
@@ -77,7 +77,7 @@
           ],
           "replies": {
             "sideways": "すきだよ。でも、今の話からそれちゃった。",
-            "repeat": "うーん、さっきと同じ答えになっちゃった。"
+            "repeat": "いっても、同じだよ。"
           },
           "earlyOk": { "challenger": "ポン太", "asks": "食べるときの『ちゃんと』も、同じいみ？" },
           "prediction": { "beforeRound": 2, "options": ["c4card", "c5card", "c6card"] }

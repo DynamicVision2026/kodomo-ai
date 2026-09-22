@@ -94,7 +94,7 @@ describe('deriveFullDeck (WO-20 Phase 7, completed WO-21 Phase 2)', () => {
     const texts = reaction.map((c) => c.text);
     // These are the real de facto standard reply strings — verifiable by grepping every
     // mission's own facts.yaml-adjacent s2.json replies (already lint-passed mission content).
-    expect(texts).toContain('うーん、さっきと同じ答えになっちゃった。');
+    expect(texts).toContain('いっても、同じだよ。');
     expect(texts).toContain('うーん、それはべつの話だよ。');
     expect(texts).toContain('さあ、それはわからないな。でも、今の話とはべつだよ。');
   });
