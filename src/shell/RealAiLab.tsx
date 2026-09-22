@@ -17,15 +17,19 @@ export interface RealAiLabProps {
  * before the course-complete screen. Co-play only — solo play never reaches 'stage-teachback' at
  * all (WO-25 #6), so there is no parent here to run this with; that path is unchanged.
  *
- * This screen is facilitation only. The actual exercise — asking a real generative AI (the
- * family's own account, e.g. ChatGPT) the same question twice, changing one condition the second
- * time, and comparing — happens entirely OUTSIDE this app, exactly as the existing, already-
- * approved Real AI guide (src/print/kit-data/real-ai-guide.json) already describes: "アプリの中で
- * AIが呼ばれることはありません". No text input lives here (gate:no-free-text scans this whole
+ * This screen is facilitation only. The actual exercise happens entirely OUTSIDE this app, on the
+ * family's own AI account — the app itself never calls one, exactly as the existing, already-
+ * approved Real AI guide (src/print/kit-data/real-ai-guide.json) already states in its own words.
+ * The Architect's alignment correction fixed the sequence at four steps, matched by the guide:
+ * (1) an everyday question, bare, (2) the same question again with one condition/preference/
+ * perspective changed, (3) compare the two answers and notice what the AI knew or didn't know,
+ * (4) the child composes the NEXT question aloud, the parent types it, the family looks at that
+ * third answer. Steps 1-3 are `ui.realAiLabIntro`; step 4 is `ui.realAiLabStep4` below — still
+ * always the PARENT typing, never an app text field (gate:no-free-text scans this whole
  * directory), no runtime LLM call, no provider named as a requirement (ChatGPTなど is an example,
- * same as the existing guide), nothing typed anywhere is ever sent to this app. The guide link
- * below opens the same Print Centre route Course Home's own kit button already uses — reusing
- * the approved guide, never rewriting it.
+ * same as the existing guide), and nothing the AI says or the parent types is ever sent to or
+ * stored by this app. The guide link below opens the same Print Centre route Course Home's own
+ * kit button already uses — reusing the approved guide, never rewriting it here.
  */
 export function RealAiLab({ ui, onContinue }: RealAiLabProps) {
   function tried() {
@@ -40,6 +44,7 @@ export function RealAiLab({ ui, onContinue }: RealAiLabProps) {
     <div className="mission-shell__wrapper mission-shell__wrapper--parent">
       <p className="mission-shell__real-ai-lab-heading">{ui.realAiLabHeading}</p>
       <p><Ruby text={ui.realAiLabIntro ?? ''} /></p>
+      <p><Ruby text={ui.realAiLabStep4 ?? ''} /></p>
       <p className="mission-shell__real-ai-lab-note">{ui.realAiLabNote}</p>
       <button
         type="button"

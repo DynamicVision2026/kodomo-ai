@@ -167,6 +167,8 @@ Short digs the family picks in any order; dig phase only. **12 at launch, 24 by 
 ### 4.4 The kit (what the buyer receives)
 8 story missions + bank · 45-card printable deck with analog game · 保護者ハンドブック PDF (three rules, one question per mission, no answer keys, one page linking the game to school learning per section 1A) · おとな版1分メモ · 質問レシピシート and 親子認定証 · guide sheet for one parent-supervised real-AI session on the parent's own account.
 
+**Superseded (Architect's alignment correction):** this section's own real-AI *architecture* — the specific step sequence the guide sheet walks the family through — is no longer §8's "put the same chain to a real AI" finale below (that line is itself struck through as the same correction). The one, single Real AI activity in Module 1 is now: (1) an everyday question, bare; (2) the same question again with one condition/preference/perspective changed; (3) compare the two answers and notice what the AI knew or didn't know; (4) the child composes the next question aloud, the parent types it, the family looks at the third answer. Reached in-app only from Story 1-8's own completion sequence (`src/shell/RealAiLab.tsx`); the guide sheet itself (`src/print/kit-data/real-ai-guide.json`) is this same sequence, for offline reference. This paragraph is the current source of truth; the rest of this section (the kit item list, the "Honest limit" paragraph below) is unaffected.
+
 **Honest limit:** in the app children *select* follow-ups; they *compose* them only in the card game and the real-AI session. The handbook must push both.
 
 ---
@@ -300,7 +302,9 @@ Poker size, 9 per A4, 5 sheets, cut lines. Colour + icon + corner shape per type
 | あそびかた | 2 |
 | Blank | 2 |
 
-**「ほりさげゲーム」:** Trainer draws an おだい, builds a first question, reads it aloud. The ロボ player answers literally and briefly. Trainer plays a 追問カード and asks the follow-up **in their own words**; repeat for three layers. When the ロボ player — often the parent — says 「わからない」, that is today's ねっこ candidate: look it up together. Swap roles. Optional finale: put the same chain to a real AI on the parent's account.
+**「ほりさげゲーム」:** Trainer draws an おだい, builds a first question, reads it aloud. The ロボ player answers literally and briefly. Trainer plays a 追問カード and asks the follow-up **in their own words**; repeat for three layers. When the ロボ player — often the parent — says 「わからない」, that is today's ねっこ candidate: look it up together. Swap roles.
+
+~~Optional finale: put the same chain to a real AI on the parent's account.~~ Superseded (Architect's alignment correction): this created a SECOND real-AI finale alongside §4.4's own guide sheet — there is exactly one Real AI activity in Module 1, reached from Story 1-8's own completion sequence (see §4.4's own superseded-note above for the current four-step architecture), never from the card game. The card game's own finale is looking up the ねっこ together, above — nothing more.
 
 **Sampler (free, 9 cards):** 2 おだい, 2 slot, 3 追問, 1 reaction, 1 rules. **Founders' bonus sheet:** 9 「冬休みスペシャル」 おだい.
 

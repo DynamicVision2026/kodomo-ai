@@ -309,13 +309,20 @@ export interface ModuleUiStrings {
    *  MissionShell.tsx's own REAL_AI_LAB_MISSION_ID), so every other module fixture keeps working
    *  unchanged without authoring it. */
   realAiLabHeading?: string;
-  /** The exercise itself, in one line: ask a real generative AI (the family's own account,
-   *  outside this app — no runtime LLM here) the same question twice, changing one condition the
-   *  second time, and compare. Process/observation only — never framed as finding the "right"
+  /** Steps 1-3 of the exercise: ask a real generative AI (the family's own account, outside this
+   *  app — no runtime LLM here) an everyday question bare, ask the same question again with one
+   *  condition/preference/perspective changed, then compare the two answers and notice what the
+   *  AI knew or didn't know. Process/observation only — never framed as finding the "right"
    *  answer, checking the AI for mistakes, or a prompt-writing skill. */
   realAiLabIntro?: string;
-  /** Reinforces that this is optional and non-evaluative — nothing here is graded, and skipping
-   *  it is a completely normal outcome, not a lesser one. */
+  /** Step 4, added by the Architect's alignment correction: the child composes the NEXT question
+   *  aloud (from what steps 1-3 just surfaced), the parent types it into their own AI account —
+   *  never an app text field — and the family looks at that third answer together. Nothing the
+   *  AI says or the parent types is ever stored by this app. */
+  realAiLabStep4?: string;
+  /** Reinforces that this is optional and non-evaluative — nothing here is graded, skipping it is
+   *  a completely normal outcome (not a lesser one), and little or no difference between answers
+   *  is still something worth noticing, not a failed attempt. */
   realAiLabNote?: string;
   /** Opens the existing, already-approved Real AI guide (src/print/kit-data/real-ai-guide.json,
    *  the Home Kit's own 07_RealAI_Guide PDF) via the same Print Centre route Course Home's own

@@ -118,6 +118,20 @@ describe('WO-34 — Real AI Lab: optional, never blocks course completion', () =
   });
 });
 
+describe('WO-34 — Architect\'s alignment correction: Step 4 (child composes the next question aloud)', () => {
+  it('renders Step 4 alongside Steps 1-3, before either action is taken', async () => {
+    const user = userEvent.setup();
+    renderSingleMission(randoseru);
+    await playToReturnToChild(user, randoseru);
+    await waitFor(() => expect(screen.getByText(ui.realAiLabHeading!)).toBeInTheDocument());
+    // Steps 1-3 (ask bare, ask again with one condition changed, compare) and Step 4 (child
+    // composes the next question aloud, parent types it, family looks at the third answer) are
+    // both present on the same screen — the four-step sequence is one activity, not two.
+    expect(screen.getByText(ui.realAiLabIntro!)).toBeInTheDocument();
+    expect(screen.getByText(ui.realAiLabStep4!)).toBeInTheDocument();
+  });
+});
+
 describe('WO-34 — Real AI Lab: reuses the existing approved guide, introduces no free text, no runtime AI call', () => {
   it('the guide-link button opens Print Centre (the existing Real AI guide\'s own home) via window.open, never new content', async () => {
     const user = userEvent.setup();
@@ -143,6 +157,29 @@ describe('WO-34 — Real AI Lab: reuses the existing approved guide, introduces 
     expect(document.querySelectorAll('textarea')).toHaveLength(0);
     expect(document.querySelectorAll('[contenteditable]')).toHaveLength(0);
     expect(document.querySelectorAll('input:not([type="radio"]):not([type="checkbox"])')).toHaveLength(0);
+  });
+});
+
+describe('WO-34 — invariants: no stored AI content, no M5, at most one parent-tapped signal', () => {
+  it('tapping "tried it" touches neither milestones.M5 nor any new memories field — real AI Lab is its own, separate signal', async () => {
+    const user = userEvent.setup();
+    renderSingleMission(randoseru);
+    await playToReturnToChild(user, randoseru);
+    await waitFor(() => expect(screen.getByText(ui.realAiLabHeading!)).toBeInTheDocument());
+
+    const before = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const m5Before = before.profiles[0].milestones?.M5;
+
+    await user.click(screen.getByText(ui.handoffContinue));
+    await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
+
+    const after = JSON.parse(localStorage.getItem('m-app.v1')!);
+    // M5 (そとで つかった) is a parent-initiated, per-move outside-use record — completely
+    // unrelated to this screen, and must stay exactly as it was.
+    expect(after.profiles[0].milestones?.M5).toEqual(m5Before);
+    // This app never persists anything the family typed into, or the AI said back on, their own
+    // account — there is nothing in this repo's Profile shape a screen with no text input and no
+    // API call could even write that content to.
   });
 });
 
