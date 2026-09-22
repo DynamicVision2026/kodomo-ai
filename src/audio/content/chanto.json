@@ -1,7 +1,293 @@
 {
   "missionId": "m1-s2-1-1",
   "role": "MODEL",
-  "audioStatus": "pending-production",
+  "audioStatus": "ready",
   "robotLine": "『ちゃんと』は、きちんとすることだよ。",
-  "demonstratedLayers": [0]
+  "demonstratedLayers": [
+    0
+  ],
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "……おや、ポン太。どうしたの？　なんだか、こまった顔をしてるね。",
+      "audioUrl": "/audio/m1/1-1-chanto/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん……。さっきね、お母さんに「ちゃんとしなさい！」って言われたの。",
+      "audioUrl": "/audio/m1/1-1-chanto/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そっか。",
+      "audioUrl": "/audio/m1/1-1-chanto/02-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "でもさ、ぼく、ちゃんとしてたつもりなんだけどな。",
+      "audioUrl": "/audio/m1/1-1-chanto/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ふうん。……じゃあ、ロボに聞いてみる？",
+      "audioUrl": "/audio/m1/1-1-chanto/04-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん！　ねえロボ、「ちゃんと」って、なに？",
+      "audioUrl": "/audio/m1/1-1-chanto/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "ROBOT",
+      "text": "『ちゃんと』は、きちんとすることだよ。",
+      "audioUrl": "/audio/m1/1-1-chanto/06-robot.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "あ、そっか。わかった！",
+      "audioUrl": "/audio/m1/1-1-chanto/07-ponta.mp3",
+      "pauseAfterMs": 1000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "これで、ほんとうに わかった？",
+      "audioUrl": "/audio/m1/1-1-chanto/08-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。まじめに、きちんと、でしょ？",
+      "audioUrl": "/audio/m1/1-1-chanto/09-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "うん、ロボはそう言ったね。……じゃあポン太、今から何をすればいい？",
+      "audioUrl": "/audio/m1/1-1-chanto/10-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "え？　えっと……まじめに……。",
+      "audioUrl": "/audio/m1/1-1-chanto/11-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "まじめに、何をするの？",
+      "audioUrl": "/audio/m1/1-1-chanto/12-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "……あれ？",
+      "audioUrl": "/audio/m1/1-1-chanto/13-ponta.mp3",
+      "pauseAfterMs": 2000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "わかったと思ったのに……何をすればいいのか、わかんない。",
+      "audioUrl": "/audio/m1/1-1-chanto/14-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "おもしろいね。答えをもらったのに、まだわからないことがある。",
+      "audioUrl": "/audio/m1/1-1-chanto/15-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ねえ、わかる？",
+      "audioUrl": "/audio/m1/1-1-chanto/16-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "うーん。わたしにも、よくわからないな。だから、いっしょに考えてみよう。",
+      "audioUrl": "/audio/m1/1-1-chanto/17-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "まだ わからないのは、どこ？",
+      "audioUrl": "/audio/m1/1-1-chanto/18-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみも、いっしょに考えてみて。ポン太は、何がまだわからないのかな。",
+      "audioUrl": "/audio/m1/1-1-chanto/19-guide.mp3",
+      "pauseAfterMs": 4000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「まじめに」とか「きちんと」とか、ことばの意味は、わかるんだよ。でも……。",
+      "audioUrl": "/audio/m1/1-1-chanto/20-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "でも？",
+      "audioUrl": "/audio/m1/1-1-chanto/21-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "お母さんが、ほんとは何をしてほしいのかが、わかんない。",
+      "audioUrl": "/audio/m1/1-1-chanto/22-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "なるほど。ことばの意味はわかった。でも、何をすればいいかは、まだわからないんだね。",
+      "audioUrl": "/audio/m1/1-1-chanto/23-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "そう、それ！",
+      "audioUrl": "/audio/m1/1-1-chanto/24-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "それがわからないと、どうなるかな。",
+      "audioUrl": "/audio/m1/1-1-chanto/25-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うーん……。また「ちゃんとしなさい！」って言われちゃうかも。",
+      "audioUrl": "/audio/m1/1-1-chanto/26-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そうかもしれないね。",
+      "audioUrl": "/audio/m1/1-1-chanto/27-guide.mp3",
+      "pauseAfterMs": 1000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "じゃあ、つぎに 何を きけば いい？",
+      "audioUrl": "/audio/m1/1-1-chanto/28-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "えっと……「ちゃんとって、なに？」って、もう一回聞く！",
+      "audioUrl": "/audio/m1/1-1-chanto/29-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "それを聞いたら、何がわかりそう？",
+      "audioUrl": "/audio/m1/1-1-chanto/30-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "……あ。さっきと同じ答えが、かえってきちゃうかも。",
+      "audioUrl": "/audio/m1/1-1-chanto/31-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そうだね。同じ聞き方をしたら、同じ答えになるかもしれないね。",
+      "audioUrl": "/audio/m1/1-1-chanto/32-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "じゃあ……ぼくが知りたいのは、「何をすればいいか」だから……。",
+      "audioUrl": "/audio/m1/1-1-chanto/33-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "うん。",
+      "audioUrl": "/audio/m1/1-1-chanto/34-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「いまの『ちゃんと』は、何をすればいいの？」って聞いてみる！",
+      "audioUrl": "/audio/m1/1-1-chanto/35-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "それなら、ポン太の知りたいことが聞けそうだね。",
+      "audioUrl": "/audio/m1/1-1-chanto/36-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボ。いまの「ちゃんと」は、何をすればいいの？",
+      "audioUrl": "/audio/m1/1-1-chanto/37-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "ROBOT",
+      "text": "部屋をかたづけるときは、もとの場所にもどすことかな。",
+      "audioUrl": "/audio/m1/1-1-chanto/38-robot.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "えっ！",
+      "audioUrl": "/audio/m1/1-1-chanto/39-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "おや。",
+      "audioUrl": "/audio/m1/1-1-chanto/40-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "同じ「ちゃんと」なのに、そうじとごはんで、ちがう！",
+      "audioUrl": "/audio/m1/1-1-chanto/41-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ほんとだね。さっきより、何がわかった？",
+      "audioUrl": "/audio/m1/1-1-chanto/42-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「ちゃんと」の中身は、ひとつじゃないってこと。",
+      "audioUrl": "/audio/m1/1-1-chanto/43-ponta.mp3",
+      "pauseAfterMs": 1000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "……さあ。これで、ほんとうに わかった？",
+      "audioUrl": "/audio/m1/1-1-chanto/44-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うーん……。",
+      "audioUrl": "/audio/m1/1-1-chanto/45-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ここから先は、聞いているきみのばんだよ。",
+      "audioUrl": "/audio/m1/1-1-chanto/46-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
 }
