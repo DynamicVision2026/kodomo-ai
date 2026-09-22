@@ -292,7 +292,7 @@ describe('WO-27 — real production entitlement, PURCHASED family: full Story pr
     expect(screen.getByText(ui.coopQuestion)).toBeInTheDocument();
   });
 
-  it('TEST H — Bank schedule regression: all 12 Bank Digs stay locked through Story 1-3, then unlock together at Story 1-4 — unaffected by WO-27 entitlement gating', async () => {
+  it('TEST H — Bank schedule regression: all 12 Bank Digs stay locked through Story 1-3, the 7 めあて ones open at Story 1-4, the 5 わかれ ones wait for Story 1-5 — unaffected by WO-27 entitlement gating', async () => {
     const user = userEvent.setup();
     renderRealShell();
     await createProfile(user);
@@ -320,23 +320,38 @@ describe('WO-27 — real production entitlement, PURCHASED family: full Story pr
     await playCurrentStory(genkanJson as unknown as Mission);
     await playCurrentStory(roukaJson as unknown as Mission);
 
-    // Blueprint alignment: Story 1-3 done is not enough — every Bank Dig stays LOCKED.
-    const allBanks = [
+    // Architect's correction: Story 1-3 done is not enough — the Bank section itself isn't
+    // visible yet, so every Bank Dig stays LOCKED.
+    const bankMeate = [
       bankEscalatorJson, bankJankenJson, bankGakunenJson, bankKireiJson, bankItadakimasuJson,
-      bankArigatouJson, bank100yenJson, bankAtodeJson, bankTeamJson, bankNedanJson,
-      bankHoshiiJson, bankKotobaJson,
+      bankArigatouJson, bank100yenJson,
     ];
+    const bankWakare = [bankAtodeJson, bankTeamJson, bankNedanJson, bankHoshiiJson, bankKotobaJson];
+    const allBanks = [...bankMeate, ...bankWakare];
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const b of allBanks) {
       expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className, (b as unknown as Mission).id).toContain('is-locked');
     }
     await user.click(screen.getByText(ui.bankBackButton));
 
-    await playCurrentStory(oyatsuJson as unknown as Mission); // Story 1-4 — the one Bank gate
+    await playCurrentStory(oyatsuJson as unknown as Mission); // Story 1-4 — opens the Bank section
 
-    // All 12 Bank Digs are now available together, before Story 1-5 is even reached.
+    // The 7 めあて Bank Digs are now available (their real prerequisite, Story 1-3, already
+    // resolved); the 5 わかれ Bank Digs stay locked until Story 1-5 (minna) — their own real
+    // rootType prerequisite.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
-    for (const b of allBanks) {
+    for (const b of bankMeate) {
+      expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className, (b as unknown as Mission).id).not.toContain('is-locked');
+    }
+    for (const b of bankWakare) {
+      expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className, (b as unknown as Mission).id).toContain('is-locked');
+    }
+    await user.click(screen.getByText(ui.bankBackButton));
+
+    await playCurrentStory(minnaJson as unknown as Mission); // Story 1-5 — opens the わかれ Banks
+
+    await user.click(screen.getByText(ui.courseHomeBankLabel));
+    for (const b of bankWakare) {
       expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className, (b as unknown as Mission).id).not.toContain('is-locked');
     }
   }, 20000);

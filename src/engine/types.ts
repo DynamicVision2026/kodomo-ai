@@ -304,11 +304,12 @@ export interface ModuleUiStrings {
  * literals for module JSON, never engine source. The closed three-value set is declared and
  * enforced instead in scripts/lib/rootType.ts (outside that gate's scan root) and checked by
  * scripts/lib/moduleClassification.ts's checkMissions() — see tests/rootType.test.ts for the
- * adversarial proof that a fourth value is rejected. Not read or branched on anywhere in the
- * engine today: it briefly was, as one input to `src/shell/progression.ts`'s Bank-unlock
- * schedule (WO-26), but the Blueprint Alignment Cleanup replaced that per-move/rootType-derived
- * staggered schedule with a single flat gate (all 12 Bank Digs unlock together at Story 1-4) —
- * see that file's own `bankState` doc comment.
+ * adversarial proof that a fourth value is rejected. Read by `src/shell/progression.ts`'s
+ * `bankState` (WO-26, restored by the Architect's correction on top of the Blueprint Alignment
+ * Cleanup): a Bank Dig's own rootType is one of the two inputs — alongside its authored deepen
+ * moves — that decide which Story must be done before the Bank unlocks, so no Bank is reachable
+ * before a Story has modeled its rootType's own reasoning shape (see that file's own doc
+ * comment for the exact derivation and the Story 1-4 floor layered on top of it).
  */
 export type RootType = string;
 

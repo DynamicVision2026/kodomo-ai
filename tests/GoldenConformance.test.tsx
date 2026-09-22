@@ -132,16 +132,14 @@ function renderShell() {
   );
 }
 
-describe('WO-26 §26/§27 — sampled solo-safety + co-play ownership transitions (Story 2/4/7/8, two sampled Bank Digs)', () => {
+describe('WO-26 §26/§27 — sampled solo-safety + co-play ownership transitions (Story 2/4/7/8, one Bank per unlock tier)', () => {
   const SAMPLE = [
     STORY_MISSIONS[1]!, // Story 2
     STORY_MISSIONS[3]!, // Story 4 — Mid-Boss
     STORY_MISSIONS[6]!, // Story 7
     STORY_MISSIONS[7]!, // Story 8 — Boss
-    // All 12 Bank Digs unlock together at Story 1-4 (Blueprint Alignment Cleanup) — these two are
-    // just a sample, not two different tiers; every test below seeds every Story done anyway.
-    BANK_DIGS.find((b) => b.label.includes('escalator'))!,
-    BANK_DIGS.find((b) => b.label.includes('atode'))!,
+    BANK_DIGS.find((b) => b.label.includes('escalator'))!, // めあて — opens at Story 1-4
+    BANK_DIGS.find((b) => b.label.includes('atode'))!, // わかれ — opens at Story 1-5
   ];
 
   for (const { label, mission } of SAMPLE) {

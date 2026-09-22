@@ -34,14 +34,20 @@ const STORY = [
   chantoJson, genkanJson, roukaJson, oyatsuJson, minnaJson, zuruiJson, kashiteJson, randoseruJson,
 ].map((m) => m as unknown as Mission);
 
-// Blueprint alignment: all 12 Bank Digs are Transfer Practices under a single gate — Story 1-4
-// (oyatsu) done — not the old two-tier 1-3/1-5 rootType-derived schedule. No grouping left to
-// name; one flat list.
-const ALL_BANKS = [
+// Architect's final correction on the Blueprint Alignment Cleanup: the Bank section itself stays
+// hidden until Story 1-4 (oyatsu) is done, and each Bank Dig then still resolves its own real
+// rootType/move prerequisite. The 7 めあて Banks' real prerequisite (Story 1-3) already resolves
+// by the time Story 1-4 is done, so the section-visibility floor is what actually opens them; the
+// 5 わかれ Banks' real prerequisite is Story 1-5 (minna, the first わかれ-rooted Story) and stays
+// binding.
+const BANK_MEATE = [ // opens at Story 1-4 (the section-visibility floor)
   bankEscalatorJson, bankJankenJson, bankGakunenJson, bankKireiJson, bankItadakimasuJson,
-  bankArigatouJson, bank100yenJson, bankAtodeJson, bankTeamJson, bankNedanJson, bankHoshiiJson,
-  bankKotobaJson,
+  bankArigatouJson, bank100yenJson,
 ].map((m) => m as unknown as Mission);
+const BANK_WAKARE = [ // opens at Story 1-5 (its own real rootType prerequisite)
+  bankAtodeJson, bankTeamJson, bankNedanJson, bankHoshiiJson, bankKotobaJson,
+].map((m) => m as unknown as Mission);
+const ALL_BANKS = [...BANK_MEATE, ...BANK_WAKARE];
 
 const missionLibrary: MissionLibrary = {
   missionOrder: STORY.map((m) => m.id),
@@ -163,31 +169,45 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + Bank unlo
     }
     await user.click(screen.getByText(ui.bankBackButton));
 
-    // Story 4 (Mid-Boss, oyatsu) — the one and only Bank gate.
+    // Story 4 (Mid-Boss, oyatsu) — opens the Bank section itself.
     await playCurrentStoryToMap(user, STORY[3]!);
 
-    // All 12 Bank Digs are now AVAILABLE together.
+    // The 7 めあて Bank Digs are AVAILABLE (their own real prerequisite, Story 1-3, already
+    // resolved — the section-visibility floor is what actually opens them here); the 5 わかれ
+    // Bank Digs stay LOCKED, since Story 1-5 (minna, the first わかれ-rooted Story) isn't done yet.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
-    for (const bank of ALL_BANKS) {
+    for (const bank of BANK_MEATE) {
       const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
       expect(btn.className, bank.id).not.toContain('is-locked');
     }
+    for (const bank of BANK_WAKARE) {
+      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
+      expect(btn.className, bank.id).toContain('is-locked');
+    }
     await user.click(screen.getByText(ui.bankBackButton));
 
-    // Play one Bank Dig to completion — Story progression must be unaffected: Story 5 (minna)
-    // is still CURRENT, not skipped, not regressed.
-    await playBankToCompletion(user, ALL_BANKS[0]!);
+    // Play one めあて Bank Dig to completion — Story progression must be unaffected: Story 5
+    // (minna) is still CURRENT, not skipped, not regressed.
+    await playBankToCompletion(user, BANK_MEATE[0]!);
     const stillCurrent = document.querySelector('.course-home__depth.is-current') as HTMLElement;
     expect(within(stillCurrent).getByText(STORY[4]!.title)).toBeTruthy();
 
     // Its own completion evidence is retained (COMPLETED, not just AVAILABLE) without touching
     // the Story spine at all.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
-    expect(screen.getByText(titleMatcher(ALL_BANKS[0]!.title)).closest('button')!.textContent).toContain(ui.bankDoneLabel);
+    expect(screen.getByText(titleMatcher(BANK_MEATE[0]!.title)).closest('button')!.textContent).toContain(ui.bankDoneLabel);
     await user.click(screen.getByText(ui.bankBackButton));
 
-    // Story 5, 6, 7, 8 (Boss) — the rest of the spine.
+    // Story 5 (minna) — opens the 5 わかれ Bank Digs, their own real rootType prerequisite.
     await playCurrentStoryToMap(user, STORY[4]!);
+    await user.click(screen.getByText(ui.courseHomeBankLabel));
+    for (const bank of BANK_WAKARE) {
+      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
+      expect(btn.className, bank.id).not.toContain('is-locked');
+    }
+    await user.click(screen.getByText(ui.bankBackButton));
+
+    // Story 6, 7, 8 (Boss) — the rest of the spine.
     await playCurrentStoryToMap(user, STORY[5]!);
     await playCurrentStoryToMap(user, STORY[6]!);
 

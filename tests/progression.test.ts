@@ -51,18 +51,29 @@ describe('storyState — sequential CURRENT/COMPLETED/LOCKED (WO-26 §3.1/§7)',
   });
 });
 
-describe('bankState — single flat gate at Story 1-4 (Blueprint Alignment Cleanup, replacing WO-26 §5\'s per-move/rootType two-tier schedule)', () => {
-  it('all 12 Bank Digs stay LOCKED through Story 1-3 — the old schedule would have opened 7 of them here, the frozen one opens none', () => {
+describe('bankState — per-bank rootType/move prerequisite, floored at Story 1-4 (Architect\'s final correction on the Blueprint Alignment Cleanup)', () => {
+  it('all 12 Bank Digs stay LOCKED through Story 1-3 — the Bank section itself is not yet visible', () => {
     const afterStory3 = doneUpTo(3); // chanto, genkan, rouka done; oyatsu (1-4) not yet
     for (const bank of Object.values(BANKS)) {
       expect(bankState(bank as unknown as Mission, storyMissionsInOrder, afterStory3), bank.id).toBe('locked');
     }
   });
 
-  it('all 12 Bank Digs become AVAILABLE together the instant Story 1-4 (oyatsu) is done', () => {
+  it('the 7 めあて Bank Digs (B02/B03/B05/B07/B10/B11/B12) become AVAILABLE the instant Story 1-4 (oyatsu) is done — their real prerequisite (Story 1-3) already resolved, so the section-visibility floor is what actually binds', () => {
+    const meateGroup = ['B02', 'B03', 'B05', 'B07', 'B10', 'B11', 'B12'] as const;
     const afterStory4 = doneUpTo(4);
-    for (const bank of Object.values(BANKS)) {
-      expect(bankState(bank as unknown as Mission, storyMissionsInOrder, afterStory4), bank.id).toBe('available');
+    for (const id of meateGroup) {
+      expect(bankState(BANKS[id] as unknown as Mission, storyMissionsInOrder, afterStory4), id).toBe('available');
+    }
+  });
+
+  it('the 5 わかれ Bank Digs (B01/B04/B06/B08/B09) stay LOCKED at Story 1-4 and only become AVAILABLE once Story 1-5 (minna) — the first Story with a わかれ root — is done', () => {
+    const wakareGroup = ['B01', 'B04', 'B06', 'B08', 'B09'] as const;
+    const afterStory4 = doneUpTo(4);
+    const afterStory5 = doneUpTo(5);
+    for (const id of wakareGroup) {
+      expect(bankState(BANKS[id] as unknown as Mission, storyMissionsInOrder, afterStory4), id).toBe('locked');
+      expect(bankState(BANKS[id] as unknown as Mission, storyMissionsInOrder, afterStory5), id).toBe('available');
     }
   });
 
