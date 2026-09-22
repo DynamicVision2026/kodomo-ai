@@ -227,3 +227,24 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* WO-32: these short, content-sized screens (coop question, locked note, the generic tip/
+   teachBack/ouchiTalk/handoff wrapper, and the parent register) have no height of their own at
+   phone size — they just sit at the natural height of a couple of lines and a button, which
+   happens to roughly fill a 390x844 viewport. At tablet heights the same short content leaves a
+   plain white void below it (these two rules never claimed the viewport at all) or, for the
+   parent register (which does force min-height: 100dvh), several hundred px of dead space below
+   top-anchored content — both read as broken/incomplete rather than a considered tablet layout.
+   Filling the viewport with the screen's own surface colour and centering the (still
+   phone-sized) card within it fixes both without changing anything about the phone layout. */
+@media (min-width: 768px) {
+  .mission-shell__locked,
+  .mission-shell__wrapper,
+  .mission-shell__coop {
+    min-height: 100dvh;
+    justify-content: center;
+  }
+  .mission-shell__wrapper--parent {
+    justify-content: center;
+  }
+}

@@ -91,3 +91,12 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* WO-32: already min-height: 100dvh (correctly fills the viewport), but top-anchored — on a
+   tall tablet viewport that left several hundred px of dead space below the card, same class of
+   issue as mission-shell.css's short wrapper screens. Centering only at tablet+ widths leaves
+   the already-shipped phone layout (where this content roughly fills the viewport on its own)
+   untouched. */
+@media (min-width: 768px) {
+  .mission-complete { justify-content: center; }
+}

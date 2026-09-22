@@ -52,3 +52,16 @@
   cursor: pointer;
   font-size: 0.9rem;
 }
+
+/* WO-32: same fix as mission-shell.css's short wrapper screens — this content-sized card has no
+   height of its own at phone size (it just naturally sizes to a couple of lines and a button),
+   which happens to roughly fill a 390x844 viewport but leaves a plain white void below it on a
+   taller tablet screen, since nothing here ever claimed the viewport. Filling it with the
+   screen's own surface colour and centering the same phone-sized card within it fixes that
+   without changing anything about the phone layout. */
+@media (min-width: 768px) {
+  .handoff {
+    min-height: 100dvh;
+    justify-content: center;
+  }
+}

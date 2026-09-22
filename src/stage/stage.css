@@ -276,3 +276,16 @@
     animation: none !important;
   }
 }
+
+/* WO-32: at phone height (100dvh ~844px or less), .stage__world's mascot/dialogue content
+   roughly fills the space `flex: 1 1 auto` gives it. At tablet heights that same fixed-size
+   content left hundreds of px of dead space below it, top-anchored, with the tray stranded far
+   below — the single most time-spent surface in the product reading as broken on every tablet
+   orientation. Centering the content vertically within the available world area (the tray stays
+   in its own separate, already-pinned-bottom region below, untouched) and capping the stage's
+   own width to the same 40rem the rest of the app already uses for tablet (course-home.css)
+   fixes both without changing anything about the phone layout this component was built for. */
+@media (min-width: 768px) {
+  .stage { max-width: 40rem; margin: 0 auto; }
+  .stage__world { justify-content: center; }
+}
