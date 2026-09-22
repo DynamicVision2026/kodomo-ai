@@ -655,6 +655,7 @@ export function MissionShell({
       <AudioScene
         role={screen.role}
         robotLine={script?.robotLine ?? ''}
+        lines={script?.lines}
         ui={ui}
         onDone={() => setScreen(screen.role === 'CHECKPOINT' ? { kind: 'complete' } : { kind: 'stage' })}
       />

@@ -302,6 +302,13 @@ export interface ModuleUiStrings {
    *  a mission id present in src/audio/registry.ts's own list — module m1's three reference
    *  missions today, nothing else). */
   audioListenPrompt?: string;
+  /** The play button on a mission's own FULL playback audio screen (real committed MP3s —
+   *  AudioScript.lines present, audioStatus 'ready') — Story 1-1/chanto today, the first lesson
+   *  with real production audio. Absent/unused on a mission still in the text-anchor fallback
+   *  (no `lines` yet). Tapping it (re)starts the sequence from the first line; the existing
+   *  `handoffContinue`/always-available exit is unaffected either way — this screen still can
+   *  never block on actually listening. */
+  audioPlayLabel?: string;
 
   // --- WO-34: Real AI Lab (one optional parent-supervised session, after Story 1-8, before the
   // course-complete screen) ---------------------------------------------------------------------

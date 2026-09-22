@@ -201,18 +201,35 @@ async function skipBattleIfPresent(user: ReturnType<typeof userEvent.setup>, ui:
 }
 
 /**
+ * WO-33/WO-35: dismisses whichever of the two AudioScene screens is showing (src/stage/
+ * AudioScene.tsx's own dispatch): the text-anchor fallback (`.speech-bubble` x2, tap-to-advance)
+ * for a mission whose audio is still pending production, or the real full-playback screen (a
+ * play button plus an always-available continue button) for one with real committed MP3s
+ * (chanto/1-1 today). Either way the continue action alone is enough to leave the screen — never
+ * requires actually pressing play, matching the screen's own "optional, never blocks" contract.
+ */
+async function dismissAudioScene(user: ReturnType<typeof userEvent.setup>) {
+  if (document.querySelector('.speech-bubble')) {
+    await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the listen prompt
+    await waitFor(() => expect(document.querySelector('.speech-bubble')).toBeInTheDocument());
+    await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the robotSays anchor
+    return;
+  }
+  const buttons = document.querySelectorAll('[data-audio-role] button');
+  await user.click(buttons[buttons.length - 1] as HTMLElement); // the continue button
+}
+
+/**
  * WO-33 (AD-10 / Audio Reference Scripts rev.3): a mission with its own registered pre-practice
  * MODEL/GUIDED audio (src/audio/registry.ts, reached via `chooseCoop` for both solo and co-play)
- * shows that screen — one framing bubble, then the mission's own robotSays bubble — before the
- * real practice stage ever appears. A no-op for every one of the other 18 missions, which never
- * render `[data-audio-role]` at all. Exported so tests/Mission1Stage.test.tsx's own `enterStage`
- * (chanto/MODEL) can reuse the exact same tap sequence instead of a second copy of it.
+ * shows that screen before the real practice stage ever appears. A no-op for every one of the
+ * other 18 missions, which never render `[data-audio-role]` at all. Exported so
+ * tests/Mission1Stage.test.tsx's own `enterStage` (chanto/MODEL) can reuse the exact same tap
+ * sequence instead of a second copy of it.
  */
 export async function skipPrePracticeAudioIfPresent(user: ReturnType<typeof userEvent.setup>) {
   if (!document.querySelector('[data-audio-role]')) return;
-  await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the listen prompt
-  await waitFor(() => expect(document.querySelector('.speech-bubble')).toBeInTheDocument());
-  await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the robotSays anchor
+  await dismissAudioScene(user);
   await waitFor(() => expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument());
 }
 
@@ -225,9 +242,7 @@ export async function skipPrePracticeAudioIfPresent(user: ReturnType<typeof user
  */
 export async function skipCheckpointAudioIfPresent(user: ReturnType<typeof userEvent.setup>) {
   if (!document.querySelector('[data-audio-role="CHECKPOINT"]')) return;
-  await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the listen prompt
-  await waitFor(() => expect(document.querySelector('.speech-bubble')).toBeInTheDocument());
-  await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the robotSays anchor
+  await dismissAudioScene(user);
 }
 
 /**
