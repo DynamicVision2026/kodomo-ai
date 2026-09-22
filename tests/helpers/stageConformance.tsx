@@ -231,6 +231,17 @@ export async function skipCheckpointAudioIfPresent(user: ReturnType<typeof userE
 }
 
 /**
+ * WO-34: the same "reached only from 'stage-teachback's own return-to-child tap" slot as
+ * `skipCheckpointAudioIfPresent` above, for Story 1-8 (randoseru)'s own optional Real AI Lab —
+ * a no-op for every other mission. Callers must await this BEFORE asserting on
+ * `ui.completeHeading`, same contract as the CHECKPOINT helper.
+ */
+export async function skipRealAiLabIfPresent(user: ReturnType<typeof userEvent.setup>, ui: ModuleUiStrings) {
+  if (!document.querySelector('.mission-shell__real-ai-lab-heading')) return;
+  await user.click(screen.getByText(ui.handoffSkip));
+}
+
+/**
  * WO-26 §25/§26/§27: drives a mission end to end through the real `MissionShell` tree (profile
  * already picked, coop question already answered — the caller owns getting there and whatever
  * comes after completion), reused by both the sampled solo-safety/co-play conformance tests

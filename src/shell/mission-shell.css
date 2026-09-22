@@ -74,6 +74,22 @@
   color: var(--ink-soft, #6b5d4f);
 }
 
+/* WO-34: Real AI Lab — same parent-register wrapper as stage-teachback above, just its own
+ * heading/note treatment. */
+.mission-shell__real-ai-lab-heading {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.mission-shell__real-ai-lab-note {
+  font-size: 0.9rem;
+  color: var(--ink-soft, #6b5d4f);
+}
+.mission-shell__real-ai-lab-guide-link {
+  background: none !important;
+  border: 2px solid var(--root, #c8922e) !important;
+  color: var(--root, #c8922e) !important;
+}
+
 .mission-shell__wrapper button,
 .mission-shell__coop-choices button {
   min-height: 48px;

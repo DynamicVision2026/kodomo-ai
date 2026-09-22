@@ -302,6 +302,26 @@ export interface ModuleUiStrings {
    *  a mission id present in src/audio/registry.ts's own list — module m1's three reference
    *  missions today, nothing else). */
   audioListenPrompt?: string;
+
+  // --- WO-34: Real AI Lab (one optional parent-supervised session, after Story 1-8, before the
+  // course-complete screen) ---------------------------------------------------------------------
+  /** Heading for src/shell/RealAiLab.tsx. Optional — only module m1 wires this screen in (see
+   *  MissionShell.tsx's own REAL_AI_LAB_MISSION_ID), so every other module fixture keeps working
+   *  unchanged without authoring it. */
+  realAiLabHeading?: string;
+  /** The exercise itself, in one line: ask a real generative AI (the family's own account,
+   *  outside this app — no runtime LLM here) the same question twice, changing one condition the
+   *  second time, and compare. Process/observation only — never framed as finding the "right"
+   *  answer, checking the AI for mistakes, or a prompt-writing skill. */
+  realAiLabIntro?: string;
+  /** Reinforces that this is optional and non-evaluative — nothing here is graded, and skipping
+   *  it is a completely normal outcome, not a lesser one. */
+  realAiLabNote?: string;
+  /** Opens the existing, already-approved Real AI guide (src/print/kit-data/real-ai-guide.json,
+   *  the Home Kit's own 07_RealAI_Guide PDF) via the same Print Centre route Course Home's own
+   *  「おうちの方へ」kit button already uses — reused, never rewritten, by this ticket's own
+   *  instruction. */
+  realAiLabGuideLinkLabel?: string;
 }
 
 /**

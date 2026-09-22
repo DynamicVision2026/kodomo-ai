@@ -23,7 +23,17 @@ import { Ruby } from '../engine/ruby';
 import { MissionStage } from '../stage/MissionStage';
 import { AudioScene } from '../stage/AudioScene';
 import { audioScriptFor } from '../audio/registry';
+import { RealAiLab } from './RealAiLab';
 import './mission-shell.css';
+
+/**
+ * WO-34: Story 1-8 (randoseru), the Boss mission and last Story in Module 1's own spine — the
+ * one, singleton place the optional Real AI Lab session can ever be reached from (this whole
+ * repo's Module 1 topics fixture, not derived from missionOrder position — a future module with
+ * its own Real AI Lab moment would get its own equally explicit id here, not a generic
+ * "last story" rule, so this can never silently move if the spine's own order ever changes).
+ */
+const REAL_AI_LAB_MISSION_ID = 'm1-s2-1-8';
 
 /** Every mission a module ships (any stage) + the order `pickNextMission` walks. Optional: a
  *  caller with only one mission (today's reality for most modules) can omit this and `mission`
@@ -100,6 +110,10 @@ type Screen =
    *  CHECKPOINT reaches it from 'stage-teachback's own return-to-child action, after teach-back
    *  and M2b — never any other way, so it can never appear before the child's own work. */
   | { kind: 'audio'; role: AudioRole }
+  /** WO-34: the optional Real AI Lab session — reached ONLY from 'stage-teachback's own
+   *  return-to-child action, and only for REAL_AI_LAB_MISSION_ID (Story 1-8), same "after
+   *  teach-back and M2b, never any other way" guarantee CHECKPOINT audio already has above. */
+  | { kind: 'real-ai-lab' }
   | { kind: 'tip' }
   | { kind: 'teachback' }
   | { kind: 'ouchi' }
@@ -647,6 +661,10 @@ export function MissionShell({
     );
   }
 
+  if (screen.kind === 'real-ai-lab') {
+    return <RealAiLab ui={ui} onContinue={() => setScreen({ kind: 'complete' })} />;
+  }
+
   if (screen.kind === 'stage') {
     const demonstratedLayers = audioScriptFor(mission.id)?.demonstratedLayers;
     return (
@@ -831,13 +849,15 @@ export function MissionShell({
           type="button"
           className="mission-shell__stage-return-to-child"
           onClick={() => {
-            // WO-33: this is the one place CHECKPOINT audio (1-4/oyatsu) can ever be reached —
-            // strictly after teach-back (just given, above) and M2b (confirmed by `gotIt` in the
-            // first step of this same screen), never any earlier. A mission without a registered
-            // CHECKPOINT script (every mission but oyatsu, today) goes straight to 'complete',
-            // exactly as before this ticket.
+            // WO-33/WO-34: this is the one place CHECKPOINT audio (1-4/oyatsu) and the Real AI
+            // Lab (1-8/randoseru) can ever be reached — strictly after teach-back (just given,
+            // above) and M2b (confirmed by `gotIt` in the first step of this same screen), never
+            // any earlier. Every other mission goes straight to 'complete', exactly as before
+            // either ticket.
             const script = audioScriptFor(mission.id);
-            setScreen(script?.role === 'CHECKPOINT' ? { kind: 'audio', role: 'CHECKPOINT' } : { kind: 'complete' });
+            if (script?.role === 'CHECKPOINT') { setScreen({ kind: 'audio', role: 'CHECKPOINT' }); return; }
+            if (mission.id === REAL_AI_LAB_MISSION_ID) { setScreen({ kind: 'real-ai-lab' }); return; }
+            setScreen({ kind: 'complete' });
           }}
         >
           {ui.stageReturnToChild}

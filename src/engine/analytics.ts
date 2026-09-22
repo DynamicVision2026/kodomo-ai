@@ -26,7 +26,12 @@ export type EventName =
   // WO-19: M0/M5 parent-screen evidence. `m0_sealed` fires once, on the Day-1 envelope tap.
   // `outside_use` fires whenever a parent records a real-world observation for a move — never a
   // judgment of correctness, only which move was identified. Also not in spec v0.5 §11.
-  | 'm0_sealed' | 'outside_use';
+  | 'm0_sealed' | 'outside_use'
+  // WO-34: the optional Real AI Lab screen (after Story 1-8, before the course-complete screen,
+  // co-play only) — whether the family actually took it into the real world or skipped it this
+  // time. Engagement signal only, never a correctness/completion judgment — the screen has no way
+  // to know what happened outside the app. Also not in spec v0.5 §11.
+  | 'real_ai_lab_tried' | 'real_ai_lab_skipped';
 
 type Props = Record<string, string | number | boolean>;
 

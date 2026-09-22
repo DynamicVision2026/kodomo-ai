@@ -101,7 +101,11 @@
     "stageHandbackPrompt": "こどもに もどしてね",
     "courseHomeSequentialLockedMessage": "ここは まだ さきの ばしょだよ。今の ばしょから じゅんばんに ほろう。",
     "bankLockedMessage": "この あなは まだ ほれないよ。ものがたりを すすめると、ほれるように なるよ。",
-    "audioListenPrompt": "みみを すませて、きいてね。"
+    "audioListenPrompt": "みみを すませて、きいてね。",
+    "realAiLabHeading": "ほんものの AI で ためしてみよう",
+    "realAiLabIntro": "おうちの人の AI(ChatGPTなど)に、同じ しつもんを 2回 きいてみよう。2回目は、じょうけんを ひとつ かえてね。こたえが かわったか、かわらなかったかを くらべて、AIが 何を 知っていて、何を 知らなかったかを 話してみよう。",
+    "realAiLabNote": "せいかいを さがす れんしゅうでは ないよ。どう かわったかに 気づくのが たのしいところ。むりに しなくても だいじょうぶ。",
+    "realAiLabGuideLinkLabel": "くわしいガイドを 見る"
   },
   "cardTypes": {
     "odai": {

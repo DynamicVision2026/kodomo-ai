@@ -6,6 +6,7 @@ import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
 import {
   playMissionStageToCompletion, playMissionScreenToCompletion, skipCheckpointAudioIfPresent,
+  skipRealAiLabIfPresent,
 } from './helpers/stageConformance';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
@@ -199,6 +200,9 @@ describe('WO-26 §26/§27 — sampled solo-safety + co-play ownership transition
       // WO-33: oyatsu (1-4) has its own CHECKPOINT audio here, strictly after teach-back/M2b
       // (both already done above) — a no-op for the other 5 sampled missions.
       await skipCheckpointAudioIfPresent(freshUser);
+      // WO-34: randoseru (1-8) has its own optional Real AI Lab here, same slot — a no-op for
+      // the other 5 sampled missions.
+      await skipRealAiLabIfPresent(freshUser, ui);
 
       expect(screen.getByText(ui.completeHeading)).toBeInTheDocument();
     });
