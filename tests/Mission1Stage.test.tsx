@@ -6,6 +6,7 @@ import type { MissionLibrary } from '../src/shell/MissionShell';
 import { MissionStage } from '../src/stage/MissionStage';
 import type { DigResult, UseEvidence } from '../src/templates/dig';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
+import { skipPrePracticeAudioIfPresent } from './helpers/stageConformance';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
 import moduleJson from '../src/modules/m1/module.json';
@@ -59,6 +60,9 @@ async function enterStage(user: ReturnType<typeof userEvent.setup>, coop: 'solo'
   await createProfile(user);
   await user.click(screen.getByText(ui.courseHomeContinueLabel));
   await user.click(screen.getByText(coop === 'solo' ? ui.coopSolo : ui.coopYes));
+  // WO-33: chanto (1-1) now has its own MODEL audio before practice — tap through it here so
+  // every existing caller of this helper keeps landing exactly where it always has.
+  await skipPrePracticeAudioIfPresent(user);
 }
 
 /** WO-25 #1: picks the CLEAR card and reads the robot's terminal reply — ONE tap now reaches

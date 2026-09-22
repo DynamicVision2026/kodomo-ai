@@ -41,6 +41,14 @@ export interface MissionStageProps {
    *  Dig-phase-complete + tip-screen-advance combination used to signal together, so
    *  MissionShell can mark the mission done and continue exactly as it always has. */
   onComplete: (result: DigResult) => void;
+  /** WO-33 (AD-10 / Audio Reference Scripts rev.3 §E): dig layer indices this mission's own
+   *  MODEL audio has just fully demonstrated — a play at one of these layers is primed, so its
+   *  `onUse` evidence (use/apt_use/rung advancement/milestone credit) is suppressed entirely; the
+   *  layer stays fully playable, everything else about it (state transitions, sfx, guidance use
+   *  counting, `onMoveRendered`/`onGapNamed`) is unaffected. Absent for every mission without a
+   *  registered MODEL script — see src/audio/registry.ts and src/shell/MissionShell.tsx, the only
+   *  place this is ever computed and passed down. */
+  demonstratedLayers?: ReadonlySet<number>;
 }
 
 function isTerminalArchetype(claims: string[]): boolean {
@@ -73,7 +81,7 @@ function isTerminalArchetype(claims: string[]): boolean {
  */
 export function MissionStage({
   mission, ui, solo, moveProgress, guidanceUses, onGuidanceUse, onMoveRendered, onUse,
-  onBlindCommit, onBlindSelfReport, onGapNamed, onComplete,
+  onBlindCommit, onBlindSelfReport, onGapNamed, onComplete, demonstratedLayers,
 }: MissionStageProps) {
   const slotPhase = mission.phases.find((p) => p.template === 'slot-assembly') as SlotAssemblyPhase | undefined;
   const digPhase = mission.phases.find((p) => p.template === 'dig') as DigPhase;
@@ -227,10 +235,16 @@ export function MissionStage({
     const next = playCard(digPhase, state, card);
     if (next === state) return;
     setState(next);
-    onUse({
-      move: card.move, domain: card.domain, missionId: mission.id, layerIndex: prevLayer,
-      timestamp: Date.now(), aptUse: isAptUse(playIndexAtLayer, card.tag),
-    });
+    // WO-33: a play at a layer this mission's own MODEL audio just fully demonstrated is primed
+    // — the child has already heard the answer — so it writes no growth evidence at all. The
+    // layer itself is otherwise unaffected: state still advances, sfx/world-impact/guidance still
+    // fire below exactly as for any other play.
+    if (!demonstratedLayers?.has(prevLayer)) {
+      onUse({
+        move: card.move, domain: card.domain, missionId: mission.id, layerIndex: prevLayer,
+        timestamp: Date.now(), aptUse: isAptUse(playIndexAtLayer, card.tag),
+      });
+    }
     if (next.finished) {
       track('root_reached');
       sfx.playRootChime();

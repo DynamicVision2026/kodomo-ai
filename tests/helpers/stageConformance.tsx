@@ -50,9 +50,11 @@ export async function playMissionStageToCompletion(
   user: ReturnType<typeof userEvent.setup>,
   mission: Mission,
   ui: ModuleUiStrings,
+  opts?: { demonstratedLayers?: ReadonlySet<number> },
 ) {
   const onComplete = vi.fn();
   const onGuidanceUse = vi.fn();
+  const onUse = vi.fn();
   render(
     <MissionStage
       mission={mission}
@@ -62,11 +64,12 @@ export async function playMissionStageToCompletion(
       guidanceUses={{}}
       onGuidanceUse={onGuidanceUse}
       onMoveRendered={() => {}}
-      onUse={() => {}}
+      onUse={onUse}
       onBlindCommit={() => {}}
       onBlindSelfReport={() => {}}
       onGapNamed={() => {}}
       onComplete={onComplete}
+      demonstratedLayers={opts?.demonstratedLayers}
     />,
   );
 
@@ -183,7 +186,7 @@ export async function playMissionStageToCompletion(
     expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({ layerCount: digPhase.layers.length }));
   });
 
-  return { onComplete };
+  return { onComplete, onUse };
 }
 
 /** A layer's own mid-mission prediction battle (root layers, in this content) shows right after
@@ -195,6 +198,36 @@ export async function playMissionStageToCompletion(
 async function skipBattleIfPresent(user: ReturnType<typeof userEvent.setup>, ui: ModuleUiStrings) {
   const skip = screen.queryByText(ui.predictionSkip);
   if (skip) await user.click(skip);
+}
+
+/**
+ * WO-33 (AD-10 / Audio Reference Scripts rev.3): a mission with its own registered pre-practice
+ * MODEL/GUIDED audio (src/audio/registry.ts, reached via `chooseCoop` for both solo and co-play)
+ * shows that screen — one framing bubble, then the mission's own robotSays bubble — before the
+ * real practice stage ever appears. A no-op for every one of the other 18 missions, which never
+ * render `[data-audio-role]` at all. Exported so tests/Mission1Stage.test.tsx's own `enterStage`
+ * (chanto/MODEL) can reuse the exact same tap sequence instead of a second copy of it.
+ */
+export async function skipPrePracticeAudioIfPresent(user: ReturnType<typeof userEvent.setup>) {
+  if (!document.querySelector('[data-audio-role]')) return;
+  await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the listen prompt
+  await waitFor(() => expect(document.querySelector('.speech-bubble')).toBeInTheDocument());
+  await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the robotSays anchor
+  await waitFor(() => expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument());
+}
+
+/**
+ * WO-33: the CHECKPOINT counterpart of `skipPrePracticeAudioIfPresent` — reached only from
+ * 'stage-teachback's own return-to-child tap (after teach-back and M2b), for a mission with its
+ * own registered CHECKPOINT script (oyatsu/1-4, today). A no-op for every other mission, whose
+ * return-to-child tap goes straight to Mission Complete exactly as before this ticket. Callers
+ * must await this BEFORE asserting on `ui.completeHeading`.
+ */
+export async function skipCheckpointAudioIfPresent(user: ReturnType<typeof userEvent.setup>) {
+  if (!document.querySelector('[data-audio-role="CHECKPOINT"]')) return;
+  await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the listen prompt
+  await waitFor(() => expect(document.querySelector('.speech-bubble')).toBeInTheDocument());
+  await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the robotSays anchor
 }
 
 /**
@@ -213,6 +246,8 @@ export async function playMissionScreenToCompletion(
 ) {
   const digPhase = mission.phases.find((p) => p.template === 'dig') as DigPhase;
   const slotPhase = mission.phases.find((p) => p.template === 'slot-assembly') as SlotAssemblyPhase | undefined;
+
+  await skipPrePracticeAudioIfPresent(user);
 
   if (slotPhase) {
     const clearCard = slotPhase.cards.find((c) => c.tag === 'clear')!;

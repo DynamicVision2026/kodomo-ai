@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
-import { playMissionScreenToCompletion } from './helpers/stageConformance';
+import { playMissionScreenToCompletion, skipPrePracticeAudioIfPresent } from './helpers/stageConformance';
 import { titleMatcher } from './helpers/titleText';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
@@ -118,6 +118,8 @@ describe('WO-27 — real production entitlement (no purchase): CURRENT => ENTERA
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     expect(screen.getByText(ui.coopQuestion)).toBeInTheDocument();
     await user.click(screen.getByText(ui.coopSolo));
+    // WO-33: chanto's own MODEL audio plays first now — tap through it before the slot tray.
+    await skipPrePracticeAudioIfPresent(user);
     // Genuinely playable, not just a screen transition — the slot tray for chanto renders.
     expect(screen.getByText(ui.stageQuestionPrompt)).toBeInTheDocument();
   });
@@ -243,6 +245,8 @@ describe('WO-27 — real production entitlement, PURCHASED family: full Story pr
     expect(screen.getByText(ui.coopQuestion)).toBeInTheDocument();
     expect(screen.queryByText(ui.lockedMessage)).not.toBeInTheDocument();
     await user.click(screen.getByText(ui.coopSolo));
+    // WO-33: genkan's own GUIDED audio plays first now — tap through it before the slot tray.
+    await skipPrePracticeAudioIfPresent(user);
     expect(screen.getByText(ui.stageQuestionPrompt)).toBeInTheDocument(); // genkan's own slot tray
 
     // Route B: Course Home -> tap the Story 2 depth directly (fresh render, same profile).

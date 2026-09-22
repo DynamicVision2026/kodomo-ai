@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Mission, ModuleUiStrings } from '../engine/types';
+import type { AudioRole } from '../audio/types';
 import { load, save, MAX_PROFILES, type AppState, type Profile } from '../engine/storage';
 import { hasAccess, reconcileEntitlements, applyRedemption, revokeUnrecognizedCode } from '../engine/entitlements';
 import { redeemFamilyCode } from '../parent/unlock/redeemCode';
@@ -20,6 +21,8 @@ import { Dig, type UseEvidence, type BlindSelfReportEvidence, type DigResult } f
 import { Handoff } from '../templates/handoff';
 import { Ruby } from '../engine/ruby';
 import { MissionStage } from '../stage/MissionStage';
+import { AudioScene } from '../stage/AudioScene';
+import { audioScriptFor } from '../audio/registry';
 import './mission-shell.css';
 
 /** Every mission a module ships (any stage) + the order `pickNextMission` walks. Optional: a
@@ -92,6 +95,11 @@ type Screen =
   /** WO-24 (AD-07): Mission 1's own continuous scene — replaces the 'phase'/'tip' sequence, only
    *  when `continuousStageMissionId` matches the active mission. */
   | { kind: 'stage' }
+  /** WO-33 (AD-10 / Audio Reference Scripts rev.3): a mission's own registered reference-audio
+   *  screen (src/audio/registry.ts). MODEL/GUIDED reach this from `chooseCoop`, before 'stage';
+   *  CHECKPOINT reaches it from 'stage-teachback's own return-to-child action, after teach-back
+   *  and M2b — never any other way, so it can never appear before the child's own work. */
+  | { kind: 'audio'; role: AudioRole }
   | { kind: 'tip' }
   | { kind: 'teachback' }
   | { kind: 'ouchi' }
@@ -303,7 +311,15 @@ export function MissionShell({
     setSolo(!isCoop);
     track('coop_selected', { coop: isCoop });
     track('m1_start');
-    setScreen(continuousStageMissionIds?.has(mission.id) ? { kind: 'stage' } : { kind: 'phase', index: 0 });
+    if (!continuousStageMissionIds?.has(mission.id)) {
+      setScreen({ kind: 'phase', index: 0 });
+      return;
+    }
+    // WO-33: MODEL (1-1)/GUIDED (1-2) play before practice, for both solo and co-play — rev.3
+    // positions them here, not gated on the family's coop choice. CHECKPOINT (1-4) is never
+    // entered this way; it only ever reaches 'audio' later, from 'stage-teachback' below.
+    const script = audioScriptFor(mission.id);
+    setScreen(script && script.role !== 'CHECKPOINT' ? { kind: 'audio', role: script.role } : { kind: 'stage' });
   }
 
   function markDone() {
@@ -619,7 +635,20 @@ export function MissionShell({
     );
   }
 
+  if (screen.kind === 'audio') {
+    const script = audioScriptFor(mission.id);
+    return (
+      <AudioScene
+        role={screen.role}
+        robotLine={script?.robotLine ?? ''}
+        ui={ui}
+        onDone={() => setScreen(screen.role === 'CHECKPOINT' ? { kind: 'complete' } : { kind: 'stage' })}
+      />
+    );
+  }
+
   if (screen.kind === 'stage') {
+    const demonstratedLayers = audioScriptFor(mission.id)?.demonstratedLayers;
     return (
       <MissionStage
         mission={mission}
@@ -634,6 +663,7 @@ export function MissionShell({
         onBlindSelfReport={selfReported}
         onGapNamed={gapNamed}
         onComplete={stageCompleted}
+        demonstratedLayers={demonstratedLayers ? new Set(demonstratedLayers) : undefined}
       />
     );
   }
@@ -800,7 +830,15 @@ export function MissionShell({
         <button
           type="button"
           className="mission-shell__stage-return-to-child"
-          onClick={() => setScreen({ kind: 'complete' })}
+          onClick={() => {
+            // WO-33: this is the one place CHECKPOINT audio (1-4/oyatsu) can ever be reached —
+            // strictly after teach-back (just given, above) and M2b (confirmed by `gotIt` in the
+            // first step of this same screen), never any earlier. A mission without a registered
+            // CHECKPOINT script (every mission but oyatsu, today) goes straight to 'complete',
+            // exactly as before this ticket.
+            const script = audioScriptFor(mission.id);
+            setScreen(script?.role === 'CHECKPOINT' ? { kind: 'audio', role: 'CHECKPOINT' } : { kind: 'complete' });
+          }}
         >
           {ui.stageReturnToChild}
         </button>

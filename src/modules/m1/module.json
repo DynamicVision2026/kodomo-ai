@@ -100,7 +100,8 @@
     "stagePredictionParentTask": "どれが ロボの こたえに ちかいか、よそうしてね",
     "stageHandbackPrompt": "こどもに もどしてね",
     "courseHomeSequentialLockedMessage": "ここは まだ さきの ばしょだよ。今の ばしょから じゅんばんに ほろう。",
-    "bankLockedMessage": "この あなは まだ ほれないよ。ものがたりを すすめると、ほれるように なるよ。"
+    "bankLockedMessage": "この あなは まだ ほれないよ。ものがたりを すすめると、ほれるように なるよ。",
+    "audioListenPrompt": "みみを すませて、きいてね。"
   },
   "cardTypes": {
     "odai": {

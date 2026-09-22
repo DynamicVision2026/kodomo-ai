@@ -290,6 +290,18 @@ export interface ModuleUiStrings {
    *  contract as `courseHomeSequentialLockedMessage`, for the Bank's own staged unlock instead
    *  of the Story spine's strict sequence. */
   bankLockedMessage: string;
+
+  // --- Audio Reference Slice (AD-10 / Audio Reference Scripts rev.3) ------------------------
+  /** WO-33: the one fixed framing line shown on a mission's own MODEL/GUIDED/CHECKPOINT
+   *  reference-audio screen (src/stage/AudioScene.tsx), before the screen's own robotSays line
+   *  (the mission's real, already-reviewed layer-0 answer — never new copy of its own). Reused
+   *  across every audio role rather than authored per-role, since nothing role-specific is
+   *  child-facing text here; placement/order/growth-guard are what actually differ per role, and
+   *  those live entirely in src/shell/MissionShell.tsx and src/audio/, not in copy. Optional so
+   *  every existing module fixture without it keeps working unchanged (it only ever renders for
+   *  a mission id present in src/audio/registry.ts's own list — module m1's three reference
+   *  missions today, nothing else). */
+  audioListenPrompt?: string;
 }
 
 /**
