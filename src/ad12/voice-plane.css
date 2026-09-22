@@ -1,0 +1,41 @@
+@import './tokens.css';
+
+.ad12-voice-plane {
+  background: var(--ad12-paper);
+  color: var(--ad12-ink);
+  border-radius: var(--ad12-radius-plane);
+  padding: 1.25rem 1.5rem;
+  border-left: 6px solid var(--ad12-recess-1);
+}
+
+.ad12-voice-plane__speaker {
+  opacity: 0.6;
+  margin-bottom: 0.35rem;
+}
+
+/** ポン太 — warm tan border, never the yellow accent (F7). */
+.ad12-voice-plane--ponta {
+  border-left-color: var(--ad12-ponta);
+}
+
+.ad12-voice-plane--robot {
+  border-left-color: var(--ad12-recess-2);
+}
+
+.ad12-voice-plane--guide {
+  border-left-color: var(--ad12-field-2);
+}
+
+/** Miss (F5): a small voice plane, never red/shake/✕ — same paper/ink treatment as any other
+ *  voice plane, just visually smaller/quieter since it's a brief aside, not a new scene. */
+.ad12-voice-plane--flatReply {
+  padding: 0.85rem 1.25rem;
+  font-size: 0.9em;
+}
+
+/** Early わかった's challenge (F5): still no red/warning treatment — a plain voice plane. */
+.ad12-voice-plane--challenge {
+}
+
+.ad12-voice-plane--refrain {
+}

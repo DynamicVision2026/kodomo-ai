@@ -1,0 +1,27 @@
+@import './tokens.css';
+
+.ad12-teach-back-panel {
+  background: var(--ad12-paper);
+  color: var(--ad12-ink);
+  border-radius: var(--ad12-radius-plane);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ad12-teach-back-panel__ouchi {
+  opacity: 0.75;
+}
+
+/** F7: ink, never yellow — every parent-surface action button in src/ad12/ shares this one
+ *  class, and it references no --ad12-accent anywhere. */
+.ad12-ink-button {
+  background: var(--ad12-ink);
+  color: var(--ad12-paper);
+  border: none;
+  border-radius: var(--ad12-radius-chip);
+  padding: 0.85rem 1.5rem;
+  cursor: pointer;
+  align-self: flex-start;
+}

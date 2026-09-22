@@ -1,0 +1,31 @@
+@import './tokens.css';
+
+/**
+ * F1: the cue is a soft outline/glow around the WHOLE wrapped group — judgment bar, slip area,
+ * or tray — never a spotlight on one option. F7: paired with elevation (a lift), never yellow
+ * alone (yellow-on-white is ~1.5:1 contrast on its own).
+ */
+.ad12-guidance {
+  border-radius: var(--ad12-radius-plane);
+  transition: box-shadow var(--ad12-t-settle), transform var(--ad12-t-settle);
+}
+
+.ad12-guidance--show {
+  box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.55), 0 8px 20px rgba(27, 31, 58, 0.12);
+  transform: translateY(-2px);
+}
+
+.ad12-guidance--nudge {
+  box-shadow: 0 0 0 2px rgba(255, 210, 63, 0.3), 0 6px 14px rgba(27, 31, 58, 0.08);
+}
+
+.ad12-guidance--fade {
+  box-shadow: 0 0 0 1px rgba(255, 210, 63, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad12-guidance {
+    transition-duration: var(--ad12-t-reduced);
+    transform: none;
+  }
+}

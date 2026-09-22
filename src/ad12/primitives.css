@@ -1,0 +1,78 @@
+/**
+ * AD-12 shared primitives — plane/paper/ink mechanics every src/ad12/ component builds on.
+ * Colour/spacing/type come only from tokens.css; no component should re-declare a raw hex or
+ * px value that already has a token (mirrors src/styles/tokens.css's own discipline).
+ */
+@import './tokens.css';
+
+.ad12 {
+  font-family: var(--ad12-font);
+  color: var(--ad12-ink);
+}
+
+.ad12 button {
+  font-family: inherit;
+}
+
+/** F8: 48px minimum tap target on every interactive element. */
+.ad12-tappable {
+  min-height: var(--ad12-tap-min);
+  min-width: var(--ad12-tap-min);
+}
+
+/**
+ * "One dominant reading object" (§1 confirmation #1) — the paper surface every answer/voice/
+ * root/card content sits on. Elevation only via box-shadow (no 3D transform, no blur/backdrop-
+ * filter — F8's Chromebook-performance constraint).
+ */
+.ad12-plane {
+  background: var(--ad12-paper);
+  color: var(--ad12-ink);
+  border-radius: var(--ad12-radius-plane);
+  box-shadow: 0 1px 0 rgba(27, 31, 58, 0.06), 0 6px 16px rgba(27, 31, 58, 0.08);
+  padding: 1.25rem 1.5rem;
+}
+
+.ad12-reading-text {
+  font-size: var(--ad12-reading-size);
+  font-weight: var(--ad12-reading-weight);
+  line-height: var(--ad12-reading-line-height);
+  margin: 0;
+}
+
+@media (min-width: 720px) {
+  .ad12-reading-text {
+    font-size: var(--ad12-reading-size-max);
+  }
+}
+
+.ad12-ui-text {
+  font-size: var(--ad12-ui-size);
+  font-weight: var(--ad12-ui-weight);
+  margin: 0;
+}
+
+/** F11: phrase-boundary breaks where the browser supports it; default breaks elsewhere. */
+.ad12-reading-text,
+.ad12-ui-text {
+  word-break: auto-phrase;
+}
+
+/**
+ * The one accent per screen (F7). A caller applies `.ad12-accent-active` to exactly one element
+ * at a time — nothing here enforces that mechanically (that's what tests/ad12/yellowDiscipline
+ * asserts), it only supplies the visual treatment.
+ */
+.ad12-accent-active {
+  outline: 3px solid var(--ad12-accent);
+  outline-offset: 2px;
+}
+
+.ad12-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

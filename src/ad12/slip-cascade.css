@@ -1,0 +1,30 @@
+@import './tokens.css';
+
+.ad12-recess {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  background: var(--ad12-recess-1);
+  border-radius: var(--ad12-radius-plane);
+  padding: 1rem;
+}
+
+/** F3: every slip identical in width/weight/opacity — no per-position emphasis, no per-kind
+ *  colour (the component never even receives `kind`, see SlipCascade.tsx). */
+.ad12-slip {
+  background: var(--ad12-paper);
+  color: var(--ad12-ink);
+  border: none;
+  border-radius: var(--ad12-radius-chip);
+  padding: 0.9rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  opacity: 1;
+}
+
+.ad12-slip.is-chosen {
+  /* Still equal weight/opacity at rest per F3 — a chosen-but-not-yet-transitioned slip is not a
+     resting state (F3: "Magnify happens only after the child's tap. It is never a resting
+     state"), so no visual distinction is drawn here yet; Pass 2 owns what happens next. */
+}

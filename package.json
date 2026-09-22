@@ -11,6 +11,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:visual": "playwright test",
     "lint:content": "tsx pipeline/04_lint.ts",
     "gate:no-llm": "tsx scripts/gate-no-llm.ts",
     "gate:no-input": "tsx scripts/gate-no-free-text.ts",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@google-cloud/text-to-speech": "^7.1.0",
+    "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",

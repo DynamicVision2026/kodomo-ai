@@ -1,0 +1,22 @@
+@import './tokens.css';
+
+.ad12-refrain-slot {
+  border: 2px dashed var(--ad12-recess-1);
+  border-radius: var(--ad12-radius-chip);
+  padding: 0.75rem 1rem;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.ad12-refrain-slot.is-empty {
+  opacity: 0.5;
+}
+
+.ad12-refrain-slot.is-filled {
+  border-style: solid;
+  background: var(--ad12-paper);
+  opacity: 1;
+}

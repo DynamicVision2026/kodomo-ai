@@ -1,0 +1,42 @@
+@import './tokens.css';
+
+/** F3: equal width, full text, no per-card colour — every card in a tray uses this one class. */
+.ad12-move-card {
+  background: var(--ad12-paper);
+  color: var(--ad12-ink);
+  border: 1px solid var(--ad12-field-1);
+  border-radius: var(--ad12-radius-chip);
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transform-origin: center;
+  transition: transform var(--ad12-t-press), box-shadow var(--ad12-t-press);
+}
+
+.ad12-move-card--rest {
+  transform: scale(1);
+}
+
+.ad12-move-card--pressed {
+  transform: scale(0.94);
+}
+
+.ad12-move-card--magnified {
+  transform: scale(1.06);
+  box-shadow: 0 10px 24px rgba(27, 31, 58, 0.16);
+  z-index: 1;
+  position: relative;
+}
+
+.ad12-move-card--committed {
+  transform: scale(1);
+  outline: 3px solid var(--ad12-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad12-move-card {
+    transition-duration: var(--ad12-t-reduced);
+  }
+}

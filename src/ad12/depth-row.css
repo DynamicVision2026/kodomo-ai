@@ -1,0 +1,33 @@
+@import './tokens.css';
+
+.ad12-depth-row {
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+}
+
+.ad12-depth-row__tab {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--ad12-radius-pill, 999px);
+  background: var(--ad12-field-1);
+  transition: background-color var(--ad12-t-settle), transform var(--ad12-t-press);
+}
+
+.ad12-depth-row__tab.is-filled {
+  background: var(--ad12-recess-1);
+}
+
+.ad12-depth-row__tab.is-root-active {
+  background: var(--ad12-accent);
+}
+
+/** F7: muted whenever another yellow is active on the same screen — at most one at a time. */
+.ad12-depth-row__tab.is-root-muted {
+  background: color-mix(in srgb, var(--ad12-accent) 45%, var(--ad12-field-1));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad12-depth-row__tab {
+    transition-duration: var(--ad12-t-reduced);
+  }
+}

@@ -1,0 +1,73 @@
+/**
+ * AD-12 — ひらく＋ 整えたかたち (B+ refined). §3's token table, verbatim values.
+ *
+ * Deliberately a SEPARATE file from src/styles/tokens.css, never merged into it: AD-12 §0 states
+ * it supersedes the visual layer of AD-11 (the current 土と根/soil-and-paper system that file
+ * defines), but this ticket's own Pass 1 scope is "build the 12 representative states as
+ * production components" — not "cut the live app over to them" (that risks the ~750 already-
+ * passing tests that assert on the CURRENT DOM/class structure across MissionStage, CourseHome,
+ * BankSelect, etc.). Every AD-12 component in src/ad12/ imports ONLY this file, never
+ * src/styles/tokens.css, so the two systems can coexist without either leaking into the other
+ * until a dedicated cutover ticket wires src/ad12/ components into the live screens.
+ */
+:root {
+  /* Field ramp — one family, one step deeper per breakthrough (Progress Fill). Never used for
+     anything but the dig's own progress; F0 is the resting/shallow tone, Deep is root/listening. */
+  --ad12-field-0: #eef0f4;
+  --ad12-field-1: #e3e6f0;
+  --ad12-field-2: #d8dcea;
+  --ad12-field-deep: #232849;
+
+  /* Paper / ink — the reading object and its text. */
+  --ad12-paper: #ffffff;
+  --ad12-ink: #1b1f3a;
+
+  /* Recess — where slips/gap-naming choices sit once the lid opens. */
+  --ad12-recess-1: #454c7e;
+  --ad12-recess-2: #2b3160;
+
+  /* Accent — the child's OWN action only (the one active yellow per screen, F7). Never a card-
+     kind identity color, never used for more than one thing on screen at once. */
+  --ad12-accent: #ffd23f;
+
+  /* ポン太 — warm tan, deliberately NOT accent-yellow (AD-12 §1 confirmation #4/F7: with the
+     refrain slots on screen, ポン太-as-yellow would make two yellows). */
+  --ad12-ponta: #d9b98c;
+
+  /* Type — Zen Kaku Gothic New, not the existing --font-child (Zen Maru Gothic); a different,
+     more geometric family is part of what AD-12 supersedes. Reading vs UI weight/size per §3. */
+  --ad12-font: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', system-ui,
+    sans-serif;
+  --ad12-reading-size: 26px;
+  --ad12-reading-size-max: 31px;
+  --ad12-reading-weight: 700;
+  --ad12-reading-line-height: 1.75;
+  --ad12-ui-size: 15px;
+  --ad12-ui-weight: 500;
+
+  /* Timing (§3) — named once here so every component uses the same numbers rather than each
+     re-declaring its own. Not used for anything in Pass 1 (no motion yet) — declared now so
+     Pass 2 has a single source of truth to read from, same discipline as the token table itself. */
+  --ad12-t-press: 90ms;
+  --ad12-t-settle: 450ms;
+  --ad12-t-transition: 700ms;
+  --ad12-t-stagger: 70ms;
+  --ad12-t-reduced: 180ms; /* F8: prefers-reduced-motion crossfade window (150-200ms). */
+
+  /* Spacing/radius/elevation — AD-12 doesn't redefine a full scale, so these borrow the existing
+     product-wide primitives (src/styles/tokens.css) rather than inventing parallel ones; spacing/
+     radius/shadow are layout mechanics, not part of what AD-12 §0 says it supersedes (colour,
+     type, motion). */
+  --ad12-radius-plane: 1.1rem;
+  --ad12-radius-chip: 0.85rem;
+  --ad12-tap-min: 48px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    /* AD-12 doesn't specify a dark variant; the field ramp's own Deep tone already reads as a
+       "dark" state by design (listening/root), so resting/shallow states keep their light paper
+       — flipping paper<->ink here would contradict F8's own "ink on white passes AAA" contrast
+       requirement, which assumes light paper. No override needed until a real dark-mode pass. */
+  }
+}

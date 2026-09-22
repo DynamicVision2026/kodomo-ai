@@ -1,0 +1,23 @@
+@import './tokens.css';
+
+.ad12-breakthrough-scene {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/** The travelling FLIP chip (BreakthroughScene.tsx) — sized/positioned entirely from JS-measured
+ *  rects each time a breakthrough plays, never from CSS; it starts at 0x0/transparent so it's
+ *  inert whenever no travel is in flight. */
+.ad12-breakthrough-scene__chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-radius: var(--ad12-radius-pill, 999px);
+  background: var(--ad12-recess-1);
+  opacity: 0;
+  pointer-events: none;
+}

@@ -1,0 +1,22 @@
+@import './tokens.css';
+
+.ad12-field {
+  min-height: 100%;
+  padding: var(--space-6, 1.5rem);
+  transition: background-color var(--ad12-t-settle);
+}
+
+.ad12-field--0 { background: var(--ad12-field-0); }
+.ad12-field--1 { background: var(--ad12-field-1); }
+.ad12-field--2 { background: var(--ad12-field-2); }
+
+.ad12-field--deep {
+  background: var(--ad12-field-deep);
+  color: var(--ad12-paper);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad12-field {
+    transition-duration: var(--ad12-t-reduced);
+  }
+}
