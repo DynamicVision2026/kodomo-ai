@@ -235,13 +235,42 @@ export async function skipM0RitualIfPresent(user: ReturnType<typeof userEvent.se
 /**
  * WO-33 (AD-10 / Audio Reference Scripts rev.3): a mission with its own registered pre-practice
  * MODEL/GUIDED audio (src/audio/registry.ts, reached via `chooseCoop` for both solo and co-play)
- * shows that screen before the real practice stage ever appears. A no-op for every one of the
- * other 18 missions, which never render `[data-audio-role]` at all. Exported so
- * tests/Mission1Stage.test.tsx's own `enterStage` (chanto/MODEL) can reuse the exact same tap
- * sequence instead of a second copy of it.
+ * shows that screen before the real practice stage ever appears. A no-op for every mission whose
+ * own registered audio (if it has one at all) plays somewhere else instead — CHECKPOINT (after
+ * teach-back/M2b, see `skipCheckpointAudioIfPresent`) or TRANSFER/'independent practice' (right
+ * after the child's own work, see `skipPostWorkAudioIfPresent`), which never render
+ * `[data-audio-role]` at this point in the flow. Exported so tests/Mission1Stage.test.tsx's own
+ * `enterStage` (chanto/MODEL) can reuse the exact same tap sequence instead of a second copy.
  */
 export async function skipPrePracticeAudioIfPresent(user: ReturnType<typeof userEvent.setup>) {
   if (!document.querySelector('[data-audio-role]')) return;
+  await dismissAudioScene(user);
+  await waitFor(() => expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument());
+}
+
+/**
+ * Final Module 1 Audio Integration Pass: the 'post-ungated' counterpart of
+ * `skipPrePracticeAudioIfPresent`/`skipCheckpointAudioIfPresent` — a mission with its own
+ * registered TRANSFER (every Bank Dig) or 'independent practice' (Story 1-6/zurui) audio shows
+ * this screen immediately after the child's own work (`MissionStage`'s onComplete, reached via
+ * `stageCompleted`), in BOTH solo and co-play — never gated behind teach-back/M2b the way
+ * CHECKPOINT is. A no-op for every other mission. Callers must await this before asserting on
+ * whatever screen follows completion (course-complete, the completion ritual, or the co-play
+ * handoff curtain), same contract as the other two skip*IfPresent audio helpers.
+ *
+ * Unlike those two (both reached synchronously from a plain button onClick), this one is reached
+ * from `MissionStage`'s own completion animation — a real `setTimeout(() => onComplete(result),
+ * 480)` — so a bare synchronous DOM check immediately after the triggering tap can race it and
+ * wrongly conclude "no audio" before it has actually rendered. Waits briefly for it to possibly
+ * appear first; a mission with none genuinely never satisfies this and the catch makes that the
+ * ordinary no-op case, same as the other two helpers'.
+ */
+export async function skipPostWorkAudioIfPresent(user: ReturnType<typeof userEvent.setup>) {
+  try {
+    await waitFor(() => expect(document.querySelector('[data-audio-role]')).toBeInTheDocument(), { timeout: 800 });
+  } catch {
+    return; // this mission has no 'post-ungated' audio — the ordinary case for every Story.
+  }
   await dismissAudioScene(user);
   await waitFor(() => expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument());
 }

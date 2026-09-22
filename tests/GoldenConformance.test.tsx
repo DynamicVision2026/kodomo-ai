@@ -7,6 +7,7 @@ import type { DigPhase, Mission, ModuleUiStrings } from '../src/engine/types';
 import {
   playMissionStageToCompletion, playMissionScreenToCompletion, skipCheckpointAudioIfPresent,
   skipRealAiLabIfPresent, skipCompletionRitualIfPresent, skipM0RitualIfPresent,
+  skipPostWorkAudioIfPresent,
 } from './helpers/stageConformance';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
@@ -166,6 +167,10 @@ describe('WO-26 §26/§27 — sampled solo-safety + co-play ownership transition
       }
       await freshUser.click(screen.getByText(ui.coopSolo));
       await playMissionScreenToCompletion(freshUser, mission, ui);
+      // Final Module 1 Audio Integration Pass: escalator/atode (Bank Digs, TRANSFER) now have
+      // their own registered 'post-ungated' audio, shown right here — immediately after the
+      // dig work, in both solo and co-play. A no-op for the other 4 sampled missions.
+      await skipPostWorkAudioIfPresent(freshUser);
 
       // WO-34/Architect completion ritual: randoseru (1-8) solo goes straight from its own dig
       // completion into the required completion ritual (no Real AI Lab in solo) — a no-op for
@@ -196,6 +201,11 @@ describe('WO-26 §26/§27 — sampled solo-safety + co-play ownership transition
       }
       await freshUser.click(screen.getByText(ui.coopYes));
       await playMissionScreenToCompletion(freshUser, mission, ui);
+      // Final Module 1 Audio Integration Pass: escalator/atode (Bank Digs, TRANSFER) now have
+      // their own registered 'post-ungated' audio, shown right here — immediately after the
+      // dig work, before the co-play handoff curtain even appears. A no-op for the other 4
+      // sampled missions.
+      await skipPostWorkAudioIfPresent(freshUser);
 
       await waitFor(() => expect(screen.getByText(ui.stageHandoffPrompt)).toBeInTheDocument());
       expect(screen.queryByText(ui.parentScreenHeading)).not.toBeInTheDocument();

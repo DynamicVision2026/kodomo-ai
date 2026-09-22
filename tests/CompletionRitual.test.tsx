@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
 import {
-  playMissionScreenToCompletion, skipCompletionRitualIfPresent,
+  playMissionScreenToCompletion, skipCompletionRitualIfPresent, skipCheckpointAudioIfPresent,
 } from './helpers/stageConformance';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import randoseruJson from '../src/modules/m1/topics/randoseru/s2.json';
@@ -116,6 +116,9 @@ describe('Architect completion ritual — behaviours #2/#3: after Story 1-8, opt
     await waitFor(() => expect(screen.getByText(randoseru.teachBack)).toBeInTheDocument());
     await user.click(screen.getByText(ui.stageParentGotItLabel));
     await user.click(screen.getByText(ui.stageReturnToChild));
+    // randoseru (1-8) now has its own registered CHECKPOINT audio too (Final Module 1 Audio
+    // Integration Pass) — same "post-gated" placement as oyatsu's, it plays first.
+    await skipCheckpointAudioIfPresent(user);
     await waitFor(() => expect(screen.getByText(ui.realAiLabHeading!)).toBeInTheDocument());
     await user.click(screen.getByText(ui.handoffContinue));
     expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument();
@@ -133,6 +136,9 @@ describe('Architect completion ritual — behaviours #2/#3: after Story 1-8, opt
     await waitFor(() => expect(screen.getByText(randoseru.teachBack)).toBeInTheDocument());
     await user.click(screen.getByText(ui.stageParentGotItLabel));
     await user.click(screen.getByText(ui.stageReturnToChild));
+    // randoseru (1-8) now has its own registered CHECKPOINT audio too (Final Module 1 Audio
+    // Integration Pass) — same "post-gated" placement as oyatsu's, it plays first.
+    await skipCheckpointAudioIfPresent(user);
     await waitFor(() => expect(screen.getByText(ui.realAiLabHeading!)).toBeInTheDocument());
     await user.click(screen.getByText(ui.handoffSkip));
     expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument();
@@ -237,6 +243,9 @@ describe('Architect completion ritual — behaviour #8: Real AI Lab never popula
     await waitFor(() => expect(screen.getByText(randoseru.teachBack)).toBeInTheDocument());
     await user.click(screen.getByText(ui.stageParentGotItLabel));
     await user.click(screen.getByText(ui.stageReturnToChild));
+    // randoseru (1-8) now has its own registered CHECKPOINT audio too (Final Module 1 Audio
+    // Integration Pass) — same "post-gated" placement as oyatsu's, it plays first.
+    await skipCheckpointAudioIfPresent(user);
     await waitFor(() => expect(screen.getByText(ui.realAiLabHeading!)).toBeInTheDocument());
     await user.click(screen.getByText(ui.handoffContinue));
 

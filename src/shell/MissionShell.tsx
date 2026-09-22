@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Mission, ModuleUiStrings } from '../engine/types';
-import type { AudioRole } from '../audio/types';
+import { audioPlacement, type AudioRole } from '../audio/types';
 import { load, save, MAX_PROFILES, type AppState, type Profile } from '../engine/storage';
 import { hasAccess, reconcileEntitlements, applyRedemption, revokeUnrecognizedCode } from '../engine/entitlements';
 import { redeemFamilyCode } from '../parent/unlock/redeemCode';
@@ -112,11 +112,16 @@ type Screen =
   /** WO-24 (AD-07): Mission 1's own continuous scene — replaces the 'phase'/'tip' sequence, only
    *  when `continuousStageMissionId` matches the active mission. */
   | { kind: 'stage' }
-  /** WO-33 (AD-10 / Audio Reference Scripts rev.3): a mission's own registered reference-audio
-   *  screen (src/audio/registry.ts). MODEL/GUIDED reach this from `chooseCoop`, before 'stage';
-   *  CHECKPOINT reaches it from 'stage-teachback's own return-to-child action, after teach-back
-   *  and M2b — never any other way, so it can never appear before the child's own work. */
-  | { kind: 'audio'; role: AudioRole }
+  /** WO-33/Final Module 1 Audio Integration Pass (AD-10 / Audio Reference Scripts rev.3): a
+   *  mission's own registered reference-audio screen (src/audio/registry.ts). `placement`
+   *  (src/audio/types.ts's own `audioPlacement`, derived from `role`) says which of the three
+   *  ways it was reached, since `onDone` needs to resume a different place for each: 'pre'
+   *  (MODEL/GUIDED) from `chooseCoop`, before 'stage'; 'post-gated' (CHECKPOINT) from
+   *  'stage-teachback's own return-to-child action, after teach-back and M2b — never in solo
+   *  play; 'post-ungated' (TRANSFER/'independent practice') from `stageCompleted` itself,
+   *  immediately after the child's own dig work, in BOTH solo and co-play — never gated behind
+   *  the parent hand-off ritual. */
+  | { kind: 'audio'; role: AudioRole; placement: 'pre' | 'post-gated' | 'post-ungated' }
   /** WO-34: the optional Real AI Lab session — reached ONLY from 'stage-teachback's own
    *  return-to-child action, and only for REAL_AI_LAB_MISSION_ID (Story 1-8), same "after
    *  teach-back and M2b, never any other way" guarantee CHECKPOINT audio already has above. */
@@ -347,11 +352,17 @@ export function MissionShell({
       setScreen({ kind: 'phase', index: 0 });
       return;
     }
-    // WO-33: MODEL (1-1)/GUIDED (1-2) play before practice, for both solo and co-play — rev.3
-    // positions them here, not gated on the family's coop choice. CHECKPOINT (1-4) is never
-    // entered this way; it only ever reaches 'audio' later, from 'stage-teachback' below.
+    // WO-33: MODEL/GUIDED play before practice, for both solo and co-play — rev.3 positions
+    // them here, not gated on the family's coop choice. Every other placement is never entered
+    // this way: 'post-gated' (CHECKPOINT) only ever reaches 'audio' later, from 'stage-teachback'
+    // below; 'post-ungated' (TRANSFER/'independent practice') only ever reaches it from
+    // `stageCompleted`, right after the child's own dig work — never before it.
     const script = audioScriptFor(mission.id);
-    setScreen(script && script.role !== 'CHECKPOINT' ? { kind: 'audio', role: script.role } : { kind: 'stage' });
+    if (script && audioPlacement(script.role) === 'pre') {
+      setScreen({ kind: 'audio', role: script.role, placement: 'pre' });
+      return;
+    }
+    setScreen({ kind: 'stage' });
   }
 
   function markDone() {
@@ -551,9 +562,12 @@ export function MissionShell({
   // the handoff curtain — solo goes straight to the child-facing completion screen instead.
   // The parent screen is never deleted or unreachable: Course Home's own standing おうちの方へ
   // button (unchanged) still opens it any time a parent wants it.
-  function stageCompleted(digResult: DigResult) {
-    digPhaseCompleted(digResult);
-    markDone();
+  // Final Module 1 Audio Integration Pass: the continuation `stageCompleted` always used to run
+  // directly — factored out so a mission with its own 'post-ungated' audio (every Bank Dig,
+  // Story 1-6) can play that screen FIRST and still resume the exact same routing afterward, via
+  // the 'audio' screen's own onDone below. Every mission without one skips straight to this, same
+  // behavior as before this pass.
+  function finishStageWork() {
     // WO-26 §14: a mission that declares a perspective-shift moment (e.g. Mission 1-5/minna)
     // still shows it — child-facing, before any solo/coop split — exactly where the original
     // screen-by-screen flow placed it (after おうちトーク, before handoff). Preserved content,
@@ -571,6 +585,22 @@ export function MissionShell({
       return;
     }
     setScreen({ kind: 'handoff' });
+  }
+
+  function stageCompleted(digResult: DigResult) {
+    digPhaseCompleted(digResult);
+    markDone();
+    // Final Module 1 Audio Integration Pass: a mission with its own registered 'post-ungated'
+    // audio (every Bank Dig's TRANSFER script, Story 1-6/zurui's own 'independent practice' one)
+    // plays it right here — immediately after the child's own dig work, in BOTH solo and
+    // co-play, never gated behind teach-back/M2b the way CHECKPOINT is. `finishStageWork` (via
+    // this screen's own onDone below) picks up exactly where it would have gone otherwise.
+    const script = audioScriptFor(mission.id);
+    if (script && audioPlacement(script.role) === 'post-ungated') {
+      setScreen({ kind: 'audio', role: script.role, placement: 'post-ungated' });
+      return;
+    }
+    finishStageWork();
   }
 
   /** Mission Complete's own primary action — resolves the active profile's now-updated next
@@ -692,13 +722,21 @@ export function MissionShell({
 
   if (screen.kind === 'audio') {
     const script = audioScriptFor(mission.id);
+    const placement = screen.placement;
     return (
       <AudioScene
         role={screen.role}
         robotLine={script?.robotLine ?? ''}
         lines={script?.lines}
         ui={ui}
-        onDone={() => setScreen(screen.role === 'CHECKPOINT' ? { kind: 'complete' } : { kind: 'stage' })}
+        onDone={() => {
+          if (placement === 'pre') { setScreen({ kind: 'stage' }); return; }
+          if (placement === 'post-ungated') { finishStageWork(); return; }
+          // 'post-gated' (CHECKPOINT) — reached only from 'stage-teachback's own return-to-child
+          // action, same place Real AI Lab (1-8/randoseru only) is reached from.
+          if (mission.id === REAL_AI_LAB_MISSION_ID) { setScreen({ kind: 'real-ai-lab' }); return; }
+          setScreen({ kind: 'complete' });
+        }}
       />
     );
   }
@@ -903,7 +941,10 @@ export function MissionShell({
             // any earlier. Every other mission goes straight to 'complete', exactly as before
             // either ticket.
             const script = audioScriptFor(mission.id);
-            if (script?.role === 'CHECKPOINT') { setScreen({ kind: 'audio', role: 'CHECKPOINT' }); return; }
+            if (script?.role === 'CHECKPOINT') {
+              setScreen({ kind: 'audio', role: 'CHECKPOINT', placement: 'post-gated' });
+              return;
+            }
             if (mission.id === REAL_AI_LAB_MISSION_ID) { setScreen({ kind: 'real-ai-lab' }); return; }
             setScreen({ kind: 'complete' });
           }}

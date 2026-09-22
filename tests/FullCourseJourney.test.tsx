@@ -4,7 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
-import { playMissionScreenToCompletion, skipCompletionRitualIfPresent, skipM0RitualIfPresent } from './helpers/stageConformance';
+import {
+  playMissionScreenToCompletion, skipCompletionRitualIfPresent, skipM0RitualIfPresent,
+  skipPostWorkAudioIfPresent,
+} from './helpers/stageConformance';
 import { titleMatcher } from './helpers/titleText';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
@@ -94,6 +97,10 @@ async function playCurrentStoryToMap(user: ReturnType<typeof userEvent.setup>, m
   await user.click(screen.getByText(ui.courseHomeContinueLabel));
   await user.click(screen.getByText(ui.coopSolo));
   await playMissionScreenToCompletion(user, mission, ui);
+  // Final Module 1 Audio Integration Pass: Story 6 (zurui, 'independent practice') now has its
+  // own registered 'post-ungated' audio, shown right here — immediately after the dig work. A
+  // no-op for every other Story in this journey.
+  await skipPostWorkAudioIfPresent(user);
   // Story 5 (minna) declares a perspective-shift moment (WO-19 Phase 3C) — preserved at its own
   // position (WO-26 §14), shown here before the child-facing completion screen since this whole
   // journey plays SOLO throughout.
@@ -110,6 +117,9 @@ async function playBankToCompletion(user: ReturnType<typeof userEvent.setup>, mi
   await user.click(screen.getByText(titleMatcher(mission.title)));
   await user.click(screen.getByText(ui.coopSolo));
   await playMissionScreenToCompletion(user, mission, ui);
+  // Final Module 1 Audio Integration Pass: every Bank Dig now has its own registered TRANSFER
+  // audio, shown right here — immediately after the dig work, before course-complete.
+  await skipPostWorkAudioIfPresent(user);
   await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
   await user.click(screen.getByText(ui.completeBackToMapLabel));
 }

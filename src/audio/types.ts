@@ -2,9 +2,32 @@
 // never imported by module.json or any content-lint pipeline (see src/audio/registry.ts's own
 // doc comment for why this whole directory sits outside src/modules).
 
-/** The three frozen reference patterns rev.3 defines. MODEL and GUIDED play BEFORE practice;
- *  CHECKPOINT plays AFTER the child's own work, teach-back and the M2b parent confirmation. */
-export type AudioRole = 'MODEL' | 'GUIDED' | 'CHECKPOINT';
+/** rev.3's original three reference patterns, plus the two the Final Module 1 Audio Integration
+ *  Pass added once the remaining 17 units' own finalized scripts existed: 'TRANSFER' (every Bank
+ *  Dig's own post-practice narration) and 'independent practice' (Story 1-6/zurui's own — the
+ *  Architect's own label, explicitly "not a checkpoint"). See `audioPlacement` below for what
+ *  each one actually means for WHEN a mission's audio plays — the single source of truth
+ *  src/shell/MissionShell.tsx's screen routing reads instead of comparing role strings itself. */
+export type AudioRole = 'MODEL' | 'GUIDED' | 'CHECKPOINT' | 'TRANSFER' | 'independent practice';
+
+/**
+ * Where a mission's own registered audio plays, derived purely from its `role`:
+ * - 'pre' (MODEL/GUIDED): before the child's own practice, reached from `chooseCoop` — for
+ *   both solo and co-play.
+ * - 'post-gated' (CHECKPOINT): strictly after the child's own work, teach-back AND the M2b
+ *   parent confirmation — reached only from 'stage-teachback's own return-to-child action, so
+ *   never in solo play (solo never reaches teach-back at all).
+ * - 'post-ungated' (TRANSFER, 'independent practice'): immediately after the child's own dig
+ *   work finishes (`MissionStage`'s onComplete), in BOTH solo and co-play — never gated behind
+ *   the parent hand-off ritual the way CHECKPOINT is. This is the Architect's own "DO -> LISTEN
+ *   (-> USE)" shape for every Bank Dig and for 1-6, which is explicitly "not a checkpoint" even
+ *   though it also plays after the child's own work.
+ */
+export function audioPlacement(role: AudioRole): 'pre' | 'post-gated' | 'post-ungated' {
+  if (role === 'MODEL' || role === 'GUIDED') return 'pre';
+  if (role === 'CHECKPOINT') return 'post-gated';
+  return 'post-ungated';
+}
 
 export interface AudioScript {
   /** The Mission this script belongs to — src/audio/registry.ts's own lookup key. */

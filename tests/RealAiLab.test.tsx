@@ -46,6 +46,11 @@ async function playToReturnToChild(user: ReturnType<typeof userEvent.setup>, mis
   await waitFor(() => expect(screen.getByText(mission.teachBack)).toBeInTheDocument());
   await user.click(screen.getByText(ui.stageParentGotItLabel));
   await user.click(screen.getByText(ui.stageReturnToChild));
+  // Final Module 1 Audio Integration Pass: randoseru (1-8) and kashite (1-7) now both have their
+  // own registered CHECKPOINT audio too — it plays first, same "post-gated" placement as
+  // oyatsu's; skip through it before whatever comes next (Real AI Lab, or straight to complete
+  // for every mission but randoseru) ever appears. A no-op for a mission with none.
+  await skipCheckpointAudioIfPresent(user);
 }
 
 describe('WO-34 — Real AI Lab: placement (after Story 1-8, before course-complete, co-play only)', () => {
@@ -71,8 +76,12 @@ describe('WO-34 — Real AI Lab: placement (after Story 1-8, before course-compl
     expect(document.querySelector('.mission-shell__real-ai-lab-heading')).not.toBeInTheDocument();
     expect(screen.getByText(ui.stageReturnToChild)).toBeInTheDocument();
 
-    // Only now — strictly after teach-back and M2b.
+    // Only now — strictly after teach-back and M2b. randoseru (1-8) now has its own registered
+    // CHECKPOINT audio too (Final Module 1 Audio Integration Pass) — same "post-gated" placement
+    // as oyatsu's, it plays first; skip through it before Real AI Lab, its own next screen, ever
+    // appears.
     await user.click(screen.getByText(ui.stageReturnToChild));
+    await skipCheckpointAudioIfPresent(user);
     expect(document.querySelector('.mission-shell__real-ai-lab-heading')).toBeInTheDocument();
     expect(screen.queryByText(ui.completeHeading)).not.toBeInTheDocument(); // before the course-complete screen
   });
