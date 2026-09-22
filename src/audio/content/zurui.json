@@ -1,0 +1,146 @@
+{
+  "missionId": "m1-s2-1-6",
+  "role": "independent practice",
+  "audioStatus": "ready",
+  "robotLine": "先に えらべた 人が、とくだから、ずるいよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太も、「ずるい」のところを ほってみたんだって。",
+      "audioUrl": "/audio/m1/1-6-zurui/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。「『ずるい』って、何？」ってやつ。",
+      "audioUrl": "/audio/m1/1-6-zurui/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ロボは、さいしょ何て言った？",
+      "audioUrl": "/audio/m1/1-6-zurui/02-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「先に えらべた 人が、とくだから、ずるいよ」って。だから、わかった！って思ったの。",
+      "audioUrl": "/audio/m1/1-6-zurui/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そのとき、自分に聞いたことば、おぼえてる？　「これで、ほんとうに……」",
+      "audioUrl": "/audio/m1/1-6-zurui/04-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……わかった？」って。でもね、先にえらんだだけで ずるいのかなって、ちょっと へんな気がしたの。",
+      "audioUrl": "/audio/m1/1-6-zurui/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "それで、どうしたの？",
+      "audioUrl": "/audio/m1/1-6-zurui/06-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "はじめ、「ずるいって、わるいこと？」って聞いちゃった。",
+      "audioUrl": "/audio/m1/1-6-zurui/07-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "うん。",
+      "audioUrl": "/audio/m1/1-6-zurui/08-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "でも、ほれなかった。わるいかどうかじゃなくて、「ずるい」が 何なのかを 知りたかったのに。",
+      "audioUrl": "/audio/m1/1-6-zurui/09-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そういうこと、あるよね。",
+      "audioUrl": "/audio/m1/1-6-zurui/10-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そのあと、自分に何て聞いた？　「まだ わからないのは……」",
+      "audioUrl": "/audio/m1/1-6-zurui/11-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……どこ？」　わからないのは、「ずるい」が 先にえらぶことだけなのか、だった。だから、「ほかにもある？」って聞いたの。",
+      "audioUrl": "/audio/m1/1-6-zurui/12-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そしたら？",
+      "audioUrl": "/audio/m1/1-6-zurui/13-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「ルールを まもらなかった 人にも、『ずるい』って 言うよね」って。",
+      "audioUrl": "/audio/m1/1-6-zurui/14-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "え、ぜんぜん ちがうことなのに、どっちも ずるい？って、ここで まよったんだ。",
+      "audioUrl": "/audio/m1/1-6-zurui/15-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そういうとき、自分に何て聞いた？　「じゃあ、つぎに……」",
+      "audioUrl": "/audio/m1/1-6-zurui/16-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……何を きけば いい？」　それで、「なんで、どっちも『ずるい』なの？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/1-6-zurui/17-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみも、同じねっこについたよね。",
+      "audioUrl": "/audio/m1/1-6-zurui/18-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "きみは、どこでまよった？　ポン太と、同じところ？　ちがうところ？",
+      "audioUrl": "/audio/m1/1-6-zurui/19-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも、いいんだよ。まよったところは、人によってちがうからね。",
+      "audioUrl": "/audio/m1/1-6-zurui/20-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "へえ。きみは、どこでまよったのかな。",
+      "audioUrl": "/audio/m1/1-6-zurui/21-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど「ずるい」って思ったら、どんな やくそくが あったのかな、って 考えてみてね。",
+      "audioUrl": "/audio/m1/1-6-zurui/22-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

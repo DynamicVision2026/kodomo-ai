@@ -1,0 +1,92 @@
+{
+  "missionId": "bank-b07",
+  "role": "TRANSFER",
+  "audioStatus": "ready",
+  "robotLine": "きれいって、ゴミが ないことだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、「きれい」のところを ほってみたんだって？",
+      "audioUrl": "/audio/m1/b07-kirei/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。ロボは、さいしょ「きれいって、ゴミが ないことだよ」って。",
+      "audioUrl": "/audio/m1/b07-kirei/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "自分に聞いたんだ。「これで、ほんとうに わかった？」って。",
+      "audioUrl": "/audio/m1/b07-kirei/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "でもね、はじめ「ゴミって、なに？」って聞いちゃった。",
+      "audioUrl": "/audio/m1/b07-kirei/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ほれなかった。ゴミが 何かじゃなくて、「きれい」が 何なのかを 知りたかったのに。",
+      "audioUrl": "/audio/m1/b07-kirei/04-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そういうこと、あるよね。",
+      "audioUrl": "/audio/m1/b07-kirei/05-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、「まだ わからないのは、どこ？」って考えて、「どういうこと？」って聞いたの。",
+      "audioUrl": "/audio/m1/b07-kirei/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「おもちゃが ちらかってると、ゴミが なくても、きれいじゃないよね」って。",
+      "audioUrl": "/audio/m1/b07-kirei/07-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "えっ、ゴミが なくても だめなの？って、ここで また まよったんだ。",
+      "audioUrl": "/audio/m1/b07-kirei/08-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「じゃあ、つぎに 何を きけば いい？」って考えて、「なんで、ちらかってると ダメなの？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/b07-kirei/09-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太は、二回 まよったんだね。",
+      "audioUrl": "/audio/m1/b07-kirei/10-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみは、どうだった？　すっと ほれた？　どこかで まよった？",
+      "audioUrl": "/audio/m1/b07-kirei/11-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも、いいんだよ。",
+      "audioUrl": "/audio/m1/b07-kirei/12-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど「きれいに しなさい」って言われたら、「どう すれば いいの？」って 聞いてみてね。",
+      "audioUrl": "/audio/m1/b07-kirei/13-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "missionId": "bank-b06",
+  "role": "TRANSFER",
+  "audioStatus": "ready",
+  "robotLine": "同じ おかしでも、お店で ねだんが ちがうんだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、おかしの ねだんのところを ほってみたんだって？",
+      "audioUrl": "/audio/m1/b06-nedan/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。ロボは、さいしょ「同じ おかしでも、お店で ねだんが ちがうんだよ」って。",
+      "audioUrl": "/audio/m1/b06-nedan/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "自分に聞いたんだ。「これで、ほんとうに わかった？」って。",
+      "audioUrl": "/audio/m1/b06-nedan/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "同じ おかしなのに、なんで ちがうのか、わからなかった。",
+      "audioUrl": "/audio/m1/b06-nedan/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、「まだ わからないのは、どこ？」って考えて、「なんで、ちがうの？」って聞いたの。",
+      "audioUrl": "/audio/m1/b06-nedan/04-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「お店の いろんな ひようが ちがうからだよ」って。",
+      "audioUrl": "/audio/m1/b06-nedan/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「じゃあ、つぎに 何を きけば いい？」って考えて、「ほかにもある？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/b06-nedan/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太は、どっちの お店で 買いたい？　やすい お店？　ちかい お店？",
+      "audioUrl": "/audio/m1/b06-nedan/07-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ぼくは、ちかい お店がいいな。すぐ 買えるから。",
+      "audioUrl": "/audio/m1/b06-nedan/08-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そうなんだ。すこし とおくても、やすい お店がいい、っていう人も いるよね。",
+      "audioUrl": "/audio/m1/b06-nedan/09-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみは、どっちが いい？",
+      "audioUrl": "/audio/m1/b06-nedan/10-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも いいんだよ。",
+      "audioUrl": "/audio/m1/b06-nedan/11-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど、同じ おかしの ねだんを、ふたつの お店で くらべてみてね。",
+      "audioUrl": "/audio/m1/b06-nedan/12-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

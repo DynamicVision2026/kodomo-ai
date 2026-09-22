@@ -1,0 +1,74 @@
+{
+  "missionId": "bank-b05",
+  "role": "TRANSFER",
+  "audioStatus": "ready",
+  "robotLine": "4月1日生まれと、4月2日生まれで、学年が ちがうんだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、学年の 線のところを ほってみたんだって？",
+      "audioUrl": "/audio/m1/b05-gakunen/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。ロボは、さいしょ「4月1日生まれと、4月2日生まれで、学年が ちがうんだよ」って。",
+      "audioUrl": "/audio/m1/b05-gakunen/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "自分に聞いたんだ。「これで、ほんとうに わかった？」って。",
+      "audioUrl": "/audio/m1/b05-gakunen/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "一日しか ちがわないのに、なんで 学年が かわるのか、わからなかった。",
+      "audioUrl": "/audio/m1/b05-gakunen/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、「まだ わからないのは、どこ？」って考えて、「なんで、その日で 分かれるの？」って聞いたの。",
+      "audioUrl": "/audio/m1/b05-gakunen/04-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「学年を くぎるには、どこかで 線を 引く ひつようが あるからだよ」って。",
+      "audioUrl": "/audio/m1/b05-gakunen/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「じゃあ、つぎに 何を きけば いい？」って考えて、「ほかにもある？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/b05-gakunen/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "すいすい ほれたんだね。",
+      "audioUrl": "/audio/m1/b05-gakunen/07-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみは、どうだった？　ポン太と、同じ？　どこかで まよった？",
+      "audioUrl": "/audio/m1/b05-gakunen/08-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも、いいんだよ。",
+      "audioUrl": "/audio/m1/b05-gakunen/09-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ほかにも、「ここから」って 線を 引いているもの、さがしてみてね。何さいから のれる のりものみたいに。",
+      "audioUrl": "/audio/m1/b05-gakunen/10-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

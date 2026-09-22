@@ -1,0 +1,146 @@
+{
+  "missionId": "m1-s2-1-8",
+  "role": "CHECKPOINT",
+  "audioStatus": "ready",
+  "robotLine": "見た目は かわっても、ずっと 同じ ランドセルだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、さいごのところを ほってみたんだって？",
+      "audioUrl": "/audio/m1/1-8-randoseru/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん！　「ランドセルは、6年つかっても、まだ同じ？」ってやつ。",
+      "audioUrl": "/audio/m1/1-8-randoseru/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ロボは、さいしょ何て言った？",
+      "audioUrl": "/audio/m1/1-8-randoseru/02-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「見た目は かわっても、ずっと 同じ ランドセルだよ」って。",
+      "audioUrl": "/audio/m1/1-8-randoseru/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "そのとき、自分に聞いたんだ。「これで、ほんとうに わかった？」って。",
+      "audioUrl": "/audio/m1/1-8-randoseru/04-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "そしたらね、「かわっても同じ」って、ぴんと こなかったの。",
+      "audioUrl": "/audio/m1/1-8-randoseru/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "はじめ、「ランドセルって、何年つかうの？」って聞いちゃった。でも、ほれなかった。何年か わかっても、同じかどうかは わからないから。",
+      "audioUrl": "/audio/m1/1-8-randoseru/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そういうこと、あるよね。",
+      "audioUrl": "/audio/m1/1-8-randoseru/07-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、自分に聞いたの。「まだ わからないのは、どこ？」って。",
+      "audioUrl": "/audio/m1/1-8-randoseru/08-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "わからないのは、ほんとうに どこが かわったのか、だった。だから、「たとえば？」って聞いたんだ。",
+      "audioUrl": "/audio/m1/1-8-randoseru/09-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「たとえば、ベルトも しんも、はんぶん かえたことが あるんだよ」って。",
+      "audioUrl": "/audio/m1/1-8-randoseru/10-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "えっ、はんぶんも かえたのに、同じ？って、ここで まよったんだ。",
+      "audioUrl": "/audio/m1/1-8-randoseru/11-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、自分に聞いたの。「じゃあ、つぎに 何を きけば いい？」って。",
+      "audioUrl": "/audio/m1/1-8-randoseru/12-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、「なんで、それでも 同じって 言えるの？」って聞いたの。",
+      "audioUrl": "/audio/m1/1-8-randoseru/13-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「きみが、ずっと つかってきた、ひとつの ものだからだよ」って。",
+      "audioUrl": "/audio/m1/1-8-randoseru/14-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、「ほかにもある？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/1-8-randoseru/15-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、いま、ぜんぶ 自分で 聞いていたね。",
+      "audioUrl": "/audio/m1/1-8-randoseru/16-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "さいしょは、わたしが 聞いていたのにね。",
+      "audioUrl": "/audio/m1/1-8-randoseru/17-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "えへへ。いつのまにか、自分で 聞いてた。",
+      "audioUrl": "/audio/m1/1-8-randoseru/18-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみも、ねっこについたよね。",
+      "audioUrl": "/audio/m1/1-8-randoseru/19-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "きみは、どこでまよった？　ポン太と、同じところ？　ちがうところ？",
+      "audioUrl": "/audio/m1/1-8-randoseru/20-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも、いいんだよ。まよったところは、人によってちがうからね。",
+      "audioUrl": "/audio/m1/1-8-randoseru/21-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど、うちで ずっと つかっている ものを 見つけたら、「同じって、なに？」って 考えてみてね。",
+      "audioUrl": "/audio/m1/1-8-randoseru/22-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

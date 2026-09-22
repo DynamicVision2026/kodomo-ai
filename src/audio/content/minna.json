@@ -1,0 +1,110 @@
+{
+  "missionId": "m1-s2-1-5",
+  "role": "GUIDED",
+  "audioStatus": "ready",
+  "robotLine": "",
+  "lines": [
+    {
+      "speaker": "PONTA",
+      "text": "あーあ、雨だ。雨の日って、いやな日だよね。外であそべないもん。",
+      "audioUrl": "/audio/m1/1-5-minna/00-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そっか。ポン太は、雨の日は いやな日だと思うんだね。",
+      "audioUrl": "/audio/m1/1-5-minna/01-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。ぜったい、いやな日！",
+      "audioUrl": "/audio/m1/1-5-minna/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "「これで、ほんとうに……」",
+      "audioUrl": "/audio/m1/1-5-minna/03-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……わかった？」　うん、わかったよ。いやな日に きまってる。",
+      "audioUrl": "/audio/m1/1-5-minna/04-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ねえポン太。畑をしている おばあちゃんは、雨の日が うれしいんだって。やさいが そだつからね。",
+      "audioUrl": "/audio/m1/1-5-minna/05-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "……あ。おばあちゃんには、いい日なんだ。",
+      "audioUrl": "/audio/m1/1-5-minna/06-ponta.mp3",
+      "pauseAfterMs": 2000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "でも、ぼくには いやな日なんだけどなあ。",
+      "audioUrl": "/audio/m1/1-5-minna/07-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "「まだ わからないのは……」",
+      "audioUrl": "/audio/m1/1-5-minna/08-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……どこ？」　いい日なのか、いやな日なのか、わかんなくなってきた。",
+      "audioUrl": "/audio/m1/1-5-minna/09-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちが、ただしいと思う？",
+      "audioUrl": "/audio/m1/1-5-minna/10-guide.mp3",
+      "pauseAfterMs": 2000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "……どっちも、ちょっと わかる。",
+      "audioUrl": "/audio/m1/1-5-minna/11-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "うん。こたえが ひとつじゃ ないことも ある。それも、ほったから わかることだよ。",
+      "audioUrl": "/audio/m1/1-5-minna/12-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "「じゃあ、つぎに……」",
+      "audioUrl": "/audio/m1/1-5-minna/13-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……何を きけば いい？」",
+      "audioUrl": "/audio/m1/1-5-minna/14-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "それは、きみが ほりながら 考えてね。こんど ほるところも、こたえが ひとつじゃ ないかもしれないよ。",
+      "audioUrl": "/audio/m1/1-5-minna/15-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ここから先は、きみのばんだよ。",
+      "audioUrl": "/audio/m1/1-5-minna/16-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

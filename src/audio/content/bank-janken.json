@@ -1,0 +1,92 @@
+{
+  "missionId": "bank-b03",
+  "role": "TRANSFER",
+  "audioStatus": "ready",
+  "robotLine": "じゃんけんで、じゅんばんを きめるんだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、じゃんけんのところを ほってみたんだって？",
+      "audioUrl": "/audio/m1/b03-janken/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。ロボは、さいしょ「じゃんけんで、じゅんばんを きめるんだよ」って。",
+      "audioUrl": "/audio/m1/b03-janken/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "自分に聞いたんだ。「これで、ほんとうに わかった？」って。",
+      "audioUrl": "/audio/m1/b03-janken/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "でもね、はじめ「じゃんけんって、グーが つよいの？」って聞いちゃった。",
+      "audioUrl": "/audio/m1/b03-janken/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ほれなかった。つよいかどうかじゃなくて、なんで じゃんけんで きめるのかを 知りたかったのに。",
+      "audioUrl": "/audio/m1/b03-janken/04-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そういうこと、あるよね。",
+      "audioUrl": "/audio/m1/b03-janken/05-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、「まだ わからないのは、どこ？」って考えて、「なんで、じゃんけんなの？」って聞いたの。",
+      "audioUrl": "/audio/m1/b03-janken/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「だれにも、こうへいだからだよ」って。",
+      "audioUrl": "/audio/m1/b03-janken/07-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ぼく、そこで「こうへいか、わかった！」って、とまりそうに なったんだ。",
+      "audioUrl": "/audio/m1/b03-janken/08-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "でも、「じゃあ、つぎに 何を きけば いい？」って考えて、「ほかにもある？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/b03-janken/09-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太は、二回 まよったんだね。",
+      "audioUrl": "/audio/m1/b03-janken/10-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみは、どうだった？　すっと ほれた？　どこかで まよった？",
+      "audioUrl": "/audio/m1/b03-janken/11-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも、いいんだよ。",
+      "audioUrl": "/audio/m1/b03-janken/12-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど じゅんばんを きめるとき、「ほかの きめかたも あるかな？」って 考えてみてね。",
+      "audioUrl": "/audio/m1/b03-janken/13-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

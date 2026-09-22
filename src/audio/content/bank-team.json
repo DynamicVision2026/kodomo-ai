@@ -1,0 +1,86 @@
+{
+  "missionId": "bank-b04",
+  "role": "TRANSFER",
+  "audioStatus": "ready",
+  "robotLine": "じゃんけんや、くじで、チームを 分けるんだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、チームの 分けかたを ほってみたんだって？",
+      "audioUrl": "/audio/m1/b04-team/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。ロボは、さいしょ「じゃんけんや、くじで、チームを 分けるんだよ」って。",
+      "audioUrl": "/audio/m1/b04-team/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "自分に聞いたんだ。「これで、ほんとうに わかった？」って。",
+      "audioUrl": "/audio/m1/b04-team/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "くじで 分けるって、どういうふうに 分けるのか、よく わからなかった。",
+      "audioUrl": "/audio/m1/b04-team/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、「まだ わからないのは、どこ？」って考えて、「どういうこと？」って聞いたの。",
+      "audioUrl": "/audio/m1/b04-team/04-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「強い人が かたよると、先生が ちょうせいすることも あるんだよ」って。",
+      "audioUrl": "/audio/m1/b04-team/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「じゃあ、つぎに 何を きけば いい？」って考えて、「ほかにもある？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/b04-team/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太は、どんな 分けかたが いい？",
+      "audioUrl": "/audio/m1/b04-team/07-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ぼくは、つよさが 同じくらいに なるのが いいな。しあいが おもしろくなるから。",
+      "audioUrl": "/audio/m1/b04-team/08-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そうなんだ。じゃんけんや くじのほうが いい、っていう人も いるよね。",
+      "audioUrl": "/audio/m1/b04-team/09-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみは、どっちが いい？",
+      "audioUrl": "/audio/m1/b04-team/10-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも いいんだよ。",
+      "audioUrl": "/audio/m1/b04-team/11-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど チームを 分けるとき、どうやって 分けているか、見てみてね。",
+      "audioUrl": "/audio/m1/b04-team/12-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

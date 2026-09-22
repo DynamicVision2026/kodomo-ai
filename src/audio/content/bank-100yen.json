@@ -1,0 +1,74 @@
+{
+  "missionId": "bank-b12",
+  "role": "TRANSFER",
+  "audioStatus": "ready",
+  "robotLine": "ひろった 100円は、けいさつに とどけるんだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、ひろった 100円のところを ほってみたんだって？",
+      "audioUrl": "/audio/m1/b12-100yen/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。ロボは、さいしょ「ひろった 100円は、けいさつに とどけるんだよ」って。",
+      "audioUrl": "/audio/m1/b12-100yen/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "自分に聞いたんだ。「これで、ほんとうに わかった？」って。",
+      "audioUrl": "/audio/m1/b12-100yen/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "なんで じぶんの ものに しちゃ いけないのか、わからなかった。",
+      "audioUrl": "/audio/m1/b12-100yen/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、「まだ わからないのは、どこ？」って考えて、「なんで、じぶんの ものに しちゃ ダメなの？」って聞いたの。",
+      "audioUrl": "/audio/m1/b12-100yen/04-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「おとした 人が、こまってるかも しれないからだよ」って。",
+      "audioUrl": "/audio/m1/b12-100yen/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「じゃあ、つぎに 何を きけば いい？」って考えて、「どういうこと？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/b12-100yen/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "すいすい ほれたんだね。",
+      "audioUrl": "/audio/m1/b12-100yen/07-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみは、どうだった？　ポン太と、同じ？　どこかで まよった？",
+      "audioUrl": "/audio/m1/b12-100yen/08-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも、いいんだよ。",
+      "audioUrl": "/audio/m1/b12-100yen/09-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど おとしものを 見つけたら、おとした 人のことを、ちょっと 思いうかべてみてね。",
+      "audioUrl": "/audio/m1/b12-100yen/10-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

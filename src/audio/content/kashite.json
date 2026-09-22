@@ -1,0 +1,146 @@
+{
+  "missionId": "m1-s2-1-7",
+  "role": "CHECKPOINT",
+  "audioStatus": "ready",
+  "robotLine": "『かして』って言われたら、かすのが やさしさだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太も、「かして」のところを ほってみたんだって。",
+      "audioUrl": "/audio/m1/1-7-kashite/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。「『かして』って言われたら、かさなきゃダメ？」ってやつ。",
+      "audioUrl": "/audio/m1/1-7-kashite/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ロボは、さいしょ何て言った？",
+      "audioUrl": "/audio/m1/1-7-kashite/02-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「『かして』って言われたら、かすのが やさしさだよ」って。だから、わかった！って思ったの。",
+      "audioUrl": "/audio/m1/1-7-kashite/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そのとき、自分に聞いたことば、おぼえてる？　「これで、ほんとうに……」",
+      "audioUrl": "/audio/m1/1-7-kashite/04-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……わかった？」って。そしたらね、ぼくの だいじな ものでも かすのかなって、わからなくなったの。",
+      "audioUrl": "/audio/m1/1-7-kashite/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "それで、どうしたの？",
+      "audioUrl": "/audio/m1/1-7-kashite/06-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "はじめ、もう一回「かさなきゃダメ？」って聞いちゃった。",
+      "audioUrl": "/audio/m1/1-7-kashite/07-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "うん。",
+      "audioUrl": "/audio/m1/1-7-kashite/08-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "でも、同じことを聞いたら、同じ答えになっちゃうよね。",
+      "audioUrl": "/audio/m1/1-7-kashite/09-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そういうこと、あるよね。",
+      "audioUrl": "/audio/m1/1-7-kashite/10-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そのあと、自分に何て聞いた？　「まだ わからないのは……」",
+      "audioUrl": "/audio/m1/1-7-kashite/11-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……どこ？」　わからないのは、ロボの言った「やさしさ」が、どういうことなのか、だった。だから、「どういうこと？」って聞いたの。",
+      "audioUrl": "/audio/m1/1-7-kashite/12-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そしたら？",
+      "audioUrl": "/audio/m1/1-7-kashite/13-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「たいせつな ものは、むりに かさなくても いいんだよ」って。",
+      "audioUrl": "/audio/m1/1-7-kashite/14-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "え、かさなくても いいの？って、ここで まよったんだ。",
+      "audioUrl": "/audio/m1/1-7-kashite/15-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そういうとき、自分に何て聞いた？　「じゃあ、つぎに……」",
+      "audioUrl": "/audio/m1/1-7-kashite/16-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「……何を きけば いい？」　それで、「なんで、むりしなくて いいの？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/1-7-kashite/17-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そこはね、「たとえば、どんな とき？」って聞いても、ねっこまで行けるんだよ。",
+      "audioUrl": "/audio/m1/1-7-kashite/18-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "へえ、どっちでも ほれるんだ。",
+      "audioUrl": "/audio/m1/1-7-kashite/19-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみは、どっちで聞いた？　それとも、ほかのところで まよった？",
+      "audioUrl": "/audio/m1/1-7-kashite/20-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも、いいんだよ。ここは、聞きかたが ふたつ あるところなんだ。",
+      "audioUrl": "/audio/m1/1-7-kashite/21-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど「かして」って言われたら、あいての 気もちと、じぶんの 気もちを、りょうほう 考えてみてね。",
+      "audioUrl": "/audio/m1/1-7-kashite/22-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

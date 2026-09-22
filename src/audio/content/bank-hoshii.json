@@ -1,0 +1,86 @@
+{
+  "missionId": "bank-b08",
+  "role": "TRANSFER",
+  "audioStatus": "ready",
+  "robotLine": "みんなが もってるから、ほしいと おもうんだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、「ほしい」のところを ほってみたんだって？",
+      "audioUrl": "/audio/m1/b08-hoshii/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。ロボは、さいしょ「みんなが もってるから、ほしいと おもうんだよ」って。",
+      "audioUrl": "/audio/m1/b08-hoshii/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "自分に聞いたんだ。「これで、ほんとうに わかった？」って。",
+      "audioUrl": "/audio/m1/b08-hoshii/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「みんなが もってるから」って、どういうことなのか、わからなかった。",
+      "audioUrl": "/audio/m1/b08-hoshii/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、「まだ わからないのは、どこ？」って考えて、「どういうこと？」って聞いたの。",
+      "audioUrl": "/audio/m1/b08-hoshii/04-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「じつは、なくても こまらないのに、ほしいと かんじるんだよ」って。",
+      "audioUrl": "/audio/m1/b08-hoshii/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「じゃあ、つぎに 何を きけば いい？」って考えて、「なんで、こまらないのに ほしいの？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/b08-hoshii/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太は、こまらなくても ほしいもの、ある？",
+      "audioUrl": "/audio/m1/b08-hoshii/07-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "あるよ。ぼくは、ほしいものが あっても いいと 思うな。わくわくするから。",
+      "audioUrl": "/audio/m1/b08-hoshii/08-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そうなんだ。すこし まってから 考える、っていう人も いるよね。",
+      "audioUrl": "/audio/m1/b08-hoshii/09-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみは、どっち？",
+      "audioUrl": "/audio/m1/b08-hoshii/10-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも いいんだよ。ほしいって 思うのは、わるいことじゃ ないからね。",
+      "audioUrl": "/audio/m1/b08-hoshii/11-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど 何かが ほしくなったら、どうして ほしいのか、ちょっと 考えてみてね。",
+      "audioUrl": "/audio/m1/b08-hoshii/12-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

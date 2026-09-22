@@ -1,0 +1,86 @@
+{
+  "missionId": "bank-b09",
+  "role": "TRANSFER",
+  "audioStatus": "ready",
+  "robotLine": "同じ ことばでも、言う人で、きこえかたが ちがうんだよ。",
+  "lines": [
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太、ことばの きこえかたの ところを ほってみたんだって？",
+      "audioUrl": "/audio/m1/b09-kotoba/00-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うん。ロボは、さいしょ「同じ ことばでも、言う人で、きこえかたが ちがうんだよ」って。",
+      "audioUrl": "/audio/m1/b09-kotoba/01-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "自分に聞いたんだ。「これで、ほんとうに わかった？」って。",
+      "audioUrl": "/audio/m1/b09-kotoba/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "同じ ことばなのに、なんで ちがうのか、わからなかった。",
+      "audioUrl": "/audio/m1/b09-kotoba/03-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "それで、「まだ わからないのは、どこ？」って考えて、「なんで、ちがうの？」って聞いたの。",
+      "audioUrl": "/audio/m1/b09-kotoba/04-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ロボが、「こわい 顔で 言うと、きこえかたが かわるよね」って。",
+      "audioUrl": "/audio/m1/b09-kotoba/05-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "「じゃあ、つぎに 何を きけば いい？」って考えて、「ほかにもある？」って聞いたら……ねっこについたんだ。",
+      "audioUrl": "/audio/m1/b09-kotoba/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ポン太は、だれかが 話すとき、ことばと 顔、どっちを よく 見てる？",
+      "audioUrl": "/audio/m1/b09-kotoba/07-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ぼくは、顔を 見ちゃうな。顔で、きもちが わかる 気がするから。",
+      "audioUrl": "/audio/m1/b09-kotoba/08-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そうなんだ。ことばを よく 聞いている人も いるよね。",
+      "audioUrl": "/audio/m1/b09-kotoba/09-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "聞いているきみは、どっち？",
+      "audioUrl": "/audio/m1/b09-kotoba/10-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "どっちでも いいんだよ。",
+      "audioUrl": "/audio/m1/b09-kotoba/11-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "こんど 友だちと 話すとき、ことばが どんなふうに きこえるか、気づいてみてね。",
+      "audioUrl": "/audio/m1/b09-kotoba/12-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}

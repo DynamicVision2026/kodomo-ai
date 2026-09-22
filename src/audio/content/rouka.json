@@ -1,0 +1,56 @@
+{
+  "missionId": "m1-s2-1-3",
+  "role": "GUIDED",
+  "audioStatus": "ready",
+  "robotLine": "走るとあぶないから、走っちゃダメなんだよ。",
+  "lines": [
+    {
+      "speaker": "PONTA",
+      "text": "きょう、ろうかを走ったら、先生に「走っちゃダメ！」って言われちゃった。",
+      "audioUrl": "/audio/m1/1-3-rouka/00-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "そっか。",
+      "audioUrl": "/audio/m1/1-3-rouka/01-guide.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "ねえロボ、ろうかで走っちゃダメなのは、なんで？",
+      "audioUrl": "/audio/m1/1-3-rouka/02-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "ROBOT",
+      "text": "走るとあぶないから、走っちゃダメなんだよ。",
+      "audioUrl": "/audio/m1/1-3-rouka/03-robot.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "PONTA",
+      "text": "そっか、あぶないからか。わかった！",
+      "audioUrl": "/audio/m1/1-3-rouka/04-ponta.mp3",
+      "pauseAfterMs": 1000
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "これで、ほんとうに わかった？",
+      "audioUrl": "/audio/m1/1-3-rouka/05-guide.mp3",
+      "pauseAfterMs": 3000
+    },
+    {
+      "speaker": "PONTA",
+      "text": "うーん……？",
+      "audioUrl": "/audio/m1/1-3-rouka/06-ponta.mp3",
+      "pauseAfterMs": 350
+    },
+    {
+      "speaker": "GUIDE",
+      "text": "ここから先は、聞いているきみのばんだよ。",
+      "audioUrl": "/audio/m1/1-3-rouka/07-guide.mp3",
+      "pauseAfterMs": 350
+    }
+  ]
+}
