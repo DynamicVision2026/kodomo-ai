@@ -1,8 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
+import { MissionStage } from '../src/stage/MissionStage';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
+import type { AppState } from '../src/engine/storage';
 import {
   playMissionStageToCompletion, playMissionScreenToCompletion,
   skipPrePracticeAudioIfPresent, skipCheckpointAudioIfPresent, skipM0RitualIfPresent,
@@ -161,5 +163,171 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
     // ordinary path plays a non-deepen card at layer 0 first (this same helper's own recovery
     // check) before its deepen — at least that play must still be reported.
     expect(onUse.mock.calls.some(([e]) => e.layerIndex === 0)).toBe(true);
+  });
+
+  /**
+   * The three tests above (already passing before this ticket) only ever proved onUse — the
+   * deepen hand-card commit at the END of a layer's round. Gap Naming, earlier in that SAME
+   * primed round (JUDGE -> GAP NAMING -> hand), has its own two evidence calls — onGapNamed
+   * (M2a proxy evidence) and onMoveRendered (a real mihakken -> moratta rung transition,
+   * src/engine/scaffold.ts's own applyMoveRendered, plus an M1 re-evaluation) — and Blind-first
+   * has a third, onBlindCommit (tsukaeru -> hitoride, plus M4/memory evidence). None of the
+   * three were ever gated by `demonstratedLayers` before this ticket: src/stage/MissionStage.tsx
+   * called all of them unconditionally in `gapChosen`/`blindCommitTapped`, so a demonstrated
+   * layer's own Gap Naming step silently wrote real progression evidence regardless of `onUse`'s
+   * own, correctly-guarded suppression later in the same round.
+   */
+  it('Gap Naming at layer 0 (demonstrated) writes no onGapNamed/onMoveRendered evidence either — not just onUse', async () => {
+    const user = userEvent.setup();
+    const onGapNamed = vi.fn();
+    const onMoveRendered = vi.fn();
+    render(
+      <MissionStage
+        mission={chanto} ui={ui} solo
+        moveProgress={{}} guidanceUses={{}}
+        onGuidanceUse={() => {}} onMoveRendered={onMoveRendered} onUse={() => {}}
+        onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={onGapNamed}
+        onComplete={() => {}}
+        demonstratedLayers={new Set([0])}
+      />,
+    );
+    const slotPhase = chanto.phases.find((p) => p.template === 'slot-assembly') as any;
+    const digPhase = chanto.phases.find((p) => p.template === 'dig') as any;
+    const clearCard = slotPhase.cards.find((c: any) => c.tag === 'clear');
+    await waitFor(() => expect(screen.getByText(clearCard.text)).toBeInTheDocument());
+    await user.click(screen.getByText(clearCard.text));
+    await waitFor(() => expect(screen.getByText(digPhase.layers[0].robotSays)).toBeInTheDocument());
+    await user.click(screen.getByText(digPhase.layers[0].robotSays));
+    await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
+    const [gapChoice] = document.querySelectorAll('.choice-tray .question-chip');
+    await user.click(gapChoice as HTMLElement);
+
+    await waitFor(() => expect(screen.getByText(ui.stageQuestionPrompt)).toBeInTheDocument()); // the hand tray, reached
+    expect(onGapNamed).not.toHaveBeenCalled();
+    expect(onMoveRendered).not.toHaveBeenCalled();
+  });
+
+  it('Gap Naming at layer 1 (not demonstrated) resumes ordinary onGapNamed/onMoveRendered recording — contrast proving the suppression above is per-layer, not global', async () => {
+    const user = userEvent.setup();
+    const onGapNamed = vi.fn();
+    const onMoveRendered = vi.fn();
+    render(
+      <MissionStage
+        mission={chanto} ui={ui} solo
+        moveProgress={{}} guidanceUses={{}}
+        onGuidanceUse={() => {}} onMoveRendered={onMoveRendered} onUse={() => {}}
+        onBlindCommit={() => {}} onBlindSelfReport={() => {}} onGapNamed={onGapNamed}
+        onComplete={() => {}}
+        demonstratedLayers={new Set([0])}
+      />,
+    );
+    const slotPhase = chanto.phases.find((p) => p.template === 'slot-assembly') as any;
+    const digPhase = chanto.phases.find((p) => p.template === 'dig') as any;
+    const clearCard = slotPhase.cards.find((c: any) => c.tag === 'clear');
+    await waitFor(() => expect(screen.getByText(clearCard.text)).toBeInTheDocument());
+    await user.click(screen.getByText(clearCard.text));
+    await waitFor(() => expect(screen.getByText(digPhase.layers[0].robotSays)).toBeInTheDocument());
+    await user.click(screen.getByText(digPhase.layers[0].robotSays));
+    // Layer 0: JUDGE -> GAP NAMING -> deepen, straight through (demonstrated, so no evidence).
+    await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
+    await user.click(document.querySelectorAll('.choice-tray .question-chip')[0] as HTMLElement);
+    const layer0Deepen = digPhase.layers[0].hand.find((c: any) => c.tag === 'deepen');
+    await waitFor(() => expect(screen.getByText(layer0Deepen.text)).toBeInTheDocument());
+    await user.click(screen.getByText(layer0Deepen.text));
+    await waitFor(() => expect(document.querySelector('.stage__hand-tray')).not.toBeInTheDocument());
+    expect(onGapNamed).not.toHaveBeenCalled();
+    expect(onMoveRendered).not.toHaveBeenCalled();
+
+    // Layer 1's own opening line, then its own JUDGE -> GAP NAMING (not demonstrated).
+    await waitFor(() => expect(document.querySelector('.speech-bubble')).toBeInTheDocument());
+    await user.click(document.querySelector('.speech-bubble') as HTMLElement);
+    await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
+    await user.click(document.querySelectorAll('.choice-tray .question-chip')[0] as HTMLElement);
+
+    expect(onGapNamed).toHaveBeenCalledTimes(1);
+    expect(onGapNamed).toHaveBeenCalledWith({ missionId: chanto.id });
+    expect(onMoveRendered).toHaveBeenCalledWith('follow-tatoeba'); // chanto's own authored layer-1 deepen move
+  });
+
+  it('Blind-first at layer 0 (demonstrated) writes no onBlindCommit evidence either, even when a move already at tsukaeru (from other missions) makes it eligible', async () => {
+    const user = userEvent.setup();
+    const onBlindCommit = vi.fn();
+    const onMoveRendered = vi.fn();
+    render(
+      <MissionStage
+        mission={chanto} ui={ui} solo
+        // "follow-tsumari" (chanto's own layer-0 deepen move) is already tsukaeru — as it would
+        // be for a returning profile that reached it via other missions first. This is exactly
+        // what makes Blind-first eligible on the very FIRST visit to a demonstrated layer.
+        moveProgress={{ 'follow-tsumari': { rung: 'tsukaeru', aptUseDomains: ['a', 'b', 'c'] } }}
+        guidanceUses={{}}
+        onGuidanceUse={() => {}} onMoveRendered={onMoveRendered} onUse={() => {}}
+        onBlindCommit={onBlindCommit} onBlindSelfReport={() => {}} onGapNamed={() => {}}
+        onComplete={() => {}}
+        demonstratedLayers={new Set([0])}
+      />,
+    );
+    const slotPhase = chanto.phases.find((p) => p.template === 'slot-assembly') as any;
+    const digPhase = chanto.phases.find((p) => p.template === 'dig') as any;
+    const clearCard = slotPhase.cards.find((c: any) => c.tag === 'clear');
+    await waitFor(() => expect(screen.getByText(clearCard.text)).toBeInTheDocument());
+    await user.click(screen.getByText(clearCard.text));
+    await waitFor(() => expect(screen.getByText(digPhase.layers[0].robotSays)).toBeInTheDocument());
+    await user.click(screen.getByText(digPhase.layers[0].robotSays));
+    await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
+    await user.click(document.querySelectorAll('.choice-tray .question-chip')[0] as HTMLElement);
+
+    // Blind-first's own commit chip ("いえた") replaces the ordinary hand tray when eligible.
+    const blindCommitButton = await screen.findByText(ui.blindCommit!);
+    await user.click(blindCommitButton);
+
+    expect(onBlindCommit).not.toHaveBeenCalled();
+    expect(onMoveRendered).not.toHaveBeenCalled(); // Gap Naming's own call, same round
+  });
+
+  /**
+   * End-to-end proof through the real production wiring (src/shell/MissionShell.tsx's own
+   * moveRendered/gapNamed — not a directly-injected spy), confirming the guard above actually
+   * reaches the persisted profile: `demonstratedLayers` comes from chanto's own registered
+   * MODEL script (src/audio/registry.ts), exactly as main.tsx wires it in production — no test-
+   * only shortcut.
+   */
+  it('end-to-end through the real MissionShell: after layer 0 (demonstrated), the persisted profile has no moveProgress or m2Evidence at all', async () => {
+    const user = userEvent.setup();
+    renderSingleMission(chanto);
+    await createProfile(user);
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
+    await user.click(screen.getByText(ui.coopSolo));
+    await skipPrePracticeAudioIfPresent(user); // chanto's own MODEL audio, unrelated to this guard
+
+    const slotPhase = chanto.phases.find((p) => p.template === 'slot-assembly') as any;
+    const digPhase = chanto.phases.find((p) => p.template === 'dig') as any;
+    const clearCard = slotPhase.cards.find((c: any) => c.tag === 'clear');
+    await waitFor(() => expect(screen.getByText(clearCard.text)).toBeInTheDocument());
+    await user.click(screen.getByText(clearCard.text));
+    await waitFor(() => expect(screen.getByText(digPhase.layers[0].robotSays)).toBeInTheDocument());
+    await user.click(screen.getByText(digPhase.layers[0].robotSays));
+    await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
+    await user.click(document.querySelectorAll('.choice-tray .question-chip')[0] as HTMLElement);
+    const layer0Deepen = digPhase.layers[0].hand.find((c: any) => c.tag === 'deepen');
+    await waitFor(() => expect(screen.getByText(layer0Deepen.text)).toBeInTheDocument());
+    await user.click(screen.getByText(layer0Deepen.text));
+    await waitFor(() => expect(document.querySelector('.stage__hand-tray')).not.toBeInTheDocument());
+
+    const saved: AppState = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const profile = saved.profiles[0]!;
+    expect(profile.moveProgress?.['follow-tsumari']).toBeUndefined(); // never rendered/used
+    expect(profile.milestones?.M1).toBeUndefined(); // no rung ever advanced to re-evaluate from
+    expect(profile.m2Evidence?.proxyMissionIds ?? []).not.toContain(chanto.id); // no Gap Naming credit
   });
 });

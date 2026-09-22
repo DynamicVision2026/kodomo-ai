@@ -306,9 +306,21 @@ export function MissionStage({
   function gapChosen(choiceIndex: number) {
     const choice = state.gapChoices![choiceIndex]!;
     track('gap_named', { classification: choice.kind });
-    onGapNamed({ missionId: mission.id });
+    // WO-33 (rev.3 §E): the same "a play at a demonstrated layer is primed, so it writes no
+    // evidence at all" guard commitHandCard already applies to onUse below — extended here to
+    // Gap Naming's own two evidence calls, which otherwise fire unconditionally, earlier in the
+    // very same primed round (JUDGE -> GAP NAMING -> hand), before onUse's own guard is ever
+    // reached. onGapNamed feeds M2a proxy evidence; onMoveRendered is a real mihakken -> moratta
+    // rung transition (src/engine/scaffold.ts's own applyMoveRendered) plus an M1 re-evaluation —
+    // both are exactly the "rung advancement"/"milestone credit" rev.3 says a primed play must
+    // never produce, not just the deepen commit itself.
+    if (!demonstratedLayers?.has(state.layer)) {
+      onGapNamed({ missionId: mission.id });
+    }
     const moves = currentLayerDeepenMoves();
-    for (const move of moves) onMoveRendered(move);
+    if (!demonstratedLayers?.has(state.layer)) {
+      for (const move of moves) onMoveRendered(move);
+    }
     const eligible = moves.length === 1 && isAtLeast(moveProgress[moves[0]!]?.rung ?? 'mihakken', 'tsukaeru');
     onGuidanceUse('erabu');
     setState((s) => chooseGap(s, eligible));
@@ -316,14 +328,24 @@ export function MissionStage({
 
   function blindCommitTapped() {
     const move = currentLayerDeepenMoves()[0];
-    if (move) onBlindCommit(move);
+    // WO-33 (rev.3 §E): same guard — a move already at tsukaeru from OTHER missions can make
+    // Blind-first eligible on a demonstrated layer's very first visit (`eligible` above doesn't
+    // know about priming), and applyBlindCommit is a real tsukaeru -> hitoride rung transition
+    // (plus M4/memory evidence) that must never fire for a primed play either.
+    if (move && !demonstratedLayers?.has(state.layer)) onBlindCommit(move);
     onGuidanceUse('erabu');
     setState((s) => commitBlind(s));
   }
 
   function selfReportTapped(classification: SelfReportKind) {
     const move = currentLayerDeepenMoves()[0];
-    if (move) onBlindSelfReport({ move, missionId: mission.id, layerIndex: state.layer, classification });
+    // WO-33 (rev.3 §E): same guard, for consistency — blind_selfreport is display/reflection
+    // telemetry only (never touches moveProgress/milestones/memories, per its own doc comment in
+    // src/shell/MissionShell.tsx), but it's still evidence OF a primed play, so it's suppressed
+    // here too rather than left as the one exception.
+    if (move && !demonstratedLayers?.has(state.layer)) {
+      onBlindSelfReport({ move, missionId: mission.id, layerIndex: state.layer, classification });
+    }
     onGuidanceUse('erabu');
     setState((s) => giveSelfReport(s));
   }
