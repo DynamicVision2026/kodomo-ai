@@ -17,6 +17,11 @@ existing session — no service-account key, no new credential file, no pip inst
 ---- Usage ----
   python3 scripts/audio/generate_1_1_model.py --dry-run   # validate LINES/paths, no API calls
   python3 scripts/audio/generate_1_1_model.py             # the real run
+  python3 scripts/audio/generate_1_1_model.py --only=38   # re-synthesize ONE line only (by
+                                                            # index) — requires a full run to have
+                                                            # already produced the manifest's own
+                                                            # "lines" array; merges into it, leaves
+                                                            # every other line's file/entry alone
 """
 import base64
 import json
@@ -32,8 +37,9 @@ OUT_DIR = os.path.join("public", "audio", "m1", "1-1-chanto")
 MANIFEST_PATH = os.path.join("src", "audio", "content", "chanto.json")
 
 # Story 1-1 MODEL — Audio Reference Scripts rev.3, §1B, verbatim. Kept byte-for-byte identical
-# to scripts/audio/generate-1-1-model.ts's own LINES array — see that file for the two open
-# content notes on ROBOT's two lines (index 6, 38).
+# to scripts/audio/generate-1-1-model.ts's own LINES array. Both ROBOT lines (index 6, 38) are
+# the mission's own authored engine strings (chanto/s2.json), copied verbatim — see that file's
+# own header comment.
 LINES = [
     {"speaker": "GUIDE", "text": "……おや、ポン太。どうしたの？　なんだか、こまった顔をしてるね。"},
     {"speaker": "PONTA", "text": "うん……。さっきね、お母さんに「ちゃんとしなさい！」って言われたの。"},
@@ -75,8 +81,11 @@ LINES = [
     {"speaker": "PONTA", "text": "「いまの『ちゃんと』は、何をすればいいの？」って聞いてみる！"},
     {"speaker": "GUIDE", "text": "それなら、ポン太の知りたいことが聞けそうだね。"},
     {"speaker": "PONTA", "text": "ロボ。いまの「ちゃんと」は、何をすればいいの？"},
-    # ROBOT's second line — rev.3's own draft wording, kept verbatim (see module header).
-    {"speaker": "ROBOT", "text": "そうじの「ちゃんと」は、すみまではくこと。ごはんの「ちゃんと」は、こぼさないで食べること。"},
+    # ROBOT's second line — resolved to the mission's own authored layer-1 robotSays
+    # (chanto/s2.json: '{部屋|へや}をかたづけるときは、もとの{場所|ばしょ}にもどすことかな。'),
+    # ruby markup stripped for speech, verbatim otherwise. Architect-verified against current
+    # repo truth; supersedes the earlier draft wording about cleaning and eating.
+    {"speaker": "ROBOT", "text": "部屋をかたづけるときは、もとの場所にもどすことかな。"},
     {"speaker": "PONTA", "text": "えっ！"},
     {"speaker": "GUIDE", "text": "おや。"},
     {"speaker": "PONTA", "text": "同じ「ちゃんと」なのに、そうじとごはんで、ちがう！"},
@@ -158,28 +167,45 @@ def synthesize(token: str, text: str, voice: dict) -> bytes:
     return base64.b64decode(payload["audioContent"])
 
 
-def generate():
-    token = get_access_token()
-    os.makedirs(OUT_DIR, exist_ok=True)
-
+def generate(only_index: int = None):
+    """`only_index` (--only=N): re-synthesizes ONLY that one line, merging its new mp3/manifest
+    entry into the EXISTING `lines` array a prior full run already produced — every other line's
+    file and manifest entry is left untouched. Requires that prior full run to have happened;
+    refuses otherwise rather than silently writing a 1-entry manifest."""
     plan = output_plan()
-    manifest_lines = []
-    for item in plan:
-        voice = VOICES[item["speaker"]]
-        audio = synthesize(token, item["text"], voice)
-        out_path = os.path.join(OUT_DIR, item["file"])
-        with open(out_path, "wb") as f:
-            f.write(audio)
-        manifest_lines.append({
-            "speaker": item["speaker"], "text": item["text"],
-            "audioUrl": f"/audio/m1/1-1-chanto/{item['file']}", "pauseAfterMs": item["pauseAfterMs"],
-        })
-        print(f"wrote {out_path}")
+    targets = plan if only_index is None else [item for item in plan if item["index"] == only_index]
+    if only_index is not None and not targets:
+        sys.exit(f"--only={only_index}: no such line (valid range 0-{len(plan) - 1})")
 
     existing_manifest = {}
     if os.path.exists(MANIFEST_PATH):
         with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
             existing_manifest = json.load(f)
+    if only_index is not None and not isinstance(existing_manifest.get("lines"), list):
+        sys.exit("--only requires a full run to have already produced the manifest's own "
+                  "\"lines\" array — run without --only first.")
+
+    # Preconditions checked above BEFORE fetching a token — no point shelling out to gcloud if
+    # --only was already going to refuse.
+    token = get_access_token()
+    os.makedirs(OUT_DIR, exist_ok=True)
+
+    manifest_lines = [] if only_index is None else list(existing_manifest["lines"])
+    for item in targets:
+        voice = VOICES[item["speaker"]]
+        audio = synthesize(token, item["text"], voice)
+        out_path = os.path.join(OUT_DIR, item["file"])
+        with open(out_path, "wb") as f:
+            f.write(audio)
+        entry = {
+            "speaker": item["speaker"], "text": item["text"],
+            "audioUrl": f"/audio/m1/1-1-chanto/{item['file']}", "pauseAfterMs": item["pauseAfterMs"],
+        }
+        if only_index is None:
+            manifest_lines.append(entry)
+        else:
+            manifest_lines[item["index"]] = entry
+        print(f"wrote {out_path}")
 
     robot_line = next(l["text"] for l in LINES if l["speaker"] == "ROBOT")
     manifest = {
@@ -196,14 +222,16 @@ def generate():
         f.write("\n")
     print(f"wrote {MANIFEST_PATH}")
 
-    robot_count = sum(1 for l in LINES if l["speaker"] == "ROBOT")
-    print(f"\n{len(plan)} lines synthesized ({robot_count} ROBOT line(s)).")
-    print("NOTE: ROBOT line 2 (index 38) is rev.3's own draft wording, not yet reconciled "
-          "against a single authored engine string — see generate-1-1-model.ts's own header comment.")
+    suffix = f" (--only={only_index})" if only_index is not None else ""
+    print(f"\n{len(targets)} line(s) synthesized{suffix}.")
 
 
 if __name__ == "__main__":
-    if "--dry-run" in sys.argv[1:]:
+    argv = sys.argv[1:]
+    only_arg = next((a for a in argv if a.startswith("--only=")), None)
+    if "--dry-run" in argv:
         dry_run()
+    elif only_arg:
+        generate(only_index=int(only_arg[len("--only="):]))
     else:
         generate()

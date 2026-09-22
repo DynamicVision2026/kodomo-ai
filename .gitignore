@@ -9,3 +9,5 @@ dist-server
 .firebase
 firebase-debug.log
 firebase-debug.*.log
+__pycache__/
+*.pyc

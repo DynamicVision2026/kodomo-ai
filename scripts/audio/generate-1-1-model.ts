@@ -8,11 +8,11 @@
  * regenerates byte-for-byte-equivalent output; editing LINES/VOICES and re-running is how any
  * line gets re-recorded later.
  *
- * One open content note carried over from rev.3 itself (not something this script can resolve):
- * ROBOT's SECOND line (index 38 below) is rev.3's own draft wording, not a line that matches any
- * single authored engine string — see the read-only fact-check this ticket built on. ROBOT's
- * FIRST line (index 6) IS the mission's real, already-reviewed layer-0 robotSays, copied
- * verbatim. Flagged again at the bottom of this file's own generate() summary output.
+ * Architect resolution: both ROBOT lines are now the mission's own authored engine strings,
+ * copied verbatim (never new copy authored here). Index 6 is layer-0's robotSays; index 38 is
+ * layer-1's robotSays (chanto/s2.json), ruby markup stripped — audio is spoken text, not an
+ * on-screen reading aid, so `{部屋|へや}` becomes plain `部屋`, matching `stripRuby()`
+ * (src/engine/ruby.tsx)'s own behavior.
  *
  * ---- One-time GCP setup required before this script can run (see the session's own report) ----
  * 1. Enable the API:      gcloud services enable texttospeech.googleapis.com --project=kodomo-ai
@@ -30,8 +30,14 @@
  *   npx tsx scripts/audio/generate-1-1-model.ts --list-voices   # confirm live ja-JP voice catalog
  *   npx tsx scripts/audio/generate-1-1-model.ts --dry-run       # validate LINES/paths, no API calls, no credentials needed
  *   npx tsx scripts/audio/generate-1-1-model.ts                 # the real run — needs (2a) or (2b) above
+ *   npx tsx scripts/audio/generate-1-1-model.ts --only=38       # re-synthesize ONE line only (by
+ *                                                                 index) — requires a full run to
+ *                                                                 have already produced the
+ *                                                                 manifest's own `lines` array;
+ *                                                                 merges into it, leaves every
+ *                                                                 other line's file/entry alone
  */
-import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 type Speaker = 'GUIDE' | 'PONTA' | 'ROBOT';
@@ -93,9 +99,11 @@ const LINES: Line[] = [
   { speaker: 'PONTA', text: '「いまの『ちゃんと』は、何をすればいいの？」って聞いてみる！' },
   { speaker: 'GUIDE', text: 'それなら、ポン太の知りたいことが聞けそうだね。' },
   { speaker: 'PONTA', text: 'ロボ。いまの「ちゃんと」は、何をすればいいの？' },
-  // ROBOT's second line — rev.3's own draft wording, kept verbatim. See this file's own header
-  // comment: no single authored engine string matches this compound (room + eating) claim.
-  { speaker: 'ROBOT', text: 'そうじの「ちゃんと」は、すみまではくこと。ごはんの「ちゃんと」は、こぼさないで食べること。' },
+  // ROBOT's second line — resolved to the mission's own authored layer-1 robotSays
+  // (chanto/s2.json: '{部屋|へや}をかたづけるときは、もとの{場所|ばしょ}にもどすことかな。'),
+  // ruby markup stripped for speech, verbatim otherwise. Architect-verified against current
+  // repo truth; supersedes the earlier draft wording about cleaning and eating.
+  { speaker: 'ROBOT', text: '部屋をかたづけるときは、もとの場所にもどすことかな。' },
   { speaker: 'PONTA', text: 'えっ！' },
   { speaker: 'GUIDE', text: 'おや。' },
   { speaker: 'PONTA', text: '同じ「ちゃんと」なのに、そうじとごはんで、ちがう！' },
@@ -149,15 +157,33 @@ async function listVoices() {
   }
 }
 
-async function generate() {
+/**
+ * `onlyIndex` (--only=N): re-synthesizes ONLY that one line, merging its new mp3/manifest entry
+ * into the EXISTING `lines` array a prior full run already produced — every other line's file
+ * and manifest entry is left untouched. Requires that prior full run to have happened (the
+ * manifest must already carry a real `lines` array to merge into); refuses otherwise rather than
+ * silently writing a 1-entry manifest that would look like the other 46 lines never existed.
+ */
+async function generate(onlyIndex?: number) {
   const { TextToSpeechClient } = await import('@google-cloud/text-to-speech');
   const client = new TextToSpeechClient();
   mkdirSync(OUT_DIR, { recursive: true });
 
   const plan = outputPlan();
-  const manifestLines: { speaker: Speaker; text: string; audioUrl: string; pauseAfterMs: number }[] = [];
+  const targets = onlyIndex === undefined ? plan : plan.filter((item) => item.index === onlyIndex);
+  if (onlyIndex !== undefined && targets.length === 0) {
+    throw new Error(`--only=${onlyIndex}: no such line (valid range 0-${plan.length - 1})`);
+  }
 
-  for (const item of plan) {
+  const existingManifest = existsSync(MANIFEST_PATH) ? JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) : {};
+  if (onlyIndex !== undefined && !Array.isArray(existingManifest.lines)) {
+    throw new Error('--only requires a full run to have already produced the manifest\'s own `lines` array — run without --only first.');
+  }
+
+  type ManifestLine = { speaker: Speaker; text: string; audioUrl: string; pauseAfterMs: number };
+  const manifestLines: ManifestLine[] = onlyIndex === undefined ? [] : [...existingManifest.lines];
+
+  for (const item of targets) {
     const voice = VOICES[item.speaker];
     const [res] = await client.synthesizeSpeech({
       input: { text: item.text },
@@ -167,16 +193,14 @@ async function generate() {
     if (!res.audioContent) throw new Error(`No audio returned for line ${item.index} (${item.speaker})`);
     const outPath = resolve(OUT_DIR, item.file);
     writeFileSync(outPath, res.audioContent as Buffer);
-    manifestLines.push({
+    const entry: ManifestLine = {
       speaker: item.speaker, text: item.text,
       audioUrl: `/audio/m1/1-1-chanto/${item.file}`, pauseAfterMs: item.pauseAfterMs,
-    });
+    };
+    if (onlyIndex === undefined) manifestLines.push(entry); else manifestLines[item.index] = entry;
     console.log(`wrote ${outPath}`);
   }
 
-  const existingManifest = existsSync(MANIFEST_PATH)
-    ? JSON.parse(await import('node:fs').then((fs) => fs.readFileSync(MANIFEST_PATH, 'utf8')))
-    : {};
   const manifest = {
     ...existingManifest,
     missionId: 'm1-s2-1-1',
@@ -188,8 +212,7 @@ async function generate() {
   };
   writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n');
   console.log(`wrote ${MANIFEST_PATH}`);
-  console.log(`\n${plan.length} lines synthesized (${LINES.filter((l) => l.speaker === 'ROBOT').length} ROBOT line(s)).`);
-  console.log('NOTE: ROBOT line 2 (index 38) is rev.3\'s own draft wording, not yet reconciled against a single authored engine string — see this file\'s own header comment.');
+  console.log(`\n${targets.length} line(s) synthesized${onlyIndex !== undefined ? ` (--only=${onlyIndex})` : ''}.`);
 }
 
 function dryRun() {
@@ -204,10 +227,13 @@ function dryRun() {
 }
 
 const args = process.argv.slice(2);
+const onlyArg = args.find((a) => a.startsWith('--only='));
 if (args.includes('--list-voices')) {
   await listVoices();
 } else if (args.includes('--dry-run')) {
   dryRun();
+} else if (onlyArg) {
+  await generate(Number(onlyArg.slice('--only='.length)));
 } else {
   await generate();
 }
