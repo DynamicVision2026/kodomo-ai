@@ -28,6 +28,14 @@ COPY . .
 # (src/parent/unlock/redeemCode.ts) instead of silently pointing at nothing.
 ARG VITE_UNLOCK_API_URL
 ENV VITE_UNLOCK_API_URL=$VITE_UNLOCK_API_URL
+# Same build-time-only requirement as VITE_UNLOCK_API_URL above, for the same reason:
+# import.meta.env.VITE_SHOPIFY_PRODUCT_URL is inlined at build time (src/lp/LandingPage.tsx).
+# WO-32 found this one never wired into this Dockerfile at all — the frontend's own fallback
+# (an honest "お申し込みは近日公開予定です" pending state, never a dead href="#") already covers
+# its absence correctly, so omitting this ARG has never been unsafe; it just meant there was no
+# way to ever supply the real Shopify product URL at deploy time once the Founder has one.
+ARG VITE_SHOPIFY_PRODUCT_URL
+ENV VITE_SHOPIFY_PRODUCT_URL=$VITE_SHOPIFY_PRODUCT_URL
 RUN npm run build
 
 # ---- 2. runtime — static file server only: no Node build tools, no source, no Firebase ----

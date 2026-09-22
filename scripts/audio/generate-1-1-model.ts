@@ -181,6 +181,7 @@ async function generate() {
     ...existingManifest,
     missionId: 'm1-s2-1-1',
     role: 'MODEL',
+    audioStatus: 'ready',
     robotLine: LINES.find((l) => l.speaker === 'ROBOT')!.text,
     demonstratedLayers: [0],
     lines: manifestLines,

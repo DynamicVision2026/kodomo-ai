@@ -11,6 +11,18 @@ export interface AudioScript {
   missionId: string;
   role: AudioRole;
   /**
+   * Whether this script's real, per-line TTS audio assets have actually been generated yet.
+   * `'pending-production'` — the common case today for all three Audio Reference Slice scripts:
+   * no MP3s exist anywhere in the repo, `scripts/audio/generate-*.ts` hasn't been run (blocked on
+   * a one-time Google Cloud Text-to-Speech credential — see that script's own header), and
+   * src/stage/AudioScene.tsx correctly has nothing to play — it falls back to its existing
+   * text-anchor screen (the mission's own `robotLine`, tap-to-advance), never fabricated or
+   * placeholder audio. `'ready'` is reserved for once real assets under public/audio/... exist
+   * and this script has been extended with the line-by-line manifest that plays them — do not
+   * set it before that's true.
+   */
+  audioStatus: 'pending-production' | 'ready';
+  /**
    * rev.3's own anchor requirement: "every ROBOT line must be the authored robotSays text, word
    * for word... If the audio and the stage differ by even one word, that anchor breaks." This is
    * that mission's dig phase's own layer-0 `robotSays`, copied verbatim from its s2.json — never

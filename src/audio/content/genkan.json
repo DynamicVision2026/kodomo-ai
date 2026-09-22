@@ -1,5 +1,6 @@
 {
   "missionId": "m1-s2-1-2",
   "role": "GUIDED",
+  "audioStatus": "pending-production",
   "robotLine": "外のくつは、よごれているから、ぬぐんだよ。"
 }
