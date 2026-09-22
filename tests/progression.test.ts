@@ -51,28 +51,18 @@ describe('storyState — sequential CURRENT/COMPLETED/LOCKED (WO-26 §3.1/§7)',
   });
 });
 
-describe('bankState — content-derived unlock schedule (WO-26 §5)', () => {
-  it('B02/B03/B05/B07/B10/B11/B12 (めあて root) unlock once Story 3 (rouka) is complete — the first Story to introduce both follow-naze and follow-hokaniwa', () => {
-    const meateGroup = ['B02', 'B03', 'B05', 'B07', 'B10', 'B11', 'B12'] as const;
-    const beforeStory3 = doneUpTo(2); // chanto, genkan done; rouka not yet
-    const afterStory3 = doneUpTo(3); // rouka now done
-    for (const id of meateGroup) {
-      const bank = BANKS[id] as unknown as Mission;
-      expect(bankState(bank, storyMissionsInOrder, beforeStory3), id).toBe('locked');
-      expect(bankState(bank, storyMissionsInOrder, afterStory3), id).toBe('available');
+describe('bankState — single flat gate at Story 1-4 (Blueprint Alignment Cleanup, replacing WO-26 §5\'s per-move/rootType two-tier schedule)', () => {
+  it('all 12 Bank Digs stay LOCKED through Story 1-3 — the old schedule would have opened 7 of them here, the frozen one opens none', () => {
+    const afterStory3 = doneUpTo(3); // chanto, genkan, rouka done; oyatsu (1-4) not yet
+    for (const bank of Object.values(BANKS)) {
+      expect(bankState(bank as unknown as Mission, storyMissionsInOrder, afterStory3), bank.id).toBe('locked');
     }
   });
 
-  it('B01/B04/B06/B08/B09 (わかれ root) additionally wait for Story 5 (minna) — the first Story with a わかれ root, even though their moves were already introduced at Story 3', () => {
-    const wakareGroup = ['B01', 'B04', 'B06', 'B08', 'B09'] as const;
-    const afterStory3 = doneUpTo(3);
-    const afterStory4 = doneUpTo(4); // oyatsu done too — still not minna
-    const afterStory5 = doneUpTo(5); // minna done
-    for (const id of wakareGroup) {
-      const bank = BANKS[id] as unknown as Mission;
-      expect(bankState(bank, storyMissionsInOrder, afterStory3), id).toBe('locked');
-      expect(bankState(bank, storyMissionsInOrder, afterStory4), id).toBe('locked');
-      expect(bankState(bank, storyMissionsInOrder, afterStory5), id).toBe('available');
+  it('all 12 Bank Digs become AVAILABLE together the instant Story 1-4 (oyatsu) is done', () => {
+    const afterStory4 = doneUpTo(4);
+    for (const bank of Object.values(BANKS)) {
+      expect(bankState(bank as unknown as Mission, storyMissionsInOrder, afterStory4), bank.id).toBe('available');
     }
   });
 
@@ -87,7 +77,7 @@ describe('bankState — content-derived unlock schedule (WO-26 §5)', () => {
     }
   });
 
-  it('a completed Bank Dig stays COMPLETED even if somehow replayed before its own unlock story re-resolves', () => {
+  it('a completed Bank Dig stays COMPLETED even if somehow replayed before Story 1-4 re-resolves', () => {
     const progress: Record<string, Progress> = { [bankAtode.id]: { done: true, stamps: 1, coop: false } };
     expect(bankState(bankAtode as unknown as Mission, storyMissionsInOrder, progress)).toBe('completed');
   });
@@ -98,5 +88,13 @@ describe('bankState — content-derived unlock schedule (WO-26 §5)', () => {
       const state = bankState(bank as unknown as Mission, storyMissionsInOrder, progress);
       expect(state === 'available' || state === 'completed').toBe(true);
     }
+  });
+
+  it('gates on the last Story when the supplied spine has fewer than 4 missions — never throws, never opens early', () => {
+    const shortSpine = storyMissionsInOrder.slice(0, 2); // chanto, genkan only
+    const bank = BANKS.B01 as unknown as Mission;
+    expect(bankState(bank, shortSpine, {})).toBe('locked');
+    const progress: Record<string, Progress> = { [shortSpine[1]!.id]: { done: true, stamps: 0, coop: false } };
+    expect(bankState(bank, shortSpine, progress)).toBe('available');
   });
 });

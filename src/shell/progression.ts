@@ -1,4 +1,4 @@
-import type { DigPhase, Mission } from '../engine/types';
+import type { Mission } from '../engine/types';
 import type { Progress } from '../engine/storage';
 
 /**
@@ -8,22 +8,6 @@ import type { Progress } from '../engine/storage';
  * (§3.1: "Story Missions MUST NOT be freely skipped").
  */
 export type LocationState = 'current' | 'available' | 'completed' | 'locked';
-
-/** Every deepen move a mission's own dig content actually exercises, across every dig phase and
- *  layer it has (Story missions carry one dig phase; Bank Digs are dig-phase-only content with
- *  the same shape) — the "capability required to play it meaningfully" from WO-26 §5. */
-function deepenMovesOf(mission: Mission): Set<string> {
-  const moves = new Set<string>();
-  for (const phase of mission.phases) {
-    if (phase.template !== 'dig') continue;
-    for (const layer of (phase as DigPhase).layers) {
-      for (const card of layer.hand) {
-        if (card.tag === 'deepen' && card.move) moves.add(card.move);
-      }
-    }
-  }
-  return moves;
-}
 
 /**
  * Story CURRENT/COMPLETED/LOCKED (WO-26 §3.1/§7): sequential, mirroring `pickNextMission`'s own
@@ -40,18 +24,17 @@ export function storyState(
   return missionId === currentMissionId ? 'current' : 'locked';
 }
 
+/** 0-indexed position of Story 1-4 in `storyMissionsInOrder` — the single frozen Bank-unlock
+ *  gate (see `bankState`'s own doc comment). */
+const BANK_GATE_STORY_INDEX = 3;
+
 /**
- * Bank AVAILABLE/COMPLETED/LOCKED (WO-26 §5): a Bank Dig unlocks only once the LATEST Story
- * Mission that first introduces either (a) a deepen move this Bank Dig requires, or (b) this
- * Bank Dig's own root type (rootType — めあて/しくみ/わかれ), has itself been COMPLETED — never
- * earlier ("a Bank Dig may unlock only after the child has been introduced to the capability
- * required to play it meaningfully").
- *
- * Purely derived from each Story Mission's own authored dig content and rootType metadata —
- * never a hand-picked B01-B12 grouping — so a future change to the Story spine's own content
- * re-derives the unlock schedule automatically instead of drifting from a stale hardcoded table.
- * See docs/WO-26 completion report, "BANK UNLOCK ASSUMPTIONS", for the worked-out schedule this
- * produces against the current 8 Story Missions / 12 Bank Digs.
+ * Bank AVAILABLE/COMPLETED/LOCKED: frozen product decision (Blueprint Alignment Cleanup, per
+ * the Module 1 Closed-Loop Truth Map) — all 12 Bank Digs are Transfer Practices, not additional
+ * mandatory main lessons, and unlock TOGETHER once Story 1-4 (the 4th Story Mission in sequence)
+ * is COMPLETED. Never earlier, and never staggered by individual content (no more per-move/
+ * rootType-derived schedule, which used to open 7 Banks after Story 1-3 and the remaining 5
+ * after Story 1-5 — that two-tier schedule is obsolete).
  */
 export function bankState(
   bank: Mission,
@@ -60,28 +43,11 @@ export function bankState(
 ): LocationState {
   if (progress[bank.id]?.done) return 'completed';
   // No Story spine supplied at all (a Bank-only harness/caller, e.g. an isolated Bank test) —
-  // there is nothing to gate against, so the derived schedule simply doesn't apply here: fail
-  // open, never lock content a caller never wired a Story sequence for in the first place.
+  // there is nothing to gate against, so the gate simply doesn't apply here: fail open, never
+  // lock content a caller never wired a Story sequence for in the first place.
   if (storyMissionsInOrder.length === 0) return 'available';
 
-  const moveIntroducedAt = new Map<string, number>();
-  const rootTypeIntroducedAt = new Map<string, number>();
-  storyMissionsInOrder.forEach((story, index) => {
-    for (const move of deepenMovesOf(story)) {
-      if (!moveIntroducedAt.has(move)) moveIntroducedAt.set(move, index);
-    }
-    if (story.rootType && !rootTypeIntroducedAt.has(story.rootType)) {
-      rootTypeIntroducedAt.set(story.rootType, index);
-    }
-  });
-
-  const requiredIndices = [...deepenMovesOf(bank)]
-    .map((move) => moveIntroducedAt.get(move))
-    .filter((i): i is number => i !== undefined);
-  const rootIndex = bank.rootType ? rootTypeIntroducedAt.get(bank.rootType) : undefined;
-  if (rootIndex !== undefined) requiredIndices.push(rootIndex);
-
-  const requiredIndex = requiredIndices.length > 0 ? Math.max(...requiredIndices) : 0;
-  const requiredStory = storyMissionsInOrder[requiredIndex]!;
-  return progress[requiredStory.id]?.done ? 'available' : 'locked';
+  const gateIndex = Math.min(BANK_GATE_STORY_INDEX, storyMissionsInOrder.length - 1);
+  const gateStory = storyMissionsInOrder[gateIndex]!;
+  return progress[gateStory.id]?.done ? 'available' : 'locked';
 }

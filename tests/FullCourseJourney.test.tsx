@@ -14,8 +14,8 @@ import minnaJson from '../src/modules/m1/topics/minna/s2.json';
 import zuruiJson from '../src/modules/m1/topics/zurui/s2.json';
 import kashiteJson from '../src/modules/m1/topics/kashite/s2.json';
 import randoseruJson from '../src/modules/m1/topics/randoseru/s2.json';
-import bankAtodeJson from '../src/modules/m1/topics/bank-atode/s2.json'; // B01, わかれ (Tier 2)
-import bankEscalatorJson from '../src/modules/m1/topics/bank-escalator/s2.json'; // B02, めあて (Tier 1)
+import bankAtodeJson from '../src/modules/m1/topics/bank-atode/s2.json'; // B01
+import bankEscalatorJson from '../src/modules/m1/topics/bank-escalator/s2.json'; // B02
 import bankJankenJson from '../src/modules/m1/topics/bank-janken/s2.json';
 import bankTeamJson from '../src/modules/m1/topics/bank-team/s2.json';
 import bankGakunenJson from '../src/modules/m1/topics/bank-gakunen/s2.json';
@@ -34,14 +34,14 @@ const STORY = [
   chantoJson, genkanJson, roukaJson, oyatsuJson, minnaJson, zuruiJson, kashiteJson, randoseruJson,
 ].map((m) => m as unknown as Mission);
 
-const BANK_TIER1_MEATE = [ // unlocks once Story 3 (rouka) is complete
+// Blueprint alignment: all 12 Bank Digs are Transfer Practices under a single gate — Story 1-4
+// (oyatsu) done — not the old two-tier 1-3/1-5 rootType-derived schedule. No grouping left to
+// name; one flat list.
+const ALL_BANKS = [
   bankEscalatorJson, bankJankenJson, bankGakunenJson, bankKireiJson, bankItadakimasuJson,
-  bankArigatouJson, bank100yenJson,
+  bankArigatouJson, bank100yenJson, bankAtodeJson, bankTeamJson, bankNedanJson, bankHoshiiJson,
+  bankKotobaJson,
 ].map((m) => m as unknown as Mission);
-const BANK_TIER2_WAKARE = [ // additionally waits for Story 5 (minna)
-  bankAtodeJson, bankTeamJson, bankNedanJson, bankHoshiiJson, bankKotobaJson,
-].map((m) => m as unknown as Mission);
-const ALL_BANKS = [...BANK_TIER1_MEATE, ...BANK_TIER2_WAKARE];
 
 const missionLibrary: MissionLibrary = {
   missionOrder: STORY.map((m) => m.id),
@@ -118,7 +118,7 @@ async function playBankToCompletion(user: ReturnType<typeof userEvent.setup>, mi
  * completion once Story 8 is done. Deliberately SOLO throughout — co-play ownership transitions
  * already have dedicated, sampled coverage (tests/GoldenConformance.test.tsx).
  */
-describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + staged Bank unlocks + milestones + persistence + completion)', () => {
+describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + Bank unlock at Story 1-4 + milestones + persistence + completion)', () => {
   it('plays the entire course end to end through the real product surface', async () => {
     const user = userEvent.setup();
     renderShell();
@@ -127,9 +127,10 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + staged Ba
     // Story 1 is CURRENT on a fresh profile.
     expect(within(document.querySelector('.course-home__depth.is-current') as HTMLElement).getByText(STORY[0]!.title)).toBeTruthy();
 
-    // No Bank Dig is reachable yet — Story 3 hasn't introduced follow-naze/follow-hokaniwa.
+    // No Bank Dig is reachable yet — the blueprint-frozen gate is Story 1-4 (oyatsu) done, and
+    // nothing has been played at all.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
-    await user.click(screen.getByText(BANK_TIER1_MEATE[0]!.title));
+    await user.click(screen.getByText(titleMatcher(ALL_BANKS[0]!.title)));
     expect(screen.getByText(ui.bankLockedMessage)).toBeInTheDocument();
     expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument();
     await user.click(screen.getByText(ui.bankBackButton)); // back to Course Home
@@ -153,43 +154,40 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + staged Ba
       expect(screen.getByText(ui.courseHomeSequentialLockedMessage)).toBeInTheDocument();
     }
 
-    // Tier 1 (めあて) Bank Digs are now AVAILABLE (Story 3 done); Tier 2 (わかれ) still LOCKED.
+    // Blueprint alignment: Story 3 done is NOT enough — every one of the 12 Bank Digs (Transfer
+    // Practices, all one tier) stays LOCKED until Story 1-4 itself is done.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
-    for (const bank of BANK_TIER1_MEATE) {
+    for (const bank of ALL_BANKS) {
       const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
-      expect(btn.className).not.toContain('is-locked');
-    }
-    for (const bank of BANK_TIER2_WAKARE) {
-      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
-      expect(btn.className).toContain('is-locked');
+      expect(btn.className, bank.id).toContain('is-locked');
     }
     await user.click(screen.getByText(ui.bankBackButton));
 
-    // Play one Tier-1 Bank Dig to completion — Story progression must be unaffected: Story 4
-    // (oyatsu) is still CURRENT, not skipped, not regressed.
-    await playBankToCompletion(user, BANK_TIER1_MEATE[0]!);
+    // Story 4 (Mid-Boss, oyatsu) — the one and only Bank gate.
+    await playCurrentStoryToMap(user, STORY[3]!);
+
+    // All 12 Bank Digs are now AVAILABLE together.
+    await user.click(screen.getByText(ui.courseHomeBankLabel));
+    for (const bank of ALL_BANKS) {
+      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
+      expect(btn.className, bank.id).not.toContain('is-locked');
+    }
+    await user.click(screen.getByText(ui.bankBackButton));
+
+    // Play one Bank Dig to completion — Story progression must be unaffected: Story 5 (minna)
+    // is still CURRENT, not skipped, not regressed.
+    await playBankToCompletion(user, ALL_BANKS[0]!);
     const stillCurrent = document.querySelector('.course-home__depth.is-current') as HTMLElement;
-    expect(within(stillCurrent).getByText(STORY[3]!.title)).toBeTruthy();
+    expect(within(stillCurrent).getByText(STORY[4]!.title)).toBeTruthy();
 
     // Its own completion evidence is retained (COMPLETED, not just AVAILABLE) without touching
     // the Story spine at all.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
-    expect(screen.getByText(BANK_TIER1_MEATE[0]!.title).closest('button')!.textContent).toContain(ui.bankDoneLabel);
+    expect(screen.getByText(titleMatcher(ALL_BANKS[0]!.title)).closest('button')!.textContent).toContain(ui.bankDoneLabel);
     await user.click(screen.getByText(ui.bankBackButton));
 
-    // Story 4 (Mid-Boss) and Story 5.
-    await playCurrentStoryToMap(user, STORY[3]!);
+    // Story 5, 6, 7, 8 (Boss) — the rest of the spine.
     await playCurrentStoryToMap(user, STORY[4]!);
-
-    // Tier 2 (わかれ) Bank Digs are now AVAILABLE too (Story 5 just completed).
-    await user.click(screen.getByText(ui.courseHomeBankLabel));
-    for (const bank of BANK_TIER2_WAKARE) {
-      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
-      expect(btn.className).not.toContain('is-locked');
-    }
-    await user.click(screen.getByText(ui.bankBackButton));
-
-    // Story 6, 7, 8 (Boss) — the whole spine.
     await playCurrentStoryToMap(user, STORY[5]!);
     await playCurrentStoryToMap(user, STORY[6]!);
 
@@ -208,7 +206,7 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + staged Ba
     expect(profile.milestones.M1.achieved).toBe(true);
     expect(profile.milestones.M3.achieved).toBe(true);
     for (const mission of STORY) expect(profile.progress[mission.id].done).toBe(true);
-    expect(profile.progress[BANK_TIER1_MEATE[0]!.id].done).toBe(true);
+    expect(profile.progress[ALL_BANKS[0]!.id].done).toBe(true);
 
     // Module 1 completion persists through a reload too.
     await user.click(screen.getByText(ui.completeBackToMapLabel));

@@ -61,9 +61,9 @@ export function evaluateM1(milestones: MilestoneMap, moveProgress: MoveProgressM
 
 /**
  * M3: a Dig phase was just completed (reached its root) with `layerCount` authored layers.
- * 3れん ホリ means a genuine three-step chain — bread, the only shipped Stage-2 mission today,
- * has 2 layers, so this is unreachable until a 3+-layer mission ships. The mechanism itself is
- * fully deterministic and tested independently of that content gap.
+ * 3れん ホリ means a genuine three-step chain — live today via 4 of the 8 Story Missions (rouka
+ * 1-3, oyatsu 1-4, minna 1-5, randoseru 1-8 are each 3-layer; every other Story and all 12 Bank
+ * Digs are 2-layer, so M3 is reached through Story content specifically, not Banks).
  */
 export function evaluateM3(milestones: MilestoneMap, layerCount: number, now: number): MilestoneMap {
   return layerCount >= 3 ? achieve(milestones, 'M3', now) : milestones;
@@ -102,8 +102,8 @@ export function evaluateM4(milestones: MilestoneMap, now: number): MilestoneMap 
 }
 
 /**
- * M2b — the actual milestone. This function is the clean seam a later ticket's parent-
- * confirmation UI will call once it exists; nothing in WO-08 invokes it.
+ * M2b — the actual milestone. Invoked by the parent screen's M2b confirmation button (WO-14,
+ * `src/shell/MissionShell.tsx`'s `confirmM2b`) — live, not merely a seam awaiting a future UI.
  */
 export function applyM2Confirmed(milestones: MilestoneMap, now: number): MilestoneMap {
   return achieve(milestones, 'M2', now);

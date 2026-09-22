@@ -296,16 +296,19 @@ export interface ModuleUiStrings {
  * WO-11 decision 2 (the Founder's numbered ticket decision — not a section of any AD-02 document
  * present in this repository, see docs/WO-11-implementation-notes-content-classification.md):
  * the three accepted root types a commissioned topic's ねっこ resolves into — しくみ / めあて /
- * わかれ. No quotas across them — a topic is whichever one fits, not filled to a ratio.
+ * わかれ. No quotas across them — a topic is whichever one fits, not filled to a ratio. Authored
+ * on every one of the 20 real Story/Bank topics today (see each topic's own s2.json).
  *
  * Kept as plain `string` here (not a literal union), matching `Domain` above and for the same
  * reason: gate:no-hardcoded-copy reserves child-facing/content-vocabulary Japanese string
  * literals for module JSON, never engine source. The closed three-value set is declared and
  * enforced instead in scripts/lib/rootType.ts (outside that gate's scan root) and checked by
  * scripts/lib/moduleClassification.ts's checkMissions() — see tests/rootType.test.ts for the
- * adversarial proof that a fourth value is rejected. Not yet read or branched on anywhere in the
- * engine; recorded here so the next content ticket (C-03) has one typed contract instead of
- * inventing its own.
+ * adversarial proof that a fourth value is rejected. Not read or branched on anywhere in the
+ * engine today: it briefly was, as one input to `src/shell/progression.ts`'s Bank-unlock
+ * schedule (WO-26), but the Blueprint Alignment Cleanup replaced that per-move/rootType-derived
+ * staggered schedule with a single flat gate (all 12 Bank Digs unlock together at Story 1-4) —
+ * see that file's own `bankState` doc comment.
  */
 export type RootType = string;
 
@@ -322,8 +325,8 @@ export interface Mission {
    *  this type); optional here only because engine-side consumers must not depend on its
    *  presence at runtime — this field governs release/CI concerns, not gameplay. */
   contentClass?: ContentClass;
-  /** WO-11 decision 2 — see RootType. Not yet authored on any existing mission; optional until
-   *  C-03 (or a later ticket) actually sets it. */
+  /** WO-11 decision 2 — see RootType. Authored on every real Story/Bank topic today; optional
+   *  here only because synthetic/archived fixtures don't carry it. */
   rootType?: RootType;
   stage: Stage;
   title: string;

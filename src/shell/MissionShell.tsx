@@ -406,8 +406,9 @@ export function MissionShell({
 
   /** WO-08: M2a — the system-observable proxy (Critical M2 distinction). Recorded whenever Gap
    *  Naming resolves: the child judged an answer "not enough" and named a gap before the next
-   *  follow-up. Accumulates distinct mission ids only; never sets milestones.M2 itself — only an
-   *  actual (not-yet-built) parent confirmation can do that. See src/engine/milestones.ts. */
+   *  follow-up. Accumulates distinct mission ids only; never sets milestones.M2 itself — only the
+   *  actual parent confirmation (`confirmM2b` below, live since WO-14) does that. See
+   *  src/engine/milestones.ts. */
   function gapNamed(evidence: { missionId: string }) {
     persistProfile((current) => ({
       ...current,
@@ -416,9 +417,9 @@ export function MissionShell({
   }
 
   /** WO-08: a Dig phase just completed with `layerCount` authored layers — the deterministic
-   *  signal for M3 (3れん ホリ) and the first-3-chain memory moment. Bread's shipped mission has
-   *  only 2 layers, so this is correctly a no-op for it today; the mechanism itself doesn't wait
-   *  on that content. */
+   *  signal for M3 (3れん ホリ) and the first-3-chain memory moment. Live via 4 of the 8 Story
+   *  Missions today (rouka 1-3, oyatsu 1-4, minna 1-5, randoseru 1-8 are 3-layer); a 2-layer
+   *  mission or Bank Dig correctly leaves this a no-op. */
   function digPhaseCompleted(result: DigResult) {
     const missionId = mission.id;
     persistProfile((current) => {
