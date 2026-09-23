@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { Ruby } from '../engine/ruby';
 import { animate, tokenMs } from './motion';
+import { GuidanceAffordance } from './GuidanceAffordance';
+import type { GuidanceLevel } from '../stage/Guidance';
 import './primitives.css';
 import './voice-plane.css';
 
@@ -16,6 +18,19 @@ export interface VoicePlaneProps {
    *  behavioural branch here): 'flatReply' (Miss), 'challenge' (Early わかった), 'refrain'
    *  (Refrain pause morph target), 'normal' (an ordinary audio line). */
   variant?: 'normal' | 'flatReply' | 'challenge' | 'refrain';
+  /** Builder work order §3: opts this plane into the SAME "tap anywhere to continue" contract
+   *  AnswerPlane already gives every dialogue beat — a ▼ affordance, whole-plane tap target.
+   *  Omitted (every pre-existing caller: the design gallery's Pass 1 fixtures, and any future
+   *  audio-synced Listening Pocket line whose advance is externally driven by playback, not a
+   *  tap) keeps this component exactly as it always was — a plain, non-interactive reading
+   *  plane. Passed: this stays required alongside `advanceLabel`. */
+  onAdvance?: () => void;
+  /** Required whenever `onAdvance` is passed — the advance button's accessible name, same
+   *  contract AnswerPlane's own `readOnLabel` already has. */
+  advanceLabel?: string;
+  /** Same meaning as AnswerPlane's own `guidanceLevel` — only consulted when `onAdvance` is
+   *  passed. Defaults to 'independent' (no cue) otherwise, matching AnswerPlane's own default. */
+  guidanceLevel?: GuidanceLevel;
 }
 
 /**
@@ -29,7 +44,9 @@ export interface VoicePlaneProps {
  * on the very first render (a fresh plane arriving has no prior line to fade from) and on a
  * speaker change (that's a different plane's identity, not a line swap on this one).
  */
-export function VoicePlane({ speaker, text, speakerLabel, variant = 'normal' }: VoicePlaneProps) {
+export function VoicePlane({
+  speaker, text, speakerLabel, variant = 'normal', onAdvance, advanceLabel, guidanceLevel,
+}: VoicePlaneProps) {
   const textRef = useRef<HTMLParagraphElement>(null);
   const prevRef = useRef<{ speaker: Speaker; text: string }>({ speaker, text });
 
@@ -44,10 +61,29 @@ export function VoicePlane({ speaker, text, speakerLabel, variant = 'normal' }: 
     prevRef.current = { speaker, text };
   }, [speaker, text]);
 
-  return (
-    <div className={`ad12-voice-plane ad12-voice-plane--${speaker.toLowerCase()} ad12-voice-plane--${variant}`}>
+  const className = `ad12-voice-plane ad12-voice-plane--${speaker.toLowerCase()} ad12-voice-plane--${variant}`;
+  const body = (
+    <>
       <p className="ad12-ui-text ad12-voice-plane__speaker">{speakerLabel}</p>
       <p ref={textRef} className="ad12-reading-text"><Ruby text={text} /></p>
-    </div>
+    </>
+  );
+
+  if (!onAdvance) {
+    return <div className={className}>{body}</div>;
+  }
+
+  return (
+    <button
+      type="button"
+      className={`${className} ad12-voice-plane--interactive`}
+      onClick={onAdvance}
+      aria-label={advanceLabel}
+    >
+      {body}
+      <GuidanceAffordance level={guidanceLevel ?? 'independent'}>
+        <span className="ad12-voice-plane__advance ad12-tappable" aria-hidden="true">▼</span>
+      </GuidanceAffordance>
+    </button>
   );
 }

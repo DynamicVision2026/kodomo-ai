@@ -180,6 +180,47 @@ describe('WO-25 #1 — one tap advances exactly once, everywhere', () => {
     await user.click(screen.getByText((_c, el) => el?.tagName === 'BUTTON' && (el.textContent ?? '').includes('かたづけるとき')));
     expect(screen.getByText(ui.earlyOk)).toBeInTheDocument();
   });
+
+  it('Builder work order §3: the Miss reply is ポン太-adjacent ロボ voice plane, not SpeechBubble — no red/shake/✕, no fold, no deepen', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await enterStage(user);
+    await pickClearAndReachJudge(user);
+    await passLayer0Gate(user);
+    await user.click(screen.getByText('ロボは何がすき？'));
+    await waitFor(() => {
+      expect(document.querySelector('.ad12-voice-plane--flatReply')).toBeInTheDocument();
+    });
+    const plane = document.querySelector('.ad12-voice-plane--flatReply')!;
+    expect(plane.className).toContain('ad12-voice-plane--robot'); // ロボ's own voice, not ポン太's
+    expect(within(plane as HTMLElement).getByText(ui.stageRobotName)).toBeInTheDocument();
+    expect(within(plane as HTMLElement).getByText('ぼくは今『ちゃんと』の話をしてるよ。')).toBeInTheDocument();
+    // No punishment semantics: no red/warning class, no ✕ glyph, anywhere on screen.
+    expect(screen.queryByText('✕')).not.toBeInTheDocument();
+    expect(screen.queryByText('不正解')).not.toBeInTheDocument();
+    expect(document.querySelector('[class*="red"]')).not.toBeInTheDocument();
+    // No fold/deepen: the depth row still shows layer 0 as current, not advanced.
+    expect(document.querySelector('.ad12-depth-row')!.getAttribute('aria-label')).toBe('1 / 3');
+    await user.click(plane as HTMLElement);
+    expect(screen.getByText('どういうこと？')).toBeInTheDocument(); // tray back, unchanged
+  });
+
+  it('Builder work order §3: the early わかった challenge is ポン太\'s own voice plane, not SpeechBubble', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await enterStage(user);
+    await pickClearAndReachJudge(user);
+    await user.click(screen.getByText(ui.earlyOk));
+    await waitFor(() => {
+      expect(document.querySelector('.ad12-voice-plane--challenge')).toBeInTheDocument();
+    });
+    const plane = document.querySelector('.ad12-voice-plane--challenge')!;
+    expect(plane.className).toContain('ad12-voice-plane--ponta');
+    expect(within(plane as HTMLElement).getByText('ポン太')).toBeInTheDocument();
+    expect(within(plane as HTMLElement).getByText('「きちんと」って、何をすることなの？')).toBeInTheDocument();
+    await user.click(plane as HTMLElement);
+    expect(screen.getByText(ui.earlyOk)).toBeInTheDocument(); // back at JUDGE, play resumes exactly as today
+  });
 });
 
 describe('WO-25 #2 — explicit task prompts', () => {

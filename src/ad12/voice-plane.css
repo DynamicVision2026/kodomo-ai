@@ -39,3 +39,33 @@
 
 .ad12-voice-plane--refrain {
 }
+
+/** Builder work order §3: a `<button>` root (VoicePlane.tsx's own `onAdvance`) — same "whole
+ *  plane is the tap target" contract as AnswerPlane, so these reset the browser's own default
+ *  button chrome to read as the same plane every other (non-interactive) voice plane shows. */
+.ad12-voice-plane--interactive {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+  width: 100%;
+  border: none;
+  border-left: 6px solid var(--ad12-recess-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ad12-voice-plane--interactive.ad12-voice-plane--ponta { border-left-color: var(--ad12-ponta); }
+.ad12-voice-plane--interactive.ad12-voice-plane--robot { border-left-color: var(--ad12-recess-2); }
+.ad12-voice-plane--interactive.ad12-voice-plane--guide { border-left-color: var(--ad12-field-2); }
+
+.ad12-voice-plane__advance {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ad12-ink);
+  font-size: 1.5rem;
+  line-height: 1;
+  align-self: center;
+}

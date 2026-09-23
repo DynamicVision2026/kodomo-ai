@@ -41,6 +41,12 @@ function getByAuthoredText(raw: string): HTMLElement {
  *  it's the one "tap anywhere to advance" surface currently on screen. */
 const ADVANCE_SELECTOR = '.speech-bubble, .ad12-root-plane--tappable';
 
+/** Builder work order §3: the dig-hand's own flat-reply bubble (a Miss/non-deepen reply) now
+ *  renders AD-12's own VoicePlane, not SpeechBubble — a different tap-anywhere-to-advance
+ *  surface with its own stable class. The slot round's own recovery bubble (`slotResolved` in
+ *  MissionStage.tsx) is unaffected by §3 and stays plain `.speech-bubble`. */
+const FLAT_REPLY_SELECTOR = '.ad12-voice-plane--flatReply';
+
 /**
  * WO-26 §26: reusable, CONTENT-AGNOSTIC conformance helper — walks any Story Mission or Bank
  * Dig's real content through the real `MissionStage` component (the same golden-grammar
@@ -147,13 +153,14 @@ export async function playMissionStageToCompletion(
       const nonDeepen = layer.hand.find((c) => c.tag !== 'deepen');
       if (nonDeepen) {
         await user.click(getByAuthoredText(nonDeepen.text));
-        // The dig-hand's own flat-reply bubble (WO-25 #4) needs its own ONE tap before the
-        // chip settles into its permanent blocked state and the tray reappears.
+        // The dig-hand's own flat-reply bubble (WO-25 #4, now Builder work order §3's VoicePlane)
+        // needs its own ONE tap before the chip settles into its permanent blocked state and the
+        // tray reappears.
         await waitFor(() => {
-          expect(document.querySelector('.speech-bubble')).toBeInTheDocument();
+          expect(document.querySelector(FLAT_REPLY_SELECTOR)).toBeInTheDocument();
         });
         expect(screen.queryByText('不正解')).not.toBeInTheDocument(); // no punishment semantics
-        await user.click(document.querySelector('.speech-bubble') as HTMLElement);
+        await user.click(document.querySelector(FLAT_REPLY_SELECTOR) as HTMLElement);
         await waitFor(() => {
           expect(getByAuthoredText(nonDeepen.text).closest('.ad12-move-card')!.className).toContain('ad12-move-card--blocked');
         });

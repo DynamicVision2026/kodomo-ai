@@ -23,6 +23,7 @@ import { MoveTray, type TrayCard } from '../ad12/MoveTray';
 import { JudgeBar } from '../ad12/JudgeBar';
 import { DepthRow } from '../ad12/DepthRow';
 import { RootPlane } from '../ad12/RootPlane';
+import { VoicePlane } from '../ad12/VoicePlane';
 import { rootFormFor } from '../ad12/rootForm';
 import '../ad12/tokens.css';
 import '../ad12/primitives.css';
@@ -464,10 +465,15 @@ export function MissionStage({
     }
   } else if (part === 'dig') {
     if (state.challenge) {
+      // Builder work order §3: 早わかった's challenge line — ポン太's own voice plane (F5/F6),
+      // not SpeechBubble/AnswerPlane's generic treatment. After it, play returns to the dig
+      // exactly as today (dismissChallenge is unchanged; only the presentation moved).
       world = (
-        <SpeechBubble
-          speaker={state.challenge.challenger}
+        <VoicePlane
+          speaker="PONTA"
+          speakerLabel={state.challenge.challenger}
           text={state.challenge.asks}
+          variant="challenge"
           onAdvance={dismissChallenge}
           guidanceLevel={yomuGuidance}
           advanceLabel={ui.handoffContinue}
@@ -580,10 +586,16 @@ export function MissionStage({
     } else if (state.flatReply && !flatReplyRead && !flatReplyPending) {
       // WO-25 #4: the settle/impact beat (below) has already played by the time this shows —
       // the robot's own authored reply, never a red X / 不正解 verdict.
+      // Builder work order §3: ロボ's Miss reply — its own voice plane (F5), not SpeechBubble/
+      // AnswerPlane's generic treatment. Still no red/shake/✕ (voice-plane.css's own --flatReply
+      // variant is explicitly a plain, quiet plane); the layer doesn't fold and the field doesn't
+      // deepen either — commitHandCard's own non-deepen branch never touches DepthRow/fieldTone.
       world = (
-        <SpeechBubble
-          speaker={ui.stageRobotName}
+        <VoicePlane
+          speaker="ROBOT"
+          speakerLabel={ui.stageRobotName}
           text={state.flatReply}
+          variant="flatReply"
           onAdvance={() => {
             onGuidanceUse('yomu');
             setFlatReplyRead(true);
