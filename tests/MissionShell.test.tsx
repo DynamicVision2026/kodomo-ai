@@ -103,6 +103,14 @@ describe('MissionShell', () => {
     expect(screen.getByText(ui.parentScreenHeading)).toBeInTheDocument();
     expect(plausible).toHaveBeenCalledWith('parent_screen_view', expect.anything());
 
+    // Hotfix requirement (c): the multi-device purchase-recovery mention on this (parent-only)
+    // screen is a small ink link to /login — never a price, never a purchase button itself (that
+    // lives only at /account/, one hop further, after login).
+    const recoveryLink = screen.getByText(moduleJson.ui.parentUnlockLinkLabel).closest('a')!;
+    expect(recoveryLink).toHaveAttribute('href', '/login/');
+    expect(recoveryLink.closest('.mission-shell__unlock-recovery')).toBeInTheDocument();
+    expect(document.querySelector('.mission-shell__unlock-recovery')!.textContent).not.toMatch(/購入手続き|[¥$]\d|\d+円/);
+
     // WO-05: the Toolbox on this same parent screen reflects this profile's own moveProgress —
     // follow-naze reached moratta over the two layers just played (both in one domain, so not
     // tsukaeru — see the moveProgress assertion further down this file).

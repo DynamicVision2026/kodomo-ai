@@ -444,12 +444,14 @@ describe('AD-16 §0 — trial expiry closes Lesson 1-1 only, never the account/l
 });
 
 // ---------------------------------------------------------------------------------------------
-// AD-15's own approved rule: "expired trial: new 1-1 start blocked; existing in-progress lesson
-// retains the approved 2-hour grace." backend/src/access.ts's own `checkUnitAccess`/
-// `TRIAL_GRACE_MS`, `recordTrialUnitOpened`.
+// AD-15's own approved rule, precisely scoped by the Founder's own iPhone-incident follow-up:
+// "after endsAt, a new open or re-open of 1-1 is refused even within 2h, and only progress
+// writes for a lesson opened before endsAt are accepted until endsAt + 2h." Two DIFFERENT
+// operations, two DIFFERENT rules — backend/src/access.ts's `checkUnitAccess` (unit open, NO
+// grace, ever) vs `isProgressWriteAllowed` (progress save, the actual 2-hour grace).
 // ---------------------------------------------------------------------------------------------
 
-describe("AD-15 — expired trial's 2-hour grace for a lesson already in progress", () => {
+describe('AD-15 — unit-open has NO grace: a new open or re-open of 1-1 is refused the instant the trial expires', () => {
   async function openTrialUnit(env: Env, token: string, profileId: string) {
     return handleUnitOpen(
       authedRequest('/api/v1/units/m1-s2-1-1/open', token, { method: 'POST', body: JSON.stringify({ profileId, moduleId: 'm1' }) }),
@@ -457,30 +459,50 @@ describe("AD-15 — expired trial's 2-hour grace for a lesson already in progres
     );
   }
 
-  it('a trial that expired moments ago, with a recent open on record, still opens (the grace window)', async () => {
+  it('a trial that expired moments ago is refused — even with a recent open on record, even well inside the 2-hour window', async () => {
     const env = fakeEnv();
-    const { familyId, token } = await loginFamily(env, 'graced@example.com');
+    const { familyId, token } = await loginFamily(env, 'reopen-just-expired@example.com');
     await env.db.set(trialPath(familyId, 'm1'), {
       startedAt: new Date(Date.now() - 74 * 60 * 60 * 1000).toISOString(),
       endsAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // expired 5 minutes ago
       convertedAt: null, convertedOrderId: null,
-      lastOpenedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // opened 10 minutes ago
+      lastOpenedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // opened 10 minutes ago — irrelevant to opening
     } satisfies TrialDoc);
     const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
     const { id: profileId } = await createRes.json();
 
     const openRes = await openTrialUnit(env, token, profileId);
-    expect(openRes.status).toBe(200);
+    expect(openRes.status).toBe(403);
+    expect((await openRes.json()).error).toBe('trial_expired');
   });
 
-  it("a trial expired well past the grace window, even with SOME past open on record, is blocked — grace is never a second trial", async () => {
+  it('the same refusal holds one second before the 2-hour mark, one second after it, and every point between — grace never applies to opening at all', async () => {
+    const env = fakeEnv();
+    const { familyId, token } = await loginFamily(env, 're-open-sweep@example.com');
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+
+    for (const minutesPastExpiry of [1, 60, 119, 120, 121, 600]) {
+      await env.db.set(trialPath(familyId, 'm1'), {
+        startedAt: new Date(Date.now() - 74 * 60 * 60 * 1000).toISOString(),
+        endsAt: new Date(Date.now() - minutesPastExpiry * 60 * 1000).toISOString(),
+        convertedAt: null, convertedOrderId: null,
+        lastOpenedAt: new Date(Date.now() - (minutesPastExpiry + 1) * 60 * 1000).toISOString(), // opened before endsAt
+      } satisfies TrialDoc);
+      const openRes = await openTrialUnit(env, token, profileId);
+      expect(openRes.status).toBe(403);
+      expect((await openRes.json()).error).toBe('trial_expired');
+    }
+  });
+
+  it("a trial expired well past the grace window is blocked too, obviously — grace was never a second trial", async () => {
     const env = fakeEnv();
     const { familyId, token } = await loginFamily(env, 'gracedout@example.com');
     await env.db.set(trialPath(familyId, 'm1'), {
       startedAt: new Date(Date.now() - 100 * 60 * 60 * 1000).toISOString(),
       endsAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // expired 5 hours ago
       convertedAt: null, convertedOrderId: null,
-      lastOpenedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // last opened 4h ago — outside the 2h grace
+      lastOpenedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
     } satisfies TrialDoc);
     const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
     const { id: profileId } = await createRes.json();
@@ -534,5 +556,69 @@ describe("AD-15 — expired trial's 2-hour grace for a lesson already in progres
     const trial = await env.db.get<TrialDoc>(trialPath(familyId, 'm1'));
     expect(trial?.startedAt).toBe(originalStartedAt);
     expect(trial?.endsAt).toBe(originalEndsAt); // untouched — no new trial was created
+  });
+});
+
+describe('AD-15 — progress-write grace: a lesson opened before endsAt keeps saving until endsAt + 2h', () => {
+  function putProgress(env: Env, token: string, profileId: string, missions: ModuleProgressState['missions']) {
+    const state: ModuleProgressState = { ...emptyModuleProgress(), missions };
+    return handlePutProgress(
+      authedRequest(`/api/v1/profiles/${profileId}/progress/m1`, token, { method: 'PUT', body: JSON.stringify(state) }),
+      env, profileId, 'm1',
+    );
+  }
+
+  async function seed(email: string, endsAtOffsetMs: number, lastOpenedAtOffsetMs: number | null) {
+    const env = fakeEnv();
+    const { familyId, token } = await loginFamily(env, email);
+    await env.db.set(trialPath(familyId, 'm1'), {
+      startedAt: new Date(Date.now() - 74 * 60 * 60 * 1000).toISOString(),
+      endsAt: new Date(Date.now() + endsAtOffsetMs).toISOString(),
+      convertedAt: null, convertedOrderId: null,
+      lastOpenedAt: lastOpenedAtOffsetMs === null ? null : new Date(Date.now() + lastOpenedAtOffsetMs).toISOString(),
+    } satisfies TrialDoc);
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+    return { env, familyId, token, profileId };
+  }
+
+  it('a lesson opened well before endsAt keeps saving progress 90 minutes after endsAt — inside the 2-hour grace', async () => {
+    const { env, token, profileId } = await seed('grace-save-inside@example.com', -90 * 60 * 1000, -74 * 60 * 60 * 1000);
+    const res = await putProgress(env, token, profileId, { 'm1-s2-1-1': { done: true, stamps: 1, coop: false } });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.missions['m1-s2-1-1']).toBeDefined(); // accepted, not silently dropped
+  });
+
+  it('the SAME lesson is refused past endsAt + 2h — the grace has a hard edge, not a renewable one', async () => {
+    const { env, token, profileId } = await seed('grace-save-outside@example.com', -121 * 60 * 1000, -74 * 60 * 60 * 1000);
+    const res = await putProgress(env, token, profileId, { 'm1-s2-1-1': { done: true, stamps: 1, coop: false } });
+    expect(res.status).toBe(200); // the request itself still succeeds (AD-13 idempotency philosophy)...
+    const body = await res.json();
+    expect(body.missions['m1-s2-1-1']).toBeUndefined(); // ...but the disallowed mission is silently dropped
+  });
+
+  it('a lesson NEVER actually opened (no lastOpenedAt) gets no grace at all once expired, even seconds past endsAt', async () => {
+    const { env, token, profileId } = await seed('grace-never-opened@example.com', -60 * 1000, null);
+    const res = await putProgress(env, token, profileId, { 'm1-s2-1-1': { done: true, stamps: 1, coop: false } });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.missions['m1-s2-1-1']).toBeUndefined();
+  });
+
+  it('a still-active trial (not yet expired at all) writes normally — the grace machinery never engages early', async () => {
+    const { env, token, profileId } = await seed('grace-still-active@example.com', 60 * 60 * 1000, -30 * 60 * 1000);
+    const res = await putProgress(env, token, profileId, { 'm1-s2-1-1': { done: true, stamps: 1, coop: false } });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.missions['m1-s2-1-1']).toBeDefined();
+  });
+
+  it('a paid (non-free) mission id is dropped regardless of trial/grace state — the free tier is 1-1 only, never widened by grace', async () => {
+    const { env, token, profileId } = await seed('grace-paid-mission@example.com', -90 * 60 * 1000, -74 * 60 * 60 * 1000);
+    const res = await putProgress(env, token, profileId, { 'm1-s2-1-2': { done: true, stamps: 1, coop: false } });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.missions['m1-s2-1-2']).toBeUndefined();
   });
 });

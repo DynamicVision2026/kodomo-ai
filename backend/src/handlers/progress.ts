@@ -6,7 +6,7 @@ import { passesCsrfCheck } from '../csrf.js';
 import { emptyModuleProgress, mergeModuleProgress, type ModuleProgressState } from '../../../shared/progressMerge.js';
 import { isFreeMission } from '../../../shared/freeMissions.js';
 import { isModuleEntitled } from '../family.js';
-import { recordFirstPaidUse } from '../access.js';
+import { recordFirstPaidUse, isProgressWriteAllowed } from '../access.js';
 
 const SCHEMA_VERSION = 1;
 
@@ -19,24 +19,31 @@ async function ownsProfile(env: Env, familyId: string, profileId: string): Promi
  * AD-15 "server-authoritative access gate" / "server-side progress-write enforcement": a
  * `missions[missionId]` entry is only ever accepted when `moduleId` itself is actively entitled,
  * OR `missionId` is one of that module's own free/trial ids (AD-15: "trial content = Lesson 1-1
- * only" — the same free tier a guest already gets, never widened by being logged in or mid-trial).
- * Everything else (`moveProgress`, `milestones`, `memories`, `m2Evidence`, `guidance`) is engine
- * evidence that isn't itself a claim of "I completed paid mission X" and is left untouched — this
- * is a deliberately narrow gate on the one field that IS such a claim, not a blanket lock on every
- * synced field. Silently dropping a disallowed key (never rejecting the whole request) means a
- * family's legitimate free-mission progress still syncs even while an entitlement lapses/expires
- * mid-session, exactly like AD-13's own webhook idempotency philosophy ("never fail the whole
- * request over a part of it that doesn't apply").
+ * only" — the same free tier a guest already gets, never widened by being logged in or mid-trial)
+ * AND, once the trial has actually expired, only within its own 2-hour grace window for a lesson
+ * that was genuinely opened before `endsAt` (`isProgressWriteAllowed`, backend/src/access.ts —
+ * this is the ONLY place that grace applies; re-opening the unit itself, `checkUnitAccess`, has
+ * no such exception at all). Everything else (`moveProgress`, `milestones`, `memories`,
+ * `m2Evidence`, `guidance`) is engine evidence that isn't itself a claim of "I completed paid
+ * mission X" and is left untouched — this is a deliberately narrow gate on the one field that IS
+ * such a claim, not a blanket lock on every synced field. Silently dropping a disallowed key
+ * (never rejecting the whole request) means a family's legitimate free-mission progress still
+ * syncs even while an entitlement lapses/expires mid-session, exactly like AD-13's own webhook
+ * idempotency philosophy ("never fail the whole request over a part of it that doesn't apply").
  */
-function enforceMissionAccess(
+async function enforceMissionAccess(
+  env: Env,
+  familyId: string,
   missions: ModuleProgressState['missions'],
   moduleId: string,
   moduleEntitled: boolean,
-): ModuleProgressState['missions'] {
+  now: Date,
+): Promise<ModuleProgressState['missions']> {
   if (moduleEntitled) return missions;
+  const freeMissionWriteAllowed = await isProgressWriteAllowed(env, familyId, moduleId, now);
   const allowed: ModuleProgressState['missions'] = {};
   for (const [missionId, progress] of Object.entries(missions)) {
-    if (isFreeMission(moduleId, missionId)) allowed[missionId] = progress;
+    if (isFreeMission(moduleId, missionId) && freeMissionWriteAllowed) allowed[missionId] = progress;
   }
   return allowed;
 }
@@ -75,7 +82,7 @@ export async function handlePutProgress(request: Request, env: Env, profileId: s
   }
 
   const moduleEntitled = await isModuleEntitled(env, familyId, moduleId);
-  const sanitizedMissions = enforceMissionAccess(clientState.missions, moduleId, moduleEntitled);
+  const sanitizedMissions = await enforceMissionAccess(env, familyId, clientState.missions, moduleId, moduleEntitled, new Date());
   const sanitizedState: ModuleProgressState = { ...clientState, missions: sanitizedMissions };
 
   // AD-16 §6 "defensive rule": a PUT carrying an accepted (i.e. genuinely entitled) paid-unit

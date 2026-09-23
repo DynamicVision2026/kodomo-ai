@@ -16,12 +16,15 @@ export type AccessResult = { allowed: true } | { allowed: false; reason: AccessR
  * nothing here or in `ensureTrialStarted` ever resets/recreates a trial doc that already exists).
  * Otherwise, only the module's own free/trial unit(s) (shared/freeMissions.ts) can ever pass, and
  * only while that module's trial hasn't elapsed — `not_started` counts as passing (the caller
- * starts it via `ensureTrialStarted`), `expired` closes it UNLESS the family had this exact unit
- * open within the last `TRIAL_GRACE_MS` (AD-15: "existing in-progress lesson retains the
- * approved 2-hour grace" — never a brand-new open past expiry, only one recently already
- * underway; `TrialDoc.lastOpenedAt`, written by `recordTrialUnitOpened` below). AD-16 §0: trial
- * expiry is the only place any of this ever refuses anything — never login, `/me`, profiles,
- * progress sync, or purchase.
+ * starts it via `ensureTrialStarted`), `expired` closes it, with NO exception here: AD-15's own
+ * "expired trial: new 1-1 start blocked" is unconditional — a NEW open or a RE-open of 1-1 is
+ * refused the instant `now` passes `endsAt`, whatever `TrialDoc.lastOpenedAt` says. The 2-hour
+ * grace this module also implements applies to a DIFFERENT operation entirely — see
+ * `isProgressWriteAllowed` below, used by `handlePutProgress`
+ * (backend/src/handlers/progress.ts) to keep accepting progress SAVES for a lesson that was
+ * already legitimately opened before `endsAt`, without ever re-opening (or re-entering) it. AD-16
+ * §0: trial expiry is the only place any of this ever refuses anything — never login, `/me`,
+ * profiles, or purchase.
  */
 export async function checkUnitAccess(
   env: Env,
@@ -34,11 +37,27 @@ export async function checkUnitAccess(
   if (!isFreeMission(moduleId, unitId)) return { allowed: false, reason: 'not_entitled' };
 
   const trial = await env.db.get<TrialDoc>(trialPath(familyId, moduleId));
-  if (trialState(trial, now) !== 'expired') return { allowed: true };
+  if (trialState(trial, now) === 'expired') return { allowed: false, reason: 'trial_expired' };
+  return { allowed: true };
+}
 
-  const lastOpenedAt = trial?.lastOpenedAt ? new Date(trial.lastOpenedAt).getTime() : null;
-  if (lastOpenedAt !== null && now.getTime() - lastOpenedAt <= TRIAL_GRACE_MS) return { allowed: true };
-  return { allowed: false, reason: 'trial_expired' };
+/**
+ * AD-15's own 2-hour-grace rule, precisely scoped: "only progress writes for a lesson opened
+ * before `endsAt` are accepted until `endsAt` + 2 hours" — never a re-open of the unit itself
+ * (`checkUnitAccess` above has no exception for this at all). `TrialDoc.lastOpenedAt` is set only
+ * by `recordTrialUnitOpened`, itself only ever called right after `checkUnitAccess` already
+ * allowed the open — so by construction, a non-null `lastOpenedAt` can never be later than
+ * `endsAt` (opening is unconditionally refused from `endsAt` onward), meaning "opened before
+ * endsAt" reduces to "has ever been opened at all". The grace window itself is anchored at
+ * `endsAt`, not at `lastOpenedAt` — a lesson opened at hour 71 gets the same cutoff (`endsAt` + 2h)
+ * as one opened at hour 1, never a sliding/renewable window.
+ */
+export async function isProgressWriteAllowed(env: Env, familyId: string, moduleId: string, now: Date = new Date()): Promise<boolean> {
+  const trial = await env.db.get<TrialDoc>(trialPath(familyId, moduleId));
+  const state = trialState(trial, now);
+  if (state !== 'expired') return true; // not_started/active — same as before this rule existed.
+  if (!trial?.lastOpenedAt) return false; // never actually opened — nothing to extend grace to.
+  return now.getTime() - new Date(trial.endsAt).getTime() <= TRIAL_GRACE_MS;
 }
 
 /** Idempotent, race-safe (transactional): the first call for a family+module actually starts the
@@ -57,13 +76,12 @@ export async function ensureTrialStarted(env: Env, familyId: string, moduleId: s
   });
 }
 
-/** AD-15's own 2-hour-grace rule (see `checkUnitAccess` above): stamps "the trial unit was just
- *  opened" on every server-accepted open of it, whatever the trial's own state — so a lesson
- *  that was genuinely underway right at the 72-hour boundary can still be finished, while a
- *  family that hasn't touched it in the last `TRIAL_GRACE_MS` gets the ordinary expired refusal.
- *  Always called together with `ensureTrialStarted` (backend/src/handlers/units.ts) so a trial
- *  doc always exists by the time this runs; a missing doc (shouldn't happen) is a silent no-op
- *  rather than fabricating one out of order. */
+/** Stamps "the trial unit was just opened" on every server-accepted open of it (`checkUnitAccess`
+ *  already having allowed it, so this only ever runs while the trial was still active or not yet
+ *  started) — the ONE signal `isProgressWriteAllowed` above reads to grant its 2-hour progress-
+ *  save grace. Always called together with `ensureTrialStarted` (backend/src/handlers/units.ts)
+ *  so a trial doc always exists by the time this runs; a missing doc (shouldn't happen) is a
+ *  silent no-op rather than fabricating one out of order. */
 export async function recordTrialUnitOpened(env: Env, familyId: string, moduleId: string, now: Date = new Date()): Promise<void> {
   const path = trialPath(familyId, moduleId);
   await env.db.runTransaction(async (tx) => {

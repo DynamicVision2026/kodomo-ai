@@ -121,18 +121,24 @@
   color: var(--ink-soft, #6b5d4f);
 }
 
-/* WO-30 §6: purchase recovery — a quiet utility note, not another call-to-action competing with
-   M0/M2b/M5/Bank above it. */
+/* WO-30 §6 / AD-15 rule #3 (hotfix): purchase recovery — a quiet utility note, not another
+   call-to-action competing with M0/M2b/M5/Bank above it. A device-recovery mention ("already
+   bought it elsewhere? register your family code here"), never a price and never a purchase
+   button itself (that lives only at /account/, reached one hop further, after login) — small
+   ink text, same F7 "parent actions use ink, never yellow" rule the rest of AD-12 already
+   follows, not a bold accent-coloured CTA. */
 .mission-shell__unlock-recovery {
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   font-size: 0.85rem;
-  color: var(--ink-soft, #6b5d4f);
+  color: var(--ad12-ink, #1b1f3a);
+  opacity: 0.7;
 }
 .mission-shell__unlock-recovery a {
-  color: var(--root, #c8922e);
-  font-weight: 700;
+  color: var(--ad12-ink, #1b1f3a);
+  font-weight: 500;
+  text-decoration: underline;
 }
 
 /* Hotfix (AD-15 §6): `.mission-shell__locked`/`'connection-error'` are now their own AD-12
