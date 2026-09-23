@@ -3,7 +3,7 @@ import type { ProfileDoc } from '../schema.js';
 import { profilePath } from '../schema.js';
 import { resolveSession } from '../session.js';
 import { passesCsrfCheck } from '../csrf.js';
-import { checkUnitAccess, ensureTrialStarted, recordFirstPaidUse } from '../access.js';
+import { checkUnitAccess, ensureTrialStarted, recordFirstPaidUse, recordTrialUnitOpened } from '../access.js';
 import { isFreeMission } from '../../../shared/freeMissions.js';
 
 async function ownsProfile(env: Env, familyId: string, profileId: string): Promise<boolean> {
@@ -38,15 +38,20 @@ export async function handleUnitOpen(request: Request, env: Env, unitId: string)
   const { profileId, moduleId } = body as { profileId: string; moduleId: string };
   if (!(await ownsProfile(env, familyId, profileId))) return new Response('not found', { status: 404 });
 
-  const access = await checkUnitAccess(env, familyId, moduleId, unitId);
+  const now = new Date();
+  const access = await checkUnitAccess(env, familyId, moduleId, unitId, now);
   if (!access.allowed) {
     return new Response(JSON.stringify({ error: access.reason }), { status: 403, headers: { 'content-type': 'application/json' } });
   }
 
   if (isFreeMission(moduleId, unitId)) {
-    await ensureTrialStarted(env, familyId, moduleId);
+    await ensureTrialStarted(env, familyId, moduleId, now);
+    // AD-15's own 2-hour-grace rule (backend/src/access.ts) — stamp every successful open of
+    // the trial unit, not just the first, so a lesson genuinely underway right at the 72-hour
+    // boundary can still be finished.
+    await recordTrialUnitOpened(env, familyId, moduleId, now);
   } else {
-    await recordFirstPaidUse(env, familyId, moduleId, unitId, profileId);
+    await recordFirstPaidUse(env, familyId, moduleId, unitId, profileId, now);
   }
 
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } });

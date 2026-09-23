@@ -1,4 +1,3 @@
-.mission-shell__locked,
 .mission-shell__wrapper,
 .mission-shell__coop {
   display: flex;
@@ -136,17 +135,41 @@
   font-weight: 700;
 }
 
-/* AD-16 §6: the 'unauthorized' locked-screen's own login link — same visual weight as the
-   screen's other primary action (back-to-map), never a plain inline text link buried in a
-   paragraph. */
-.mission-shell__locked-login {
-  display: inline-block;
-  padding: 0.6rem 1.25rem;
-  border-radius: 999px;
-  background: var(--root, #c8922e);
-  color: #fff;
-  font-weight: 700;
-  text-decoration: none;
+/* Hotfix (AD-15 §6): `.mission-shell__locked`/`'connection-error'` are now their own AD-12
+ * screen — NOT the shared `.mission-shell__wrapper` (several other, out-of-scope MissionShell
+ * screens still depend on that class's own legacy button styling unchanged), same "dedicated
+ * wrapper, never leak into shared classes" pattern completion-ritual.css already established.
+ * The parent-handoff action uses the shared `.ad12-ink-button` (F7: parent actions use ink,
+ * never yellow) — only the quieter back-to-map action needs styling of its own here.
+ */
+.mission-shell__locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;
+  padding: 2rem 1rem;
+  background: var(--ad12-field-0);
+}
+.mission-shell__locked-plane {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  max-width: 28rem;
+  width: 100%;
+  text-align: center;
+}
+.mission-shell__locked-plane .ad12-ink-button {
+  align-self: center;
+}
+.mission-shell__locked-back {
+  border: none;
+  background: none;
+  color: var(--ad12-ink);
+  opacity: 0.7;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .mission-shell__m2 {
@@ -262,7 +285,6 @@
    Filling the viewport with the screen's own surface colour and centering the (still
    phone-sized) card within it fixes both without changing anything about the phone layout. */
 @media (min-width: 768px) {
-  .mission-shell__locked,
   .mission-shell__wrapper,
   .mission-shell__coop {
     min-height: 100dvh;

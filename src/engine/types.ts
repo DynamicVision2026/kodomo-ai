@@ -140,14 +140,23 @@ export interface ModuleUiStrings {
    *  entitled on this device. */
   parentUnlockPrompt?: string;
   parentUnlockLinkLabel?: string;
+  /** Hotfix (AD-15 §6, post-production-incident): shown ONLY for a genuine, server-confirmed
+   *  entitlement refusal (`checkUnitAccess`'s own `not_entitled`/`trial_expired`) — never for a
+   *  session problem (that's a real `/login/` navigation now, no screen of its own — see
+   *  `MissionShell.enterMission`) and never for a network/server hiccup (`connectionErrorMessage`
+   *  below). Calm child-voice, no sales copy, no numbers — a real production incident showed a
+   *  literal "please purchase" sentence here to a first-time visitor whose actual problem was
+   *  unrelated to entitlement at all. */
   lockedMessage: string;
-  /** AD-16 §0/§6: shown instead of `lockedMessage` when the server refuses entry specifically
-   *  because there is no session at all (never logged in on this device) — the one case with a
-   *  genuinely different remedy ("log in", not "purchase"). Optional so an existing module
-   *  fixture without it keeps working unchanged, falling back to the generic `lockedMessage` +
-   *  back-to-map action exactly as before this pair existed. */
-  lockedLoginPrompt?: string;
-  lockedLoginLinkLabel?: string;
+  /** Hotfix: the one action this screen offers — hand off to the parent screen (never a purchase
+   *  button itself; that lives only on `screen.kind === 'parent'`/`/account/`, AD-15 §6's own
+   *  "purchase button lives only on the parent screen" rule). */
+  lockedGrownUpActionLabel: string;
+  /** Hotfix: shown for an `openUnit` failure that is neither a session problem nor a genuine
+   *  entitlement refusal (`network`/`server`/`not_found`/`not_configured`) — an infrastructure
+   *  problem, so this never claims a purchase is needed (nothing about entitlement is actually
+   *  known in this case). */
+  connectionErrorMessage: string;
   /** WO-02: the 「これでOK？」 judgment gate's "not enough" response, opposite of earlyOk. */
   judgeNotEnough: string;
   /** WO-05: heading for 問いのどうぐばこ, the Toolbox growth surface on the parent screen. */

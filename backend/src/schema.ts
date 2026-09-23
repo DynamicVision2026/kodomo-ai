@@ -51,6 +51,13 @@ export interface TrialDoc {
   endsAt: string;
   convertedAt: string | null;
   convertedOrderId: string | null;
+  /** AD-15's own "an already-open trial lesson retains a 2-hour grace past expiry" rule
+   *  (backend/src/access.ts's own `checkUnitAccess`/`TRIAL_GRACE_MS`) — the timestamp of the
+   *  most recent server-accepted open of the module's free/trial unit, updated on every such
+   *  open regardless of trial state (never only the first). `null` until the trial unit has
+   *  ever actually been opened once — a trial doc can exist (from `ensureTrialStarted`) with
+   *  this still `null` for the brief window between the two writes in the same request. */
+  lastOpenedAt: string | null;
 }
 
 /** AD-16 §6: the first server-accepted open of any NON-trial unit for this module — never set by

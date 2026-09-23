@@ -32,12 +32,22 @@
   width: 5rem;
 }
 
+/* Hotfix (AD-12 token cleanup): this component predates AD-12 and still carried its own
+ * five-hue pre-AD12 palette (blue/grey/green/orange/purple) — AD-12 has no purple (or blue,
+ * green, orange). A real production check caught 「なんで？」 rendering in purple (the old
+ * `sotode`/"outside" rung's own colour) on Course Home's あつめたもの row. AD-12's own rule for
+ * this kind of state is a strict binary: `--ad12-accent` (yellow) for the child's own, a neutral
+ * field/ink tone otherwise — no distinct hue per rung. The five CLASS names below stay exactly
+ * as they were (RUNG_CLASS in Toolbox.tsx, and every test asserting on them) — only the COLOUR
+ * each one paints with changes: `undiscovered` is the one "otherwise" state, every other rung
+ * (obtained/usable/independent/outside — all mean "the child has this, one way or another") is
+ * the same accent yellow. */
 .toolbox__tool-icon {
   display: block;
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  background: #2f6fb0;
+  background: var(--ad12-accent);
 }
 
 .toolbox__tool-label {
@@ -47,32 +57,35 @@
 /* Silhouette: not yet encountered. Shape stays visible, colour and detail don't — readable
  * without colour vision and in black-and-white print, same principle as ui/Card.tsx. */
 .toolbox__tool--undiscovered .toolbox__tool-icon {
-  background: #ccc;
+  background: var(--ad12-field-1);
   filter: grayscale(1);
   opacity: 0.5;
 }
 .toolbox__tool--undiscovered .toolbox__tool-label {
-  color: #999;
+  color: var(--ad12-ink);
+  opacity: 0.6;
 }
 
-/* Obtained: the full tool, plainly. */
+/* Obtained: the full tool, plainly — the child's own, so it's yellow. */
 .toolbox__tool--obtained .toolbox__tool-icon {
-  background: #2f6fb0;
+  background: var(--ad12-accent);
   opacity: 1;
 }
 
-/* Usable: established, not just seen — a ring, not a number. */
+/* Usable: established, not just seen — same yellow, a ring (not a second hue) marks the
+ * distinction, not a number. */
 .toolbox__tool--usable .toolbox__tool-icon {
-  background: #2f8f6b;
-  box-shadow: 0 0 0 3px #cdeee1;
+  background: var(--ad12-accent);
+  box-shadow: 0 0 0 3px var(--ad12-field-1);
 }
 
-/* Representable per WO-05, not produced by any evidence this ticket implements. */
+/* Representable per WO-05, not produced by any evidence this ticket implements — still "the
+ * child's own" once it ever is, so still yellow. */
 .toolbox__tool--independent .toolbox__tool-icon {
-  background: #b0632f;
-  box-shadow: 0 0 0 3px #f0ddca;
+  background: var(--ad12-accent);
+  box-shadow: 0 0 0 3px var(--ad12-field-1);
 }
 .toolbox__tool--outside .toolbox__tool-icon {
-  background: #7a4fb0;
-  box-shadow: 0 0 0 3px #e4d9f5;
+  background: var(--ad12-accent);
+  box-shadow: 0 0 0 3px var(--ad12-field-1);
 }

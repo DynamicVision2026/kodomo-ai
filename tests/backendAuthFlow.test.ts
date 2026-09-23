@@ -153,7 +153,7 @@ describe('AD-16 §0 — login/session are NEVER gated by trial or entitlement st
     await env.db.set(trialPath(familyId, 'm1'), {
       startedAt: new Date(Date.now() - 100 * 60 * 60 * 1000).toISOString(),
       endsAt: new Date(Date.now() - 28 * 60 * 60 * 1000).toISOString(),
-      convertedAt: null, convertedOrderId: null,
+      convertedAt: null, convertedOrderId: null, lastOpenedAt: null,
     });
 
     const code2 = await issuedCode(env, 'trial-over@example.com');

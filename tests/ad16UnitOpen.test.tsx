@@ -166,30 +166,61 @@ describe('AD-16 §6 — entering a unit calls POST /units/{unitId}/open, and its
     expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument();
   });
 
-  it('no session at all (401 unauthorized) shows the distinct login-prompt locked screen, never generic content', async () => {
+  /**
+   * Hotfix regression test — reproduces exactly what the Founder saw on iPhone against
+   * kodomo-ai-2igizbslpa-an.a.run.app: a guest with no session at all tapped into the free
+   * trial and landed on a child-facing screen. The root cause was `enterMission` collapsing
+   * `openUnit`'s `reason: 'unauthorized'` into the SAME generic locked screen as a genuine
+   * entitlement refusal — AD-15 rule #4 ("a logged-out visitor is routed to sign-up/login")
+   * means this must be a real navigation to `/login/`, never a screen rendered under /play at
+   * all (so there is nothing here that could ever show sales copy).
+   */
+  it('no session at all (401 unauthorized) navigates straight to /login/, never rendering any /play screen', async () => {
     stubBackend(() => new Response('unauthorized', { status: 401 }));
+    const originalLocation = window.location;
+    // jsdom's window.location.href setter throws "Not implemented: navigation" — stub the whole
+    // object the same way tests/ad16PurchaseCta.test.tsx already does for the Shopify redirect.
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, href: '', pathname: '/play/', search: '' }, writable: true,
+    });
+
     const user = userEvent.setup();
     await renderConfiguredShell();
     await createProfile(user);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
 
-    await waitFor(() => expect(screen.getByText(ui.lockedLoginPrompt!)).toBeInTheDocument());
-    expect(screen.getByText(ui.lockedLoginLinkLabel!).closest('a')).toHaveAttribute('href', '/login/');
+    await waitFor(() => expect(window.location.href).toContain('/login/'));
+    expect(window.location.href).toContain(`next=${encodeURIComponent('/play/')}`);
+    // The definitive assertion: whatever the child was looking at a moment ago, none of it is
+    // still true — there is no purchase-wall text, no coop question, nothing rendered under
+    // /play at all for this case.
+    expect(screen.queryByText(ui.lockedMessage)).not.toBeInTheDocument();
     expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument();
+
+    Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
   });
 
-  it('a network failure fails closed — never enters content on an inconclusive answer', async () => {
+  /**
+   * Hotfix regression test — the SAME production incident's other half: whatever the true
+   * trigger was on the Founder's device (a CORS/origin mismatch between the app's two live
+   * Cloud Run hostnames is the leading candidate — `backend/src/router.ts`'s CORS answers a
+   * single static `APP_ORIGIN`, and a fetch() blocked by CORS surfaces to `apiFetch` as exactly
+   * this kind of thrown/caught failure), the CHILD must never be told "please purchase" for an
+   * infrastructure problem nothing here actually knows the cause of.
+   */
+  it("a network failure never shows the purchase-wall screen — it's a connection error, not an entitlement one", async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) return new Response('unauthorized', { status: 401 });
-      throw new Error('simulated network failure');
+      throw new Error('simulated network failure (e.g. a CORS-blocked cross-origin fetch)');
     }));
     const user = userEvent.setup();
     await renderConfiguredShell();
     await createProfile(user);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
 
-    await waitFor(() => expect(screen.getByText(ui.lockedMessage)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(ui.connectionErrorMessage)).toBeInTheDocument());
+    expect(screen.queryByText(ui.lockedMessage)).not.toBeInTheDocument();
     expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument();
   });
 });

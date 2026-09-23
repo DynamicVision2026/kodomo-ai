@@ -28,6 +28,7 @@ import { RealAiLab } from './RealAiLab';
 import { M0Ritual } from './M0Ritual';
 import { CompletionRitual } from './CompletionRitual';
 import { TeachBackPanel } from '../ad12/TeachBackPanel';
+import { Plane } from '../ad12/Plane';
 import '../ad12/tokens.css';
 import '../ad12/primitives.css';
 import './mission-shell.css';
@@ -101,12 +102,24 @@ type Screen =
    *  only when that profile hasn't sealed M0 yet (`afterProfileChosen` below). Never any other
    *  way, so it can never appear after any teaching content, Story 1-1's own audio included. */
   | { kind: 'm0-ritual' }
-  /** AD-16 §6: `reason: 'unauthorized'` is the one case with a genuinely different remedy (log
-   *  in, not purchase) — see `ui.lockedLoginPrompt`/`lockedLoginLinkLabel`. Every other refusal
-   *  (`not_entitled`, `trial_expired`, or a network/server error — fail closed the same way)
-   *  shows the original generic entitlement message; the distinction was never meaningful to a
-   *  family in those other cases, just "you can't dig here yet." */
-  | { kind: 'locked'; reason: 'unauthorized' | 'entitlement' }
+  /** Hotfix (post-AD-16 production incident): `reason: 'unauthorized'` (no session at all) is
+   *  NEVER a Screen state any more — `enterMission` below navigates straight to `/login/` the
+   *  instant it sees that reason, the same real page the account-first "trial CTA" flow already
+   *  uses (AD-15 rule #4: "a logged-out visitor is routed to sign-up/login"). This `'locked'`
+   *  screen is now reserved for a GENUINE entitlement refusal only (`not_entitled`/
+   *  `trial_expired` — the server's own `checkUnitAccess`, backend/src/access.ts) — see AD-15
+   *  rule #5: "child-facing /play never displays purchase/sales copy" — `ui.lockedMessage` no
+   *  longer carries any sales copy, and this screen's only action hands off to the parent screen
+   *  (the one place a purchase link is ever allowed to live). A network/server/not_found/
+   *  not_configured `openUnit` failure is an infrastructure problem, not an entitlement one —
+   *  it get its own `'connection-error'` screen below, never this one (the exact bug a real
+   *  incident exposed: a CORS/network hiccup was being shown to the child as "please purchase"). */
+  | { kind: 'locked'; reason: 'entitlement' }
+  /** Hotfix: any `openUnit` failure that ISN'T a session problem or a genuine entitlement
+   *  refusal (`network`, `server`, `not_found`, `not_configured`) — never claims a purchase is
+   *  needed, since none of those things are actually known to be true. AD-12 styled, one retry-
+   *  shaped action (back to the map), no login link (this isn't a session problem either). */
+  | { kind: 'connection-error' }
   | { kind: 'course-home' }
   | { kind: 'coop' }
   | { kind: 'phase'; index: number }
@@ -320,7 +333,26 @@ export function MissionShell({
         setScreen({ kind: 'coop' });
         return;
       }
-      setScreen({ kind: 'locked', reason: result.reason === 'unauthorized' ? 'unauthorized' : 'entitlement' });
+      // Hotfix (AD-15 rule #4): no session at all is never shown as a locked screen on /play —
+      // it's a real navigation to the sign-up/trial-CTA flow, `?next` bringing them straight
+      // back here once they're in. Never `setScreen` for this case (nothing to render — the
+      // browser is leaving /play).
+      if (result.reason === 'unauthorized') {
+        const next = window.location.pathname + window.location.search;
+        window.location.href = `/login/?next=${encodeURIComponent(next)}`;
+        return;
+      }
+      // A genuine, server-confirmed entitlement refusal (AD-15's own `checkUnitAccess` reasons)
+      // — the only case that's actually "you need a grown-up/a purchase to continue."
+      if (result.reason === 'trial_expired' || result.reason === 'not_entitled') {
+        setScreen({ kind: 'locked', reason: 'entitlement' });
+        return;
+      }
+      // Hotfix (AD-15 rule #5, the actual production incident): `network`/`server`/`not_found`/
+      // `not_configured` are infrastructure failures, not entitlement ones — showing the child a
+      // "please purchase" screen for a CORS hiccup or a transient 500 is exactly the bug a real
+      // incident exposed. Never collapse these into `'locked'`.
+      setScreen({ kind: 'connection-error' });
     });
   }
 
@@ -743,23 +775,43 @@ export function MissionShell({
 
   if (screen.kind === 'locked') {
     // WO-23 (AD-06 RC-1): "locked state is a dead end" — the one thing missing here was any way
-    // back at all. The lock/entitlement decision itself is unchanged (hasAccess, real).
-    // AD-16 §6: 'unauthorized' (no session at all) gets its own remedy — log in — when the
-    // caller's module fixture actually supplies that copy; every existing fixture without it,
-    // and every other reason, keeps the exact original generic message + back-to-map button.
-    if (screen.reason === 'unauthorized' && ui.lockedLoginPrompt && ui.lockedLoginLinkLabel) {
-      return (
-        <div className="mission-shell__locked">
-          <p><Ruby text={ui.lockedLoginPrompt} /></p>
-          <a className="mission-shell__locked-login" href="/login/">{ui.lockedLoginLinkLabel}</a>
-          <button type="button" onClick={goToCourseHome}>{ui.completeBackToMapLabel}</button>
-        </div>
-      );
-    }
+    // back at all. Hotfix (AD-15 §6, post-production-incident): this is now reached ONLY for a
+    // genuine, server-confirmed entitlement refusal (never a session/network problem — those
+    // have their own screens, see `enterMission`/`'connection-error'` above/below) — AD-12
+    // styled, a calm child-voice message (no sales copy, no numbers, `ui.lockedMessage` itself
+    // no longer carries any), and its one action hands off to the parent screen — the ONLY place
+    // a purchase action is ever allowed to live under /play.
     return (
-      <div className="mission-shell__locked">
-        <p><Ruby text={ui.lockedMessage} /></p>
-        <button type="button" onClick={goToCourseHome}>{ui.completeBackToMapLabel}</button>
+      <div className="ad12 mission-shell__locked">
+        <Plane className="mission-shell__locked-plane">
+          <p className="ad12-reading-text"><Ruby text={ui.lockedMessage} /></p>
+          <button
+            type="button"
+            className="ad12-ink-button ad12-tappable"
+            onClick={() => setScreen({ kind: 'parent', afterMission: false })}
+          >
+            {ui.lockedGrownUpActionLabel}
+          </button>
+          <button type="button" className="mission-shell__locked-back" onClick={goToCourseHome}>
+            {ui.completeBackToMapLabel}
+          </button>
+        </Plane>
+      </div>
+    );
+  }
+
+  if (screen.kind === 'connection-error') {
+    // Hotfix: a network/server/not_found/not_configured `openUnit` failure — an infrastructure
+    // problem, never an entitlement one. No login link (not a session problem), no purchase copy
+    // (nothing here is actually known about entitlement at all) — just a calm retry shape.
+    return (
+      <div className="ad12 mission-shell__locked">
+        <Plane className="mission-shell__locked-plane">
+          <p className="ad12-reading-text"><Ruby text={ui.connectionErrorMessage} /></p>
+          <button type="button" className="mission-shell__locked-back" onClick={goToCourseHome}>
+            {ui.completeBackToMapLabel}
+          </button>
+        </Plane>
       </div>
     );
   }

@@ -414,7 +414,7 @@ describe('AD-16 §0 — trial expiry closes Lesson 1-1 only, never the account/l
     await env.db.set(trialPath(familyId, 'm1'), {
       startedAt: new Date(Date.now() - 100 * 60 * 60 * 1000).toISOString(),
       endsAt: new Date(Date.now() - 28 * 60 * 60 * 1000).toISOString(),
-      convertedAt: null, convertedOrderId: null,
+      convertedAt: null, convertedOrderId: null, lastOpenedAt: null,
     } satisfies TrialDoc);
 
     // /me still works, and still reports the module's own expired trial without refusing the request.
@@ -440,5 +440,99 @@ describe('AD-16 §0 — trial expiry closes Lesson 1-1 only, never the account/l
     );
     expect(openRes.status).toBe(403);
     expect((await openRes.json()).error).toBe('trial_expired');
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// AD-15's own approved rule: "expired trial: new 1-1 start blocked; existing in-progress lesson
+// retains the approved 2-hour grace." backend/src/access.ts's own `checkUnitAccess`/
+// `TRIAL_GRACE_MS`, `recordTrialUnitOpened`.
+// ---------------------------------------------------------------------------------------------
+
+describe("AD-15 — expired trial's 2-hour grace for a lesson already in progress", () => {
+  async function openTrialUnit(env: Env, token: string, profileId: string) {
+    return handleUnitOpen(
+      authedRequest('/api/v1/units/m1-s2-1-1/open', token, { method: 'POST', body: JSON.stringify({ profileId, moduleId: 'm1' }) }),
+      env, 'm1-s2-1-1',
+    );
+  }
+
+  it('a trial that expired moments ago, with a recent open on record, still opens (the grace window)', async () => {
+    const env = fakeEnv();
+    const { familyId, token } = await loginFamily(env, 'graced@example.com');
+    await env.db.set(trialPath(familyId, 'm1'), {
+      startedAt: new Date(Date.now() - 74 * 60 * 60 * 1000).toISOString(),
+      endsAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // expired 5 minutes ago
+      convertedAt: null, convertedOrderId: null,
+      lastOpenedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // opened 10 minutes ago
+    } satisfies TrialDoc);
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+
+    const openRes = await openTrialUnit(env, token, profileId);
+    expect(openRes.status).toBe(200);
+  });
+
+  it("a trial expired well past the grace window, even with SOME past open on record, is blocked — grace is never a second trial", async () => {
+    const env = fakeEnv();
+    const { familyId, token } = await loginFamily(env, 'gracedout@example.com');
+    await env.db.set(trialPath(familyId, 'm1'), {
+      startedAt: new Date(Date.now() - 100 * 60 * 60 * 1000).toISOString(),
+      endsAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // expired 5 hours ago
+      convertedAt: null, convertedOrderId: null,
+      lastOpenedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // last opened 4h ago — outside the 2h grace
+    } satisfies TrialDoc);
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+
+    const openRes = await openTrialUnit(env, token, profileId);
+    expect(openRes.status).toBe(403);
+    expect((await openRes.json()).error).toBe('trial_expired');
+  });
+
+  it('a genuinely fresh 72-hour trial (never opened before) records its own first open time, no grace needed', async () => {
+    const env = fakeEnv();
+    const { token } = await loginFamily(env, 'freshtrial@example.com');
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+
+    const before = Date.now();
+    const openRes = await openTrialUnit(env, token, profileId);
+    expect(openRes.status).toBe(200);
+
+    const { familyId } = await (async () => {
+      const me = await handleMe(authedRequest('/api/v1/me', token, { method: 'GET' }), env);
+      return me.json();
+    })();
+    const trial = await env.db.get<TrialDoc>(trialPath(familyId, 'm1'));
+    expect(trial?.lastOpenedAt).not.toBeNull();
+    expect(new Date(trial!.lastOpenedAt!).getTime()).toBeGreaterThanOrEqual(before);
+  });
+
+  it("refunded M1 falls back to the SAME existing trial (dates unchanged) — no new trial is ever created", async () => {
+    const env = fakeEnv();
+    const { familyId, token } = await loginFamily(env, 'refunded@example.com');
+    const originalStartedAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+    const originalEndsAt = new Date(Date.now() + 62 * 60 * 60 * 1000).toISOString(); // still active
+    await env.db.set(trialPath(familyId, 'm1'), {
+      startedAt: originalStartedAt, endsAt: originalEndsAt,
+      convertedAt: null, convertedOrderId: null, lastOpenedAt: null,
+    } satisfies TrialDoc);
+    // A module entitlement that gets revoked (mirrors AD-16 §7's own refund handler outcome) —
+    // set directly here since this test's own point is `checkUnitAccess`'s fallback, not the
+    // webhook path already covered elsewhere in this file.
+    await env.db.set(entitlementPath(familyId, 'm1'), {
+      status: 'revoked', shopifyOrderId: 'order-1', grantedAt: originalStartedAt,
+      revokedAt: new Date().toISOString(), revokedReason: 'refund',
+    } satisfies EntitlementDoc);
+
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+    const openRes = await openTrialUnit(env, token, profileId);
+    expect(openRes.status).toBe(200); // falls back to the still-active original trial — allowed
+
+    const trial = await env.db.get<TrialDoc>(trialPath(familyId, 'm1'));
+    expect(trial?.startedAt).toBe(originalStartedAt);
+    expect(trial?.endsAt).toBe(originalEndsAt); // untouched — no new trial was created
   });
 });

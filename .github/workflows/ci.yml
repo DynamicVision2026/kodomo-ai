@@ -53,6 +53,8 @@ jobs:
         run: npm run gate:no-hardcoded
       - name: Gate — every mission's claims approved (+ review stamp on release)
         run: npm run gate:claims
+      - name: Gate — no purchase/price copy in any /play string (AD-15 §6, post-incident)
+        run: npm run gate:no-purchase-copy
       - name: Content lint (kanji grade, ruby, length, tags, banned words, PII)
         run: npm run lint:content
       - name: Unit tests
