@@ -24,6 +24,9 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY tsconfig.server.json ./
 COPY backend ./backend
+# See Dockerfile's own matching comment: shared/ is a real relative import target for
+# backend/src, not optional context.
+COPY shared ./shared
 RUN npx tsc -p tsconfig.server.json
 
 # ---- 3. production-only node_modules (no devDependencies) ----------------------------------

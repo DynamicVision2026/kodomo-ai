@@ -1,34 +1,40 @@
-# Only backend/, package.json, package-lock.json, and tsconfig.server.json are needed to
-# build the Cloud Run image (see Dockerfile) — everything else here is either irrelevant to
-# the backend service or actively shouldn't ship in it.
+# ONE universal ignore file, shared by all three Cloud Run images (Dockerfile,
+# Dockerfile.frontend, Dockerfile.admin). This intentionally does NOT try to scope down to any
+# single image's own needs — that was the previous design (a `Dockerfile.frontend.dockerignore`/
+# `Dockerfile.admin.dockerignore` pair meant to override this file per Docker BuildKit's
+# `<dockerfile-name>.dockerignore` convention) and it silently broke every image except the
+# default `Dockerfile`: Google Cloud Build's own build step (Kaniko, and `gcloud run deploy
+# --source`'s default builder) does NOT implement that BuildKit-only naming convention — it reads
+# only the file literally named `.dockerignore` at the build context root, no matter which
+# `--dockerfile`/`-f` was given. Concretely, that meant every `gcloud run deploy --source .
+# --dockerfile Dockerfile.frontend` build actually ran against THIS file — which excluded
+# `tsconfig.json`, `src/`, etc. for the (unrelated) backend's sake — producing exactly the
+# `TS5083: Cannot read file '/app/tsconfig.json'` failure this file's rewrite fixes.
+#
+# The correct, portable fix (works identically under Cloud Build, Kaniko, plain `docker build`,
+# and BuildKit): this file only ever excludes things NONE of the three images' own explicit
+# `COPY <name> <name>` instructions ever reference — never `src`, `backend`, `shared`,
+# `tsconfig*.json`, `vite*.config.ts`, or any of the route directories. Each Dockerfile's build
+# stage names exactly what it needs; nothing relies on this file to narrow scope further. A file
+# that's present here but genuinely irrelevant to a given image (e.g. `backend/` inside
+# Dockerfile.frontend's build stage, needed only because `src/admin/*.ts` type-imports from it)
+# is harmless — multi-stage builds discard the build stage entirely; only the final stage's own
+# explicit `COPY --from=build ...` ships anything into the deployed image.
 node_modules
 dist
 dist-admin
 dist-server
+
 .git
 .github
 
-# Client app + build tooling — not part of this image.
-src
-play
-login
-account
-claim
-print
-legal
-design
-admin-dashboard
-index.html
-vite.config.ts
-vite.admin.config.ts
-tsconfig.json
-
-# Content pipeline — a separate CLI tool, never runs inside this service.
+# Content pipeline + one-off scripts — CLI-only, never imported by app or build code.
 pipeline
 data
 scripts
 
 tests
+e2e
 docs
 *.md
 
@@ -37,3 +43,6 @@ docs
 *.local
 .DS_Store
 *.tsbuildinfo
+test-results
+playwright-report
+blob-report

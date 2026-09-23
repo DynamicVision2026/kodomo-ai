@@ -1,5 +1,21 @@
 name: CI
+
 on: [push, pull_request]
+
+# ARCHITECT DECISION NEEDED (see docs/launch-runbook.md's own "CI/CD" section for the full
+# writeup): this repo has no `main`/release branch today — only `claude/sprint-1-setup-ok4oym`
+# (the branch this session's own work landed on, and per the Builder work order the branch
+# presumed to be driving today's `kodomo-ai`/`kodomo-ai-backend` Cloud Run revisions) and one
+# stale, long-diverged `fix/cloud-run-backend-routing-404` branch from the pre-AD-13 era. Wiring
+# the production deploy trigger to a `claude/*`-named session branch is NOT a durable release
+# architecture — a future session on a differently-named branch would silently stop deploying,
+# or two "production" branches could exist at once. This workflow wires the trigger to the
+# CURRENT de facto branch (below) so a normal push does NOT require a manual deploy starting
+# today, but the Architect/Founder should confirm: promote `main` to the real permanent
+# production branch (recommended — retarget `PRODUCTION_BRANCH` below and retire this branch
+# name), or intentionally keep `claude/sprint-1-setup-ok4oym` as the long-lived production line.
+env:
+  PRODUCTION_BRANCH: claude/sprint-1-setup-ok4oym
 
 jobs:
   gates:
@@ -21,7 +37,142 @@ jobs:
         run: npm run lint:content
       - name: Unit tests
         run: npm test
-      - name: Build
+      - name: Build (frontend, tsc -b + vite build)
         run: npm run build
       - name: Gate — no LLM/API hosts in the shipped bundle
         run: npm run gate:no-llm
+      - name: Build (backend, tsc only — no image yet)
+        run: npm run build:server
+      - name: Build (admin dashboard, tsc + its own vite build)
+        run: npm run build:admin
+
+  # AD-16 §5 / Builder work order — "close the production deployment loop": build the frontend
+  # container and deploy it to the EXISTING `kodomo-ai` Cloud Run service. Never runs on a PR
+  # (forks/PRs never get deploy credentials) and never runs unless `gates` already passed —
+  # a failed test/gate/build stops here, production is untouched (rule #7/#8 of the work order).
+  deploy-frontend:
+    needs: gates
+    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', env.PRODUCTION_BRANCH)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # Workload Identity Federation — no long-lived key ever touches this repo
+    env:
+      PROJECT_ID: kodomo-ai
+      REGION: asia-northeast1
+      SERVICE: kodomo-ai
+      BACKEND_SERVICE: kodomo-ai-backend
+      AR_REPO: kodomo-ai
+    steps:
+      - uses: actions/checkout@v4
+
+      # One-time Founder setup creates this WIF provider + service account — see
+      # scripts/bootstrap-gcp-ci.sh and docs/launch-runbook.md's own "CI/CD" section. No JSON
+      # key ever stored in GitHub; the OIDC token this job's own `id-token: write` permission
+      # mints is what authenticates, scoped to this exact repo.
+      - id: auth
+        name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Ensure the Artifact Registry repo exists (idempotent)
+        run: |
+          gcloud artifacts repositories describe "${{ env.AR_REPO }}" \
+            --location="${{ env.REGION }}" >/dev/null 2>&1 || \
+          gcloud artifacts repositories create "${{ env.AR_REPO }}" \
+            --repository-format=docker \
+            --location="${{ env.REGION }}" \
+            --description="kodomo-ai Cloud Run images"
+
+      # AD-13 §1: VITE_FAMILY_API_URL is the backend's own live Cloud Run URL — resolved from
+      # the ALREADY-DEPLOYED kodomo-ai-backend service at build time (never hand-typed/stored
+      # as a static secret that could drift if the backend's own URL ever changes). Work order
+      # rule #2: "do not hard-code secrets" — this isn't a secret at all (it's the backend's own
+      # public URL, needed by every browser that loads the frontend), so it's resolved live
+      # rather than either hard-coded OR treated as a GitHub secret.
+      - name: Resolve the live backend URL
+        id: backend-url
+        run: |
+          URL=$(gcloud run services describe "${{ env.BACKEND_SERVICE }}" \
+            --region="${{ env.REGION }}" --format='value(status.url)')
+          if [ -z "$URL" ]; then
+            echo "::error::kodomo-ai-backend has no live URL yet — deploy the backend first."
+            exit 1
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push the frontend image
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE }}
+        run: |
+          docker build -f Dockerfile.frontend \
+            --build-arg VITE_FAMILY_API_URL="${{ steps.backend-url.outputs.url }}" \
+            --build-arg VITE_SHOPIFY_PRODUCT_URL="${{ vars.VITE_SHOPIFY_PRODUCT_URL }}" \
+            -t "$IMAGE:${{ github.sha }}" \
+            -t "$IMAGE:latest" \
+            .
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:latest"
+
+      # Deploy with --no-traffic first — a NEW revision is created and becomes reachable at its
+      # own tagged URL, but the CURRENT production revision keeps serving 100% of real traffic
+      # throughout. This is rule #7's "production traffic changes only after a successful
+      # build/deploy" enforced as an explicit extra gate (a smoke-test failure below), not just
+      # relying on Cloud Run's own container-startup health check.
+      - name: Deploy the candidate revision (no traffic yet)
+        id: deploy
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE }}
+          TAG: candidate-${{ github.run_number }}
+        run: |
+          gcloud run deploy "${{ env.SERVICE }}" \
+            --image="$IMAGE:${{ github.sha }}" \
+            --region="${{ env.REGION }}" \
+            --platform=managed \
+            --allow-unauthenticated \
+            --no-traffic \
+            --tag="$TAG"
+          BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
+            --region="${{ env.REGION }}" --format='value(status.url)')
+          CANDIDATE_URL="https://${TAG}---$(echo "$BASE_URL" | sed 's#https://##')"
+          echo "candidate_url=$CANDIDATE_URL" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      # Work order #9's own smoke-test list — every real route vite.config.ts's multi-page
+      # `input` map builds, hit against the CANDIDATE revision specifically (not production).
+      - name: Smoke test the candidate revision
+        run: |
+          CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
+          FAIL=0
+          for path in / /play/ /login/ /account/ /claim/ /legal/privacy/ /legal/tokushoho/; do
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${CANDIDATE_URL}${path}")
+            if [ "$STATUS" != "200" ]; then
+              echo "::error::${path} returned ${STATUS} on the candidate revision"
+              FAIL=1
+            else
+              echo "OK ${path} -> 200"
+            fi
+          done
+          if [ "$FAIL" != "0" ]; then
+            echo "::error::Smoke tests failed — traffic NOT promoted, production still on the previous revision."
+            exit 1
+          fi
+
+      # Only reached once the candidate revision has passed every smoke test — this is the one
+      # moment production traffic actually changes. The revision this replaces remains fully
+      # deployed and selectable via `gcloud run services update-traffic` for an instant rollback.
+      - name: Promote the candidate revision to 100% traffic
+        run: |
+          gcloud run services update-traffic "${{ env.SERVICE }}" \
+            --region="${{ env.REGION }}" \
+            --to-tags="${{ steps.deploy.outputs.tag }}=100"

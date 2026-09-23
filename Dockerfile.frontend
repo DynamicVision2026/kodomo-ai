@@ -23,7 +23,27 @@ FROM node:22-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY . .
+# Explicit COPY list, never a blanket `COPY . .` — see .dockerignore's own header comment for
+# why: Google Cloud Build's builder doesn't support a per-Dockerfile ignore override, so this is
+# what actually scopes the build context now, not the ignore file. `tsc -b` (part of `npm run
+# build`) resolves every route directory vite.config.ts's own multi-page `input` map builds, plus
+# `shared/` (a real relative import target — src/family/api.ts, src/family/progressBridge.ts,
+# src/shell/ProfilePicker.tsx) and `backend/` (only because src/admin/*.ts type-imports backend
+# schema types — src/admin is real source but never referenced by any vite entry here, so it's
+# never actually bundled into dist/; copying it into this discarded build stage is harmless and
+# far simpler than trying to exclude one subdirectory from an otherwise-needed `src/` copy).
+COPY tsconfig.json vite.config.ts index.html ./
+COPY src ./src
+COPY shared ./shared
+COPY backend ./backend
+COPY play ./play
+COPY login ./login
+COPY account ./account
+COPY claim ./claim
+COPY print ./print
+COPY legal ./legal
+COPY design ./design
+COPY public ./public
 # AD-13 §1: the Family Account API base URL — inlined at BUILD time (Vite bakes
 # import.meta.env.VITE_FAMILY_API_URL into the static bundle; see src/family/api.ts), so it must
 # be a build arg here, never a container env var. Omit it and every family feature (/login,

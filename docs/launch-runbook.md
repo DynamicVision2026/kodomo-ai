@@ -3,17 +3,24 @@
 Repo: `DynamicVision2026/kodomo-ai` · Branch: `claude/sprint-1-setup-ok4oym` · Store: `https://soul-id-2.myshopify.com/`
 
 This is the single, ordered checklist from "code merged" to "a real family can log in, buy, and
-play." Every step below needs an account or credential this session does not have — Google
-Cloud, Shopify Admin, Anthropic, DeepSeek. Nothing here has been run live; this is written so
-whoever has that access can follow it top to bottom with no further decisions to make.
+play." Google Cloud project `kodomo-ai` (region `asia-northeast1`) already exists with two live
+services — `kodomo-ai` (public frontend) and `kodomo-ai-backend` — so most of Part 1/Part 2 below
+is now a description of what's already running plus how it stays current, not a from-scratch
+bootstrap; Part 2B (`kodomo-ai-admin`) and the CI/CD pipeline are the newer pieces. Whoever has
+Google Cloud / Shopify Admin / Anthropic / DeepSeek access follows whichever parts are still
+outstanding, top to bottom, no further decisions needed except the one flagged Architect
+decision (Part 2's own "CI/CD one-time setup").
 
 **AD-16 §5 architecture — three Cloud Run services, one Firestore database, no Firebase
 Hosting:**
-- **Public frontend** (`Dockerfile.frontend`) — the LP, `/play`, `/login`, `/account`, `/claim`,
-  print deck/kit, legal pages. A plain static file server, no product code of its own.
-- **Public backend** (`Dockerfile`) — the Shopify webhooks, Family Account auth/session API,
-  purchase-intent/claim API, `/units/{id}/open`. `--allow-unauthenticated`; its own HMAC/session
-  checks are the real security boundary (see `backend/src/router.ts`).
+- **Public frontend** — Cloud Run service `kodomo-ai` (`Dockerfile.frontend`) — the LP, `/play`,
+  `/login`, `/account`, `/claim`, print deck/kit, legal pages. A plain static file server, no
+  product code of its own. Never create a second service for this (e.g. `kodomo-ai-frontend`) —
+  deploys always update this one existing service.
+- **Public backend** — Cloud Run service `kodomo-ai-backend` (`Dockerfile`) — the Shopify
+  webhooks, Family Account auth/session API, purchase-intent/claim API, `/units/{id}/open`.
+  `--allow-unauthenticated`; its own HMAC/session checks are the real security boundary (see
+  `backend/src/router.ts`).
 - **`kodomo-ai-admin`** (`Dockerfile.admin`) — the staff dashboard (search/family/order+refund/
   queues/audit log) and its `/admin-api/*`. Deployed behind Google Identity-Aware Proxy, never
   `--allow-unauthenticated`; nothing here is reachable from the other two services' origins, and
@@ -32,6 +39,9 @@ independent (do it whenever, including in parallel with 1-3).
                                               ├──> 3. Shopify webhook + real order test
 2. Deploy the public frontend to Cloud Run ──┘
                                               (needs 1's URL as a build arg, and 2 deployed to receive it)
+                                              Both already live today; Part 2's own CI/CD
+                                              pipeline is what keeps 2 current from here on —
+                                              a normal push, once the one-time setup is done.
 
 2B. Deploy kodomo-ai-admin (IAP) ── independent of 2, needs 1's Firestore project
 
@@ -139,44 +149,77 @@ serve it with a plain static file server, never a catch-all rewrite to `index.ht
 silently serve the landing page for `/play`, `/legal/privacy`, etc.). `Dockerfile.frontend`
 already does this correctly (`serve`, no `-s`/`--single` flag) — see its own header comment.
 
+**The EXISTING service name is `kodomo-ai`** (this repo's own frontend service, already live —
+never `kodomo-ai-frontend`; nothing in this runbook or the CI/CD pipeline below ever creates a
+second service).
+
+### Normal path — CI/CD, no manual commands
+
+Once the one-time setup below has been done, **a normal push to the production branch is the
+entire deploy process** — `.github/workflows/ci.yml`'s own `deploy-frontend` job runs the full
+gate/test suite, builds `Dockerfile.frontend`, pushes it to Artifact Registry, deploys it to
+`kodomo-ai` with `--no-traffic`, smoke-tests the candidate revision against the exact routes
+listed below, and only THEN shifts production traffic to it. A failed test/gate/build/smoke-test
+never touches production — the previous revision keeps serving 100% of traffic the whole time,
+and stays available afterward for an instant rollback (`gcloud run services update-traffic
+kodomo-ai --region asia-northeast1 --to-revisions=<previous-revision>=100`). See "CI/CD one-time
+setup" below for what the Founder does once to enable this.
+
+### Manual path — first bootstrap, or emergency-only
+
+Before the pipeline exists (or if GitHub Actions itself is down and something urgent needs
+shipping), the equivalent manual command:
+
 ```sh
-# Build and deploy directly from source. VITE_FAMILY_API_URL (Part 1's URL) and
-# VITE_SHOPIFY_PRODUCT_URL are BUILD ARGS, not container env vars — Vite inlines
-# import.meta.env.* into the static bundle at build time (src/family/api.ts,
-# src/lp/LandingPage.tsx) — omitting either ships the existing, honest "not configured"
-# fallback instead of pointing at nothing, so it's safe to deploy without them, just non-functional.
-gcloud run deploy kodomo-ai-frontend \
+# VITE_FAMILY_API_URL (Part 1's URL) and VITE_SHOPIFY_PRODUCT_URL are BUILD ARGS, not container
+# env vars — Vite inlines import.meta.env.* into the static bundle at build time
+# (src/family/api.ts, src/lp/LandingPage.tsx). Neither is a secret (both end up in the public
+# bundle regardless) — never store either as a GitHub Actions "secret"; VITE_FAMILY_API_URL is
+# resolved live from kodomo-ai-backend's own Cloud Run URL by the CI/CD job below rather than
+# hand-typed anywhere, precisely so it can't drift.
+gcloud run deploy kodomo-ai \
   --source . \
-  --config /dev/null \
+  --dockerfile Dockerfile.frontend \
   --region asia-northeast1 \
   --allow-unauthenticated \
-  --build-env-vars=VITE_FAMILY_API_URL=https://<your-backend-cloud-run-url>,VITE_SHOPIFY_PRODUCT_URL=https://soul-id-2.myshopify.com/products/kodomo-ai-m1
+  --build-env-vars=VITE_FAMILY_API_URL=https://<kodomo-ai-backend-url>,VITE_SHOPIFY_PRODUCT_URL=https://soul-id-2.myshopify.com/products/kodomo-ai-m1
 ```
 
-(`gcloud run deploy --source .` auto-detects `Dockerfile` at the repo root by default — pass
-`--dockerfile Dockerfile.frontend` explicitly, since this repo has three Dockerfiles now, or
-build/push the image yourself: `docker build -f Dockerfile.frontend -t
-<region>-docker.pkg.dev/<project>/<repo>/kodomo-ai-frontend --build-arg
-VITE_FAMILY_API_URL=... --build-arg VITE_SHOPIFY_PRODUCT_URL=... .`, `docker push`, then
-`gcloud run deploy kodomo-ai-frontend --image <that tag> --allow-unauthenticated`.)
+`--dockerfile Dockerfile.frontend` is REQUIRED — this repo has three Dockerfiles now
+(`Dockerfile` for the backend, `Dockerfile.frontend`, `Dockerfile.admin`), and `gcloud run
+deploy --source .` only auto-detects the one literally named `Dockerfile` otherwise (the backend
+image — wrong, and the proximate cause of a real production build failure: "TS5083: Cannot read
+file '/app/tsconfig.json'", from Cloud Build using `.dockerignore`'s old backend-only exclude
+list against a frontend build it never named explicitly; both are fixed now — see `.dockerignore`
+and `Dockerfile.frontend`'s own header comments).
 
-`gcloud run deploy` prints the service's URL — something like
-`https://kodomo-ai-frontend-<hash>-an.a.run.app`, or your own domain if you map one afterward.
-**Save this URL** — go back to Part 1 and redeploy the backend with `APP_ORIGIN` set to it (a
-circular dependency between the two services is normal here; do one more backend redeploy once
-this URL exists, `gcloud run services update kodomo-ai-backend --update-env-vars
-APP_ORIGIN=https://<this-url>`).
+Or build/push the image yourself: `docker build -f Dockerfile.frontend -t
+asia-northeast1-docker.pkg.dev/kodomo-ai/kodomo-ai/kodomo-ai --build-arg
+VITE_FAMILY_API_URL=... --build-arg VITE_SHOPIFY_PRODUCT_URL=... .`, `docker push`, then `gcloud
+run deploy kodomo-ai --image <that tag> --region asia-northeast1 --allow-unauthenticated`.
 
-**Sanity check** (every real route `vite.config.ts`'s own multi-page `input` map builds):
+If this is the very first deploy (the `kodomo-ai` service doesn't exist yet at all): **save the
+printed URL** and go back to Part 1 to redeploy the backend with `APP_ORIGIN` set to it (a
+circular dependency between the two services is normal here). The CI/CD pipeline never needs
+this step again once both services exist, since it resolves `VITE_FAMILY_API_URL` live on every
+run.
+
+### Sanity check / smoke test
+
+Every real route `vite.config.ts`'s own multi-page `input` map builds — the CI/CD pipeline
+checks these seven automatically against the candidate revision before promoting traffic; the
+same list to check by hand after a manual deploy:
 - `https://<your-site-url>/` — the LP loads, headline + trust banner visible.
-- `https://<your-site-url>/play` — Mission 1-1 is playable as a guest, no login prompt yet
+- `https://<your-site-url>/play/` — Mission 1-1 is playable as a guest, no login prompt yet
   (client-side `hasAccess` still passes a free mission before any server call — AD-16 §6's real
   gate only engages once `VITE_FAMILY_API_URL` is actually configured, which it now is).
-- `https://<your-site-url>/login` — request a code, confirm the email arrives (needs Part 1's
+- `https://<your-site-url>/login/` — request a code, confirm the email arrives (needs Part 1's
   `EMAIL_API_KEY` configured) or check Cloud Run logs for the logged code otherwise, log in.
-- `https://<your-site-url>/account` — while logged in, shows the device list and (AD-16 §1) a
+- `https://<your-site-url>/account/` — while logged in, shows the device list and (AD-16 §1) a
   purchase button.
-- `https://<your-site-url>/print/deck`, `/legal/tokushoho`, `/legal/privacy` all load.
+- `https://<your-site-url>/claim/` — with no `?token=` query param, shows the honest "invalid
+  link" message rather than an error page (AD-16 §2).
+- `https://<your-site-url>/legal/privacy/` and `/legal/tokushoho/` both load.
 - An unrelated path (e.g. `/nonsense`) 404s — confirms there's no accidental SPA catch-all
   silently swallowing bad links.
 
@@ -190,9 +233,34 @@ AD-15/16 account-first trial model — a parent has to log in before Mission 1-1
 clock can start server-side — and needs a founder-approved copy pass before launch; this runbook
 does not silently rewrite marketing copy.
 
-**Continuous deploy (optional):** wire `gcloud run deploy` into `.github/workflows/ci.yml` (or a
-separate deploy workflow) on push to a chosen branch — worth doing once this branch is merged
-and stable, not required for a first manual deploy.
+### CI/CD one-time setup (do this once, before the first automated deploy)
+
+`.github/workflows/ci.yml`'s `deploy-frontend` job authenticates to GCP via Workload Identity
+Federation — no long-lived JSON key ever stored in GitHub. Run `scripts/bootstrap-gcp-ci.sh`
+once (from a machine already `gcloud auth login`'d against the `kodomo-ai` project — the
+Founder's own Mac is fine for this ONE-TIME step; it is never needed again afterward, that's the
+whole point) to create the deploy service account, the Workload Identity Pool/Provider scoped to
+exactly this repo, and the Artifact Registry Docker repository. It prints two values; add them
+as GitHub repository secrets (repo Settings → Secrets and variables → Actions):
+- `GCP_WORKLOAD_IDENTITY_PROVIDER`
+- `GCP_SERVICE_ACCOUNT_EMAIL`
+
+Optionally also add the (non-secret, public) repository **variable** `VITE_SHOPIFY_PRODUCT_URL`
+once the Shopify listing is live — the pipeline runs without it, the LP just keeps its existing
+honest "pending" fallback until then.
+
+**ARCHITECT DECISION NEEDED — production branch/trigger:** this repository has no `main` or
+other durable release branch. `.github/workflows/ci.yml`'s `deploy-frontend` job currently
+triggers on push to `claude/sprint-1-setup-ok4oym` (the branch presumed to be driving today's
+live `kodomo-ai`/`kodomo-ai-backend` revisions, per the work order that requested this pipeline)
+— a working default, not an invented one, but also not a durable naming convention: a future
+session working from a differently-named branch would silently stop triggering production
+deploys, and nothing prevents a second branch from also claiming to be "production" later. The
+recommended fix is to create a real `main` branch from the current production lineage, retarget
+`ci.yml`'s `PRODUCTION_BRANCH` env var to it, and treat `claude/*` branches as ephemeral
+work-in-progress branches going forward, same as any other feature branch — but this is a
+release-process decision for the Architect/Founder to confirm, not something to silently change
+here.
 
 ---
 
@@ -406,9 +474,9 @@ reports. Once they sign off, add the review stamp directly to that JSON file (ma
 Each new topic/mission needs `main.tsx`'s and/or `module.json`'s `missionOrder` updated to
 include it (see `src/shell/missionLibrary.ts#pickNextMission` — Sprint 1-A already made mission
 selection stage-generic, so wiring in a second real mission is a content change, not a code
-change). Once you have real content ready, re-deploy Part 2 (`gcloud run deploy
-kodomo-ai-frontend --source . --dockerfile Dockerfile.frontend ...`, same command as Part 2's
-own first deploy) to publish it.
+change). Once you have real content ready, commit and push it to the production branch — Part 2's
+own CI/CD pipeline builds and deploys it automatically; no manual `gcloud run deploy` needed once
+that pipeline exists (Part 2's own manual command is the fallback for before it does).
 
 ---
 
