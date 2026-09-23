@@ -5,6 +5,7 @@ import { timingSafeEqual } from '../util.js';
 import { emailHashOf, findFamilyIdByEmail, getFamily, normalizeEmail } from '../family.js';
 import { moduleActivatedEmail } from '../email.js';
 import { listActiveSessions, revokeSession } from '../session.js';
+import { loginUrl } from '../links.js';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -109,8 +110,7 @@ export async function handleAdmin(request: Request, env: Env, url: URL): Promise
     const familyId = segments[1]!;
     const family = await getFamily(env, familyId);
     if (!family) return new Response('not found', { status: 404 });
-    const base = env.APP_ORIGIN ?? '';
-    await env.email.send(moduleActivatedEmail(family.email, `${base}/login`));
+    await env.email.send(moduleActivatedEmail(family.email, loginUrl(env)));
     return new Response(null, { status: 202 });
   }
 

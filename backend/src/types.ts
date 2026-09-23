@@ -11,12 +11,32 @@ export interface Env {
   /** AD-13 §2: HMAC key for `loginCodes.codeHmac` and every stored session-token hash. Never the
    *  same value as ADMIN_TOKEN or the Shopify secret. */
   AUTH_PEPPER: string;
-  /** AD-13 §1 "Domain requirement": the frontend's own origin, e.g. `https://app.<domain>` —
-   *  used both as the CORS allow-origin for every cookie-bearing route and as the base URL the
-   *  welcome/login-code emails link to. Unset until the custom domain (Option A/B) is chosen and
-   *  DNS is live — see the launch blockers list; every route that needs it fails closed (never
-   *  falls back to `*`) until it is. */
+  /** @deprecated Architect decision (same-origin API via reverse proxy): superseded by
+   *  `APP_ORIGINS`/`APP_BASE_URL` below. Kept only as a fallback `passesCsrfCheck`/the email
+   *  link-builders read when the newer vars aren't set yet — a live backend whose env still only
+   *  carries this one (its config predates the migration) keeps working exactly as before,
+   *  rather than regressing the instant this code ships ahead of a manual env-var update on that
+   *  service (there is no CI job that deploys the backend — see docs/launch-runbook.md). Never
+   *  read directly anywhere new; always through the two fields below's own fallback. */
   APP_ORIGIN?: string;
+  /** Architect decision: same-origin API via reverse proxy. The frontend now proxies `/api/*` to
+   *  this service itself — a browser never makes a cross-origin request to the backend directly
+   *  any more, so credentialed CORS (Access-Control-Allow-*) is no longer needed for the app.
+   *  This allowlist is the backend's own remaining defense: `passesCsrfCheck` verifies a
+   *  state-changing request's `Origin` header (when present) is one of these — the same
+   *  necessity as before, just never emitted as a CORS response header, since nothing depends on
+   *  reading it cross-origin any more. One entry today (the canonical frontend origin,
+   *  `https://kodomo-ai-421702481956.asia-northeast1.run.app`), a second (`https://domo-ai.com`)
+   *  once the custom domain is live — no wildcard, ever. */
+  APP_ORIGINS?: string[];
+  /** Architect decision: the ONE canonical origin every emailed/redirect link is built from
+   *  (welcome/module-activated email, claim email, /login's own default return, and the account
+   *  page's own redirects) — `https://kodomo-ai-421702481956.asia-northeast1.run.app` today,
+   *  `https://domo-ai.com` once that migration happens. Distinct from `APP_ORIGINS` (a CSRF
+   *  allowlist, which may legitimately carry more than one origin during a domain migration)
+   *  even though they hold the same value today — a link must always point at the ONE canonical
+   *  place, never at whichever alias happened to receive the request. */
+  APP_BASE_URL?: string;
   /** e.g. "soul-id-2.myshopify.com" — used for the optional order note/fulfillment calls, and as
    *  the host of the AD-16 §1 purchase-intent cart permalink. */
   SHOPIFY_SHOP_DOMAIN?: string;

@@ -1,25 +1,29 @@
-# WO-22B / AD-16 §5: frontend static site for Cloud Run — a SEPARATE Cloud Run service from the
-# public backend (kodomo-ai-backend, untouched by this file) AND from kodomo-ai-admin
-# (Dockerfile.admin — never built or served from here, per AD-16: "nothing admin-related ships
-# in the public frontend"). Serves the Vite production build (dist/): the LP at /, the app at
-# /play/, the AD-13/16 Family Account screens at /login/, /account/, /claim/, the printable
-# deck/kit at /print/deck/ and /print/kit/, legal pages at /legal/tokushoho/ and /legal/privacy/
-# — every real route from vite.config.ts's own multi-page `input` map, each with its own real
-# index.html.
+# WO-22B / AD-16 §5 / Architect decision (same-origin API via reverse proxy, post-incident):
+# frontend for Cloud Run — a SEPARATE Cloud Run service from the public backend (kodomo-ai-backend,
+# untouched by this file) AND from kodomo-ai-admin (Dockerfile.admin — never built or served from
+# here, per AD-16: "nothing admin-related ships in the public frontend"). Serves the Vite
+# production build (dist/): the LP at /, the app at /play/, the AD-13/16 Family Account screens at
+# /login/, /account/, /claim/, the printable deck/kit at /print/deck/ and /print/kit/, legal pages
+# at /legal/tokushoho/ and /legal/privacy/ — every real route from vite.config.ts's own multi-page
+# `input` map, each with its own real index.html.
 #
 # This is a MULTI-PAGE static site, not a client-side-routed single-page app — there is no
 # client-side router anywhere in this codebase. The one thing that would break it is a SPA
 # catch-all rewrite ("send every unknown path to index.html"): that would silently serve the
-# landing page for /play/, /print/kit/, etc. instead of their own real pages — exactly the
-# mistake docs/launch-runbook.md's own Firebase Hosting config comment already warns against for
-# this same app. `serve` (below) is run WITHOUT its `-s`/`--single` SPA-rewrite flag for exactly
-# that reason: it serves each route's own real file/directory index.html, and correctly 404s on
-# a genuinely unknown path, matching the Firebase Hosting behavior this replaces (WO-22B: Firebase
-# CLI auth is blocked on the deployment machine, so this packages the same build for Cloud Run
-# instead — no product/content/behavior change, packaging only).
+# landing page for /play/, /print/kit/, etc. instead of their own real pages — see
+# backend/server/frontendIndex.ts's own header comment, which serves each route's own real
+# file/directory index.html and correctly 404s on a genuinely unknown path.
+#
+# A real production incident (a CORS/session mismatch between this service's own two default
+# Cloud Run hostnames) is why this is no longer a bare static file server: backend/server/
+# frontendIndex.ts is a small Express server that (1) serves the SAME static build `serve` used
+# to, (2) reverse-proxies `/api/*` to the backend Cloud Run service server-side — the browser
+# only ever talks to ONE origin now, no cross-origin CORS anywhere in the app — and (3)
+# 301-redirects any Host other than the one canonical hostname to it, so a family can never again
+# land on an alias origin whose session/CORS state silently diverges from the canonical one.
 
-# ---- 1. build the production frontend -----------------------------------------------------
-FROM node:22-slim AS build
+# ---- 1. build the production frontend (static assets) --------------------------------------
+FROM node:22-slim AS build-ui
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -44,40 +48,62 @@ COPY print ./print
 COPY legal ./legal
 COPY design ./design
 COPY public ./public
-# AD-13 §1: the Family Account API base URL — inlined at BUILD time (Vite bakes
-# import.meta.env.VITE_FAMILY_API_URL into the static bundle; see src/family/api.ts), so it must
-# be a build arg here, never a container env var. Omit it and every family feature (/login,
-# /account, /claim, purchase, unit-open/trial gating) keeps the existing, already-shipped honest
-# "not configured" fallback instead of silently pointing at nothing — but omitting it in a real
-# production build means the app can never actually reach the backend, so this MUST be supplied
-# once kodomo-ai-backend has a real, stable URL (docs/launch-runbook.md).
-ARG VITE_FAMILY_API_URL
-ENV VITE_FAMILY_API_URL=$VITE_FAMILY_API_URL
-# Same build-time-only requirement as VITE_FAMILY_API_URL above, for the same reason:
-# import.meta.env.VITE_SHOPIFY_PRODUCT_URL is inlined at build time (src/lp/LandingPage.tsx).
-# The frontend's own fallback (an honest "お申し込みは近日公開予定です" pending state, never a
-# dead href="#") already covers its absence correctly, so omitting this ARG has never been
-# unsafe; it just means there's no way to supply the real Shopify product URL at deploy time.
+# Architect decision: same-origin API via reverse proxy — the browser now only ever calls this
+# SAME origin's own `/api/*` (backend/server/frontendIndex.ts proxies it server-side), so this is
+# a FIXED relative path, never a cross-origin backend URL baked into the client bundle. No build
+# arg needed for it any more; requirement 8's own "no cross-origin API host in the bundle" check
+# is satisfied by construction (the value is a plain path, not a URL — there is no host in it to
+# find).
+ENV VITE_FAMILY_API_URL=/api/v1
+# Same build-time-only requirement as before: import.meta.env.VITE_SHOPIFY_PRODUCT_URL is inlined
+# at build time (src/lp/LandingPage.tsx). The frontend's own fallback (an honest
+# "お申し込みは近日公開予定です" pending state, never a dead href="#") already covers its absence
+# correctly, so omitting this ARG has never been unsafe; it just means there's no way to supply
+# the real Shopify product URL at deploy time.
 ARG VITE_SHOPIFY_PRODUCT_URL
 ENV VITE_SHOPIFY_PRODUCT_URL=$VITE_SHOPIFY_PRODUCT_URL
 RUN npm run build
 
-# ---- 2. runtime — static file server only: no Node build tools, no source, no Firebase ----
+# ---- 2. compile backend/server/frontendIndex.ts -> dist-server/**/*.js (same as Dockerfile's
+#         own step 1, and Dockerfile.admin's own build-server stage) -------------------------
+FROM node:22-slim AS build-server
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY tsconfig.server.json ./
+COPY backend ./backend
+# shared/ is a real relative import target for backend/src (e.g. backend/src/schema.ts,
+# backend/src/access.ts) — not optional context, same reasoning as Dockerfile's own matching
+# comment.
+COPY shared ./shared
+RUN npx tsc -p tsconfig.server.json
+
+# ---- 3. production-only node_modules (no devDependencies) -----------------------------------
+FROM node:22-slim AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# ---- 4. runtime — small, no build tools, no source, no devDependencies, no Firebase ----------
 FROM node:22-slim
 WORKDIR /app
 ENV NODE_ENV=production
-# `serve` (Vercel's static file server) — the only runtime dependency this image needs. No
-# Firebase package anywhere in this image or its dependency tree.
-RUN npm install --global serve@14
-COPY --from=build /app/dist ./dist
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build-server /app/dist-server ./dist-server
+COPY --from=build-ui /app/dist ./dist
+COPY package.json ./
 
-# Cloud Run injects PORT at runtime (default 8080 if unset, matching backend/server/index.ts's
-# own fallback convention); EXPOSE here is documentation only, Cloud Run does not read it.
+# Cloud Run injects PORT at runtime (default 8080 if unset, matching frontendIndex.ts's own
+# fallback convention); EXPOSE here is documentation only, Cloud Run does not read it.
+#
+# CANONICAL_HOST and BACKEND_URL are RUNTIME env vars (--set-env-vars at `gcloud run deploy`
+# time, .github/workflows/ci.yml), never build args — unlike the old VITE_FAMILY_API_URL, neither
+# is baked into the client bundle; both are read by backend/server/frontendIndex.ts only, at
+# container start.
 EXPOSE 8080
 
 # Official node:*-slim images already ship a low-privilege "node" user — no need to create one
 # (same choice the existing backend Dockerfile already makes).
 USER node
 
-# No -s/--single: see the file-level comment above for why that flag must never be added here.
-CMD ["sh", "-c", "serve -l tcp://0.0.0.0:${PORT:-8080} dist"]
+CMD ["node", "dist-server/backend/server/frontendIndex.js"]

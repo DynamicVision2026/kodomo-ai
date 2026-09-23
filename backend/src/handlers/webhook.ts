@@ -18,15 +18,9 @@ import { emailHashOf, getFamily, normalizeEmail } from '../family.js';
 import { claimYourPurchaseEmail, moduleActivatedEmail } from '../email.js';
 import { writeAuditLog } from '../audit.js';
 import { hmacHex, randomToken } from '../util.js';
+import { loginUrl, claimUrl } from '../links.js';
 
 const CLAIM_TTL_MS = 30 * 24 * 60 * 60 * 1000; // AD-16 §2: "valid 30 days"
-
-function loginUrl(env: Env): string {
-  return `${env.APP_ORIGIN ?? ''}/login`;
-}
-function claimUrl(env: Env, token: string): string {
-  return `${env.APP_ORIGIN ?? ''}/claim?token=${encodeURIComponent(token)}`;
-}
 
 /**
  * POST /webhooks/shopify/orders-paid — AD-16 §1-§4. AD-14 boundary: an order with no allowlisted

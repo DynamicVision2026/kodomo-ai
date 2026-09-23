@@ -131,13 +131,14 @@ export interface ModuleUiStrings {
    *  ありません" — a co-player, not an examiner. Optional so existing module fixtures without it
    *  keep working unchanged; when present, MissionShell renders it right under the heading. */
   parentReassuranceLine?: string;
-  /** WO-30 §6: an optional purchase-recovery link shown on the parent dashboard, only while the
-   *  module itself is still unentitled on this device — "already bought it on another device?
-   *  here's where to re-enter your code" (/play/unlock, the existing multi-device redemption
-   *  screen — device changes/cleared storage are exactly what its soft device cap already
-   *  supports, no new backend surface). Optional so existing module fixtures keep working
-   *  unchanged; hidden entirely (never shown as a dead/mismatched link) once the module IS
-   *  entitled on this device. */
+  /** WO-30 §6 (copy updated post-incident, requirement (c)/(6) — no code, no price, no purchase
+   *  CTA here): an optional multi-device recovery mention shown on the parent dashboard, only
+   *  while the module itself is still unentitled on this device — "already bought it on another
+   *  device? log in with your family's account" (`/login/` — AD-13's own account-first model
+   *  replaced the old code-redemption screen this used to point at; a family's purchase-
+   *  confirmation email already directs them there too). Optional so existing module fixtures
+   *  keep working unchanged; hidden entirely (never shown as a dead/mismatched link) once the
+   *  module IS entitled on this device. */
   parentUnlockPrompt?: string;
   parentUnlockLinkLabel?: string;
   /** Hotfix (AD-15 §6, post-production-incident): shown ONLY for a genuine, server-confirmed

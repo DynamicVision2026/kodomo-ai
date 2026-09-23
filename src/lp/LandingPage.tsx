@@ -121,7 +121,12 @@ export function LandingPage() {
         <h1>{HEADLINES[variant]}</h1>
         <p className="lp__subhead">{SUBHEAD}</p>
         <div className="lp__cta-row">
-          <a className="lp__cta lp__cta--primary" href="/play/" onClick={() => track('cta_play_click')}>
+          {/* Architect decision (AD-15 §4): a new visitor always signs in first — no profile
+             created before login. `?next=/play/` returns them straight to the app once they
+             have (LoginPage.tsx's own resolveNextPath); the existing guest-import reconciliation
+             it already runs on a successful login is unaffected, and still the only path for
+             someone who already has local profiles from before this change. */}
+          <a className="lp__cta lp__cta--primary" href="/login/?next=/play/" onClick={() => track('cta_play_click')}>
             無料でミッション1を体験する
           </a>
           <a className="lp__cta lp__cta--secondary" href="#price" onClick={() => track('cta_buy_click')}>

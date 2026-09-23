@@ -13,6 +13,7 @@ import { writeAuditLog, listAuditLogForTarget } from './audit.js';
 import { computeEligibilitySnapshot } from './refund.js';
 import { moduleActivatedEmail, claimYourPurchaseEmail } from './email.js';
 import { randomToken, hmacHex } from './util.js';
+import { loginUrl, claimUrl } from './links.js';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -169,7 +170,7 @@ async function routeFamily(request: Request, env: Env, staff: StaffIdentity, seg
   if (method === 'POST' && segments[2] === 'resend-welcome') {
     const family = await getFamily(env, familyId);
     if (!family) return new Response('not found', { status: 404 });
-    await env.email.send(moduleActivatedEmail(family.email, `${env.APP_ORIGIN ?? ''}/login`));
+    await env.email.send(moduleActivatedEmail(family.email, loginUrl(env)));
     await writeAuditLog(env, { actor: staff.email, action: 'resend_welcome', targetType: 'family', targetId: familyId, before: null, after: null, reason: 'staff resend' });
     return new Response(null, { status: 202 });
   }
@@ -265,7 +266,7 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
     await writeAuditLog(env, { actor: staff.email, action: 'admin_bind', targetType: 'order', targetId: orderId, before: order, after: updated, reason });
     if (updated.entitlementState === 'granted') {
       const family = await getFamily(env, targetFamilyId);
-      if (family) await env.email.send(moduleActivatedEmail(family.email, `${env.APP_ORIGIN ?? ''}/login`));
+      if (family) await env.email.send(moduleActivatedEmail(family.email, loginUrl(env)));
     }
     return jsonResponse(updated);
   }
@@ -280,7 +281,7 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
       redeemedAt: null, familyId: null,
     };
     await env.db.set(claimPath(claimHash), claim);
-    await env.email.send(claimYourPurchaseEmail(order.purchaserEmail, order.orderName, `${env.APP_ORIGIN ?? ''}/claim?token=${claimToken}`));
+    await env.email.send(claimYourPurchaseEmail(order.purchaserEmail, order.orderName, claimUrl(env, claimToken)));
     await writeAuditLog(env, { actor: staff.email, action: 'resend_claim', targetType: 'order', targetId: orderId, before: null, after: null, reason: 'staff resend' });
     return new Response(null, { status: 202 });
   }

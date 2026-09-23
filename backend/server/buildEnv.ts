@@ -59,6 +59,16 @@ export function buildEnv(): Env {
     }
   }
 
+  // Architect decision: APP_ORIGINS is a comma-separated allowlist (never a wildcard) — e.g.
+  // "https://kodomo-ai-421702481956.asia-northeast1.run.app,https://domo-ai.com" once the custom
+  // domain is live. Absent entirely until this service's own env vars are updated to the new
+  // scheme — `passesCsrfCheck` falls back to the deprecated single-origin APP_ORIGIN below in
+  // that case, so a not-yet-migrated deployment keeps working unchanged.
+  const originsRaw = process.env.APP_ORIGINS;
+  const appOrigins = originsRaw
+    ? originsRaw.split(',').map((s) => s.trim()).filter(Boolean)
+    : undefined;
+
   return {
     db: createDb(),
     email: buildEmailSender(),
@@ -66,6 +76,8 @@ export function buildEnv(): Env {
     ADMIN_TOKEN: process.env.ADMIN_TOKEN!,
     AUTH_PEPPER: process.env.AUTH_PEPPER!,
     APP_ORIGIN: process.env.APP_ORIGIN,
+    APP_ORIGINS: appOrigins,
+    APP_BASE_URL: process.env.APP_BASE_URL,
     SHOPIFY_SHOP_DOMAIN: process.env.SHOPIFY_SHOP_DOMAIN,
     SHOPIFY_ADMIN_API_TOKEN: process.env.SHOPIFY_ADMIN_API_TOKEN,
     SHOPIFY_VARIANT_IDS: variantIds,

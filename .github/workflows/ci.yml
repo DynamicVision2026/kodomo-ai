@@ -92,6 +92,13 @@ jobs:
       # so it's the default here — see the "Ensure the Artifact Registry repo exists" step below,
       # which verifies rather than silently creates if this ever turns out to be wrong.
       AR_REPO: kodomo-ai-images
+      # Architect decision (same-origin API via reverse proxy, post-incident): the ONE hostname
+      # this service answers as itself — backend/server/frontendIndex.ts 301-redirects any other
+      # Host to this (its own doc comment explains why: the OTHER default Cloud Run URL this same
+      # service is also reachable at was the actual root of the CORS/session-isolation incident
+      # this whole migration replaces). Update this the day the domo-ai.com custom domain goes
+      # live — nothing else in this job needs to change alongside it.
+      CANONICAL_HOST: kodomo-ai-421702481956.asia-northeast1.run.app
     steps:
       - uses: actions/checkout@v4
 
@@ -127,12 +134,12 @@ jobs:
             exit 1
           }
 
-      # AD-13 §1: VITE_FAMILY_API_URL is the backend's own live Cloud Run URL — resolved from
-      # the ALREADY-DEPLOYED kodomo-ai-backend service at build time (never hand-typed/stored
-      # as a static secret that could drift if the backend's own URL ever changes). Work order
-      # rule #2: "do not hard-code secrets" — this isn't a secret at all (it's the backend's own
-      # public URL, needed by every browser that loads the frontend), so it's resolved live
-      # rather than either hard-coded OR treated as a GitHub secret.
+      # Architect decision (same-origin API via reverse proxy): the backend's own live Cloud Run
+      # URL is still resolved live (never hand-typed/stored as a static secret that could drift),
+      # but it's now a RUNTIME env var on the frontend service (BACKEND_URL, --set-env-vars
+      # below) — backend/server/frontendIndex.ts's own server-side `/api/*` proxy target — never
+      # a build arg baked into the client bundle any more (that was the OLD, cross-origin
+      # architecture the incident this replaces exposed).
       - name: Resolve the live backend URL
         id: backend-url
         run: |
@@ -149,7 +156,6 @@ jobs:
           IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE }}
         run: |
           docker build -f Dockerfile.frontend \
-            --build-arg VITE_FAMILY_API_URL="${{ steps.backend-url.outputs.url }}" \
             --build-arg VITE_SHOPIFY_PRODUCT_URL="${{ vars.VITE_SHOPIFY_PRODUCT_URL }}" \
             -t "$IMAGE:${{ github.sha }}" \
             -t "$IMAGE:latest" \
@@ -174,7 +180,8 @@ jobs:
             --platform=managed \
             --allow-unauthenticated \
             --no-traffic \
-            --tag="$TAG"
+            --tag="$TAG" \
+            --set-env-vars="CANONICAL_HOST=${{ env.CANONICAL_HOST }},BACKEND_URL=${{ steps.backend-url.outputs.url }}"
           BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
             --region="${{ env.REGION }}" --format='value(status.url)')
           CANDIDATE_URL="https://${TAG}---$(echo "$BASE_URL" | sed 's#https://##')"
@@ -182,7 +189,14 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       # Work order #9's own smoke-test list — every real route vite.config.ts's multi-page
-      # `input` map builds, hit against the CANDIDATE revision specifically (not production).
+      # `input` map builds, hit against the CANDIDATE revision specifically (not production) —
+      # Cloud Run's own revision-tag hostname (containing `---`) is deliberately exempt from
+      # backend/server/frontendIndex.ts's own canonical-host redirect (its own doc comment
+      # explains why), so this always tests the candidate directly, never bounces to whatever is
+      # currently live on the canonical host. The final check (`/api/v1/me`, expect 401 — no
+      # session cookie on a fresh curl, never 502/503/404) is the same-origin reverse proxy
+      # reaching the real backend end to end, the actual mechanism this whole migration exists
+      # for — a broken BACKEND_URL/proxy would 502 or 503 here, not silently pass.
       - name: Smoke test the candidate revision
         run: |
           CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
@@ -196,6 +210,13 @@ jobs:
               echo "OK ${path} -> 200"
             fi
           done
+          API_STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${CANDIDATE_URL}/api/v1/me")
+          if [ "$API_STATUS" != "401" ]; then
+            echo "::error::/api/v1/me returned ${API_STATUS} on the candidate revision (expected 401 — the same-origin proxy to the backend isn't working)"
+            FAIL=1
+          else
+            echo "OK /api/v1/me -> 401 (proxy reaches the real backend)"
+          fi
           if [ "$FAIL" != "0" ]; then
             echo "::error::Smoke tests failed — traffic NOT promoted, production still on the previous revision."
             exit 1

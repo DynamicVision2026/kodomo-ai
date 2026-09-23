@@ -105,9 +105,12 @@ describe('LandingPage', () => {
     expect(screen.getByText('プライバシーポリシー').closest('a')).toHaveAttribute('href', '/legal/privacy/');
   });
 
-  it('WO-21 Phase 8: the primary CTA into the app carries a trailing slash, matching the real built page path', () => {
+  it('AD-15 §4 (Architect decision): the primary CTA routes a new visitor through login first, returning them to /play/ once signed in', () => {
     render(<LandingPage />);
-    expect(screen.getByText('無料でミッション1を体験する').closest('a')).toHaveAttribute('href', '/play/');
+    // Never straight to /play/ any more — no profile creation before login for a new visitor.
+    // ?next=/play/ still carries the same trailing-slash real-built-page-path requirement
+    // WO-21 Phase 8 established, now for the login screen's own eventual redirect target.
+    expect(screen.getByText('無料でミッション1を体験する').closest('a')).toHaveAttribute('href', '/login/?next=/play/');
   });
 
   it('prominently features the privacy slogan right after the hero, before any other section', () => {

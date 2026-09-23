@@ -1,8 +1,15 @@
 import type { ModuleProgressState } from '../../shared/progressMerge';
 
-/** Set once the backend (backend/src/ + backend/server/) is actually deployed behind the real
- *  custom domain (AD-13 §1) — undefined in every environment until then, same honest
- *  not-configured fallback the old /play/unlock screen used for VITE_UNLOCK_API_URL. */
+/** Architect decision (same-origin API via reverse proxy, post-incident): a FIXED relative path
+ *  (`/api/v1`, Dockerfile.frontend), never a cross-origin backend URL — the frontend Cloud Run
+ *  service itself reverse-proxies `/api/*` to the backend server-side
+ *  (backend/server/frontendIndex.ts), so the browser only ever calls its own origin. Undefined in
+ *  local dev/every test (no backend/proxy running there) — same honest not-configured fallback
+ *  the old /play/unlock screen used for VITE_UNLOCK_API_URL, and the same signal
+ *  `isFamilyApiConfigured()` below reads to decide whether a real network call can be trusted at
+ *  all. Before this migration this held the backend's own absolute, cross-origin URL — CORS and
+ *  session-cookie isolation between that origin and the frontend's own were exactly the failure
+ *  a real production incident exposed; a relative path has no origin of its own to mismatch. */
 const API_BASE_URL: string | undefined = import.meta.env.VITE_FAMILY_API_URL;
 
 export type ApiFailure = { ok: false; reason: 'not_configured' | 'network' | 'server' | string };

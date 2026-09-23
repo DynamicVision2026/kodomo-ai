@@ -7,13 +7,10 @@ import { hmacHex } from '../util.js';
 import { writeAuditLog } from '../audit.js';
 import { moduleActivatedEmail } from '../email.js';
 import { getFamily } from '../family.js';
+import { loginUrl } from '../links.js';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
-}
-
-function loginUrl(env: Env): string {
-  return `${env.APP_ORIGIN ?? ''}/login`;
 }
 
 async function loadValidClaim(env: Env, token: string): Promise<{ hash: string; claim: ClaimDoc; order: OrderDoc } | null> {

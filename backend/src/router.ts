@@ -15,36 +15,17 @@ import { handleUnitOpen } from './handlers/units.js';
 import { handleConfirmClaim, handleGetClaim } from './handlers/claims.js';
 
 /**
- * AD-13 §1 "Domain requirement": every `/api/v1/*` route is a cookie-bearing, credentialed,
- * cross-origin request under Option A (separate `app.<domain>`/`api.<domain>` subdomains) — an
- * open `*` origin (the old `/unlock` route's own CORS, WO-30) is never correct once real session
- * cookies are involved, so this only ever answers the ONE configured `APP_ORIGIN`, and answers
- * nothing at all (no CORS headers, browser blocks the response) while it's still unset.
+ * Architect decision (same-origin API via reverse proxy): the frontend Cloud Run service now
+ * reverse-proxies `/api/*` to this backend server-side — a browser never makes a cross-origin
+ * request to this backend directly any more, so credentialed CORS (Access-Control-Allow-*
+ * response headers, the OPTIONS preflight this used to answer) is no longer needed for the app
+ * and has been removed entirely. `passesCsrfCheck` (backend/src/csrf.ts) remains the real
+ * defense against a request that reaches this still-`--allow-unauthenticated` backend some other
+ * way — a CSRF check, not CORS, and it needs no response headers to do its job.
  */
-function corsHeaders(env: Env): Record<string, string> {
-  if (!env.APP_ORIGIN) return {};
-  return {
-    'Access-Control-Allow-Origin': env.APP_ORIGIN,
-    'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'content-type',
-  };
-}
-
-function withCors(response: Response, env: Env): Response {
-  const headers = new Headers(response.headers);
-  for (const [name, value] of Object.entries(corsHeaders(env))) headers.set(name, value);
-  return new Response(response.body, { status: response.status, headers });
-}
-
-/** Platform-neutral request router — plain Web-standard Request in, Response out. */
 export async function handleRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
-
-  if (request.method === 'OPTIONS' && path.startsWith('/api/v1/')) {
-    return new Response(null, { status: 204, headers: corsHeaders(env) });
-  }
 
   if (request.method === 'POST' && path === '/webhooks/shopify/orders-paid') {
     return handleShopifyOrderWebhook(request, env);
@@ -57,8 +38,7 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
   }
 
   if (path.startsWith('/api/v1/')) {
-    const response = await routeApi(request, env, path);
-    return withCors(response, env);
+    return routeApi(request, env, path);
   }
 
   return new Response('not found', { status: 404 });

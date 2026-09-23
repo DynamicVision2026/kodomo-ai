@@ -25,7 +25,9 @@
     "start:server": "node dist-server/backend/server/index.js",
     "dev:admin": "tsx watch backend/server/adminIndex.ts",
     "build:admin": "tsc -p tsconfig.json --noEmit && vite build --config vite.admin.config.ts",
-    "start:admin-server": "node dist-server/backend/server/adminIndex.js"
+    "start:admin-server": "node dist-server/backend/server/adminIndex.js",
+    "dev:frontend-server": "tsx watch backend/server/frontendIndex.ts",
+    "start:frontend-server": "node dist-server/backend/server/frontendIndex.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",
