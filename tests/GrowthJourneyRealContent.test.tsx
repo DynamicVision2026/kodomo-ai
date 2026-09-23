@@ -170,7 +170,7 @@ describe('Growth Journey M0-M5 — reachable end to end through only real, relea
     // M1 (どうぐが 手に入った) — at least one move reached moratta.
     expect(profile.milestones.M1).toEqual({ achieved: true, achievedAt: expect.any(Number) });
     // M2 — only the real parent confirmation sets this, never M2a proxy evidence alone.
-    expect(profile.milestones.M2).toEqual({ achieved: true, achievedAt: expect.any(Number), afterCompare: false });
+    expect(profile.milestones.M2).toEqual({ achieved: true, achievedAt: expect.any(Number) });
     expect(profile.m2Evidence.proxyMissionIds).toContain(rouka.id);
     // M3 (3れん ホリ) — rouka's real 3-layer chain.
     expect(profile.milestones.M3).toEqual({ achieved: true, achievedAt: expect.any(Number) });

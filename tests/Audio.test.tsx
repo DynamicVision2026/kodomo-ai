@@ -5,6 +5,7 @@ import { MissionShell } from '../src/shell/MissionShell';
 import { MissionStage } from '../src/stage/MissionStage';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
 import type { AppState } from '../src/engine/storage';
+import { emptyModuleProgress, mergeModuleProgress, type ModuleProgressState } from '../shared/progressMerge';
 import {
   playMissionStageToCompletion, playMissionScreenToCompletion,
   skipPrePracticeAudioIfPresent, playPrePracticeAudioIfPresent, skipCheckpointAudioIfPresent, skipM0RitualIfPresent,
@@ -21,6 +22,10 @@ const oyatsu = oyatsuJson as unknown as Mission;
 
 beforeEach(() => localStorage.clear());
 afterEach(() => cleanup());
+
+function state(overrides: Partial<ModuleProgressState> = {}): ModuleProgressState {
+  return { ...emptyModuleProgress(), ...overrides };
+}
 
 async function createProfile(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText(ui.profileCreateLabel));
@@ -379,11 +384,14 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
 
 /**
  * Builder work order §4 ("CHECKPOINT audio — fix solo completion", acceptance §7F) + correction
- * (1): a child plays 1-4 (oyatsu) solo, defers teach-back via 「あとでやる」, actually hears the
- * CHECKPOINT comparison audio, and completes the mission. A parent LATER opens the parent
- * dashboard and confirms teach-back there — proving `confirmM2b`/`addStamp` correctly tag that
- * confirmation `afterCompare: true` end to end through the real MissionShell, not a direct
- * milestones.ts unit call.
+ * (1) + §0 (this round's own M2/afterCompare correction): a child plays 1-4 (oyatsu) solo, defers
+ * teach-back via 「あとでやる」, actually hears the CHECKPOINT comparison audio, and completes the
+ * mission. A parent LATER opens the parent dashboard and confirms teach-back there.
+ *
+ * §0's own rule: a confirmation whose own `afterCompare` (computed at confirmation time) is
+ * `true` must NEVER grant M2 — `confirmM2b` does not even call `applyM2Confirmed` in that case.
+ * The per-mission `Progress.afterCompare` tag (`addStamp`, correction 1) is unaffected by §0 and
+ * is still recorded end to end — it is the "reporting only" signal §0 explicitly preserves.
  *
  * WO-27 §11's own hardened invariant (see WO27ProgressionConsistency.test.tsx's own "parent
  * isolation" test) is that `mission` is only reliably "what this confirmation is actually for"
@@ -392,8 +400,8 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
  * completeTryOutsideLabel button, used below), never when opened independently from Course
  * Home's standing 「おうちの方へ」 button. Both paths are covered here.
  */
-describe('Builder work order §4 — CHECKPOINT solo completion: afterCompare end to end', () => {
-  it('solo あとでやる + actually-played comparison audio, then a LATER M2b confirmation via the just-finished-mission dashboard path (おうちで やってみる), is tagged afterCompare: true', async () => {
+describe('Builder work order §0/§4 — CHECKPOINT solo completion: afterCompare end to end', () => {
+  it('solo あとでやる + actually-played comparison audio, then a LATER M2b confirmation via the just-finished-mission dashboard path (おうちで やってみる): the per-mission record is tagged afterCompare: true, but M2 is NOT granted — this confirmation is an after-compare one', async () => {
     const user = userEvent.setup();
     renderSingleMission(oyatsu);
     await createProfile(user);
@@ -422,12 +430,15 @@ describe('Builder work order §4 — CHECKPOINT solo completion: afterCompare en
     await user.click(screen.getByText(ui.m2ConfirmAction));
 
     saved = JSON.parse(localStorage.getItem('m-app.v2')!);
-    expect(saved.profiles[0]!.milestones!.M2).toEqual({ achieved: true, achievedAt: expect.any(Number), afterCompare: true });
-    // The per-mission teach-back record (correction 1) — not just the once-ever M2 milestone.
+    // §0: this confirmation's own afterCompare is true (checkpointAudioHeard already contained
+    // oyatsu.id at confirmation time) — it must NOT grant M2 at all.
+    expect(saved.profiles[0]!.milestones?.M2).toBeUndefined();
+    // The per-mission teach-back record (correction 1) is still written regardless — it is the
+    // "reporting only" signal, separate from whether M2 itself was granted.
     expect(saved.profiles[0]!.progress[oyatsu.id]).toEqual({ done: true, stamps: 1, coop: false, afterCompare: true });
   });
 
-  it('the SAME facts, but confirmed from the standing dashboard opened independently (not just-finished), is NOT attributed afterCompare — WO-27\'s own "mission may be unrelated" invariant', async () => {
+  it('the SAME facts, but confirmed from the standing dashboard opened independently (not just-finished): no confirmingMissionId means afterCompare is computed false, so THIS confirmation is genuine and grants M2 — WO-27\'s own "mission may be unrelated" invariant', async () => {
     const user = userEvent.setup();
     renderSingleMission(oyatsu);
     await createProfile(user);
@@ -446,15 +457,102 @@ describe('Builder work order §4 — CHECKPOINT solo completion: afterCompare en
     expect(saved1.profiles[0]!.checkpointAudioHeard).toContain(oyatsu.id); // the fact IS recorded…
 
     // …but confirming from the INDEPENDENTLY-opened dashboard (back to map, then Course Home's
-    // own standing button) must not attribute it to `mission`, which is unreliable there.
+    // own standing button) must not attribute it to `mission`, which is unreliable there — so
+    // confirmM2b() is called with no confirmingMissionId, computes afterCompare=false, and grants
+    // M2 as a genuine confirmation.
     await user.click(screen.getByText(ui.completeBackToMapLabel));
     await user.click(screen.getByText(ui.parentScreenHeading));
     await waitFor(() => expect(screen.getByText(ui.m2ConfirmAction)).toBeInTheDocument());
     await user.click(screen.getByText(ui.m2ConfirmAction));
 
     const saved2: AppState = JSON.parse(localStorage.getItem('m-app.v2')!);
-    expect(saved2.profiles[0]!.milestones!.M2).toEqual({ achieved: true, achievedAt: expect.any(Number), afterCompare: false });
+    expect(saved2.profiles[0]!.milestones!.M2).toEqual({ achieved: true, achievedAt: expect.any(Number) });
     // No per-mission stamp was written for oyatsu from this path either.
     expect(saved2.profiles[0]!.progress[oyatsu.id]?.stamps ?? 0).toBe(0);
+  });
+
+  // §0.4's own required test: a genuine M2b confirmation grants M2, and a LATER after-compare
+  // confirmation attempt for the same mission never revokes or re-timestamps it.
+  //
+  // Manifest/UI ambiguity found while writing this test, reported rather than guessed around:
+  // the exact literal §0.4 sequence asks for "the mission tag is true" as part of THIS SAME later
+  // step. In the live product, once `milestones.M2.achieved` is true, the parent dashboard's M2
+  // section renders only `ui.m2ConfirmedMessage` (MissionShell.tsx ~line 1161) — the
+  // addStamp()+confirmM2b() button is not rendered at all once m2Achieved, so there is no user
+  // gesture left that can write `Progress[missionId].afterCompare` for a mission whose own
+  // teach-back is confirmed AFTER M2 was already achieved elsewhere. That per-mission tag DOES
+  // correctly become `true` when the SAME confirmation both provides the afterCompare signal AND
+  // is the one attempting to grant M2 (covered by this describe block's first test, above, and by
+  // the two-device merge test below, which exercises the tag's own sticky-OR merge in isolation).
+  // Extending live addStamp() to also fire on an already-achieved-M2 dashboard visit would be a
+  // real product behavior change (stamps would then increment on mere visits, not just genuine
+  // confirmations) outside this work order's own explicit scope ("wires them into the live
+  // product; it does not redesign them") — flagging for an Architect decision rather than
+  // guessing. This test therefore verifies the part that IS unambiguous and live-reachable: M2's
+  // own achievedAt is never revoked, recomputed, or re-derived by this later confirmation.
+  it('§0.4: genuine M2b (M2 granted) -> compare audio -> later dashboard visit on an after-mission context -> M2 stays granted with its original timestamp, never revoked or recomputed', async () => {
+    const user = userEvent.setup();
+    renderSingleMission(oyatsu);
+    await createProfile(user);
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
+    await user.click(screen.getByText(ui.coopYes));
+
+    // Genuine M2b FIRST: teach-back given during the in-mission flow, well before any CHECKPOINT
+    // comparison audio has been heard for this (or any) mission — a real, unprimed confirmation.
+    await playMissionScreenToCompletion(user, oyatsu, ui);
+    await waitFor(() => expect(screen.getByText(ui.stageHandoffGiven)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.stageHandoffGiven));
+    await waitFor(() => expect(screen.getByText(ui.stageParentGotItLabel)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.stageParentGotItLabel));
+    await waitFor(() => expect(screen.getByText(ui.stageReturnToChild)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.stageReturnToChild));
+    await waitFor(() => expect(document.querySelector('[data-audio-role="CHECKPOINT"]')).toBeInTheDocument());
+
+    let saved: AppState = JSON.parse(localStorage.getItem('m-app.v2')!);
+    const firstAchievedAt: number = saved.profiles[0]!.milestones!.M2!.achievedAt!;
+    expect(saved.profiles[0]!.milestones!.M2).toEqual({ achieved: true, achievedAt: firstAchievedAt });
+    expect(saved.profiles[0]!.progress[oyatsu.id]?.afterCompare ?? false).toBe(false); // unprimed grant
+
+    // THEN the comparison audio is actually heard.
+    const audioButtons = document.querySelectorAll('[data-audio-role] button');
+    await user.click(audioButtons[0] as HTMLElement); // さいせいする — actually played
+    await user.click(audioButtons[audioButtons.length - 1] as HTMLElement); // continue
+    await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
+
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
+    expect(saved.profiles[0]!.checkpointAudioHeard).toContain(oyatsu.id);
+    expect(saved.profiles[0]!.milestones!.M2).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // unchanged
+
+    // LATER, the after-mission dashboard is opened again (「おうちで やってみる」) — M2 is already
+    // achieved, so the confirm action is never even shown (idempotent by construction), and the
+    // milestone is provably untouched: never recomputed from the mission-level sticky-OR tag,
+    // never revoked by this later after-compare context.
+    await user.click(screen.getByText(ui.completeTryOutsideLabel!));
+    expect(screen.queryByText(ui.m2ConfirmAction)).not.toBeInTheDocument();
+    expect(screen.getByText(ui.m2ConfirmedMessage)).toBeInTheDocument();
+
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
+    expect(saved.profiles[0]!.milestones!.M2).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // still unchanged, never revoked
+  });
+
+  // §0.4's own required two-device merge variant of the same state.
+  it('§0.4: two-device merge of the genuine-M2b-then-after-compare-tag state loses nothing and never re-derives M2', () => {
+    const now = Date.now();
+    const deviceA = state({
+      milestones: { M2: { achieved: true, achievedAt: now } },
+      missions: { [oyatsu.id]: { done: true, stamps: 1, coop: true, afterCompare: false } },
+      checkpointAudioHeard: [],
+    });
+    const deviceB = state({
+      milestones: { M2: { achieved: true, achievedAt: now } },
+      missions: { [oyatsu.id]: { done: true, stamps: 1, coop: true, afterCompare: true } },
+      checkpointAudioHeard: [oyatsu.id],
+    });
+    const merged = mergeModuleProgress(deviceA, deviceB);
+    expect(merged.milestones.M2).toEqual({ achieved: true, achievedAt: now });
+    expect(merged.missions[oyatsu.id]!.afterCompare).toBe(true); // sticky OR, unaffected by §0
+    expect(merged.checkpointAudioHeard).toContain(oyatsu.id);
+    // Merging in the other order produces the identical result (commutative).
+    expect(mergeModuleProgress(deviceB, deviceA)).toEqual(merged);
   });
 });

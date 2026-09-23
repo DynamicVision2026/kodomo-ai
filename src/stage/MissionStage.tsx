@@ -225,7 +225,15 @@ export function MissionStage({
    *  before anything commits. Only once that drive completes does the outcome resolve: a
    *  deepen play cracks the world open and descends; a non-deepen play hits stone, settles,
    *  and stays visible with its own badge — no outcome is ever revealed before the child has
-   *  seen the chip actually reach the ground. */
+   *  seen the chip actually reach the ground.
+   *
+   *  Builder work order §2: `onCommit` (wired to `<MoveTray live>` below) is only ever invoked
+   *  ONCE per real pointer/keyboard gesture — that guarantee now lives entirely in MoveCard.tsx's
+   *  own `committedRef`, driven by real pointerdown/pointerup-inside/pointerleave/pointercancel
+   *  grammar, not here. The `drivingCardId`/`impactingId` check below is sequencing only (never
+   *  start a second card's drive while one is already mid-flight) — this setTimeout, and
+   *  `commitHandCard` it calls, are pure POST-commit animation/resolution timing, never the
+   *  commit's own trigger. */
   function playHandCard(cardId: string) {
     const layer = digPhase.layers[state.layer];
     const card = layer?.hand.find((c) => c.id === cardId);
@@ -618,6 +626,10 @@ export function MissionStage({
               badge: blockedIds.has(c.id) ? BADGE_BLOCKED : undefined,
             }))}
             onCommit={playHandCard}
+            // Builder work order §2: this IS AD-12 §4's own "move card" grammar target — real
+            // pointerdown press-scale/pointerup-inside-commits-once/pointerleave-cancels, live,
+            // even though `variant` above also drives the post-commit drive/settle choreography.
+            live
           />
           {blockedIds.size > 0 && flatReplyRead && (
             // WO-25 #4's own "short neutral recovery cue" — the SAME continuation nudge WO-23

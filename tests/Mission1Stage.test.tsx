@@ -358,7 +358,7 @@ describe('WO-25 #6 (P0) — parent handoff repair', () => {
     expect(screen.getByText(ui.stageReturnToChild)).toBeInTheDocument();
     expect(screen.queryByText(ui.parentScreenHeading)).not.toBeInTheDocument(); // never the dashboard
     saved = JSON.parse(localStorage.getItem('m-app.v2')!);
-    expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: expect.any(Number), afterCompare: false });
+    expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: expect.any(Number) });
 
     await user.click(screen.getByText(ui.stageReturnToChild));
     expect(screen.getByText(ui.completeHeading)).toBeInTheDocument();

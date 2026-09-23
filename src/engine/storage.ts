@@ -1,6 +1,6 @@
 import type { Stage } from './types';
 import type { MoveProgressMap } from './scaffold';
-import type { MilestoneMap, M2Evidence, MemoryMomentMap } from './milestones';
+import type { MilestoneMap, MilestoneState, M2Evidence, MemoryMomentMap } from './milestones';
 
 /**
  * Local, per-device state. NO PII: preset avatar + preset nickname id + a stage number.
@@ -131,13 +131,41 @@ function migrateLegacyState(): AppState | null {
   }
 }
 
+/**
+ * Builder work order §0.2: `milestones.M2.afterCompare` is retired — `MilestoneState` no longer
+ * declares the field at all (see src/engine/milestones.ts). A profile persisted by the brief
+ * window this app ran with that field (ed111dc/6805afc) may still have it on disk; this strips it
+ * on load so the in-memory shape always matches the current type. It never touches `achieved`/
+ * `achievedAt` — an M2 already granted stays granted, exactly as-is, never silently revoked here.
+ * Per §0.2 ("report how many exist; do not silently keep or delete them"), any profile actually
+ * carrying `afterCompare: true` is reported via `console.warn` rather than passed through quietly.
+ */
+function stripStaleM2AfterCompare(profiles: Profile[]): Profile[] {
+  let flaggedCount = 0;
+  const cleaned = profiles.map((profile) => {
+    const m2 = profile.milestones?.M2 as (MilestoneState & { afterCompare?: boolean }) | undefined;
+    if (!m2 || !('afterCompare' in m2)) return profile;
+    if (m2.afterCompare === true) flaggedCount += 1;
+    const { afterCompare: _afterCompare, ...rest } = m2;
+    return { ...profile, milestones: { ...profile.milestones, M2: rest } };
+  });
+  if (flaggedCount > 0) {
+    console.warn(
+      `[m-app] ${flaggedCount} stored profile(s) had milestones.M2.afterCompare: true from a retired ` +
+        `schema (Builder work order §0.2). The field was dropped; the M2 achievement itself was left untouched.`,
+    );
+  }
+  return cleaned;
+}
+
 /** Always succeeds: storage may be blocked (private mode, school device). */
 export function load(): AppState {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return migrateLegacyState() ?? empty();
     const parsed = JSON.parse(raw) as Partial<AppState>;
-    return { ...empty(), ...parsed };
+    const state = { ...empty(), ...parsed };
+    return { ...state, profiles: stripStaleM2AfterCompare(state.profiles) };
   } catch {
     return empty();
   }

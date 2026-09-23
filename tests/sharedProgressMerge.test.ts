@@ -15,24 +15,25 @@ describe('mergeModuleProgress — monotonic merge (AD-13 §2)', () => {
   it('milestones: both achieved keeps the earliest achievedAt', () => {
     const a = state({ milestones: { M1: { achieved: true, achievedAt: 500 } } });
     const b = state({ milestones: { M1: { achieved: true, achievedAt: 100 } } });
-    expect(mergeModuleProgress(a, b).milestones.M1).toEqual({ achieved: true, achievedAt: 100, afterCompare: false });
+    expect(mergeModuleProgress(a, b).milestones.M1).toEqual({ achieved: true, achievedAt: 100 });
   });
 
   it('milestones: only one side achieved wins outright, never re-derived', () => {
     const a = state({ milestones: { M1: { achieved: true, achievedAt: 100 } } });
     const b = state({ milestones: { M1: { achieved: false, achievedAt: null } } });
-    expect(mergeModuleProgress(a, b).milestones.M1).toEqual({ achieved: true, achievedAt: 100, afterCompare: false });
-    expect(mergeModuleProgress(b, a).milestones.M1).toEqual({ achieved: true, achievedAt: 100, afterCompare: false });
+    expect(mergeModuleProgress(a, b).milestones.M1).toEqual({ achieved: true, achievedAt: 100 });
+    expect(mergeModuleProgress(b, a).milestones.M1).toEqual({ achieved: true, achievedAt: 100 });
   });
 
-  // Builder work order correction (2): afterCompare is a sticky-OR across a sync, and
-  // checkpointAudioHeard unions like m2Evidence.proxyMissionIds — neither is ever lost when two
-  // devices merge, in either order.
-  it('milestones: afterCompare is a sticky OR — true on either side survives the merge, in either order', () => {
-    const a = state({ milestones: { M2: { achieved: true, achievedAt: 100, afterCompare: true } } });
-    const b = state({ milestones: { M2: { achieved: true, achievedAt: 100, afterCompare: false } } });
-    expect(mergeModuleProgress(a, b).milestones.M2!.afterCompare).toBe(true);
-    expect(mergeModuleProgress(b, a).milestones.M2!.afterCompare).toBe(true);
+  // Builder work order §0: afterCompare was removed from milestones.M2 entirely — an achieved M2
+  // is by definition unprimed, so a merge of two M2 states never carries or derives any
+  // afterCompare-shaped signal. Only the per-mission `missions[id].afterCompare` tag (below) still
+  // exists and is still a sticky OR.
+  it('milestones: M2 merges the same as any other milestone, with no afterCompare field at all', () => {
+    const a = state({ milestones: { M2: { achieved: true, achievedAt: 100 } } });
+    const b = state({ milestones: { M2: { achieved: true, achievedAt: 100 } } });
+    expect(mergeModuleProgress(a, b).milestones.M2).toEqual({ achieved: true, achievedAt: 100 });
+    expect(mergeModuleProgress(a, b).milestones.M2).not.toHaveProperty('afterCompare');
   });
 
   it('missions: afterCompare is also a sticky OR, same as the milestone-level one', () => {

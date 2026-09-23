@@ -557,18 +557,27 @@ export function MissionShell({
    * (as WO27ProgressionConsistency.test.tsx's own "parent isolation" test exists specifically to
    * prove) one blocked by entitlement — and must never be attributed anything mission-specific.
    * Omitting `confirmingMissionId` there (see the dashboard's own call site below) is what keeps
-   * this confirmation exactly as mission-agnostic as it was before this field existed: it still
-   * achieves the once-ever-profile-wide M2 milestone, just with afterCompare left `false` rather
-   * than guessed from an unrelated mission id.
+   * this confirmation exactly as mission-agnostic as it was before this field existed.
+   *
+   * Builder work order §0: `afterCompare` is computed here, at confirmation time, from whether
+   * the confirming mission's CHECKPOINT comparison audio had already been heard. When it is
+   * `true`, this confirmation is an after-compare one and must NEVER grant M2 — `applyM2Confirmed`
+   * is not called at all, so M2 is left exactly as it was (still unachieved if it was, or achieved
+   * with its original timestamp if it already was — either way, untouched and never revoked by
+   * this call). Only a genuine confirmation (`afterCompare === false`) can ever grant M2. The
+   * per-mission `Progress.afterCompare` tag (`addStamp`, above) is a separate, reporting-only
+   * signal and is always recorded regardless — see this mission's own `gotIt`/dashboard call sites,
+   * which call `addStamp()` alongside `confirmM2b()`.
    */
   function confirmM2b(confirmingMissionId?: string) {
     persistProfile((current) => {
       const afterCompare = confirmingMissionId
         ? (current.checkpointAudioHeard ?? []).includes(confirmingMissionId)
         : false;
+      if (afterCompare) return current;
       return {
         ...current,
-        milestones: applyM2Confirmed(current.milestones ?? {}, Date.now(), afterCompare),
+        milestones: applyM2Confirmed(current.milestones ?? {}, Date.now()),
       };
     });
   }

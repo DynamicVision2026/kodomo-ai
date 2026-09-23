@@ -20,15 +20,18 @@
  *  - `missions[id].afterCompare`         -> sticky OR (same reasoning as milestones' own, below —
  *                                            per-mission since milestones.M2 itself only ever
  *                                            achieves once, profile-wide)
- *  - `milestones[id]`                    -> union; both achieved -> earliest achievedAt kept
+ *  - `milestones[id]`                    -> union; both achieved -> earliest achievedAt kept.
+ *                                            Builder work order §0.2: `afterCompare` was removed
+ *                                            from milestones.M2 entirely — an achieved M2 is by
+ *                                            definition unprimed, and nothing about it is merged
+ *                                            from mission-level tags. The per-mission
+ *                                            `missions[id].afterCompare` below is the only
+ *                                            surviving afterCompare signal, reporting-only.
  *  - `memories[kind]`                    -> union; both present -> earliest recordedAt kept
  *  - `m2Evidence.proxyMissionIds`        -> union (distinct mission ids)
  *  - `moveProgress[moveId].rung`         -> max by scaffold rung order (a guidance counter)
  *  - `moveProgress[moveId].aptUseDomains`-> union
  *  - `guidance[verb]`                    -> max (a guidance counter)
- *  - `milestones[id].afterCompare`       -> sticky OR (once true on either side, stays true —
- *                                            same "never lose a real signal" reasoning as the
- *                                            union rules above, not a scalar counter to max)
  *  - `checkpointAudioHeard`              -> union (distinct mission ids, same shape/reasoning as
  *                                            m2Evidence.proxyMissionIds — a device syncing after
  *                                            another device already recorded a mission's
@@ -45,9 +48,6 @@ export interface MergeMissionProgress {
 export interface MergeMilestoneState {
   achieved: boolean;
   achievedAt: number | null;
-  /** M2 only — see this file's own header comment ("sticky OR"). Absent on every other
-   *  milestone and on any M2 achieved before this field existed; both read as `false`. */
-  afterCompare?: boolean;
 }
 
 export interface MergeMemoryMoment {
@@ -121,16 +121,12 @@ function mergeMoveProgress(a?: MergeMoveProgress, b?: MergeMoveProgress): MergeM
 function mergeMilestone(a?: MergeMilestoneState, b?: MergeMilestoneState): MergeMilestoneState {
   if (!a) return b!;
   if (!b) return a;
-  // afterCompare is sticky-OR across BOTH branches below, never dropped just because one side's
-  // object happens to get returned/rebuilt without it explicitly carried over.
-  const afterCompare = (a.afterCompare ?? false) || (b.afterCompare ?? false);
   if (a.achieved && b.achieved) {
     const earliest =
       a.achievedAt === null ? b.achievedAt : b.achievedAt === null ? a.achievedAt : Math.min(a.achievedAt, b.achievedAt);
-    return { achieved: true, achievedAt: earliest, afterCompare };
+    return { achieved: true, achievedAt: earliest };
   }
-  const winner = a.achieved ? a : b;
-  return { ...winner, afterCompare };
+  return a.achieved ? a : b;
 }
 
 function mergeMemory(a?: MergeMemoryMoment, b?: MergeMemoryMoment): MergeMemoryMoment {

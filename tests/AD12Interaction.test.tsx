@@ -54,7 +54,7 @@ describe('MoveCard — real pointer-driven grammar (F4)', () => {
     expect(onCommit).toHaveBeenCalledTimes(1); // F4: fires exactly once, not once per click
   });
 
-  it('an explicit `variant` is a fully static snapshot — pointer events never move it', () => {
+  it('an explicit `variant` without `live` is a fully static snapshot — pointer events never move it', () => {
     const onCommit = vi.fn();
     render(<MoveCard text="x" variant="rest" onCommit={onCommit} />);
     const btn = screen.getByText('x').closest('button')!;
@@ -64,6 +64,79 @@ describe('MoveCard — real pointer-driven grammar (F4)', () => {
     // static-mode callers driving their own fixture state, e.g. the gallery, are unaffected.
     fireEvent.click(btn);
     expect(onCommit).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Builder work order §2 (AD-12 completion — live wiring): a `live` card real-pointer-drives its
+   * commit grammar even though `variant` is ALSO supplied (MissionStage's own post-commit "drive
+   * to soil then settle" choreography) — the two concerns must stay independent.
+   */
+  describe('MoveCard — `live` (variant supplied, real pointer grammar still drives the commit)', () => {
+    it('pointerdown presses the card even though its caller-supplied variant is "rest" — one commit per tap', () => {
+      const onCommit = vi.fn();
+      render(<MoveCard text="x" variant="rest" live onCommit={onCommit} />);
+      const btn = screen.getByText('x').closest('button')!;
+      expect(btn.className).toContain('ad12-move-card--rest');
+      fireEvent.pointerDown(btn);
+      expect(btn.className).toContain('ad12-move-card--pressed'); // real press-scale, not the static variant
+      fireEvent.click(btn); // pointerup inside — commits
+      expect(onCommit).toHaveBeenCalledTimes(1);
+    });
+
+    it('sliding off after pointerdown (before release) records nothing', () => {
+      const onCommit = vi.fn();
+      render(<MoveCard text="x" variant="rest" live onCommit={onCommit} />);
+      const btn = screen.getByText('x').closest('button')!;
+      fireEvent.pointerDown(btn);
+      expect(btn.className).toContain('ad12-move-card--pressed');
+      fireEvent.pointerLeave(btn); // slide off — no click ever follows
+      expect(btn.className).toContain('ad12-move-card--rest'); // springs back to the caller's own variant
+      expect(onCommit).not.toHaveBeenCalled();
+    });
+
+    it('a pointercancel (e.g. a scroll interrupting a touch) also cancels, records nothing', () => {
+      const onCommit = vi.fn();
+      render(<MoveCard text="x" variant="rest" live onCommit={onCommit} />);
+      const btn = screen.getByText('x').closest('button')!;
+      fireEvent.pointerDown(btn);
+      fireEvent.pointerCancel(btn);
+      expect(btn.className).toContain('ad12-move-card--rest');
+      expect(onCommit).not.toHaveBeenCalled();
+    });
+
+    it('a double tap (two clicks) records the move exactly once', () => {
+      const onCommit = vi.fn();
+      render(<MoveCard text="x" variant="rest" live onCommit={onCommit} />);
+      const btn = screen.getByText('x').closest('button')!;
+      fireEvent.pointerDown(btn);
+      fireEvent.click(btn);
+      fireEvent.click(btn); // a second, immediate tap on the same still-rendered card
+      expect(onCommit).toHaveBeenCalledTimes(1);
+    });
+
+    it('the caller-supplied variant still governs the visual once real pointer press has released, and post-commit', () => {
+      const onCommit = vi.fn();
+      const { rerender } = render(<MoveCard text="x" variant="magnified" live onCommit={onCommit} />);
+      const btn = screen.getByText('x').closest('button')!;
+      // No press in progress: the caller's own post-commit choreography variant shows through.
+      expect(btn.className).toContain('ad12-move-card--magnified');
+      fireEvent.click(btn); // commits once, via real grammar
+      expect(onCommit).toHaveBeenCalledTimes(1);
+      rerender(<MoveCard text="x" variant="committed" live onCommit={onCommit} />);
+      expect(btn.className).toContain('ad12-move-card--committed');
+    });
+
+    it('keyboard activation (native button click, e.g. Enter/Space) commits exactly once', () => {
+      const onCommit = vi.fn();
+      render(<MoveCard text="x" variant="rest" live onCommit={onCommit} />);
+      const btn = screen.getByText('x').closest('button')!;
+      // A native <button> dispatches `click` on Enter/Space without a preceding pointerdown —
+      // exercised directly here (jsdom's own keyboard-activation simulation is unreliable), the
+      // same guarded path real pointer taps use.
+      fireEvent.click(btn);
+      fireEvent.click(btn);
+      expect(onCommit).toHaveBeenCalledTimes(1);
+    });
   });
 });
 

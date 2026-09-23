@@ -687,7 +687,7 @@ describe('MissionShell', () => {
     expect(screen.queryByText(ui.m2ConfirmPrompt)).not.toBeInTheDocument();
     expect(screen.queryByText(ui.m2ConfirmAction)).not.toBeInTheDocument();
     saved = JSON.parse(localStorage.getItem('m-app.v2')!);
-    expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: expect.any(Number), afterCompare: false });
+    expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: expect.any(Number) });
   });
 
   it('WO-14: M2b confirmation is idempotent and survives a reload', async () => {
@@ -722,7 +722,7 @@ describe('MissionShell', () => {
     expect(screen.getByText(ui.m2ConfirmedMessage)).toBeInTheDocument();
     expect(screen.queryByText(ui.m2ConfirmAction)).not.toBeInTheDocument();
     const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
-    expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: firstAchievedAt, afterCompare: false }); // unchanged
+    expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // unchanged
   });
 
   it('WO-14: M2b confirmation for one profile never touches another profile', async () => {

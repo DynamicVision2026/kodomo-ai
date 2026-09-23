@@ -82,7 +82,7 @@ describe('evaluateM4 (カードなしで きけた — first blind_commit)', () 
 describe('applyM2Confirmed (M2b — the actual milestone, wired to the parent screen\'s confirmation button since WO-14)', () => {
   it('achieves M2 when called directly', () => {
     const result = applyM2Confirmed({}, NOW);
-    expect(result.M2).toEqual({ achieved: true, achievedAt: NOW, afterCompare: false });
+    expect(result.M2).toEqual({ achieved: true, achievedAt: NOW });
   });
 
   it('is idempotent', () => {
@@ -90,17 +90,20 @@ describe('applyM2Confirmed (M2b — the actual milestone, wired to the parent sc
     expect(applyM2Confirmed(first, NOW + 1000)).toEqual(first);
   });
 
-  // Builder work order §4 ("CHECKPOINT audio — fix solo completion"): afterCompare records
-  // whether the mission being confirmed already had its comparison audio heard.
-  it('records afterCompare: true when the caller says so', () => {
-    const result = applyM2Confirmed({}, NOW, true);
-    expect(result.M2).toEqual({ achieved: true, achievedAt: NOW, afterCompare: true });
+  // Builder work order §0: applyM2Confirmed no longer tracks afterCompare at all — the decision
+  // of whether a confirmation is genuine (and therefore may call this function) is made entirely
+  // by the caller (src/shell/MissionShell.tsx's confirmM2b), BEFORE this function is ever invoked.
+  // An after-compare confirmation must never call this function — see tests/Audio.test.tsx and
+  // tests/MissionShell.test.tsx for that caller-side behavior.
+  it('never carries an afterCompare field on the milestone it produces — an achieved M2 is by definition unprimed', () => {
+    const result = applyM2Confirmed({}, NOW);
+    expect(result.M2).not.toHaveProperty('afterCompare');
   });
 
-  it('never retroactively flips afterCompare once M2 is already achieved — achieve() stays monotonic', () => {
-    const first = applyM2Confirmed({}, NOW, false);
-    const second = applyM2Confirmed(first, NOW + 1000, true);
-    expect(second).toEqual(first); // unchanged — still afterCompare: false, same achievedAt
+  it('leaves an already-achieved M2 completely untouched, same achievedAt, on a later call', () => {
+    const first = applyM2Confirmed({}, NOW);
+    const second = applyM2Confirmed(first, NOW + 1000);
+    expect(second).toEqual(first); // unchanged — same achievedAt, never revoked or re-derived
   });
 });
 

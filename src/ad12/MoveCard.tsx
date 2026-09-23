@@ -13,10 +13,21 @@ export interface MoveCardProps {
    *  evidence, never surfaced as a visual cue here. */
   text: string;
   /** Omitted (the normal, interactive case): the card drives itself through the grammar from
-   *  real pointer events. Passed explicitly: a fully static snapshot for a Pass 1 screenshot
-   *  fixture — pointer events are ignored and `onCommit` fires straight from the click, same as
-   *  before Pass 2. The two modes never mix for one card. */
+   *  real pointer events. Passed explicitly WITHOUT `live`: a fully static snapshot for a Pass 1
+   *  screenshot fixture — pointer events are ignored and `onCommit` fires straight from the
+   *  click, same as before Pass 2. Passed explicitly WITH `live: true`: see `live` below. */
   variant?: MoveCardVariant;
+  /** Builder work order §2: opts a caller-choreographed card (one that also supplies `variant`)
+   *  into the SAME real pointer-driven commit grammar an uncontrolled card already has — genuine
+   *  pointerdown press-scale, pointerup-inside commits exactly once, pointerleave/pointercancel
+   *  cancels with nothing recorded. `variant` still governs the visual once that one guaranteed
+   *  commit has fired (e.g. MissionStage's own post-commit "drive to soil then settle" beats) —
+   *  the two concerns are independent. Omitted (the default): `variant`, when supplied, keeps its
+   *  original, unrelated meaning — a fully static snapshot; pointer events are ignored and a
+   *  click forwards straight to `onCommit` every time, unchanged, for every caller that predates
+   *  this flag (Pass 1 gallery fixtures, the self-report/blind-commit/gap-naming single-choice
+   *  trays, none of which are AD-12 §4's own "move card" grammar target). */
+  live?: boolean;
   onCommit?: () => void;
   /** Real-coverage addition (not one of AD-12 §4's 12 sample states, but a real requirement the
    *  live dig hand has): a card that already resolved non-deepen this layer — kept visible
@@ -31,44 +42,85 @@ export interface MoveCardProps {
 }
 
 /**
- * AD-12 §4 states 3-4. F4 commit semantics: pressing down only compresses the card; releasing
- * INSIDE commits (fires once); sliding off cancels and records nothing.
+ * AD-12 §4 states 3-4 + Builder work order §2 (AD-12 completion, live wiring). F4/§2 commit
+ * semantics apply whenever the card is NOT a bare static snapshot — i.e. either fully
+ * uncontrolled (`variant` omitted) or `live` (`variant` supplied for post-commit choreography,
+ * but real pointer grammar still drives the commit itself):
+ *  - `pointerdown` on the card -> press-scale only (`localPressed`, below). Nothing is recorded.
+ *  - a genuine DOM `click` only ever fires when the pointer released INSIDE the element (the
+ *    platform's own "slide off cancels" rule, not reimplemented here) — so it is already the
+ *    correct "pointerup inside the same card" commit signal, firing the move event exactly once
+ *    per gesture, guarded by `committedRef` (§2: "the move event fires exactly once, then the
+ *    magnify animation runs" — the magnify itself may still be a caller-driven `variant`, e.g.
+ *    MissionStage's own post-commit "drive to soil" choreography; only the ONE guaranteed-
+ *    exactly-once event is this component's own job here).
+ *  - `pointerleave`/`pointercancel` before release cancels (`localPressed` clears) — nothing
+ *    recorded, matching native `click`'s own "released outside never fires click" behavior.
+ *  - Enter/Space: a native `<button>` already dispatches `click` on either, so keyboard commits
+ *    through the exact same guarded path — no separate keyboard handler needed.
  *
- * Uncontrolled (no `variant`), this now drives that sequence from real pointer events: pointerdown
- * compresses (rest -> pressed, plain CSS transition on --ad12-t-press — fast tap feedback);
- * a genuine DOM `click` only ever fires when the pointer released INSIDE the element (the
- * platform's own "slide off cancels" rule, not reimplemented here), so `onClick` alone is already
- * the correct, single commit signal. `committedRef` additionally makes a second click on an
- * already-committed card a no-op — belt-and-braces for "the event fires exactly once". The final
- * magnified -> committed settle plays over the slower --ad12-t-settle via the Web Animations API
- * (`animate`, motion.ts) rather than the CSS transition alone, because the two beats — the quick
- * press and the slower settle — need different durations off one `transform` property; WAAPI is
- * the tool for that, and it already resolves to a short reduced-motion crossfade automatically.
+ * For a `live` card, `variant` (e.g. MissionStage's own `drivingCardId`/`impactingId` post-commit
+ * "drive to soil then settle" beats) governs the visual ONLY after this component's own real-time
+ * `localPressed` (finger/pointer genuinely down, pre-commit) releases — it was never a substitute
+ * for genuine pointer-driven press feedback, only for what happens once a commit has already,
+ * unconditionally, fired. `variant === undefined` (Pass 1 fixtures, self-driving trays like the
+ * Gap/self-report/blind-commit ones) keeps the ORIGINAL fully self-managed magnified -> committed
+ * settle, played over the slower --ad12-t-settle via the Web Animations API (`animate`, motion.ts)
+ * — the quick press and the slower settle need different durations off one `transform` property,
+ * and WAAPI already resolves to a short reduced-motion crossfade automatically. `variant` supplied
+ * WITHOUT `live` keeps the ORIGINAL static-snapshot contract exactly as it always was (see
+ * `staticSnapshot`, below) — untouched by any of the above.
  */
-export function MoveCard({ text, variant, onCommit, blocked, badge }: MoveCardProps) {
+export function MoveCard({ text, variant, live, onCommit, blocked, badge }: MoveCardProps) {
   const [phase, setPhase] = useState<MoveCardVariant>('rest');
+  /** Real-time press feedback for `live` cards, independent of `variant` — pointer/keyboard-
+   *  driven, never parent-controlled, so a caller supplying `variant` for its OWN post-commit
+   *  choreography can never suppress the live pre-commit press-scale §2 requires. Unused (stays
+   *  false) for the original static-snapshot contract (`variant` without `live`). */
+  const [localPressed, setLocalPressed] = useState(false);
   const committedRef = useRef(false);
+  const pressedRef = useRef(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const controlled = variant !== undefined;
-  const effective = blocked ? 'rest' : controlled ? variant : phase;
+  /** The ORIGINAL contract, unchanged: `variant` alone (no `live`) is a fully static snapshot —
+   *  pointer events are ignored and a click forwards straight to `onCommit`, every time. */
+  const staticSnapshot = controlled && !live;
+  const effective = blocked
+    ? 'rest'
+    : !staticSnapshot && localPressed && !committedRef.current
+      ? 'pressed'
+      : controlled
+        ? variant
+        : phase;
 
   function handlePointerDown() {
-    if (controlled || committedRef.current) return;
-    setPhase('pressed');
+    if (staticSnapshot || blocked || committedRef.current) return;
+    pressedRef.current = true;
+    setLocalPressed(true);
   }
 
   function handlePointerLeave() {
-    if (controlled || committedRef.current) return;
-    setPhase('rest');
+    if (staticSnapshot || !pressedRef.current) return;
+    pressedRef.current = false;
+    setLocalPressed(false); // cancel: springs back, nothing recorded.
+    if (!controlled) setPhase('rest');
   }
 
   function handleClick() {
-    if (controlled) {
+    if (staticSnapshot) {
+      // Unchanged: static-snapshot callers (Pass 1 fixtures aside) forward every click straight
+      // through — never AD-12 §4's own "move card" grammar target, so never guarded here.
       onCommit?.();
       return;
     }
-    if (committedRef.current) return; // F4: the commit event fires exactly once.
+    pressedRef.current = false;
+    setLocalPressed(false);
+    if (committedRef.current) return; // §2/F4: the commit event fires exactly once.
     committedRef.current = true;
+    if (controlled) {
+      onCommit?.(); // `live`: variant (caller-driven) takes over the post-commit visual.
+      return;
+    }
     setPhase('magnified');
     const el = buttonRef.current;
     const settle = () => setPhase('committed');
