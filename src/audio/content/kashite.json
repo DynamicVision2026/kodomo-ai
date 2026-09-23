@@ -32,7 +32,11 @@
       "speaker": "GUIDE",
       "text": "そのとき、自分に聞いたことば、おぼえてる？　「これで、ほんとうに……」",
       "audioUrl": "/audio/m1/1-7-kashite/04-guide.mp3",
-      "pauseAfterMs": 3000
+      "pauseAfterMs": 3000,
+      "refrainSplit": {
+        "refrain": 1,
+        "completion": "わかった？"
+      }
     },
     {
       "speaker": "PONTA",
@@ -74,7 +78,11 @@
       "speaker": "GUIDE",
       "text": "そのあと、自分に何て聞いた？　「まだ わからないのは……」",
       "audioUrl": "/audio/m1/1-7-kashite/11-guide.mp3",
-      "pauseAfterMs": 3000
+      "pauseAfterMs": 3000,
+      "refrainSplit": {
+        "refrain": 2,
+        "completion": "どこ？"
+      }
     },
     {
       "speaker": "PONTA",
@@ -104,7 +112,11 @@
       "speaker": "GUIDE",
       "text": "そういうとき、自分に何て聞いた？　「じゃあ、つぎに……」",
       "audioUrl": "/audio/m1/1-7-kashite/16-guide.mp3",
-      "pauseAfterMs": 3000
+      "pauseAfterMs": 3000,
+      "refrainSplit": {
+        "refrain": 3,
+        "completion": "何を きけば いい？"
+      }
     },
     {
       "speaker": "PONTA",

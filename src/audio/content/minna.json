@@ -26,7 +26,11 @@
       "speaker": "GUIDE",
       "text": "「これで、ほんとうに……」",
       "audioUrl": "/audio/m1/1-5-minna/03-guide.mp3",
-      "pauseAfterMs": 3000
+      "pauseAfterMs": 3000,
+      "refrainSplit": {
+        "refrain": 1,
+        "completion": "わかった？"
+      }
     },
     {
       "speaker": "PONTA",
@@ -56,7 +60,11 @@
       "speaker": "GUIDE",
       "text": "「まだ わからないのは……」",
       "audioUrl": "/audio/m1/1-5-minna/08-guide.mp3",
-      "pauseAfterMs": 3000
+      "pauseAfterMs": 3000,
+      "refrainSplit": {
+        "refrain": 2,
+        "completion": "どこ？"
+      }
     },
     {
       "speaker": "PONTA",
@@ -86,7 +94,11 @@
       "speaker": "GUIDE",
       "text": "「じゃあ、つぎに……」",
       "audioUrl": "/audio/m1/1-5-minna/13-guide.mp3",
-      "pauseAfterMs": 3000
+      "pauseAfterMs": 3000,
+      "refrainSplit": {
+        "refrain": 3,
+        "completion": "何を きけば いい？"
+      }
     },
     {
       "speaker": "PONTA",
