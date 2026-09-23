@@ -39,12 +39,30 @@ export function loginCodeEmail(to: string, code: string): EmailMessage {
   };
 }
 
-/** AD-13 §5 step 2: sent right after a webhook grants an entitlement, prefilling /login. */
-export function welcomeEmail(to: string, loginUrl: string): EmailMessage {
+/** AD-16 §7/§10: "Module 1 activated" — sent to the FAMILY ACCOUNT email (never the purchaser
+ *  email directly; when binding was by token/email_match they're normally the same address, but
+ *  the distinction matters for the mother/father scenario — see AD-16 §1's own example) right
+ *  after the webhook grants the entitlement. */
+export function moduleActivatedEmail(to: string, loginUrl: string): EmailMessage {
   return {
     to,
-    subject: 'ナゼホリ ご購入ありがとうございます',
-    text: `ご購入ありがとうございます。以下のリンクからログインし、メールで届く確認コードを入力してください。\n\n${loginUrl}`,
+    subject: 'ナゼホリ モジュール1が使えるようになりました',
+    text: `ご購入ありがとうございます。モジュール1が使えるようになりました。以下のリンクからログインし、メールで届く確認コードを入力してください。\n\n${loginUrl}`,
+  };
+}
+
+/** AD-16 §2/§7: sent to the PURCHASER email (contact information only, never assumed to be the
+ *  account holder) when an order can't be bound by token or existing account email — opens
+ *  `/claim`, which requires logging in as the family the purchase is FOR. */
+export function claimYourPurchaseEmail(to: string, orderName: string, claimUrl: string): EmailMessage {
+  return {
+    to,
+    subject: 'ナゼホリ ご購入の受け取り手続きのお願い',
+    text:
+      `ご注文${orderName}のお受け取り手続きをお願いします。お子さまが使っているアカウントのメール` +
+      `アドレスでログインし、以下のリンクから受け取りを確定してください。\n\n${claimUrl}\n\n` +
+      `まだアカウントをお持ちでない場合は、そのままログイン画面からメールアドレスを入力して` +
+      `お進みください。`,
   };
 }
 

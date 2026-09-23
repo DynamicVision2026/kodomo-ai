@@ -10,6 +10,9 @@ import { handleGetProgress, handlePutProgress } from './handlers/progress.js';
 import { handleImport } from './handlers/importHandler.js';
 import { handleDeleteSession, handleListSessions } from './handlers/sessions.js';
 import { handleAccountEmail, handleDeleteAccount } from './handlers/account.js';
+import { handleCreatePurchaseIntent } from './handlers/purchaseIntents.js';
+import { handleUnitOpen } from './handlers/units.js';
+import { handleConfirmClaim, handleGetClaim } from './handlers/claims.js';
 
 /**
  * AD-13 §1 "Domain requirement": every `/api/v1/*` route is a cookie-bearing, credentialed,
@@ -92,6 +95,17 @@ async function routeApi(request: Request, env: Env, path: string): Promise<Respo
 
   if (method === 'POST' && path === '/api/v1/account/email') return handleAccountEmail(request, env);
   if (method === 'DELETE' && path === '/api/v1/account') return handleDeleteAccount(request, env);
+
+  if (method === 'POST' && path === '/api/v1/purchase-intents') return handleCreatePurchaseIntent(request, env);
+
+  if (method === 'POST' && segments[0] === 'units' && segments[2] === 'open' && segments.length === 3) {
+    return handleUnitOpen(request, env, segments[1]!);
+  }
+
+  if (segments[0] === 'claims' && segments.length === 2) {
+    if (method === 'GET') return handleGetClaim(request, env, segments[1]!);
+    if (method === 'POST') return handleConfirmClaim(request, env, segments[1]!);
+  }
 
   return new Response('not found', { status: 404 });
 }

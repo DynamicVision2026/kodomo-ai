@@ -1,8 +1,7 @@
 import type { Env } from './types.js';
 import type { LoginCodeDoc } from './schema.js';
 import { loginCodePath } from './schema.js';
-import { emailHashOf, familyHasActiveEntitlement, getFamily, getOrCreateFamilyIdInTx, normalizeEmail } from './family.js';
-import { isTrialActive } from './trial.js';
+import { emailHashOf, getOrCreateFamilyIdInTx, normalizeEmail } from './family.js';
 import { loginCodeEmail } from './email.js';
 import { hmacHex, randomOtp, timingSafeEqual } from './util.js';
 
@@ -49,7 +48,7 @@ export async function requestLoginCode(env: Env, rawEmail: string): Promise<Requ
   return 'code_sent';
 }
 
-export type VerifyOutcome = 'ok' | 'invalid' | 'expired' | 'locked' | 'trial_expired';
+export type VerifyOutcome = 'ok' | 'invalid' | 'expired' | 'locked';
 
 export interface VerifyResult {
   outcome: VerifyOutcome;
@@ -85,11 +84,15 @@ export async function verifyRawCode(env: Env, rawEmail: string, rawCode: string)
  * AD-15 "account-first": a correct code for an email with NO existing family creates one right
  * here (inside a transaction, alongside the emailIndex entry — see `getOrCreateFamilyIdInTx`) and
  * starts its trial clock; this is the one and only place a Family Account is ever created purely
- * from a login, no purchase required. AD-15's "server-authoritative access gate": a family with
- * no active entitlement is let in only while its own trial clock hasn't elapsed yet — past that,
- * the account still exists (nothing is deleted, no data is lost) but login itself is refused
- * until a real purchase arrives, at which point the SAME family/profiles/progress pick back up
- * (AD-15: "trial progress continues after purchase").
+ * from a login, no purchase required.
+ *
+ * AD-16 §0 fix: login itself is NEVER gated by trial or entitlement state — a family's `status`
+ * (`active`/`deleted`) is the only thing that could ever refuse it, and `getOrCreateFamilyIdInTx`
+ * never returns a deleted family's id (account deletion removes the family doc outright). The
+ * trial clock only ever governs `access.m1` (the AD-15 gate on the trial UNIT itself, now behind
+ * `POST /units/{unitId}/open` — see backend/src/access.ts), never whether a family can sign in,
+ * see `/me`, manage profiles/progress, or purchase. AD-13's old "trial_expired blocks login" was
+ * a real bug this ticket exists to fix, not a design this file should re-introduce.
  */
 export async function verifyLoginCode(env: Env, rawEmail: string, rawCode: string): Promise<VerifyResult> {
   const outcome = await verifyRawCode(env, rawEmail, rawCode);
@@ -97,11 +100,6 @@ export async function verifyLoginCode(env: Env, rawEmail: string, rawCode: strin
 
   const now = new Date();
   const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, rawEmail, now.toISOString()));
-
-  if (!(await familyHasActiveEntitlement(env, familyId))) {
-    const family = await getFamily(env, familyId);
-    if (!family || !isTrialActive(family, now)) return { outcome: 'trial_expired' };
-  }
   return { outcome: 'ok', familyId };
 }
 

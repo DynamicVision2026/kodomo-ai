@@ -1,26 +1,26 @@
 /**
- * AD-13 §2 Firestore data model — every document shape and path helper the backend touches.
- * One place to check a path against the spec's own table rather than re-deriving it per handler.
+ * AD-13 §2 / AD-16 §9 Firestore data model — every document shape and path helper the backend
+ * touches. One place to check a path against the spec's own table rather than re-deriving it
+ * per handler.
  */
 import type { ModuleProgressState } from '../../shared/progressMerge.js';
 
-export type EntitlementStatus = 'active' | 'refunded' | 'revoked';
-export type OrderState = 'granted' | 'duplicate' | 'needs_review' | 'refunded';
 export type FamilyStatus = 'active' | 'deleted';
 
+/**
+ * AD-16 §0: a family's `status` is the ONLY thing that ever gates login/`/me`/profiles/progress/
+ * `/account`/purchase — trial and entitlement state never appear on this doc at all anymore
+ * (AD-15's `trialStartedAt`/`trialEndsAt` fields are retired; trial state now lives per-module in
+ * the `trials/{moduleId}` subcollection below, exactly because a family with zero trial history
+ * — e.g. one created directly by a purchase, never having opened the trial unit — must still log
+ * in normally).
+ */
 export interface FamilyDoc {
   email: string;
   status: FamilyStatus;
   profileCount: number;
   createdAt: string;
   updatedAt: string;
-  /** AD-15: "account-first 72-hour family trial" + "shared family trial clock" — set once, at
-   *  account creation (the family's first-ever successful `/auth/verify`), never renewed or
-   *  reset by a later login. A family with an active entitlement is never gated by this; it
-   *  only bounds how long an UNPURCHASED family may keep using the account itself (see
-   *  backend/src/trial.ts). */
-  trialStartedAt: string;
-  trialEndsAt: string;
 }
 
 export interface EmailIndexDoc {
@@ -28,24 +28,163 @@ export interface EmailIndexDoc {
   createdAt: string;
 }
 
+export type EntitlementStatus = 'active' | 'revoked';
+export type EntitlementRevokeReason = 'refund' | 'admin';
+
 export interface EntitlementDoc {
   status: EntitlementStatus;
   shopifyOrderId: string;
-  shopifyCustomerId?: string;
   grantedAt: string;
   revokedAt: string | null;
+  revokedReason: EntitlementRevokeReason | null;
 }
 
-export interface OrderDoc {
-  familyId: string | null;
-  moduleIds: string[];
-  state: OrderState;
-  webhookIds: string[];
-  processedAt: string;
-  /** AD-14: every matched line item's `variant_id`, in match order — persisted (not just
-   *  logged) so a real order can be audited later without depending on log retention. */
-  variantIds: number[];
+/**
+ * AD-16 §5: not started (no doc) -> active (`startedAt`/`endsAt`) -> expired (derived from
+ * `endsAt`, never itself stored) or converted (`convertedAt`/`convertedOrderId`). Started lazily,
+ * by the first `POST /units/{unitId}/open` for the module's own trial unit — never by account
+ * creation/login (that was AD-15's design; AD-16 §0 corrects it: login must work identically
+ * whether or not a trial has ever been touched).
+ */
+export interface TrialDoc {
+  startedAt: string;
+  endsAt: string;
+  convertedAt: string | null;
+  convertedOrderId: string | null;
 }
+
+/** AD-16 §6: the first server-accepted open of any NON-trial unit for this module — never set by
+ *  login, profile creation, map browsing, or trial-unit (1-1) play. */
+export interface UsageDoc {
+  firstPaidUseAt: string;
+  firstPaidUnitId: string;
+  firstPaidProfileId: string;
+}
+
+// --- AD-16 §1/§4: purchase -> family binding -------------------------------------------------
+
+export type BindingMethod = 'token' | 'email_match' | 'claim' | 'admin';
+export type BindingState = 'bound' | 'awaiting_claim' | 'needs_review';
+export type EntitlementState = 'granted' | 'duplicate' | 'revoked' | 'none';
+export type RefundState = 'none' | 'requested' | 'refunded' | 'partial' | 'declined';
+
+/** AD-16 §1: `purchaseIntents/{sha256(token)}` — only the HASH of the 256-bit token is ever
+ *  stored, same pattern as every other bearer credential in this schema (session tokens, login
+ *  codes). `expiresAt` is +14 days so konbini/bank-transfer orders (which can take days to
+ *  actually pay) are still covered. */
+export interface PurchaseIntentDoc {
+  familyId: string;
+  moduleId: string;
+  createdAt: string;
+  expiresAt: string;
+  redeemedAt: string | null;
+  orderId: string | null;
+}
+
+/** AD-16 §2: `claims/{sha256(token)}` — sent to the purchaser's email when an order can't be
+ *  bound any other way; opens `/claim`, valid 30 days, single-use. */
+export interface ClaimDoc {
+  orderId: string;
+  createdAt: string;
+  expiresAt: string;
+  redeemedAt: string | null;
+  familyId: string | null;
+}
+
+export interface OrderLine {
+  sku: string;
+  variantId: number | null;
+  moduleId: string;
+  quantity: number;
+  /** JPY integer, after line discounts, tax included (AD-16 §4). */
+  lineTotal: number;
+}
+
+/** AD-16 §7: frozen at the moment staff record a refund request — never recomputed afterward,
+ *  even if `usage.firstPaidUseAt` changes later (AD-16: "anything used after `requestedAt` is
+ *  visible in the dashboard, and the snapshot stays unchanged"). */
+export interface RefundEligibilitySnapshot {
+  purchaseAgeDays: number;
+  withinWindow: boolean;
+  paidContentUsed: boolean;
+  firstPaidUseAt: string | null;
+  objectivelyEligible: boolean;
+  policyVersion: string;
+  frozenAt: string;
+}
+
+export interface RefundInfo {
+  requestedAt: string | null;
+  requestChannel: string | null;
+  eligibilitySnapshot: RefundEligibilitySnapshot | null;
+  decision: 'approved' | 'declined' | null;
+  shopifyRefundIds: string[];
+  refundedAt: string | null;
+  refundedAmount: number | null;
+  state: RefundState;
+}
+
+export function emptyRefundInfo(): RefundInfo {
+  return {
+    requestedAt: null, requestChannel: null, eligibilitySnapshot: null, decision: null,
+    shopifyRefundIds: [], refundedAt: null, refundedAmount: null, state: 'none',
+  };
+}
+
+/**
+ * AD-16 §4: the full order record. Shopify is authoritative for money (amounts, tax, payment
+ * status, refund execution); DomoAI is authoritative for binding, entitlement, trial and refund
+ * DECISIONS. Never stores card/payment credentials, addresses, phone numbers, purchaser names,
+ * or line items for any other product.
+ */
+export interface OrderDoc {
+  shopifyOrderId: string;
+  orderName: string;
+  lines: OrderLine[];
+  currency: string;
+  financialStatus: string;
+  shopifyCreatedAt: string;
+  paidAt: string;
+  purchaserEmail: string | null;
+  familyId: string | null;
+  bindingMethod: BindingMethod | null;
+  bindingState: BindingState;
+  entitlementState: EntitlementState;
+  trialConverted: boolean;
+  refund: RefundInfo;
+  webhookIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// --- AD-16 §8: admin -------------------------------------------------------------------------
+
+export type StaffRole = 'viewer' | 'operator';
+export interface StaffDoc {
+  role: StaffRole;
+}
+
+export interface RefundPolicyDoc {
+  windowDays: number;
+  requiresNoPaidUse: boolean;
+  version: string;
+}
+
+/** Append-only; no endpoint ever updates or deletes an entry (AD-16 §8). */
+export interface AuditLogDoc {
+  at: string;
+  /** A staff email, or `system:webhook` / `system:api`. */
+  actor: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  before: unknown;
+  after: unknown;
+  /** Required for every STAFF write; null for a system-originated entry. */
+  reason: string | null;
+}
+
+// --- existing (AD-13/AD-15) -------------------------------------------------------------------
 
 export interface ProfileDoc {
   avatarId: string;
@@ -97,7 +236,17 @@ export const familyPath = (familyId: string) => `families/${familyId}`;
 export const emailIndexPath = (emailHash: string) => `emailIndex/${emailHash}`;
 export const entitlementsCollection = (familyId: string) => `families/${familyId}/entitlements`;
 export const entitlementPath = (familyId: string, moduleId: string) => `families/${familyId}/entitlements/${moduleId}`;
+export const trialsCollection = (familyId: string) => `families/${familyId}/trials`;
+export const trialPath = (familyId: string, moduleId: string) => `families/${familyId}/trials/${moduleId}`;
+export const usagePath = (familyId: string, moduleId: string) => `families/${familyId}/usage/${moduleId}`;
 export const orderPath = (shopifyOrderId: string | number) => `orders/${shopifyOrderId}`;
+export const ordersCollection = () => 'orders';
+export const purchaseIntentPath = (tokenHash: string) => `purchaseIntents/${tokenHash}`;
+export const claimPath = (tokenHash: string) => `claims/${tokenHash}`;
+export const staffPath = (email: string) => `staff/${email}`;
+export const refundPolicyPath = () => 'config/refundPolicy';
+export const auditLogCollection = () => 'auditLog';
+export const auditLogPath = (id: string) => `auditLog/${id}`;
 export const profilesCollection = (familyId: string) => `families/${familyId}/profiles`;
 export const profilePath = (familyId: string, profileId: string) => `families/${familyId}/profiles/${profileId}`;
 export const progressCollection = (familyId: string, profileId: string) =>

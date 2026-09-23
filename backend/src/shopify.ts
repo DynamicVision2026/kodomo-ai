@@ -23,17 +23,41 @@ export interface ShopifyLineItem {
   /** AD-14: "log variant_id for audit" — captured alongside the match, never used to decide
    *  isolation itself (that's `sku`, exact-match only, see SKU_TO_MODULE_IDS above). */
   variant_id: number | null;
+  /** Per-unit price, as Shopify always sends it: a decimal string, tax included for a JP
+   *  storefront (every listed price on this store is quoted 税込). */
+  price: string;
+  /** Per-line discount, same string-decimal shape; absent/'0.00' for an undiscounted line. */
+  total_discount?: string;
+}
+
+export interface ShopifyNoteAttribute {
+  name: string;
+  value: string;
 }
 
 export interface ShopifyOrderPayload {
   id: number;
+  /** e.g. "#1234" — the human-facing order number (AD-16 §4 `orderName`). */
+  name: string;
   line_items: ShopifyLineItem[];
+  currency: string;
+  financial_status: string;
+  created_at: string;
   /** AD-13 §3: read directly off the real `orders/paid` payload now — Shopify always includes
    *  both `email` and `customer.email` (the latter absent only for a genuinely anonymous/guest
    *  checkout with no account and no contact email at all, vanishingly rare for a paid order).
    *  Prefer `customer.email` when present; `email` is the fallback. */
   email?: string | null;
   customer?: { email?: string | null } | null;
+  /** AD-16 §1: the cart attribute (`attributes[domo_pt]`) a purchase-intent permalink carries,
+   *  copied verbatim by Shopify into `note_attributes` on the resulting order. */
+  note_attributes?: ShopifyNoteAttribute[];
+}
+
+/** AD-16 §1: the purchase-intent token, if this order's cart carried one — `undefined` for a
+ *  direct storefront purchase with no permalink involved. */
+export function purchaseIntentToken(order: ShopifyOrderPayload): string | undefined {
+  return order.note_attributes?.find((a) => a.name === 'domo_pt')?.value;
 }
 
 export interface ShopifyRefundLineItem {
@@ -79,6 +103,10 @@ export interface MatchedLineItem {
    *  and persist it on the OrderDoc, without this module (the pure isolation/matching logic)
    *  taking on any logging or storage concern itself. */
   variantId: number | null;
+  /** AD-16 §4: JPY integer, after line discounts, tax included — `price` is already tax-inclusive
+   *  on this (JP) storefront, so this is `round(quantity * price - total_discount)` with no
+   *  separate tax computation needed. */
+  lineTotal: number;
 }
 
 /**
@@ -95,7 +123,11 @@ export function matchLineItems(order: ShopifyOrderPayload): MatchedLineItem[] {
     if (!item.sku) continue;
     const moduleIds = SKU_TO_MODULE_IDS[item.sku];
     if (!moduleIds) continue;
-    matched.push({ lineItemId: item.id, sku: item.sku, moduleIds, quantity: item.quantity, variantId: item.variant_id ?? null });
+    const lineTotal = Math.round(item.quantity * Number(item.price) - Number(item.total_discount ?? '0'));
+    matched.push({
+      lineItemId: item.id, sku: item.sku, moduleIds, quantity: item.quantity,
+      variantId: item.variant_id ?? null, lineTotal,
+    });
   }
   return matched;
 }

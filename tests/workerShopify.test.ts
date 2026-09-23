@@ -8,21 +8,29 @@ async function sign(body: string, secret: string): Promise<string> {
   return btoa(String.fromCharCode(...new Uint8Array(digest)));
 }
 
+const BASE_ORDER_FIELDS = {
+  name: '#1001',
+  currency: 'JPY',
+  financial_status: 'paid',
+  created_at: '2026-01-01T00:00:00.000Z',
+};
+
 describe('matchLineItems: the actual isolation boundary from products A-D', () => {
   const order: ShopifyOrderPayload = {
     id: 1001,
+    ...BASE_ORDER_FIELDS,
     line_items: [
-      { id: 1, sku: 'product-a-sku', quantity: 1, variant_id: 9001 },
-      { id: 2, sku: 'kodomo-ai-m1', quantity: 1, variant_id: 5555 },
-      { id: 3, sku: 'product-b-sku', quantity: 2, variant_id: 9002 },
-      { id: 4, sku: null, quantity: 1, variant_id: null },
+      { id: 1, sku: 'product-a-sku', quantity: 1, variant_id: 9001, price: '1000' },
+      { id: 2, sku: 'kodomo-ai-m1', quantity: 1, variant_id: 5555, price: '9800' },
+      { id: 3, sku: 'product-b-sku', quantity: 2, variant_id: 9002, price: '2000' },
+      { id: 4, sku: null, quantity: 1, variant_id: null, price: '0' },
     ],
   };
 
   it('only returns the line item whose SKU is in the module allowlist', () => {
     const matched = matchLineItems(order);
     expect(matched).toHaveLength(1);
-    expect(matched[0]).toEqual({ lineItemId: 2, sku: 'kodomo-ai-m1', moduleIds: ['m1'], quantity: 1, variantId: 5555 });
+    expect(matched[0]).toEqual({ lineItemId: 2, sku: 'kodomo-ai-m1', moduleIds: ['m1'], quantity: 1, variantId: 5555, lineTotal: 9800 });
   });
 
   it('drops every other product\'s line items entirely, quantity included', () => {
@@ -34,41 +42,59 @@ describe('matchLineItems: the actual isolation boundary from products A-D', () =
   it('returns nothing at all for an order made up entirely of other products', () => {
     const otherOnly: ShopifyOrderPayload = {
       id: 1002,
+      ...BASE_ORDER_FIELDS,
       line_items: [
-        { id: 5, sku: 'product-c-sku', quantity: 1, variant_id: 1 },
-        { id: 6, sku: 'product-d-sku', quantity: 3, variant_id: 2 },
+        { id: 5, sku: 'product-c-sku', quantity: 1, variant_id: 1, price: '500' },
+        { id: 6, sku: 'product-d-sku', quantity: 3, variant_id: 2, price: '500' },
       ],
     };
     expect(matchLineItems(otherOnly)).toEqual([]);
   });
 
   it('preserves quantity > 1 for a matched item (multiple units of the same module)', () => {
-    const twoUnits: ShopifyOrderPayload = { id: 1003, line_items: [{ id: 7, sku: 'kodomo-ai-m1', quantity: 2, variant_id: 5555 }] };
+    const twoUnits: ShopifyOrderPayload = {
+      id: 1003,
+      ...BASE_ORDER_FIELDS,
+      line_items: [{ id: 7, sku: 'kodomo-ai-m1', quantity: 2, variant_id: 5555, price: '9800' }],
+    };
     expect(matchLineItems(twoUnits)[0]!.quantity).toBe(2);
   });
 });
 
 describe('AD-14 — exact SKU only, never title or prefix', () => {
   it('a near-miss SKU (prefix of the real one) is never matched', () => {
-    const order: ShopifyOrderPayload = { id: 2001, line_items: [{ id: 1, sku: 'kodomo-ai-m1-v2', quantity: 1, variant_id: 1 }] };
+    const order: ShopifyOrderPayload = {
+      id: 2001,
+      ...BASE_ORDER_FIELDS,
+      line_items: [{ id: 1, sku: 'kodomo-ai-m1-v2', quantity: 1, variant_id: 1, price: '9800' }],
+    };
     expect(matchLineItems(order)).toEqual([]);
   });
 
   it('a product whose TITLE happens to mention the real SKU is still ignored — SKU only, never title', () => {
     const order = {
       id: 2002,
-      line_items: [{ id: 1, sku: 'unrelated-sku', quantity: 1, variant_id: 1, title: 'kodomo-ai-m1 bonus sticker' }],
+      ...BASE_ORDER_FIELDS,
+      line_items: [{ id: 1, sku: 'unrelated-sku', quantity: 1, variant_id: 1, price: '9800', title: 'kodomo-ai-m1 bonus sticker' }],
     } as unknown as ShopifyOrderPayload;
     expect(matchLineItems(order)).toEqual([]);
   });
 
   it('carries variant_id through for every matched line item, for audit logging downstream', () => {
-    const order: ShopifyOrderPayload = { id: 2003, line_items: [{ id: 1, sku: 'kodomo-ai-m1', quantity: 1, variant_id: 77777 }] };
+    const order: ShopifyOrderPayload = {
+      id: 2003,
+      ...BASE_ORDER_FIELDS,
+      line_items: [{ id: 1, sku: 'kodomo-ai-m1', quantity: 1, variant_id: 77777, price: '9800' }],
+    };
     expect(matchLineItems(order)[0]!.variantId).toBe(77777);
   });
 
   it('a null variant_id (malformed/legacy payload) never throws — surfaced as null, not dropped', () => {
-    const order: ShopifyOrderPayload = { id: 2004, line_items: [{ id: 1, sku: 'kodomo-ai-m1', quantity: 1, variant_id: null }] };
+    const order: ShopifyOrderPayload = {
+      id: 2004,
+      ...BASE_ORDER_FIELDS,
+      line_items: [{ id: 1, sku: 'kodomo-ai-m1', quantity: 1, variant_id: null, price: '9800' }],
+    };
     expect(matchLineItems(order)[0]!.variantId).toBeNull();
   });
 });

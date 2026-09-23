@@ -37,7 +37,18 @@ export class MemoryDb implements Db {
 
   async query<T>(collectionPath: string, field: string, value: unknown): Promise<DbDoc<T>[]> {
     const all = await this.list<T>(collectionPath);
-    return all.filter((doc) => (doc.data as Record<string, unknown>)[field] === value);
+    // Mirrors Firestore's own `.where('a.b', '==', v)` dot-path support (FirestoreDb.query passes
+    // the field straight through to the real `.where()`, which resolves nested fields natively) —
+    // a fake that only checked the top level would silently diverge from production behavior the
+    // moment a query needs a nested field (AD-16 §8's `refund.state` queue lookup).
+    return all.filter((doc) => {
+      let node: unknown = doc.data;
+      for (const key of field.split('.')) {
+        if (node === null || typeof node !== 'object') return false;
+        node = (node as Record<string, unknown>)[key];
+      }
+      return node === value;
+    });
   }
 
   async runTransaction<R>(fn: (tx: DbTx) => Promise<R>): Promise<R> {

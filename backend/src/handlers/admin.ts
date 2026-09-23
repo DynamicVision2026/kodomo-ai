@@ -3,7 +3,7 @@ import type { EmailIndexDoc, EntitlementDoc, FamilyDoc, OrderDoc } from '../sche
 import { emailIndexPath, entitlementPath, familyPath, orderPath, sessionsCollection } from '../schema.js';
 import { timingSafeEqual } from '../util.js';
 import { emailHashOf, findFamilyIdByEmail, getFamily, normalizeEmail } from '../family.js';
-import { welcomeEmail } from '../email.js';
+import { moduleActivatedEmail } from '../email.js';
 import { listActiveSessions, revokeSession } from '../session.js';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -19,7 +19,10 @@ function checkAdminAuth(request: Request, env: Env): boolean {
  * Every `/admin/*` route AD-13 §3 lists, dispatched from a single Bearer-token check — support
  * tooling/founder use, never called from a browser (no CORS, no session cookie, no CSRF check
  * needed: the bearer token itself is the whole authorization boundary, same as the old
- * `/admin/issue`).
+ * `/admin/issue`). AD-16 §8: this bearer-token surface is retained for CLI/script use only — the
+ * real staff-facing admin dashboard is the separate `kodomo-ai-admin` IAP-protected deployment
+ * (backend/src/adminRouter.ts + backend/server/adminIndex.ts), which never accepts `ADMIN_TOKEN`
+ * and reuses the same domain functions this file also calls (family.ts, session.ts, refund.ts).
  */
 export async function handleAdmin(request: Request, env: Env, url: URL): Promise<Response> {
   if (!checkAdminAuth(request, env)) return new Response('unauthorized', { status: 401 });
@@ -84,8 +87,11 @@ export async function handleAdmin(request: Request, env: Env, url: URL): Promise
     const existing = await env.db.get<EntitlementDoc>(path);
     const now = new Date().toISOString();
     const doc: EntitlementDoc = existing
-      ? { ...existing, status: body.status, revokedAt: body.status === 'revoked' ? now : null }
-      : { status: body.status, shopifyOrderId: 'admin-issued', grantedAt: now, revokedAt: body.status === 'revoked' ? now : null };
+      ? { ...existing, status: body.status, revokedAt: body.status === 'revoked' ? now : null, revokedReason: body.status === 'revoked' ? 'admin' : null }
+      : {
+          status: body.status, shopifyOrderId: 'admin-issued', grantedAt: now,
+          revokedAt: body.status === 'revoked' ? now : null, revokedReason: body.status === 'revoked' ? 'admin' : null,
+        };
     await env.db.set(path, doc);
     return jsonResponse({ familyId, moduleId, ...doc });
   }
@@ -104,7 +110,7 @@ export async function handleAdmin(request: Request, env: Env, url: URL): Promise
     const family = await getFamily(env, familyId);
     if (!family) return new Response('not found', { status: 404 });
     const base = env.APP_ORIGIN ?? '';
-    await env.email.send(welcomeEmail(family.email, `${base}/login?email=${encodeURIComponent(family.email)}`));
+    await env.email.send(moduleActivatedEmail(family.email, `${base}/login`));
     return new Response(null, { status: 202 });
   }
 

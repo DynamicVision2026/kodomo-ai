@@ -23,7 +23,6 @@ async function seedFamily(env: Env, familyId: string, email: string): Promise<st
   const now = new Date().toISOString();
   await env.db.set(familyPath(familyId), {
     email, status: 'active', profileCount: 0, createdAt: now, updatedAt: now,
-    trialStartedAt: now, trialEndsAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
   });
   await env.db.set(`families/${familyId}/profiles/p1`, {
     avatarId: 'a1', nicknameId: 'n1', stage: 2, settingsUpdatedAt: now, createdAt: now, deletedAt: null,

@@ -50,6 +50,15 @@ export function buildEnv(): Env {
     assertNotPlaceholder('SHOPIFY_ADMIN_API_TOKEN', process.env.SHOPIFY_ADMIN_API_TOKEN);
   }
 
+  let variantIds: Record<string, string> | undefined;
+  if (process.env.SHOPIFY_VARIANT_IDS) {
+    try {
+      variantIds = JSON.parse(process.env.SHOPIFY_VARIANT_IDS) as Record<string, string>;
+    } catch {
+      console.warn('[buildEnv] SHOPIFY_VARIANT_IDS is not valid JSON — ignoring it');
+    }
+  }
+
   return {
     db: createDb(),
     email: buildEmailSender(),
@@ -59,5 +68,7 @@ export function buildEnv(): Env {
     APP_ORIGIN: process.env.APP_ORIGIN,
     SHOPIFY_SHOP_DOMAIN: process.env.SHOPIFY_SHOP_DOMAIN,
     SHOPIFY_ADMIN_API_TOKEN: process.env.SHOPIFY_ADMIN_API_TOKEN,
+    SHOPIFY_VARIANT_IDS: variantIds,
+    IAP_AUDIENCE: process.env.IAP_AUDIENCE,
   };
 }

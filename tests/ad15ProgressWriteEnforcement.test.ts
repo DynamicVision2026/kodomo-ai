@@ -24,10 +24,9 @@ async function seedFamilyAndProfile(env: Env, entitled: boolean): Promise<{ toke
   const now = new Date().toISOString();
   await env.db.set(familyPath(familyId), {
     email: 'parent@example.com', status: 'active', profileCount: 1, createdAt: now, updatedAt: now,
-    trialStartedAt: now, trialEndsAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
   });
   if (entitled) {
-    await env.db.set(entitlementPath(familyId, 'm1'), { status: 'active', shopifyOrderId: 'o1', grantedAt: now, revokedAt: null });
+    await env.db.set(entitlementPath(familyId, 'm1'), { status: 'active', shopifyOrderId: 'o1', grantedAt: now, revokedAt: null, revokedReason: null });
   }
   const profileId = 'p1';
   await env.db.set(`families/${familyId}/profiles/${profileId}`, {
@@ -89,7 +88,7 @@ describe('AD-15 — server-authoritative access gate / server-side progress-writ
     const forged: ModuleProgressState = { ...emptyModuleProgress(), missions: { 'm1-s2-1-2': { done: true, stamps: 1, coop: false } } };
     await handlePutProgress(authedRequest(`/api/v1/profiles/${profileId}/progress/m1`, token, forged), env, profileId, 'm1');
 
-    await env.db.set(entitlementPath('f1', 'm1'), { status: 'active', shopifyOrderId: 'o1', grantedAt: new Date().toISOString(), revokedAt: null });
+    await env.db.set(entitlementPath('f1', 'm1'), { status: 'active', shopifyOrderId: 'o1', grantedAt: new Date().toISOString(), revokedAt: null, revokedReason: null });
 
     const res = await handlePutProgress(authedRequest(`/api/v1/profiles/${profileId}/progress/m1`, token, forged), env, profileId, 'm1');
     expect((await res.json()).missions['m1-s2-1-2'].done).toBe(true);

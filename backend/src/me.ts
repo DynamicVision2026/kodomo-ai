@@ -1,7 +1,8 @@
 import type { Env } from './types.js';
-import type { ProfileDoc } from './schema.js';
-import { profilesCollection } from './schema.js';
-import { familyHasActiveEntitlement, getFamily, listEntitlements } from './family.js';
+import type { ProfileDoc, TrialDoc } from './schema.js';
+import { profilesCollection, trialsCollection } from './schema.js';
+import { getFamily, listEntitlements } from './family.js';
+import { trialState } from './trial.js';
 
 /** Never the full address over the wire to the client that's already authenticated as this
  *  family — `/me` is read by ordinary page JS, and there's no reason it needs the whole string.
@@ -17,9 +18,12 @@ export interface MeResponse {
   email: string;
   entitlements: { moduleId: string; status: string }[];
   profiles: { id: string; avatarId: string; nicknameId: string; stage: number }[];
-  /** AD-15: null once the family has any active entitlement (trial is moot at that point);
-   *  otherwise the ISO timestamp its 72-hour trial ends, so the client can show a countdown. */
-  trialEndsAt: string | null;
+  /** AD-16 §5: per-module now (a family's trial history is per-module, not a single family-wide
+   *  clock) — `state` is `not_started`/`active`/`expired`, `endsAt` is null until the module's
+   *  trial has actually started (AD-16 §0/§6: nothing but the trial unit's own open ever starts
+   *  it; login/`/me` never do). Only ever lists a module once it has a trial doc — an
+   *  entitled-only family with no trial history for that module has nothing to report here. */
+  trials: { moduleId: string; state: 'not_started' | 'active' | 'expired'; endsAt: string | null }[];
 }
 
 export async function buildMeResponse(env: Env, familyId: string): Promise<MeResponse | null> {
@@ -28,7 +32,7 @@ export async function buildMeResponse(env: Env, familyId: string): Promise<MeRes
 
   const entitlements = await listEntitlements(env, familyId);
   const profiles = await env.db.list<ProfileDoc>(profilesCollection(familyId));
-  const entitled = await familyHasActiveEntitlement(env, familyId);
+  const trialDocs = await env.db.list<TrialDoc>(trialsCollection(familyId));
 
   return {
     familyId,
@@ -37,7 +41,7 @@ export async function buildMeResponse(env: Env, familyId: string): Promise<MeRes
     profiles: profiles
       .filter((p) => !p.data.deletedAt)
       .map((p) => ({ id: p.id, avatarId: p.data.avatarId, nicknameId: p.data.nicknameId, stage: p.data.stage })),
-    trialEndsAt: entitled ? null : family.trialEndsAt,
+    trials: trialDocs.map((t) => ({ moduleId: t.id, state: trialState(t.data), endsAt: t.data.endsAt })),
   };
 }
 

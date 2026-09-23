@@ -1,8 +1,7 @@
 import type { Env } from './types.js';
 import type { EmailIndexDoc, EntitlementDoc, FamilyDoc } from './schema.js';
-import { emailIndexPath, entitlementsCollection, familyPath } from './schema.js';
+import { emailIndexPath, entitlementPath, entitlementsCollection, familyPath } from './schema.js';
 import { randomToken, sha256Hex } from './util.js';
-import { trialWindow } from './trial.js';
 
 /** Case/whitespace-insensitive — the same address typed differently must hash to the same
  *  `emailIndex` doc (AD-13 §2's own uniqueness guard would otherwise silently not guard). */
@@ -24,14 +23,17 @@ export async function getFamily(env: Env, familyId: string): Promise<FamilyDoc |
 }
 
 /**
- * AD-13 §2 `emailIndex` doc: "created in a transaction; one email maps to one family." Two
- * callers, both server-authenticated in their own way and never the browser directly: the
- * Shopify webhook (email comes from an HMAC-verified order) and, since AD-15's "account-first"
- * trial, `verifyLoginCode` (email comes from an already-verified OTP, not a client-asserted
- * value). Idempotent: a second call for an email that already has a family just returns its
- * existing id, inside the same transaction the caller is already running — and, critically,
- * never touches that family's own `trialStartedAt`/`trialEndsAt` once set (AD-15: "shared family
- * trial clock" — one clock, ever, not renewed by a later purchase or a later trial-path login).
+ * AD-13 §2 `emailIndex` doc: "created in a transaction; one email maps to one family." The ONLY
+ * caller is `verifyLoginCode` — since AD-15's "account-first" trial, a correct OTP is the one and
+ * only way a Family Account is ever created (email comes from an already-verified code, not a
+ * client-asserted value). AD-16 §2 explicitly REMOVES the Shopify webhook's own former use of
+ * this function ("never auto-create a Family from an unmatched Shopify purchaser email") — the
+ * webhook only ever looks an email up (`findFamilyIdByEmail`), never creates one; an order with no
+ * token and no matching existing family goes to the claim flow instead (backend/src/handlers/
+ * webhook.ts). Idempotent: a second call for an email that already has a family just returns its
+ * existing id, inside the same transaction the caller is already running. Never sets any trial
+ * state (AD-16 §0/§5: trial starts lazily at the trial unit's own first open, never at account
+ * creation).
  */
 export async function getOrCreateFamilyIdInTx(
   tx: { get<T>(path: string): Promise<T | null>; set<T>(path: string, data: T): void },
@@ -44,10 +46,7 @@ export async function getOrCreateFamilyIdInTx(
   if (existing) return { familyId: existing.familyId, created: false };
 
   const familyId = randomToken(16);
-  const family: FamilyDoc = {
-    email: normalized, status: 'active', profileCount: 0, createdAt: now, updatedAt: now,
-    ...trialWindow(new Date(now)),
-  };
+  const family: FamilyDoc = { email: normalized, status: 'active', profileCount: 0, createdAt: now, updatedAt: now };
   tx.set(familyPath(familyId), family);
   tx.set(emailIndexPath(emailHash), { familyId, createdAt: now } satisfies EmailIndexDoc);
   return { familyId, created: true };
@@ -57,12 +56,18 @@ export async function listEntitlements(env: Env, familyId: string) {
   return env.db.list<EntitlementDoc>(entitlementsCollection(familyId));
 }
 
-/** AD-15: the one check that matters for login now — an active entitlement always overrides
- *  the trial clock (backend/src/trial.ts); a family with none is gated by
- *  `isTrialActive` instead. (AD-13's original "refunded => treated as unknown" rule is
- *  superseded: AD-15's account-first model means every email can hold a Family Account, so a
- *  refunded/never-purchased family still logs in — it just falls back to the trial gate.) */
+/** Whether ANY module is actively entitled for this family — used by the content-access gate
+ *  (backend/src/access.ts) and account-page checks. Never used to gate login/`/me` itself
+ *  (AD-16 §0): a refunded or never-purchased family always logs in; only `access.m1` for a
+ *  specific module depends on this. */
 export async function familyHasActiveEntitlement(env: Env, familyId: string): Promise<boolean> {
   const entitlements = await listEntitlements(env, familyId);
   return entitlements.some((e) => e.data.status === 'active');
+}
+
+/** The module-scoped equivalent — whether `moduleId` specifically is actively entitled, not
+ *  "any module." Multi-module aware (AD-16 §5: "future modules use the same Family Account"). */
+export async function isModuleEntitled(env: Env, familyId: string, moduleId: string): Promise<boolean> {
+  const entitlement = await env.db.get<EntitlementDoc>(entitlementPath(familyId, moduleId));
+  return entitlement?.status === 'active';
 }

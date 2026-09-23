@@ -1,21 +1,18 @@
 import type { Env } from '../types.js';
-import type { EntitlementDoc, ProfileDoc, ProgressDoc } from '../schema.js';
-import { entitlementPath, profilePath, progressPath } from '../schema.js';
+import type { ProfileDoc, ProgressDoc } from '../schema.js';
+import { profilePath, progressPath } from '../schema.js';
 import { resolveSession } from '../session.js';
 import { passesCsrfCheck } from '../csrf.js';
 import { emptyModuleProgress, mergeModuleProgress, type ModuleProgressState } from '../../../shared/progressMerge.js';
 import { isFreeMission } from '../../../shared/freeMissions.js';
+import { isModuleEntitled } from '../family.js';
+import { recordFirstPaidUse } from '../access.js';
 
 const SCHEMA_VERSION = 1;
 
 async function ownsProfile(env: Env, familyId: string, profileId: string): Promise<boolean> {
   const profile = await env.db.get<ProfileDoc>(profilePath(familyId, profileId));
   return !!profile && !profile.deletedAt;
-}
-
-async function isModuleEntitled(env: Env, familyId: string, moduleId: string): Promise<boolean> {
-  const entitlement = await env.db.get<EntitlementDoc>(entitlementPath(familyId, moduleId));
-  return entitlement?.status === 'active';
 }
 
 /**
@@ -78,10 +75,17 @@ export async function handlePutProgress(request: Request, env: Env, profileId: s
   }
 
   const moduleEntitled = await isModuleEntitled(env, familyId, moduleId);
-  const sanitizedState: ModuleProgressState = {
-    ...clientState,
-    missions: enforceMissionAccess(clientState.missions, moduleId, moduleEntitled),
-  };
+  const sanitizedMissions = enforceMissionAccess(clientState.missions, moduleId, moduleEntitled);
+  const sanitizedState: ModuleProgressState = { ...clientState, missions: sanitizedMissions };
+
+  // AD-16 §6 "defensive rule": a PUT carrying an accepted (i.e. genuinely entitled) paid-unit
+  // event also records first paid use, in case it happened to reach here without going through
+  // POST /units/{unitId}/open first (e.g. an older client, or a retried/offline-queued write).
+  // recordFirstPaidUse is itself idempotent — this never overwrites an already-set record.
+  const paidUnitId = Object.keys(sanitizedMissions).find((missionId) => !isFreeMission(moduleId, missionId));
+  if (paidUnitId) {
+    await recordFirstPaidUse(env, familyId, moduleId, paidUnitId, profileId);
+  }
 
   const path = progressPath(familyId, profileId, moduleId);
   const merged = await env.db.runTransaction(async (tx) => {
