@@ -13,6 +13,10 @@ export interface MissionCompleteProps {
   onNext: () => void;
   onBackToMap: () => void;
   onTryOutside: () => void;
+  /** Builder work order §7: "Post-dig audio... shown at mission complete as today, replayable
+   *  there." Omitted, the replay action simply doesn't render — every mission without its own
+   *  post-dig audio (most of them) keeps this screen exactly as it always was. */
+  onReplayAudio?: () => void;
 }
 
 /** Every distinct move this mission's own dig phase(s) actually exercised — real content, not
@@ -36,7 +40,9 @@ function practicedMoves(mission: Mission): string[] {
  * never replaces it, adds the one thing it was missing: a named next step, so a family never
  * needs to reload /play/ to continue (AD-06 §7's own explicit requirement).
  */
-export function MissionComplete({ ui, mission, cardTypes, nextMission, onNext, onBackToMap, onTryOutside }: MissionCompleteProps) {
+export function MissionComplete({
+  ui, mission, cardTypes, nextMission, onNext, onBackToMap, onTryOutside, onReplayAudio,
+}: MissionCompleteProps) {
   const moves = practicedMoves(mission);
   // WO-28 §8: nextMission === null already means "the whole course is done" (the caller resolves
   // this, unchanged) — reused here only to pick a visual treatment, no new completion logic.
@@ -81,6 +87,16 @@ export function MissionComplete({ ui, mission, cardTypes, nextMission, onNext, o
         <button type="button" className="mission-complete__tertiary" onClick={onTryOutside}>
           {ui.completeTryOutsideLabel}
         </button>
+        {onReplayAudio && (
+          <button
+            type="button"
+            className="mission-complete__replay ad12-tappable"
+            onClick={onReplayAudio}
+            aria-label={ui.audioReplayLabel}
+          >
+            <span aria-hidden="true">↻</span> {ui.audioReplayLabel}
+          </button>
+        )}
       </div>
     </div>
   );

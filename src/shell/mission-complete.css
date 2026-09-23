@@ -82,7 +82,8 @@
   cursor: pointer;
 }
 .mission-complete__secondary,
-.mission-complete__tertiary {
+.mission-complete__tertiary,
+.mission-complete__replay {
   min-height: 48px;
   border: 1px solid var(--ink-soft, #6b5d4f);
   border-radius: var(--radius-pill, 999px);
@@ -90,6 +91,13 @@
   color: var(--ink, #2b2622);
   font-weight: 700;
   cursor: pointer;
+}
+
+/* Builder work order §7: a quiet fourth action — never the primary "next mission" one — for
+   replaying this mission's own post-dig audio, when it has any. */
+.mission-complete__replay {
+  opacity: 0.85;
+  font-size: 0.95rem;
 }
 
 /* WO-32: already min-height: 100dvh (correctly fills the viewport), but top-anchored — on a

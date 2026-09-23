@@ -94,6 +94,25 @@
   .course-home__depth-robot { animation: none; }
 }
 
+/* Builder work order §7: a completed depth's own quiet replay affordance — bottom-right so it
+   never collides with the current-depth robot marker (top-right, and only ever shown on the ONE
+   current depth, never a done one, so the two never actually appear on the same node anyway). */
+.course-home__depth-replay {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--ad12-paper);
+  color: var(--ad12-ink);
+  opacity: 0.75;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
 /* WO-26 §7: LOCKED's own short diegetic explanation — appears only right after a locked depth
    is tapped, never a browser-style error, never blocking the shaft. */
 .course-home__depth-locked-note {

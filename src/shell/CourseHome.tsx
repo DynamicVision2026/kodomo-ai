@@ -7,6 +7,7 @@ import { Toolbox } from './Toolbox';
 import { Mascot } from './Mascot';
 import { Ruby } from '../engine/ruby';
 import { HomePlane } from '../ad12/HomePlane';
+import { audioScriptFor } from '../audio/registry';
 import '../ad12/tokens.css';
 import '../ad12/primitives.css';
 import './course-home.css';
@@ -45,6 +46,11 @@ export interface CourseHomeProps {
   onOpenBank: () => void;
   onOpenParent: () => void;
   onOpenKit: () => void;
+  /** Builder work order §7: opens a COMPLETED lesson's own registered audio (pre or post,
+   *  whichever it has) back up for replay, independent of the active mission/dig entirely — see
+   *  MissionShell.tsx's own `'replay-audio'` screen, which never writes evidence. Omitted, this
+   *  affordance simply never renders (every existing caller/test keeps working unchanged). */
+  onReplayMission?: (missionId: string) => void;
 }
 
 /**
@@ -63,6 +69,7 @@ export interface CourseHomeProps {
 export function CourseHome({
   ui, missionOrder, missions, progress, currentMissionId, isStoryEntitled, moveProgress,
   followMoves, cardTypes, hasBank, onContinue, onSelectMission, onOpenBank, onOpenParent, onOpenKit,
+  onReplayMission,
 }: CourseHomeProps) {
   const currentRef = useRef<HTMLLIElement>(null);
   /** WO-26 §7: a Story ahead of CURRENT is LOCKED — tapping it never navigates away. Instead it
@@ -152,6 +159,22 @@ export function CourseHome({
                   locked={locked}
                   onSelect={() => tapDepth(id, locked)}
                 />
+                {/* Builder work order §7: "a completed lesson's plane offers a small replay icon
+                   that opens its pocket... Lessons that are not completed offer nothing." A
+                   sibling of HomePlane's own single `<button>` (never nested inside it — HTML
+                   forbids a button inside a button), shown only once BOTH this depth is actually
+                   done AND it has a registered AudioScript (pre or post — audioScriptFor doesn't
+                   distinguish, the replay screen plays whichever the mission has) to open. */}
+                {done && onReplayMission && audioScriptFor(id) && (
+                  <button
+                    type="button"
+                    className="course-home__depth-replay ad12-tappable"
+                    onClick={() => onReplayMission(id)}
+                    aria-label={ui.audioReplayLabel}
+                  >
+                    <span aria-hidden="true">↻</span>
+                  </button>
+                )}
                 {/* WO-24 (AD-07 §12): "Robot stands at the current dig site" — a small, plain
                    positional cue (never a reward badge), not a second mascot with its own
                    reactive state. */}

@@ -123,6 +123,16 @@ type Screen =
    *  immediately after the child's own dig work, in BOTH solo and co-play — never gated behind
    *  the parent hand-off ritual. */
   | { kind: 'audio'; role: AudioRole; placement: 'pre' | 'post-gated' | 'post-ungated' }
+  /** Builder work order §7 (replay rules): re-opens a mission's own registered audio for replay,
+   *  outside the normal in-mission flow entirely — reached from Course Home's own per-depth
+   *  replay icon (a COMPLETED lesson only) or from MissionComplete's own replay action for the
+   *  mission that was just played. `missionId` is resolved independently of whatever mission is
+   *  currently `active` (Course Home can replay ANY completed mission's audio, not only the
+   *  active one) via `missionLibrary`/`audioScriptFor` — never the `'audio'` screen above, whose
+   *  own `onDone` performs real evidence writes and stage/completion routing this one must never
+   *  trigger (WO-27 §11-shaped invariant: replaying must never mutate progress). `onDone` here
+   *  only ever returns to wherever it was opened from — no persistProfile call of any kind. */
+  | { kind: 'replay-audio'; missionId: string; returnTo: 'course-home' | 'complete' }
   /** WO-34: the optional Real AI Lab session — reached ONLY from 'stage-teachback's own
    *  return-to-child action, and only for REAL_AI_LAB_MISSION_ID (Story 1-8), same "after
    *  teach-back and M2b, never any other way" guarantee CHECKPOINT audio already has above. */
@@ -775,6 +785,37 @@ export function MissionShell({
         // 「まとめてダウンロード」 for the full ZIP) — /print/kit/ itself remains the internal
         // everything-at-once preview, never what a family is sent to.
         onOpenKit={() => window.open('/print/centre/', '_blank', 'noopener')}
+        onReplayMission={(id) => setScreen({ kind: 'replay-audio', missionId: id, returnTo: 'course-home' })}
+      />
+    );
+  }
+
+  if (screen.kind === 'replay-audio') {
+    // Builder work order §7: resolved independently of the active `mission`/`solo`/progress
+    // state entirely — Course Home can replay ANY completed mission, not only the active one.
+    const replayMission = missionLibrary?.missions[screen.missionId] ?? (screen.missionId === mission.id ? mission : undefined);
+    const replayScript = audioScriptFor(screen.missionId);
+    if (!replayMission || !replayScript) {
+      // Content drifted out from under this screen (shouldn't happen — both callers only ever
+      // offer this for a mission with a registered script) — fail safe back to where we came
+      // from rather than rendering a dead screen.
+      setScreen({ kind: screen.returnTo });
+      return null;
+    }
+    return (
+      <AudioScene
+        role={replayScript.role}
+        robotLine={replayScript.robotLine}
+        lines={replayScript.lines}
+        ui={ui}
+        guidanceUses={profile?.guidance ?? {}}
+        // No persistProfile call of any kind here — replaying never changes evidence (§7's own
+        // explicit requirement). Deliberately NOT `guidanceUsed` (unlike the real 'audio' screen
+        // below): tapping the play glyph during a replay must never nudge that affordance's own
+        // guidance curve, the same as it must never write checkpointAudioHeard/audioActuallyPlayed
+        // (both written only by the real in-mission 'audio' screen, never by this one).
+        onGuidanceUse={() => {}}
+        onDone={() => setScreen({ kind: screen.returnTo })}
       />
     );
   }
@@ -1123,6 +1164,15 @@ export function MissionShell({
         onNext={goToNextMission}
         onBackToMap={goToCourseHome}
         onTryOutside={() => setScreen({ kind: 'parent', afterMission: true })}
+        // Builder work order §7: "Post-dig audio (CHECKPOINT, independent practice, Bank)...
+        // shown at mission complete as today, replayable there." Scoped to post-dig placements
+        // specifically — a MODEL/GUIDED mission's own pre-dig audio already played well before
+        // this screen and gets its own replay affordance from Course Home instead (below).
+        onReplayAudio={
+          audioScriptFor(mission.id) && audioPlacement(audioScriptFor(mission.id)!.role) !== 'pre'
+            ? () => setScreen({ kind: 'replay-audio', missionId: mission.id, returnTo: 'complete' })
+            : undefined
+        }
       />
     );
   }
