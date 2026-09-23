@@ -17,7 +17,14 @@ export interface AudioSceneProps {
    *  below renders; nothing else does. */
   lines?: AudioLine[];
   ui: ModuleUiStrings;
-  onDone: () => void;
+  /** Builder work order §5 ("1-1 audio priming — verify before modifying"): `played` is true only
+   *  when real playback actually started (the child tapped さいせいする at least once), never
+   *  merely because this screen was visited/skipped. src/shell/MissionShell.tsx uses this to
+   *  decide whether a MODEL script's own `demonstratedLayers` actually apply — before this field
+   *  existed, `onDone` carried no such signal and demonstratedLayers was applied unconditionally
+   *  whenever a mission HAD a registered MODEL script, regardless of whether the child ever
+   *  pressed play. */
+  onDone: (played: boolean) => void;
 }
 
 /**
@@ -49,6 +56,8 @@ export function AudioScene({ role, robotLine, lines, ui, onDone }: AudioScenePro
  */
 function TextAnchorAudioScene({ role, robotLine, ui, onDone }: Omit<AudioSceneProps, 'lines'>) {
   const [revealed, setRevealed] = useState(false);
+  // No real audio exists on this fallback path at all — nothing was ever "played", so priming
+  // (src/shell/MissionShell.tsx's own demonstratedLayers gate) must never apply here.
   return (
     <div className="mission-shell__wrapper" data-audio-role={role}>
       <Mascot state="curious" />
@@ -59,7 +68,12 @@ function TextAnchorAudioScene({ role, robotLine, ui, onDone }: Omit<AudioScenePr
           advanceLabel={ui.handoffContinue}
         />
       ) : (
-        <SpeechBubble speaker={ui.stageRobotName} text={robotLine} onAdvance={onDone} advanceLabel={ui.handoffContinue} />
+        <SpeechBubble
+          speaker={ui.stageRobotName}
+          text={robotLine}
+          onAdvance={() => onDone(false)}
+          advanceLabel={ui.handoffContinue}
+        />
       )}
     </div>
   );
@@ -76,6 +90,10 @@ function TextAnchorAudioScene({ role, robotLine, ui, onDone }: Omit<AudioScenePr
  */
 function FullAudioScene({ role, lines, ui, onDone }: Required<Pick<AudioSceneProps, 'role' | 'lines' | 'ui' | 'onDone'>>) {
   const [index, setIndex] = useState(-1); // -1 = not yet started
+  // Builder work order §5: true the instant real playback actually starts (the play button's own
+  // tap), independent of whether the child then lets it finish, stops mid-line, or taps continue
+  // right after — "played" means genuinely started, not "completed".
+  const [played, setPlayed] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timeoutRef = useRef<number | null>(null);
 
@@ -100,8 +118,12 @@ function FullAudioScene({ role, lines, ui, onDone }: Required<Pick<AudioScenePro
     };
     audio.addEventListener('ended', advance);
     // A rejected/no-op play() (autoplay policy, or a test environment with no real media
-    // pipeline) still has to progress the sequence rather than stall on it forever.
-    audio.play().catch(advance);
+    // pipeline) still has to progress the sequence rather than stall on it forever. jsdom's own
+    // HTMLMediaElement.play() returns undefined (not a Promise at all, unlike real browsers) —
+    // exposed once a test actually presses play rather than skipping past this screen — so this
+    // can't assume a Promise back either.
+    const result = audio.play();
+    if (result && typeof result.catch === 'function') result.catch(advance);
   }
 
   const playing = index >= 0 && index < lines.length;
@@ -110,14 +132,21 @@ function FullAudioScene({ role, lines, ui, onDone }: Required<Pick<AudioScenePro
     <div className="mission-shell__wrapper" data-audio-role={role}>
       <Mascot state={playing ? 'curious' : 'thinking'} />
       <p><Ruby text={ui.audioListenPrompt ?? ''} /></p>
-      <button type="button" onClick={() => playFrom(0)} disabled={playing}>
+      <button
+        type="button"
+        onClick={() => {
+          setPlayed(true);
+          playFrom(0);
+        }}
+        disabled={playing}
+      >
         {ui.audioPlayLabel}
       </button>
       <button
         type="button"
         onClick={() => {
           stopPlayback();
-          onDone();
+          onDone(played);
         }}
       >
         {ui.handoffContinue}

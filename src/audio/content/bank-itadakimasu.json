@@ -36,7 +36,7 @@
     },
     {
       "speaker": "PONTA",
-      "text": "ロボが、「野菜や お肉を そだてた 人にも、言ってるんだよ」って。",
+      "text": "ロボが、「{野菜|やさい}や お肉を そだてた 人にも、言ってるんだよ」って。",
       "audioUrl": "/audio/m1/b10-itadakimasu/05-ponta.mp3",
       "pauseAfterMs": 350
     },

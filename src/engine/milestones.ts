@@ -33,6 +33,13 @@ export interface MilestoneState {
   achieved: boolean;
   /** Epoch ms. Set once, on the transition to achieved=true, and never overwritten again. */
   achievedAt: number | null;
+  /** M2 only (Builder work order "CHECKPOINT audio — fix solo completion"): true when this
+   *  confirmation was recorded after the same mission's CHECKPOINT comparison audio had already
+   *  been heard (a solo child who chose 「あとでやる」, then a parent confirming teach-back
+   *  later, from the standing parent dashboard). Purely descriptive — it changes nothing about
+   *  achieve()'s own monotonic/idempotent/first-time-only semantics above; a later confirmation
+   *  can never retroactively flip it once M2 is already achieved. */
+  afterCompare?: boolean;
 }
 
 export type MilestoneMap = Partial<Record<MilestoneId, MilestoneState>>;
@@ -104,9 +111,15 @@ export function evaluateM4(milestones: MilestoneMap, now: number): MilestoneMap 
 /**
  * M2b — the actual milestone. Invoked by the parent screen's M2b confirmation button (WO-14,
  * `src/shell/MissionShell.tsx`'s `confirmM2b`) — live, not merely a seam awaiting a future UI.
+ *
+ * `afterCompare` (Builder work order "CHECKPOINT audio — fix solo completion"): the caller passes
+ * true when the mission being confirmed had its CHECKPOINT comparison audio already heard (solo
+ * 「あとでやる」 path) before this confirmation. Stored alongside the achievement, never used to
+ * change whether/when M2 is achieved — `achieve()` is still the one monotonic gate.
  */
-export function applyM2Confirmed(milestones: MilestoneMap, now: number): MilestoneMap {
-  return achieve(milestones, 'M2', now);
+export function applyM2Confirmed(milestones: MilestoneMap, now: number, afterCompare = false): MilestoneMap {
+  if (stateOf(milestones, 'M2').achieved) return milestones;
+  return { ...milestones, M2: { achieved: true, achievedAt: now, afterCompare } };
 }
 
 /**

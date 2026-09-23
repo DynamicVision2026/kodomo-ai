@@ -173,7 +173,7 @@ describe('Final Module 1 Audio Integration Pass — 2. ready manifests actually 
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
   });
 
-  it('"post-gated" — 1-7 (kashite/CHECKPOINT) never appears in solo play at all (solo never reaches teach-back/M2b)', async () => {
+  it('"post-gated" — 1-7 (kashite/CHECKPOINT) in SOLO: no teach-back/M2b, but a single 「あとでやる」 tap still reaches and completes its comparison audio (Builder work order §4)', async () => {
     const kashite = kashiteJson as unknown as Mission;
     const user = userEvent.setup();
     renderSingleMission(kashite);
@@ -181,8 +181,17 @@ describe('Final Module 1 Audio Integration Pass — 2. ready manifests actually 
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await playMissionScreenToCompletion(user, kashite, ui);
-    await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
+
+    // No teach-back/M2b in solo — straight to the single deferral tap instead of 'complete'.
     expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument();
+    // The completion animation's own real setTimeout delays this offer screen's own appearance.
+    await waitFor(() => expect(screen.getByText(ui.teachbackSkip)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.teachbackSkip));
+    expect(document.querySelector('[data-audio-role="CHECKPOINT"]')).toBeInTheDocument();
+    expect(screen.getByText(ui.audioPlayLabel!)).toBeInTheDocument(); // real playback, not text-anchor
+
+    await skipCheckpointAudioIfPresent(user);
+    await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
   });
 
   it('"post-ungated" — B03 (janken/TRANSFER) plays immediately after the child\'s own dig work in SOLO — never gated behind a parent hand-off', async () => {

@@ -7,7 +7,7 @@ import type { Mission, ModuleUiStrings } from '../src/engine/types';
 import type { AppState } from '../src/engine/storage';
 import {
   playMissionStageToCompletion, playMissionScreenToCompletion,
-  skipPrePracticeAudioIfPresent, skipCheckpointAudioIfPresent, skipM0RitualIfPresent,
+  skipPrePracticeAudioIfPresent, playPrePracticeAudioIfPresent, skipCheckpointAudioIfPresent, skipM0RitualIfPresent,
 } from './helpers/stageConformance';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
@@ -123,7 +123,7 @@ describe('WO-33 — Audio Reference Slice: placement/order', () => {
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
   });
 
-  it('1-4 (oyatsu/CHECKPOINT): never appears in solo play at all (solo never reaches teach-back/M2b)', async () => {
+  it('1-4 (oyatsu/CHECKPOINT) in SOLO: no teach-back/M2b, but a single 「あとでやる」 tap still reaches and completes its comparison audio (Builder work order §4)', async () => {
     const user = userEvent.setup();
     renderSingleMission(oyatsu);
     await createProfile(user);
@@ -132,8 +132,10 @@ describe('WO-33 — Audio Reference Slice: placement/order', () => {
     expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument();
 
     await playMissionScreenToCompletion(user, oyatsu, ui);
-    await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
+    // No teach-back/M2b in solo — straight to the single deferral tap instead of 'complete'.
     expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument();
+    await skipCheckpointAudioIfPresent(user, ui);
+    await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
   });
 });
 
@@ -306,7 +308,10 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
     await createProfile(user);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
-    await skipPrePracticeAudioIfPresent(user); // chanto's own MODEL audio, unrelated to this guard
+    // Builder work order §5: this test's own point is the DEMONSTRATED case, which now requires
+    // the audio to have actually been played (not merely visited/skipped) — see this file's own
+    // new "skip without playing" test below for the companion NOT-demonstrated case.
+    await playPrePracticeAudioIfPresent(user);
 
     const slotPhase = chanto.phases.find((p) => p.template === 'slot-assembly') as any;
     const digPhase = chanto.phases.find((p) => p.template === 'dig') as any;
@@ -329,5 +334,87 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
     expect(profile.moveProgress?.['follow-tsumari']).toBeUndefined(); // never rendered/used
     expect(profile.milestones?.M1).toBeUndefined(); // no rung ever advanced to re-evaluate from
     expect(profile.m2Evidence?.proxyMissionIds ?? []).not.toContain(chanto.id); // no Gap Naming credit
+  });
+
+  /**
+   * Builder work order §5 ("1-1 audio priming — verify before modifying"): the companion NOT-
+   * demonstrated case. Before this fix, `demonstratedLayers` applied unconditionally to any
+   * mission with a registered MODEL script, so tapping straight past the audio screen without
+   * ever pressing play still suppressed layer 0's evidence — exactly the bug this test guards
+   * against regressing to. Same real MissionShell wiring as the test above, same layer-0 play,
+   * only difference is `skipPrePracticeAudioIfPresent` (never presses さいせいする) instead of
+   * `playPrePracticeAudioIfPresent`.
+   */
+  it('end-to-end through the real MissionShell: layer 0 is NOT demonstrated when the audio screen is skipped without ever pressing play', async () => {
+    const user = userEvent.setup();
+    renderSingleMission(chanto);
+    await createProfile(user);
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
+    await user.click(screen.getByText(ui.coopSolo));
+    await skipPrePracticeAudioIfPresent(user);
+
+    const slotPhase = chanto.phases.find((p) => p.template === 'slot-assembly') as any;
+    const digPhase = chanto.phases.find((p) => p.template === 'dig') as any;
+    const clearCard = slotPhase.cards.find((c: any) => c.tag === 'clear');
+    await waitFor(() => expect(screen.getByText(clearCard.text)).toBeInTheDocument());
+    await user.click(screen.getByText(clearCard.text));
+    await waitFor(() => expect(screen.getByText(digPhase.layers[0].robotSays)).toBeInTheDocument());
+    await user.click(screen.getByText(digPhase.layers[0].robotSays));
+    await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.judgeNotEnough));
+    await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
+    await user.click(document.querySelectorAll('.ad12-recess .ad12-slip')[0] as HTMLElement);
+    const layer0Deepen = digPhase.layers[0].hand.find((c: any) => c.tag === 'deepen');
+    await waitFor(() => expect(screen.getByText(layer0Deepen.text)).toBeInTheDocument());
+    await user.click(screen.getByText(layer0Deepen.text));
+    await waitFor(() => expect(document.querySelector('.stage__hand-tray')).not.toBeInTheDocument());
+
+    const saved: AppState = JSON.parse(localStorage.getItem('m-app.v2')!);
+    const profile = saved.profiles[0]!;
+    // Normal evidence recording — the OPPOSITE of the demonstrated case above.
+    expect(profile.moveProgress?.['follow-tsumari']).toBeDefined();
+    expect(profile.m2Evidence?.proxyMissionIds ?? []).toContain(chanto.id);
+  });
+});
+
+/**
+ * Builder work order §4 ("CHECKPOINT audio — fix solo completion", acceptance §7F): a child plays
+ * 1-4 (oyatsu) solo, defers teach-back via 「あとでやる」, actually hears the CHECKPOINT
+ * comparison audio, and completes the mission. A parent LATER opens the standing parent
+ * dashboard (Course Home's own 「おうちの方へ」, reachable any time, independent of the
+ * in-mission flow) and confirms teach-back there — proving `confirmM2b` correctly tags that
+ * confirmation `afterCompare: true` end to end through the real MissionShell, not a direct
+ * milestones.ts unit call.
+ */
+describe('Builder work order §4 — CHECKPOINT solo completion: afterCompare end to end', () => {
+  it('solo あとでやる + actually-played comparison audio, then a LATER parent-dashboard M2b confirmation, is tagged afterCompare: true', async () => {
+    const user = userEvent.setup();
+    renderSingleMission(oyatsu);
+    await createProfile(user);
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
+    await user.click(screen.getByText(ui.coopSolo));
+    await playMissionScreenToCompletion(user, oyatsu, ui);
+
+    // No teach-back/M2b yet — defer, then actually press play (not skip) on the comparison audio.
+    await waitFor(() => expect(screen.getByText(ui.teachbackSkip)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.teachbackSkip));
+    await waitFor(() => expect(document.querySelector('[data-audio-role="CHECKPOINT"]')).toBeInTheDocument());
+    const audioButtons = document.querySelectorAll('[data-audio-role] button');
+    await user.click(audioButtons[0] as HTMLElement); // さいせいする — actually played
+    await user.click(audioButtons[audioButtons.length - 1] as HTMLElement); // continue
+    await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
+
+    let saved: AppState = JSON.parse(localStorage.getItem('m-app.v2')!);
+    expect(saved.profiles[0]!.checkpointAudioHeard).toContain(oyatsu.id);
+    expect(saved.profiles[0]!.milestones?.M2).toBeUndefined(); // no teach-back given yet
+
+    // LATER: the parent opens the standing dashboard directly from Course Home and confirms.
+    await user.click(screen.getByText(ui.completeBackToMapLabel));
+    await user.click(screen.getByText(ui.parentScreenHeading));
+    await waitFor(() => expect(screen.getByText(ui.m2ConfirmAction)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.m2ConfirmAction));
+
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
+    expect(saved.profiles[0]!.milestones!.M2).toEqual({ achieved: true, achievedAt: expect.any(Number), afterCompare: true });
   });
 });

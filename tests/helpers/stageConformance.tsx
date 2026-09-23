@@ -234,6 +234,22 @@ async function dismissAudioScene(user: ReturnType<typeof userEvent.setup>) {
   await user.click(buttons[buttons.length - 1] as HTMLElement); // the continue button
 }
 
+/** Builder work order §5: the "actually played" counterpart of `dismissAudioScene` — presses
+ *  さいせいする (the FIRST button on the real full-playback screen) before continuing, so
+ *  `MissionShell`'s own `audioActuallyPlayed` state is true. A no-op text-anchor fallback (still
+ *  pending-production content) has no real play button at all, so it falls back to a plain
+ *  dismiss — priming never applies to that path regardless (see AudioScene.tsx's own doc
+ *  comment on `TextAnchorAudioScene`). */
+async function playThenDismissAudioScene(user: ReturnType<typeof userEvent.setup>) {
+  if (document.querySelector('.speech-bubble')) {
+    await dismissAudioScene(user);
+    return;
+  }
+  const buttons = document.querySelectorAll('[data-audio-role] button');
+  await user.click(buttons[0] as HTMLElement); // さいせいする
+  await user.click(buttons[buttons.length - 1] as HTMLElement); // continue, mid/after playback
+}
+
 /**
  * Architect-resolved completion-ritual behaviour #1: M0 now fires automatically right after
  * every profile is created/chosen, before Course Home — src/shell/MissionShell.tsx's
@@ -260,6 +276,16 @@ export async function skipM0RitualIfPresent(user: ReturnType<typeof userEvent.se
 export async function skipPrePracticeAudioIfPresent(user: ReturnType<typeof userEvent.setup>) {
   if (!document.querySelector('[data-audio-role]')) return;
   await dismissAudioScene(user);
+  await waitFor(() => expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument());
+}
+
+/** Builder work order §5: the "actually played" counterpart of `skipPrePracticeAudioIfPresent` —
+ *  same no-op-if-absent contract, but presses play first so priming (demonstratedLayers) applies
+ *  for this attempt. Use this, not the skip variant, whenever a test's own point is to exercise
+ *  what happens once a mission's reference audio was genuinely heard. */
+export async function playPrePracticeAudioIfPresent(user: ReturnType<typeof userEvent.setup>) {
+  if (!document.querySelector('[data-audio-role]')) return;
+  await playThenDismissAudioScene(user);
   await waitFor(() => expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument());
 }
 
@@ -297,7 +323,22 @@ export async function skipPostWorkAudioIfPresent(user: ReturnType<typeof userEve
  * return-to-child tap goes straight to Mission Complete exactly as before this ticket. Callers
  * must await this BEFORE asserting on `ui.completeHeading`.
  */
-export async function skipCheckpointAudioIfPresent(user: ReturnType<typeof userEvent.setup>) {
+export async function skipCheckpointAudioIfPresent(user: ReturnType<typeof userEvent.setup>, ui?: ModuleUiStrings) {
+  // Builder work order §4: solo now passes through 'solo-checkpoint-offer' (a single existing
+  // teachbackSkip/「あとでやる」 button) on its way to the same CHECKPOINT audio screen the
+  // co-play path reaches from 'stage-teachback' — tap through it first if present. Every
+  // pre-existing (co-play) caller never sees that screen at all, so omitting `ui` is a no-op for
+  // them; only a solo-CHECKPOINT test needs to pass it. Reached via MissionStage's own real
+  // `setTimeout(() => onComplete(result), 480)` completion animation (same race
+  // `skipPostWorkAudioIfPresent` above already guards against), so a bare synchronous query can
+  // run before the offer screen has actually appeared.
+  if (ui) {
+    let soloOffer: HTMLElement | null = null;
+    try {
+      await waitFor(() => { soloOffer = screen.getByText(ui.teachbackSkip); }, { timeout: 800 });
+    } catch { /* this mission/path never shows the solo offer — the ordinary case. */ }
+    if (soloOffer) await user.click(soloOffer);
+  }
   if (!document.querySelector('[data-audio-role="CHECKPOINT"]')) return;
   await dismissAudioScene(user);
 }

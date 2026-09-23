@@ -5,7 +5,7 @@ import { MissionShell } from '../src/shell/MissionShell';
 import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
 import {
-  playMissionScreenToCompletion, skipCompletionRitualIfPresent, skipM0RitualIfPresent,
+  playMissionScreenToCompletion, skipCompletionRitualIfPresent, skipCheckpointAudioIfPresent, skipM0RitualIfPresent,
   skipPostWorkAudioIfPresent,
 } from './helpers/stageConformance';
 import { titleMatcher } from './helpers/titleText';
@@ -101,6 +101,10 @@ async function playCurrentStoryToMap(user: ReturnType<typeof userEvent.setup>, m
   // own registered 'post-ungated' audio, shown right here — immediately after the dig work. A
   // no-op for every other Story in this journey.
   await skipPostWorkAudioIfPresent(user);
+  // Builder work order §4: Story 1-4/1-7 (CHECKPOINT) solo now pass through their own
+  // 「あとでやる」 offer + comparison audio here too — a no-op for every other Story in this
+  // journey (Story 1-8/randoseru is played separately below, via its own completion-ritual path).
+  await skipCheckpointAudioIfPresent(user, ui);
   // Story 5 (minna) declares a perspective-shift moment (WO-19 Phase 3C) — preserved at its own
   // position (WO-26 §14), shown here before the child-facing completion screen since this whole
   // journey plays SOLO throughout.
@@ -226,6 +230,9 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + Bank unlo
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await playMissionScreenToCompletion(user, STORY[7]!, ui);
+    // Builder work order §4: randoseru (1-8, CHECKPOINT) solo passes through its own
+    // 「あとでやる」 offer + comparison audio before the completion ritual.
+    await skipCheckpointAudioIfPresent(user, ui);
     // Architect completion ritual: Story 8 (randoseru) solo play reaches the required ritual
     // before the course-complete screen (no Real AI Lab in solo play).
     await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());

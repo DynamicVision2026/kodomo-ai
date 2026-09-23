@@ -171,6 +171,10 @@ describe('WO-26 §26/§27 — sampled solo-safety + co-play ownership transition
       // their own registered 'post-ungated' audio, shown right here — immediately after the
       // dig work, in both solo and co-play. A no-op for the other 4 sampled missions.
       await skipPostWorkAudioIfPresent(freshUser);
+      // Builder work order §4: randoseru (1-8, CHECKPOINT) solo now passes through its own
+      // 「あとでやる」 offer + comparison audio here too — a no-op for the other 5 sampled
+      // missions (none of which are CHECKPOINT-role).
+      await skipCheckpointAudioIfPresent(freshUser, ui);
 
       // WO-34/Architect completion ritual: randoseru (1-8) solo goes straight from its own dig
       // completion into the required completion ritual (no Real AI Lab in solo) — a no-op for

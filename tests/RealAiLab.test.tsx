@@ -94,15 +94,20 @@ describe('WO-34 — Real AI Lab: placement (after Story 1-8, before course-compl
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
   });
 
-  it('never appears in solo play — solo never reaches teach-back/M2b at all', async () => {
+  it('never appears in solo play, even now that solo can reach randoseru\'s own CHECKPOINT comparison audio (Builder work order §4) — Real AI Lab itself still needs a co-playing parent', async () => {
     const user = userEvent.setup();
     renderSingleMission(randoseru);
     await createProfile(user);
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await playMissionScreenToCompletion(user, randoseru, ui);
-    // Architect completion ritual: solo play reaches the required ritual directly (no Real AI
-    // Lab, since that stays co-play only — solo never reaches 'stage-teachback' at all).
+    // No teach-back/M2b in solo — one 「あとでやる」 tap into randoseru's own CHECKPOINT audio,
+    // via the same helper WO27ProgressionConsistency.test.tsx uses (handles the real completion
+    // animation's own setTimeout delay before that offer screen appears).
+    expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument();
+    await skipCheckpointAudioIfPresent(user, ui);
+    // Architect completion ritual: solo still reaches the required ritual directly afterward —
+    // never Real AI Lab, which stays co-play only (it needs the PARENT's own AI access).
     await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());
     expect(document.querySelector('.mission-shell__real-ai-lab-heading')).not.toBeInTheDocument();
     await skipCompletionRitualIfPresent(user, ui);

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MissionShell } from '../src/shell/MissionShell';
 import type { MissionLibrary, BankLibrary } from '../src/shell/MissionShell';
 import type { Mission, ModuleUiStrings } from '../src/engine/types';
-import { playMissionScreenToCompletion, skipPrePracticeAudioIfPresent, skipM0RitualIfPresent } from './helpers/stageConformance';
+import { playMissionScreenToCompletion, skipPrePracticeAudioIfPresent, skipCheckpointAudioIfPresent, skipM0RitualIfPresent } from './helpers/stageConformance';
 import { titleMatcher } from './helpers/titleText';
 import chantoJson from '../src/modules/m1/topics/chanto/s2.json';
 import genkanJson from '../src/modules/m1/topics/genkan/s2.json';
@@ -317,6 +317,10 @@ describe('WO-27 — real production entitlement, PURCHASED family: full Story pr
         await waitFor(() => expect(screen.getByText(mission.perspective!.text)).toBeInTheDocument());
         await user.click(screen.getByText(ui.handoffContinue));
       }
+      // Builder work order §4: a solo CHECKPOINT mission (oyatsu/1-4 here) now passes through
+      // its own 「あとでやる」 offer + comparison audio before 'complete' — skipCheckpointAudioIfPresent
+      // (with `ui`) taps through both if present, and is a no-op for every other mission.
+      await skipCheckpointAudioIfPresent(user, ui);
       await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
       await user.click(screen.getByText(ui.completeBackToMapLabel));
     }

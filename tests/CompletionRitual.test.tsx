@@ -93,6 +93,9 @@ describe('Architect completion ritual — behaviours #2/#3: after Story 1-8, opt
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await playMissionScreenToCompletion(user, randoseru, ui);
+    // Builder work order §4: randoseru (1-8, CHECKPOINT) solo now passes through its own
+    // 「あとでやる」 offer + comparison audio before the completion ritual.
+    await skipCheckpointAudioIfPresent(user, ui);
   }
 
   it('solo play (no Real AI Lab reachable at all) reaches the required ritual directly after Story 1-8\'s own dig work', async () => {
@@ -153,6 +156,7 @@ describe('Architect completion ritual — behaviour #4: the exact same baseline 
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await playMissionScreenToCompletion(user, randoseru, ui);
+    await skipCheckpointAudioIfPresent(user, ui);
     await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());
     expect(screen.getByText(ui.m0ChildPrompt!)).toBeInTheDocument();
   });
@@ -165,6 +169,7 @@ describe('Architect completion ritual — behaviours #5/#6: write again, nothing
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await playMissionScreenToCompletion(user, randoseru, ui);
+    await skipCheckpointAudioIfPresent(user, ui);
     await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());
   }
 
@@ -197,6 +202,7 @@ describe('Architect completion ritual — behaviour #7: 親子認定証 issued a
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await playMissionScreenToCompletion(user, randoseru, ui);
+    await skipCheckpointAudioIfPresent(user, ui);
     await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());
     await user.click(screen.getByText(ui.handoffContinue)); // write -> compare
     await user.click(screen.getByText(ui.handoffContinue)); // compare -> certificate
@@ -224,6 +230,7 @@ describe('Architect completion ritual — behaviour #7: 親子認定証 issued a
     await user.click(screen.getByText(ui.courseHomeContinueLabel));
     await user.click(screen.getByText(ui.coopSolo));
     await playMissionScreenToCompletion(user, randoseru, ui);
+    await skipCheckpointAudioIfPresent(user, ui);
     await waitFor(() => expect(document.querySelector('.mission-shell__completion-ritual')).toBeInTheDocument());
     await skipCompletionRitualIfPresent(user, ui);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());

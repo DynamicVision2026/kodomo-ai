@@ -34,6 +34,16 @@ export interface Profile {
   m2Evidence?: M2Evidence;
   /** WO-08: durable, first-occurrence memory moments. */
   memories?: MemoryMomentMap;
+  /** Builder work order "CHECKPOINT audio — fix solo completion": mission ids whose CHECKPOINT
+   *  comparison audio this profile has actually heard (real playback started, not merely
+   *  visited/skipped) — read by `confirmM2b` to decide `afterCompare` when a parent later
+   *  confirms teach-back for one of these missions from the standing parent dashboard. Absent on
+   *  profiles that predate this feature, treated the same as `[]`. Deliberately local-only —
+   *  NOT part of src/family/progressBridge.ts's ModuleProgressState (AD-13's cross-device sync
+   *  surface is explicitly out of scope for this work order); a family switching devices mid-
+   *  mission may lose this one soft signal, which only ever softens `afterCompare`'s accuracy,
+   *  never M2's own achievement/monotonic semantics. */
+  checkpointAudioHeard?: string[];
   /** WO-24 (AD-07 §D): per-verb guidance use counts for the Mission 1 continuous stage
    *  (src/stage/Guidance.tsx) — SHOW/NUDGE/FADE/INDEPENDENT is always re-derived from this, never
    *  stored as a level itself. Deliberately untyped here (plain string keys) rather than

@@ -142,6 +142,12 @@ type Screen =
   /** WO-24 (AD-07 beat 15): Mission 1's own parent-turn teach-back — reached only from the
    *  Mission-1 co-play 'handoff' screen's own continue action. */
   | { kind: 'stage-teachback' }
+  /** Builder work order "CHECKPOINT audio — fix solo completion": the one screen a SOLO
+   *  CHECKPOINT mission (1-4/1-7/1-8) now passes through instead of going straight to
+   *  'complete' — a single existing-string (ui.teachbackSkip) action leading to that mission's own
+   *  CHECKPOINT comparison audio, so a child playing alone can still finish the mission and hear
+   *  it. Reached only from `finishStageWork`'s own solo branch. */
+  | { kind: 'solo-checkpoint-offer' }
   /** WO-27: `afterMission` distinguishes the two genuinely different ways this screen is
    *  reached. `true` — a real mission handoff just finished (`toParent()`/the Mission-1
    *  handoff flow): `mission` is legitimately "what was just played," and the screen's own
@@ -201,6 +207,11 @@ export function MissionShell({
    *  navigation target on its own (nothing else ever routes to "just step 2"). */
   const [parentGaveTeachBack, setParentGaveTeachBack] = useState(false);
   const [mission, setMission] = useState<Mission>(defaultMission);
+  /** Builder work order §5: whether THIS mission attempt's own 'pre'-placement reference audio
+   *  (MODEL/GUIDED) was actually played — real playback started, not merely visited/skipped.
+   *  Reset on every fresh mission entry (`chooseCoop`); read once, when rendering 'stage', to
+   *  decide whether that script's own `demonstratedLayers` actually apply this attempt. */
+  const [audioActuallyPlayed, setAudioActuallyPlayed] = useState(false);
 
   function persist(next: AppState) {
     setAppState(next);
@@ -372,6 +383,7 @@ export function MissionShell({
 
   function chooseCoop(isCoop: boolean) {
     setSolo(!isCoop);
+    setAudioActuallyPlayed(false);
     track('coop_selected', { coop: isCoop });
     track('m1_start');
     if (!continuousStageMissionIds?.has(mission.id)) {
@@ -528,10 +540,18 @@ export function MissionShell({
    *  (src/engine/milestones.ts) unchanged — monotonic and idempotent by construction, same as
    *  every other milestone here. */
   function confirmM2b() {
-    persistProfile((current) => ({
-      ...current,
-      milestones: applyM2Confirmed(current.milestones ?? {}, Date.now()),
-    }));
+    persistProfile((current) => {
+      // Builder work order §4: afterCompare records whether the mission this confirmation is
+      // FOR (whatever `mission` currently is — the live in-mission stage-teachback flow and the
+      // standing parent-dashboard button both call this with `mission` already set to the
+      // relevant mission) already had its CHECKPOINT comparison audio actually heard, via the
+      // solo ui.teachbackSkip path, before this confirmation happened.
+      const afterCompare = (current.checkpointAudioHeard ?? []).includes(mission.id);
+      return {
+        ...current,
+        milestones: applyM2Confirmed(current.milestones ?? {}, Date.now(), afterCompare),
+      };
+    });
   }
 
   /** WO-19: M0 — the Day-1 envelope moment. Fires only from the parent screen's own explicit
@@ -603,6 +623,15 @@ export function MissionShell({
       return;
     }
     if (solo) {
+      // Builder work order §4 ("CHECKPOINT audio — fix solo completion"): a CHECKPOINT mission
+      // (1-4/1-7/1-8) no longer dead-ends a solo child at 'complete' without ever hearing the
+      // comparison audio — one ui.teachbackSkip tap (deferring teach-back, not skipping the
+      // mission) leads to it, same screen the co-play path reaches from 'stage-teachback' below.
+      const script = audioScriptFor(mission.id);
+      if (script?.role === 'CHECKPOINT') {
+        setScreen({ kind: 'solo-checkpoint-offer' });
+        return;
+      }
       // Architect-resolved completion-ritual behaviours #2/#3: solo play never reaches
       // 'stage-teachback' (WO-25 #6), so it never reaches 'real-ai-lab' either — but the
       // required completion ritual still applies. Every other mission's solo completion is
@@ -767,15 +796,56 @@ export function MissionShell({
         robotLine={script?.robotLine ?? ''}
         lines={script?.lines}
         ui={ui}
-        onDone={() => {
-          if (placement === 'pre') { setScreen({ kind: 'stage' }); return; }
+        onDone={(played) => {
+          if (placement === 'pre') { setAudioActuallyPlayed(played); setScreen({ kind: 'stage' }); return; }
           if (placement === 'post-ungated') { finishStageWork(); return; }
-          // 'post-gated' (CHECKPOINT) — reached only from 'stage-teachback's own return-to-child
-          // action, same place Real AI Lab (1-8/randoseru only) is reached from.
-          if (mission.id === REAL_AI_LAB_MISSION_ID) { setScreen({ kind: 'real-ai-lab' }); return; }
+          // 'post-gated' (CHECKPOINT) — reached either from 'stage-teachback's own return-to-
+          // child action (co-play) or, now, from 'solo-checkpoint-offer' (solo). Builder work
+          // order §4: record that this mission's comparison audio was actually heard, so a LATER
+          // teach-back confirmation (confirmM2b, possibly from the standing parent dashboard) can
+          // correctly mark itself afterCompare.
+          if (played) {
+            persistProfile((current) => ({
+              ...current,
+              checkpointAudioHeard: current.checkpointAudioHeard?.includes(mission.id)
+                ? current.checkpointAudioHeard
+                : [...(current.checkpointAudioHeard ?? []), mission.id],
+            }));
+          }
+          // Architect-resolved completion-ritual behaviours #2/#3 (preserved exactly, including
+          // through the NEW solo path above): Real AI Lab needs the PARENT's own AI access
+          // (mission.perspective aside, its own content literally says "おうちの人の AI に
+          // きいてみよう" — a parent's device, not the child's alone), so it stays co-play only,
+          // same as before this work order — solo goes to the required completion ritual
+          // directly, never 'real-ai-lab', exactly as it always has.
+          if (mission.id === REAL_AI_LAB_MISSION_ID) {
+            setScreen(solo ? { kind: 'completion-ritual' } : { kind: 'real-ai-lab' });
+            return;
+          }
           setScreen({ kind: 'complete' });
         }}
       />
+    );
+  }
+
+  if (screen.kind === 'solo-checkpoint-offer') {
+    // Builder work order §4: the sole action here is the SAME existing ui.teachbackSkip string
+    // already used elsewhere in this file (teachbackSkip) to defer a parent-facing step — no new
+    // copy authored. Reaching this screen at all already means the dig is done and `markDone()`
+    // already ran (via `stageCompleted`, before `finishStageWork` routed here); tapping through
+    // just continues into that mission's own CHECKPOINT comparison audio.
+    return (
+      <div className="mission-shell__wrapper">
+        <button
+          type="button"
+          onClick={() => {
+            const script = audioScriptFor(mission.id);
+            setScreen({ kind: 'audio', role: script!.role, placement: 'post-gated' });
+          }}
+        >
+          {ui.teachbackSkip}
+        </button>
+      </div>
     );
   }
 
@@ -790,7 +860,12 @@ export function MissionShell({
   }
 
   if (screen.kind === 'stage') {
-    const demonstratedLayers = audioScriptFor(mission.id)?.demonstratedLayers;
+    // Builder work order §5: demonstratedLayers only actually applies once THIS attempt's own
+    // pre-dig audio was really played — see audioActuallyPlayed's own doc comment above. Before
+    // this gate existed, a script's demonstratedLayers applied unconditionally to any mission
+    // that HAD a registered MODEL script, even if the child tapped straight past the audio
+    // screen without ever pressing play.
+    const demonstratedLayers = audioActuallyPlayed ? audioScriptFor(mission.id)?.demonstratedLayers : undefined;
     return (
       <MissionStage
         mission={mission}
