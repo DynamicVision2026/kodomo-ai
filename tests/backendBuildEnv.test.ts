@@ -23,7 +23,6 @@ beforeEach(() => {
   delete process.env.EMAIL_API_KEY;
   delete process.env.EMAIL_FROM;
   delete process.env.APP_ORIGIN;
-  delete process.env.STORE_URL;
 });
 
 afterEach(() => {
@@ -64,12 +63,10 @@ describe('buildEnv', () => {
     process.env.SHOPIFY_SHOP_DOMAIN = 'soul-id-2.myshopify.com';
     process.env.SHOPIFY_ADMIN_API_TOKEN = 'shpat_test';
     process.env.APP_ORIGIN = 'https://app.example.com';
-    process.env.STORE_URL = 'https://store.example.com';
     const env = buildEnv();
     expect(env.SHOPIFY_SHOP_DOMAIN).toBe('soul-id-2.myshopify.com');
     expect(env.SHOPIFY_ADMIN_API_TOKEN).toBe('shpat_test');
     expect(env.APP_ORIGIN).toBe('https://app.example.com');
-    expect(env.STORE_URL).toBe('https://store.example.com');
   });
 
   it('leaves the optional fields undefined when absent, rather than empty strings', () => {

@@ -30,10 +30,14 @@ function jsonRequest(path: string, body: unknown): Request {
 
 async function seedEntitledFamily(env: Env, email: string): Promise<string> {
   const familyId = 'f-seed';
-  const now = new Date().toISOString();
-  await env.db.set(familyPath(familyId), { email, status: 'active', profileCount: 0, createdAt: now, updatedAt: now });
-  await env.db.set(`emailIndex/${await emailHashOf(email)}`, { familyId, createdAt: now });
-  await env.db.set(entitlementPath(familyId, 'm1'), { status: 'active', shopifyOrderId: 'o1', grantedAt: now, revokedAt: null });
+  const now = new Date();
+  const nowIso = now.toISOString();
+  await env.db.set(familyPath(familyId), {
+    email, status: 'active', profileCount: 0, createdAt: nowIso, updatedAt: nowIso,
+    trialStartedAt: nowIso, trialEndsAt: new Date(now.getTime() + 72 * 60 * 60 * 1000).toISOString(),
+  });
+  await env.db.set(`emailIndex/${await emailHashOf(email)}`, { familyId, createdAt: nowIso });
+  await env.db.set(entitlementPath(familyId, 'm1'), { status: 'active', shopifyOrderId: 'o1', grantedAt: nowIso, revokedAt: null });
   return familyId;
 }
 
@@ -42,8 +46,10 @@ async function issuedCode(env: Env, email: string): Promise<string> {
   const doc = await env.db.get<LoginCodeDoc>(loginCodePath(await emailHashOf(email)));
   // Recover the plaintext code the only way a test legitimately can: re-derive by trying every
   // digit combination is absurd, so this helper instead reaches past the HMAC by asking the
-  // email sender what it actually sent (FakeEmailSender records every message verbatim).
-  const sent = (env.email as FakeEmailSender).sent.find((m) => m.to === email);
+  // email sender what it actually sent (FakeEmailSender records every message verbatim). `.at(-1)`
+  // (not `.find`) because a test calling this twice for the same email (a resend, or a second
+  // login) must get the LATEST code, not the first one ever sent to that address.
+  const sent = (env.email as FakeEmailSender).sent.filter((m) => m.to === email).at(-1);
   const match = sent?.text.match(/(\d{6})/);
   expect(doc).not.toBeNull();
   expect(match).not.toBeNull();
@@ -104,23 +110,85 @@ describe('AD-13 acceptance 6 — no enumeration', () => {
     expect(knownRes.status).toBe(unknownRes.status);
     expect(await knownRes.json()).toEqual(await unknownRes.json());
   });
+});
 
-  it('an unknown email receives a "no purchase found" email, not a login code', async () => {
+describe('AD-15 — account-first trial', () => {
+  it('a brand-new email gets a REAL login code (never "no purchase found") — anyone can start a trial', async () => {
     const env = fakeEnv();
-    await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email: 'stranger@example.com' }), env);
-    const sent = (env.email as FakeEmailSender).sent.find((m) => m.to === 'stranger@example.com');
-    expect(sent?.subject).toContain('見つかりませんでした');
+    const code = await issuedCode(env, 'newcomer@example.com');
+    expect(code).toMatch(/^\d{6}$/);
   });
 
-  it('a refunded/revoked entitlement is treated as unknown — no login code is issued', async () => {
+  it('the first successful verify for a brand-new email creates its family and starts a 72-hour trial', async () => {
+    const env = fakeEnv();
+    const code = await issuedCode(env, 'newcomer@example.com');
+    const res = await handleAuthVerify(jsonRequest('/api/v1/auth/verify', { email: 'newcomer@example.com', code }), env);
+    expect(res.status).toBe(200);
+    const me = await res.json();
+    expect(me.familyId).toBeTruthy();
+    expect(me.trialEndsAt).not.toBeNull();
+    const hoursLeft = (new Date(me.trialEndsAt).getTime() - Date.now()) / (60 * 60 * 1000);
+    expect(hoursLeft).toBeGreaterThan(71.9);
+    expect(hoursLeft).toBeLessThanOrEqual(72);
+  });
+
+  it('a second login (still unpurchased, still within the trial) reuses the SAME family and does not reset the trial clock', async () => {
+    const env = fakeEnv();
+    const code1 = await issuedCode(env, 'newcomer@example.com');
+    const first = await handleAuthVerify(jsonRequest('/api/v1/auth/verify', { email: 'newcomer@example.com', code: code1 }), env);
+    const firstMe = await first.json();
+
+    const code2 = await issuedCode(env, 'newcomer@example.com');
+    const second = await handleAuthVerify(jsonRequest('/api/v1/auth/verify', { email: 'newcomer@example.com', code: code2 }), env);
+    const secondMe = await second.json();
+
+    expect(secondMe.familyId).toBe(firstMe.familyId);
+    expect(secondMe.trialEndsAt).toBe(firstMe.trialEndsAt); // shared, non-renewing clock
+  });
+
+  it('once the trial clock has elapsed with no purchase, login is refused with trial_expired', async () => {
+    const env = fakeEnv();
+    const code1 = await issuedCode(env, 'expired@example.com');
+    const first = await handleAuthVerify(jsonRequest('/api/v1/auth/verify', { email: 'expired@example.com', code: code1 }), env);
+    const familyId = (await first.json()).familyId as string;
+
+    // Simulate the 72 hours passing.
+    const family = await env.db.get<{ trialEndsAt: string }>(familyPath(familyId));
+    await env.db.set(familyPath(familyId), { ...family, trialEndsAt: new Date(Date.now() - 1000).toISOString() });
+
+    const code2 = await issuedCode(env, 'expired@example.com');
+    const second = await handleAuthVerify(jsonRequest('/api/v1/auth/verify', { email: 'expired@example.com', code: code2 }), env);
+    expect(second.status).toBe(401);
+    expect((await second.json()).error).toBe('trial_expired');
+  });
+
+  it('an active entitlement always overrides an elapsed trial clock', async () => {
+    const env = fakeEnv();
+    const code1 = await issuedCode(env, 'paid-late@example.com');
+    const first = await handleAuthVerify(jsonRequest('/api/v1/auth/verify', { email: 'paid-late@example.com', code: code1 }), env);
+    const familyId = (await first.json()).familyId as string;
+
+    const family = await env.db.get<{ trialEndsAt: string }>(familyPath(familyId));
+    await env.db.set(familyPath(familyId), { ...family, trialEndsAt: new Date(Date.now() - 1000).toISOString() });
+    await env.db.set(entitlementPath(familyId, 'm1'), {
+      status: 'active', shopifyOrderId: 'o1', grantedAt: new Date().toISOString(), revokedAt: null,
+    });
+
+    const code2 = await issuedCode(env, 'paid-late@example.com');
+    const second = await handleAuthVerify(jsonRequest('/api/v1/auth/verify', { email: 'paid-late@example.com', code: code2 }), env);
+    expect(second.status).toBe(200);
+    expect((await second.json()).trialEndsAt).toBeNull(); // moot once entitled
+  });
+
+  it('a refunded family (AD-13\'s old "treated as unknown" case) still logs in — it just falls back to the trial gate', async () => {
     const env = fakeEnv();
     const familyId = await seedEntitledFamily(env, 'refunded@example.com');
     await env.db.set(entitlementPath(familyId, 'm1'), {
       status: 'refunded', shopifyOrderId: 'o1', grantedAt: new Date().toISOString(), revokedAt: new Date().toISOString(),
     });
-    await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email: 'refunded@example.com' }), env);
-    const sent = (env.email as FakeEmailSender).sent.find((m) => m.to === 'refunded@example.com');
-    expect(sent?.subject).toContain('見つかりませんでした');
+    const code = await issuedCode(env, 'refunded@example.com');
+    const res = await handleAuthVerify(jsonRequest('/api/v1/auth/verify', { email: 'refunded@example.com', code }), env);
+    expect(res.status).toBe(200); // its own trial clock (still fresh) covers it, not the retired entitlement
   });
 });
 

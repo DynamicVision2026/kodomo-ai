@@ -28,10 +28,9 @@ describe('TokushohoPage', () => {
     expect(screen.getByText(/ご請求いただければ/)).toBeInTheDocument();
   });
 
-  it('states the 30-day refund guarantee (plus the pre-order period, spec v0.5 §9) and the household licence in natural Japanese, matching spec v0.5 §9', () => {
+  it('AD-15: no longer states the retired 30-day refund guarantee, and states the household licence in natural Japanese (spec v0.5 §9)', () => {
     render(<TokushohoPage />);
-    expect(screen.getByText(/30日間/)).toBeInTheDocument();
-    expect(screen.getByText(/お届け前はいつでも/)).toBeInTheDocument();
+    expect(screen.queryByText(/30日間/)).not.toBeInTheDocument();
     expect(screen.getByText(/世帯ライセンス/)).toBeInTheDocument();
     expect(screen.queryByText(/household licence/)).not.toBeInTheDocument();
   });
@@ -50,9 +49,17 @@ describe('PrivacyPage', () => {
 
   it('names the real third parties involved in checkout and analytics', () => {
     render(<PrivacyPage />);
-    expect(screen.getByText(/Shopify/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Shopify/).length).toBeGreaterThan(0);
     expect(screen.getByText(/KOMOJU/)).toBeInTheDocument();
     expect(screen.getByText(/PayPal/)).toBeInTheDocument();
+  });
+
+  it('AD-13/15: discloses the Family Account server-side data (Firestore), the email processor, and the APPI overseas-transfer note', () => {
+    render(<PrivacyPage />);
+    expect(screen.getByText(/Firestore/)).toBeInTheDocument();
+    expect(screen.getByText(/Postmark/)).toBeInTheDocument();
+    expect(screen.getByText(/外国にある/)).toBeInTheDocument();
+    expect(screen.getByText(/\/account/)).toBeInTheDocument(); // deletion path is named, not just promised
   });
 
   it('gives a real contact email, not a placeholder', () => {

@@ -61,15 +61,6 @@ export function deviceEvictedEmail(to: string, newDeviceLabel: string, evictedDe
   };
 }
 
-/** AD-13 §4: the honest, non-enumerating response to an email with no matching purchase. */
-export function noPurchaseFoundEmail(to: string, storeUrl: string): EmailMessage {
-  return {
-    to,
-    subject: 'ナゼホリ ご購入が見つかりませんでした',
-    text: `このメールアドレスでのご購入が見つかりませんでした。ご購入がまだの場合は、以下からお求めいただけます。\n\n${storeUrl}`,
-  };
-}
-
 /** AD-13 §3 step 6: email change notifies both the old and new address. */
 export function emailChangedEmail(to: string, otherAddress: string): EmailMessage {
   return {

@@ -1,7 +1,7 @@
 import type { Env } from './types.js';
 import type { ProfileDoc } from './schema.js';
 import { profilesCollection } from './schema.js';
-import { getFamily, listEntitlements } from './family.js';
+import { familyHasActiveEntitlement, getFamily, listEntitlements } from './family.js';
 
 /** Never the full address over the wire to the client that's already authenticated as this
  *  family — `/me` is read by ordinary page JS, and there's no reason it needs the whole string.
@@ -17,6 +17,9 @@ export interface MeResponse {
   email: string;
   entitlements: { moduleId: string; status: string }[];
   profiles: { id: string; avatarId: string; nicknameId: string; stage: number }[];
+  /** AD-15: null once the family has any active entitlement (trial is moot at that point);
+   *  otherwise the ISO timestamp its 72-hour trial ends, so the client can show a countdown. */
+  trialEndsAt: string | null;
 }
 
 export async function buildMeResponse(env: Env, familyId: string): Promise<MeResponse | null> {
@@ -25,6 +28,7 @@ export async function buildMeResponse(env: Env, familyId: string): Promise<MeRes
 
   const entitlements = await listEntitlements(env, familyId);
   const profiles = await env.db.list<ProfileDoc>(profilesCollection(familyId));
+  const entitled = await familyHasActiveEntitlement(env, familyId);
 
   return {
     familyId,
@@ -33,6 +37,7 @@ export async function buildMeResponse(env: Env, familyId: string): Promise<MeRes
     profiles: profiles
       .filter((p) => !p.data.deletedAt)
       .map((p) => ({ id: p.id, avatarId: p.data.avatarId, nicknameId: p.data.nicknameId, stage: p.data.stage })),
+    trialEndsAt: entitled ? null : family.trialEndsAt,
   };
 }
 

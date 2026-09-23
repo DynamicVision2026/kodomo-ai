@@ -2,6 +2,7 @@ import type { Env } from './types.js';
 import type { EmailIndexDoc, EntitlementDoc, FamilyDoc } from './schema.js';
 import { emailIndexPath, entitlementsCollection, familyPath } from './schema.js';
 import { randomToken, sha256Hex } from './util.js';
+import { trialWindow } from './trial.js';
 
 /** Case/whitespace-insensitive — the same address typed differently must hash to the same
  *  `emailIndex` doc (AD-13 §2's own uniqueness guard would otherwise silently not guard). */
@@ -23,10 +24,14 @@ export async function getFamily(env: Env, familyId: string): Promise<FamilyDoc |
 }
 
 /**
- * AD-13 §2 `emailIndex` doc: "created in a transaction; one email maps to one family." Called
- * only from the webhook (the one place a family is ever created — there is no separate sign-up
- * form, AD-13 §5 step 2). Idempotent: a second call for an email that already has a family just
- * returns its existing id, inside the same transaction the caller is already running.
+ * AD-13 §2 `emailIndex` doc: "created in a transaction; one email maps to one family." Two
+ * callers, both server-authenticated in their own way and never the browser directly: the
+ * Shopify webhook (email comes from an HMAC-verified order) and, since AD-15's "account-first"
+ * trial, `verifyLoginCode` (email comes from an already-verified OTP, not a client-asserted
+ * value). Idempotent: a second call for an email that already has a family just returns its
+ * existing id, inside the same transaction the caller is already running — and, critically,
+ * never touches that family's own `trialStartedAt`/`trialEndsAt` once set (AD-15: "shared family
+ * trial clock" — one clock, ever, not renewed by a later purchase or a later trial-path login).
  */
 export async function getOrCreateFamilyIdInTx(
   tx: { get<T>(path: string): Promise<T | null>; set<T>(path: string, data: T): void },
@@ -39,7 +44,10 @@ export async function getOrCreateFamilyIdInTx(
   if (existing) return { familyId: existing.familyId, created: false };
 
   const familyId = randomToken(16);
-  const family: FamilyDoc = { email: normalized, status: 'active', profileCount: 0, createdAt: now, updatedAt: now };
+  const family: FamilyDoc = {
+    email: normalized, status: 'active', profileCount: 0, createdAt: now, updatedAt: now,
+    ...trialWindow(new Date(now)),
+  };
   tx.set(familyPath(familyId), family);
   tx.set(emailIndexPath(emailHash), { familyId, createdAt: now } satisfies EmailIndexDoc);
   return { familyId, created: true };
@@ -49,9 +57,11 @@ export async function listEntitlements(env: Env, familyId: string) {
   return env.db.list<EntitlementDoc>(entitlementsCollection(familyId));
 }
 
-/** AD-13 §4: "an email with a refunded or revoked entitlement is treated as unknown" — a family
- *  that once bought and fully refunded has no login path back in via `/auth/request` alone
- *  (recovery goes through `/admin`, same as a lost mailbox — AD-13 §5 step 6). */
+/** AD-15: the one check that matters for login now — an active entitlement always overrides
+ *  the trial clock (backend/src/trial.ts); a family with none is gated by
+ *  `isTrialActive` instead. (AD-13's original "refunded => treated as unknown" rule is
+ *  superseded: AD-15's account-first model means every email can hold a Family Account, so a
+ *  refunded/never-purchased family still logs in — it just falls back to the trial gate.) */
 export async function familyHasActiveEntitlement(env: Env, familyId: string): Promise<boolean> {
   const entitlements = await listEntitlements(env, familyId);
   return entitlements.some((e) => e.data.status === 'active');

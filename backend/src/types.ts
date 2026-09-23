@@ -17,9 +17,6 @@ export interface Env {
    *  DNS is live — see the launch blockers list; every route that needs it fails closed (never
    *  falls back to `*`) until it is. */
   APP_ORIGIN?: string;
-  /** Linked from the "no purchase found" email (AD-13 §4) and used as the storefront fallback.
-   *  Falls back to a placeholder if unset — real value is a launch-config item, not a secret. */
-  STORE_URL?: string;
   /** e.g. "soul-id-2.myshopify.com" — only used for the optional order note/fulfillment calls. */
   SHOPIFY_SHOP_DOMAIN?: string;
   /** Admin API access token, only needed if attachCodeToOrder/fulfillment calls are enabled. */

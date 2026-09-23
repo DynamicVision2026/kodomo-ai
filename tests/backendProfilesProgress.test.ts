@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { handleCreateProfile } from '../backend/src/handlers/profiles';
 import { handleGetProgress, handlePutProgress } from '../backend/src/handlers/progress';
 import type { Env } from '../backend/src/types';
-import { familyPath, MAX_PROFILES } from '../backend/src/schema';
+import { entitlementPath, familyPath, MAX_PROFILES } from '../backend/src/schema';
 import { createSession, SESSION_COOKIE_NAME } from '../backend/src/session';
 import { MemoryDb } from '../backend/server/memoryDb';
 import { FakeEmailSender } from '../backend/src/email';
@@ -23,7 +23,15 @@ function fakeEnv(): Env {
 async function seedFamily(env: Env): Promise<{ familyId: string; token: string }> {
   const familyId = 'f1';
   const now = new Date().toISOString();
-  await env.db.set(familyPath(familyId), { email: 'parent@example.com', status: 'active', profileCount: 0, createdAt: now, updatedAt: now });
+  await env.db.set(familyPath(familyId), {
+    email: 'parent@example.com', status: 'active', profileCount: 0, createdAt: now, updatedAt: now,
+    trialStartedAt: now, trialEndsAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
+  });
+  // AD-15's server-side progress-write enforcement (backend/src/handlers/progress.ts) only
+  // accepts a non-free mission id when the module is actively entitled — this suite is about
+  // profile/progress mechanics, not entitlement gating (tests/ad15ProgressWriteEnforcement.test.ts
+  // covers that), so this family is a paying one throughout.
+  await env.db.set(entitlementPath(familyId, 'm1'), { status: 'active', shopifyOrderId: 'o1', grantedAt: now, revokedAt: null });
   const { token } = await createSession(env, familyId, 'test-device');
   return { familyId, token };
 }

@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { handleImport } from '../backend/src/handlers/importHandler';
 import { handleGetProgress } from '../backend/src/handlers/progress';
 import type { Env } from '../backend/src/types';
-import { familyPath } from '../backend/src/schema';
+import { familyPath, MAX_PROFILES } from '../backend/src/schema';
 import { createSession, SESSION_COOKIE_NAME } from '../backend/src/session';
 import { MemoryDb } from '../backend/server/memoryDb';
 import { FakeEmailSender } from '../backend/src/email';
@@ -74,13 +74,13 @@ describe('AD-13 acceptance 12 — guest 1-1 import', () => {
     expect(secondBody.alreadyImported).toBe(true);
   });
 
-  it('at 6 profiles, a targetProfileId merges into an existing profile instead of creating a 7th', async () => {
+  it('at the profile cap, a targetProfileId merges into an existing profile instead of exceeding it', async () => {
     const env = fakeEnv();
     const token = await seedFamily(env);
     // Fill the family to the cap with an existing profile we'll merge into.
     const { handleCreateProfile } = await import('../backend/src/handlers/profiles');
     let targetId = '';
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < MAX_PROFILES; i++) {
       const res = await handleCreateProfile(
         new Request('https://backend.example/api/v1/profiles', {
           method: 'POST',

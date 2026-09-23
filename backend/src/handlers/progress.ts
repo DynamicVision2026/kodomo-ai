@@ -1,15 +1,47 @@
 import type { Env } from '../types.js';
-import type { ProfileDoc, ProgressDoc } from '../schema.js';
-import { profilePath, progressPath } from '../schema.js';
+import type { EntitlementDoc, ProfileDoc, ProgressDoc } from '../schema.js';
+import { entitlementPath, profilePath, progressPath } from '../schema.js';
 import { resolveSession } from '../session.js';
 import { passesCsrfCheck } from '../csrf.js';
 import { emptyModuleProgress, mergeModuleProgress, type ModuleProgressState } from '../../../shared/progressMerge.js';
+import { isFreeMission } from '../../../shared/freeMissions.js';
 
 const SCHEMA_VERSION = 1;
 
 async function ownsProfile(env: Env, familyId: string, profileId: string): Promise<boolean> {
   const profile = await env.db.get<ProfileDoc>(profilePath(familyId, profileId));
   return !!profile && !profile.deletedAt;
+}
+
+async function isModuleEntitled(env: Env, familyId: string, moduleId: string): Promise<boolean> {
+  const entitlement = await env.db.get<EntitlementDoc>(entitlementPath(familyId, moduleId));
+  return entitlement?.status === 'active';
+}
+
+/**
+ * AD-15 "server-authoritative access gate" / "server-side progress-write enforcement": a
+ * `missions[missionId]` entry is only ever accepted when `moduleId` itself is actively entitled,
+ * OR `missionId` is one of that module's own free/trial ids (AD-15: "trial content = Lesson 1-1
+ * only" — the same free tier a guest already gets, never widened by being logged in or mid-trial).
+ * Everything else (`moveProgress`, `milestones`, `memories`, `m2Evidence`, `guidance`) is engine
+ * evidence that isn't itself a claim of "I completed paid mission X" and is left untouched — this
+ * is a deliberately narrow gate on the one field that IS such a claim, not a blanket lock on every
+ * synced field. Silently dropping a disallowed key (never rejecting the whole request) means a
+ * family's legitimate free-mission progress still syncs even while an entitlement lapses/expires
+ * mid-session, exactly like AD-13's own webhook idempotency philosophy ("never fail the whole
+ * request over a part of it that doesn't apply").
+ */
+function enforceMissionAccess(
+  missions: ModuleProgressState['missions'],
+  moduleId: string,
+  moduleEntitled: boolean,
+): ModuleProgressState['missions'] {
+  if (moduleEntitled) return missions;
+  const allowed: ModuleProgressState['missions'] = {};
+  for (const [missionId, progress] of Object.entries(missions)) {
+    if (isFreeMission(moduleId, missionId)) allowed[missionId] = progress;
+  }
+  return allowed;
 }
 
 /** GET /api/v1/profiles/{pid}/progress/{moduleId} — AD-13 §3/§5 step 4: "progress is fetched." */
@@ -45,10 +77,16 @@ export async function handlePutProgress(request: Request, env: Env, profileId: s
     return new Response('invalid JSON', { status: 400 });
   }
 
+  const moduleEntitled = await isModuleEntitled(env, familyId, moduleId);
+  const sanitizedState: ModuleProgressState = {
+    ...clientState,
+    missions: enforceMissionAccess(clientState.missions, moduleId, moduleEntitled),
+  };
+
   const path = progressPath(familyId, profileId, moduleId);
   const merged = await env.db.runTransaction(async (tx) => {
     const server = await tx.get<ProgressDoc>(path);
-    const mergedState = mergeModuleProgress(server ?? emptyModuleProgress(), clientState);
+    const mergedState = mergeModuleProgress(server ?? emptyModuleProgress(), sanitizedState);
     const doc: ProgressDoc = {
       ...mergedState,
       schemaVersion: SCHEMA_VERSION,

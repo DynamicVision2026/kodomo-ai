@@ -57,7 +57,6 @@ export function buildEnv(): Env {
     ADMIN_TOKEN: process.env.ADMIN_TOKEN!,
     AUTH_PEPPER: process.env.AUTH_PEPPER!,
     APP_ORIGIN: process.env.APP_ORIGIN,
-    STORE_URL: process.env.STORE_URL,
     SHOPIFY_SHOP_DOMAIN: process.env.SHOPIFY_SHOP_DOMAIN,
     SHOPIFY_ADMIN_API_TOKEN: process.env.SHOPIFY_ADMIN_API_TOKEN,
   };

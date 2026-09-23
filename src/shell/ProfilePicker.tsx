@@ -42,7 +42,7 @@ function newProfileId(): string {
 
 /**
  * Preset avatar + preset nickname + a stage number — never a name, birthday, school, or free
- * text. Spec v0.5 §7, §5 step 0. Max 6 profiles (storage.MAX_PROFILES). `defaultStage` is a
+ * text. Spec v0.5 §7, §5 step 0. Max 3 profiles (storage.MAX_PROFILES, AD-15). `defaultStage` is a
  * default, not a choice offered here — see ProfilePickerProps.defaultStage.
  */
 export function ProfilePicker({ profiles, ui, defaultStage, onSelect, onCreate }: ProfilePickerProps) {

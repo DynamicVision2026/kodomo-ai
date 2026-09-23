@@ -12,17 +12,17 @@ describe('matchLineItems: the actual isolation boundary from products A-D', () =
   const order: ShopifyOrderPayload = {
     id: 1001,
     line_items: [
-      { id: 1, sku: 'product-a-sku', quantity: 1 },
-      { id: 2, sku: 'kodomo-ai-m1', quantity: 1 },
-      { id: 3, sku: 'product-b-sku', quantity: 2 },
-      { id: 4, sku: null, quantity: 1 },
+      { id: 1, sku: 'product-a-sku', quantity: 1, variant_id: 9001 },
+      { id: 2, sku: 'kodomo-ai-m1', quantity: 1, variant_id: 5555 },
+      { id: 3, sku: 'product-b-sku', quantity: 2, variant_id: 9002 },
+      { id: 4, sku: null, quantity: 1, variant_id: null },
     ],
   };
 
   it('only returns the line item whose SKU is in the module allowlist', () => {
     const matched = matchLineItems(order);
     expect(matched).toHaveLength(1);
-    expect(matched[0]).toEqual({ lineItemId: 2, sku: 'kodomo-ai-m1', moduleIds: ['m1'], quantity: 1 });
+    expect(matched[0]).toEqual({ lineItemId: 2, sku: 'kodomo-ai-m1', moduleIds: ['m1'], quantity: 1, variantId: 5555 });
   });
 
   it('drops every other product\'s line items entirely, quantity included', () => {
@@ -34,14 +34,42 @@ describe('matchLineItems: the actual isolation boundary from products A-D', () =
   it('returns nothing at all for an order made up entirely of other products', () => {
     const otherOnly: ShopifyOrderPayload = {
       id: 1002,
-      line_items: [{ id: 5, sku: 'product-c-sku', quantity: 1 }, { id: 6, sku: 'product-d-sku', quantity: 3 }],
+      line_items: [
+        { id: 5, sku: 'product-c-sku', quantity: 1, variant_id: 1 },
+        { id: 6, sku: 'product-d-sku', quantity: 3, variant_id: 2 },
+      ],
     };
     expect(matchLineItems(otherOnly)).toEqual([]);
   });
 
   it('preserves quantity > 1 for a matched item (multiple units of the same module)', () => {
-    const twoUnits: ShopifyOrderPayload = { id: 1003, line_items: [{ id: 7, sku: 'kodomo-ai-m1', quantity: 2 }] };
+    const twoUnits: ShopifyOrderPayload = { id: 1003, line_items: [{ id: 7, sku: 'kodomo-ai-m1', quantity: 2, variant_id: 5555 }] };
     expect(matchLineItems(twoUnits)[0]!.quantity).toBe(2);
+  });
+});
+
+describe('AD-14 — exact SKU only, never title or prefix', () => {
+  it('a near-miss SKU (prefix of the real one) is never matched', () => {
+    const order: ShopifyOrderPayload = { id: 2001, line_items: [{ id: 1, sku: 'kodomo-ai-m1-v2', quantity: 1, variant_id: 1 }] };
+    expect(matchLineItems(order)).toEqual([]);
+  });
+
+  it('a product whose TITLE happens to mention the real SKU is still ignored — SKU only, never title', () => {
+    const order = {
+      id: 2002,
+      line_items: [{ id: 1, sku: 'unrelated-sku', quantity: 1, variant_id: 1, title: 'kodomo-ai-m1 bonus sticker' }],
+    } as unknown as ShopifyOrderPayload;
+    expect(matchLineItems(order)).toEqual([]);
+  });
+
+  it('carries variant_id through for every matched line item, for audit logging downstream', () => {
+    const order: ShopifyOrderPayload = { id: 2003, line_items: [{ id: 1, sku: 'kodomo-ai-m1', quantity: 1, variant_id: 77777 }] };
+    expect(matchLineItems(order)[0]!.variantId).toBe(77777);
+  });
+
+  it('a null variant_id (malformed/legacy payload) never throws — surfaced as null, not dropped', () => {
+    const order: ShopifyOrderPayload = { id: 2004, line_items: [{ id: 1, sku: 'kodomo-ai-m1', quantity: 1, variant_id: null }] };
+    expect(matchLineItems(order)[0]!.variantId).toBeNull();
   });
 });
 

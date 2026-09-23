@@ -20,6 +20,10 @@ const CODE_ERROR_MESSAGE: Record<string, string> = {
   invalid: 'コードが正しくありません。もう一度ご確認ください。',
   expired: 'コードの有効期限が切れました。もう一度お送りします。',
   locked: '試行回数の上限に達しました。もう一度コードをお送りします。',
+  // AD-15: an unpurchased Family Account whose 72-hour trial has ended — the account and its
+  // progress are still there, purchasing is what re-opens login (AD-15: "trial progress
+  // continues after purchase").
+  trial_expired: 'お試し期間が終了しました。ご購入いただくと、これまでの進み具合そのままでお使いいただけます。',
   network: `通信エラーが発生しました。しばらくしてから、もう一度お試しください。`,
   server: `エラーが発生しました。しばらくしてから、もう一度お試しください。解決しない場合は、${COMPANY.email} までご連絡ください。`,
 };
@@ -122,7 +126,10 @@ export function LoginPage() {
             </button>
           </form>
           {step.kind === 'code-error' && (
-            <p className="login__message login__message--error">{CODE_ERROR_MESSAGE[step.reason] ?? CODE_ERROR_MESSAGE.server}</p>
+            <>
+              <p className="login__message login__message--error">{CODE_ERROR_MESSAGE[step.reason] ?? CODE_ERROR_MESSAGE.server}</p>
+              {step.reason === 'trial_expired' && <a className="login__cta" href="/">ご購入はこちら</a>}
+            </>
           )}
         </>
       )}

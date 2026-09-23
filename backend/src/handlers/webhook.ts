@@ -22,7 +22,9 @@ function loginUrl(env: Env, email: string): string {
  * grants one entitlement per purchased module." Always answers 2xx for a well-formed,
  * correctly-signed request — even one with zero matched line items or a missing email — so
  * Shopify never retry-storms this over a delivery that never needed action or that this Worker
- * has already flagged for manual review.
+ * has already flagged for manual review. AD-14: routing is exact-SKU only (matchLineItems),
+ * every unrelated line item is ignored, and each matched item's `variant_id` is both logged and
+ * persisted on the OrderDoc for audit.
  */
 export async function handleShopifyOrderWebhook(request: Request, env: Env): Promise<Response> {
   const rawBody = await request.text();
@@ -45,10 +47,18 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
   }
 
   const moduleIds = [...new Set(matched.flatMap((m) => m.moduleIds))];
+  const variantIds = matched.map((m) => m.variantId).filter((id): id is number => id !== null);
   const email = purchaserEmail(order);
   const webhookId = request.headers.get('X-Shopify-Webhook-Id') ?? '';
   const orderId = String(order.id);
   const now = new Date().toISOString();
+
+  // AD-14: "log variant_id for audit" — one line per matched line item, independent of whatever
+  // the transaction below decides (granted/duplicate/needs_review/already-processed) so the
+  // audit trail exists even for a redelivery.
+  for (const item of matched) {
+    console.log(`[webhook] orders/paid audit: order=${orderId} sku=${item.sku} variant_id=${item.variantId ?? 'null'} moduleIds=${item.moduleIds.join(',')}`);
+  }
 
   const result = await env.db.runTransaction(async (tx) => {
     const existing = await tx.get<OrderDoc>(orderPath(orderId));
@@ -62,7 +72,7 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
     }
 
     if (!email) {
-      const doc: OrderDoc = { familyId: null, moduleIds, state: 'needs_review', webhookIds: webhookId ? [webhookId] : [], processedAt: now };
+      const doc: OrderDoc = { familyId: null, moduleIds, state: 'needs_review', webhookIds: webhookId ? [webhookId] : [], processedAt: now, variantIds };
       tx.set(orderPath(orderId), doc);
       return { alreadyProcessed: false as const, state: 'needs_review' as OrderState, familyId: null };
     }
@@ -81,7 +91,7 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
     }
 
     const state: OrderState = anyDuplicate ? 'duplicate' : 'granted';
-    const doc: OrderDoc = { familyId, moduleIds, state, webhookIds: webhookId ? [webhookId] : [], processedAt: now };
+    const doc: OrderDoc = { familyId, moduleIds, state, webhookIds: webhookId ? [webhookId] : [], processedAt: now, variantIds };
     tx.set(orderPath(orderId), doc);
     return { alreadyProcessed: false as const, state, familyId };
   });

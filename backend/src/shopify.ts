@@ -20,6 +20,9 @@ export interface ShopifyLineItem {
   id: number;
   sku: string | null;
   quantity: number;
+  /** AD-14: "log variant_id for audit" — captured alongside the match, never used to decide
+   *  isolation itself (that's `sku`, exact-match only, see SKU_TO_MODULE_IDS above). */
+  variant_id: number | null;
 }
 
 export interface ShopifyOrderPayload {
@@ -69,21 +72,30 @@ export interface MatchedLineItem {
   lineItemId: number;
   sku: string;
   moduleIds: string[];
-  /** One family code is issued per unit purchased — a household that buys 2 of the same
-   *  module in one order gets 2 separate codes, never one code silently covering both. */
+  /** One entitlement grant per unit purchased in the sense that quantity > 1 is preserved
+   *  through to the caller — never silently collapsed to a single unit. */
   quantity: number;
+  /** AD-14: "log variant_id for audit" — carried through so the webhook handler can both log it
+   *  and persist it on the OrderDoc, without this module (the pure isolation/matching logic)
+   *  taking on any logging or storage concern itself. */
+  variantId: number | null;
 }
 
-/** Pure. Only ever returns entries whose SKU is in SKU_TO_MODULE_IDS — this IS the isolation
- *  boundary between this integration and products A-D; every other line item is dropped here
- *  and never reaches code issuance, order-note, or fulfillment calls. */
+/**
+ * Pure. Only ever returns entries whose SKU is in SKU_TO_MODULE_IDS — this IS the isolation
+ * boundary between this integration and products A-D; every other line item is dropped here and
+ * never reaches entitlement granting, order-note, or fulfillment calls. AD-14: exact-SKU lookup
+ * only (`SKU_TO_MODULE_IDS[item.sku]`) — never a title match, never a prefix/`startsWith` check;
+ * an unrelated Shopify line item (any SKU not in the table, including a near-miss like
+ * `kodomo-ai-m1-v2`) is silently ignored, exactly like every other non-matching product.
+ */
 export function matchLineItems(order: ShopifyOrderPayload): MatchedLineItem[] {
   const matched: MatchedLineItem[] = [];
   for (const item of order.line_items) {
     if (!item.sku) continue;
     const moduleIds = SKU_TO_MODULE_IDS[item.sku];
     if (!moduleIds) continue;
-    matched.push({ lineItemId: item.id, sku: item.sku, moduleIds, quantity: item.quantity });
+    matched.push({ lineItemId: item.id, sku: item.sku, moduleIds, quantity: item.quantity, variantId: item.variant_id ?? null });
   }
   return matched;
 }

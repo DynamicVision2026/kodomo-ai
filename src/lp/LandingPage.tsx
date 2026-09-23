@@ -240,10 +240,14 @@ export function LandingPage() {
         <p className="lp__price-anchor">AIスクール1か月分より安く、家族みんなで、買い切り。</p>
         <p className="lp__price-amount">¥4,980（税込・買い切り・月額なし）</p>
         <ul>
-          <li>世帯ライセンス — ひとつの購入で、ご家庭のお子さま・保護者の方すべてが使えます（プロフィールは最大6人まで作成可能）</li>
+          <li>世帯ライセンス — ひとつの購入で、ご家庭のお子さま・保護者の方すべてが使えます（プロフィールは最大3人まで作成可能）</li>
           <li>アプリ本体とあそべる印刷キット（質問カードなど）の両方が届きます</li>
           <li>同時に使える端末は最大5台まで</li>
-          <li>お届け前はいつでも、お届け後30日間の返金保証</li>
+          {/* AD-15: the old "30-day guarantee" copy is retired. The new refund policy (a 10-day
+              voluntary window, contingent on whether paid content was actually used) is not yet
+              finalized/server-enforced — see backend/src/schema.ts's OrderDoc/EntitlementDoc
+              timestamps, which already preserve what that check will need. Real wording pending
+              the founder/legal review this whole section still needs regardless. */}
           <li>創設ファミリー特典（冬休みスペシャルシート 全9枚 を含む）</li>
         </ul>
         {SHOPIFY_PRODUCT_URL ? (
@@ -272,9 +276,12 @@ export function LandingPage() {
           <dt>個人情報を入力する場面はありますか？</dt>
           <dd>ありません。名前・住所・学校名などの入力欄はどこにもありません。</dd>
           <dt>返金はできますか？</dt>
-          <dd>お届け前はいつでも、お届け後は30日間、返金保証をご利用いただけます。</dd>
+          {/* AD-15: old 30-day guarantee copy retired; the new policy (10-day voluntary window,
+              contingent on actual paid-content use) isn't finalized yet — see the price
+              section's own note. */}
+          <dd>返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。</dd>
           <dt>兄弟姉妹で使えますか？</dt>
-          <dd>世帯ライセンスのため、ご家庭のお子さま・保護者の方すべてでお使いいただけます（プロフィールは最大6人まで、同時に使える端末は最大5台までです）。</dd>
+          <dd>世帯ライセンスのため、ご家庭のお子さま・保護者の方すべてでお使いいただけます（プロフィールは最大3人まで、同時に使える端末は最大5台までです）。</dd>
           <dt>毎月お金がかかりますか？</dt>
           <dd>いいえ。¥4,980の買い切りで、月額料金や自動更新はありません。</dd>
         </dl>

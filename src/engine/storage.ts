@@ -67,7 +67,8 @@ export interface AppState {
   deviceId: string;
 }
 
-export const MAX_PROFILES = 6;
+/** AD-15: lowered from AD-13's original 6 — applies to every family, trial or paid. */
+export const MAX_PROFILES = 3;
 
 function newDeviceId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();

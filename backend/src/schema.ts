@@ -14,6 +14,13 @@ export interface FamilyDoc {
   profileCount: number;
   createdAt: string;
   updatedAt: string;
+  /** AD-15: "account-first 72-hour family trial" + "shared family trial clock" — set once, at
+   *  account creation (the family's first-ever successful `/auth/verify`), never renewed or
+   *  reset by a later login. A family with an active entitlement is never gated by this; it
+   *  only bounds how long an UNPURCHASED family may keep using the account itself (see
+   *  backend/src/trial.ts). */
+  trialStartedAt: string;
+  trialEndsAt: string;
 }
 
 export interface EmailIndexDoc {
@@ -35,6 +42,9 @@ export interface OrderDoc {
   state: OrderState;
   webhookIds: string[];
   processedAt: string;
+  /** AD-14: every matched line item's `variant_id`, in match order — persisted (not just
+   *  logged) so a real order can be audited later without depending on log retention. */
+  variantIds: number[];
 }
 
 export interface ProfileDoc {
@@ -100,5 +110,8 @@ export const loginCodePath = (emailHash: string) => `loginCodes/${emailHash}`;
 export const rateLimitPath = (ipHash: string, hourBucket: string) => `rateLimits/${ipHash}_${hourBucket}`;
 export const importPath = (importId: string) => `imports/${importId}`;
 
-export const MAX_PROFILES = 6;
+/** AD-15: lowered from AD-13's original 6 — applies uniformly to every family, trial or paid,
+ *  present or future module (AD-15: "future modules use the same Family Account and same
+ *  3-profile cap"). */
+export const MAX_PROFILES = 3;
 export const MAX_ACTIVE_SESSIONS = 5;

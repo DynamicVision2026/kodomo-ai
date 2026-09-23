@@ -129,19 +129,18 @@ describe('LandingPage', () => {
     expect(trust.textContent).not.toMatch(/オフライン|インターネット接続なし/);
   });
 
-  it('WO-21 Phase 7: consistently states every required commercial fact — price, household licence (in natural Japanese, not raw English), digital+printable, profile/device caps, refund guarantee, no subscription, and founders\' bonus', () => {
+  it('WO-21 Phase 7/AD-15: consistently states every required commercial fact — price, household licence (in natural Japanese, not raw English), digital+printable, profile/device caps, no subscription, and founders\' bonus; no longer overclaims the retired refund guarantee', () => {
     render(<LandingPage />);
     const text = document.body.textContent ?? '';
     expect(text).toContain('¥4,980');
     expect(text).toContain('世帯ライセンス');
     expect(text).not.toContain('household licence'); // no untranslated placeholder copy
     expect(text).toContain('印刷キット'); // digital app + printable kit, both mentioned
-    expect(text).toContain('最大6人'); // MAX_PROFILES
+    expect(text).toContain('最大3人'); // MAX_PROFILES (AD-15: lowered from 6)
     expect(text).toContain('最大5台'); // MAX_DEVICES
-    // WO-31: the refund window covers the pre-order period too (spec §9), not just
-    // "30日間" from purchase — the old, narrower wording is gone from both surfaces.
-    expect(text).toContain('お届け後30日間の返金保証');
-    expect(text).toContain('お届け前はいつでも、お届け後は30日間、返金保証をご利用いただけます。');
+    // AD-15: the old 30-day guarantee copy is retired everywhere — the new (10-day, usage-
+    // contingent) policy isn't finalized/server-enforced yet, so neither surface should claim it.
+    expect(text).not.toContain('30日間');
     expect(text).toContain('月額なし');
     expect(text).toContain('自動更新はありません'); // explicitly denied, never silently omitted
     expect(text).toContain('創設ファミリー特典');

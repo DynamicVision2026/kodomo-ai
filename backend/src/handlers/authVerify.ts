@@ -6,8 +6,12 @@ import { getFamily } from '../family.js';
 import { deviceEvictedEmail } from '../email.js';
 import { passesCsrfCheck } from '../csrf.js';
 
-/** POST /api/v1/auth/verify — AD-13 §3/§5 step 3. On success: sets the session cookie, applies
- *  LRU eviction at the cap, returns the same body `/me` would. */
+/** POST /api/v1/auth/verify — AD-13 §3/§5 step 3, AD-15 "account-first": on a correct code,
+ *  `verifyLoginCode` creates the family (if this is its first ever login) and enforces the
+ *  trial/entitlement gate — a `trial_expired` outcome flows through the same generic
+ *  `{ error: result.outcome }` 401 every other rejection already used, no separate branch
+ *  needed. On success: sets the session cookie, applies LRU eviction at the cap, returns the
+ *  same body `/me` would. */
 export async function handleAuthVerify(request: Request, env: Env): Promise<Response> {
   if (!passesCsrfCheck(request, env)) return new Response('forbidden', { status: 403 });
 
