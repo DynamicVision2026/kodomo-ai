@@ -18,6 +18,26 @@ env:
   PRODUCTION_BRANCH: claude/sprint-1-setup-ok4oym
 
 jobs:
+  # `gates` and `deploy-frontend`'s own `if:` below can't reference the top-level `env` context
+  # above (`jobs.<job_id>.if` only has access to `github`/`vars`/`needs`/`inputs` — `env` is NOT
+  # in that list; a prior version of this file referenced `env.PRODUCTION_BRANCH` there, which is
+  # an invalid workflow file GitHub Actions rejects before running a single job — confirmed via
+  # two real runs, both "failure" with zero jobs and no logs). This job re-exposes that same
+  # branch name as a step *output*, which the env context IS valid inside (`run:` steps), so
+  # `deploy-frontend` can gate on it without duplicating the branch name a second time.
+  which-branch:
+    runs-on: ubuntu-latest
+    outputs:
+      is_production: ${{ steps.check.outputs.is_production }}
+    steps:
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/${{ env.PRODUCTION_BRANCH }}" ]; then
+            echo "is_production=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_production=false" >> "$GITHUB_OUTPUT"
+          fi
+
   gates:
     runs-on: ubuntu-latest
     steps:
@@ -51,8 +71,8 @@ jobs:
   # (forks/PRs never get deploy credentials) and never runs unless `gates` already passed —
   # a failed test/gate/build stops here, production is untouched (rule #7/#8 of the work order).
   deploy-frontend:
-    needs: gates
-    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', env.PRODUCTION_BRANCH)
+    needs: [which-branch, gates]
+    if: needs.which-branch.outputs.is_production == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
