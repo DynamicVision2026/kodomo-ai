@@ -25,7 +25,10 @@ PROJECT_ID="kodomo-ai"
 REGION="asia-northeast1"
 REPO_OWNER="DynamicVision2026"
 REPO_NAME="kodomo-ai"
-AR_REPO="kodomo-ai"
+# Builder work order ("take ownership of production deployment"): this project already has two
+# Artifact Registry Docker repos (kodomo-ai-images, cloud-run-source-deploy) — do NOT create a
+# third. Must match .github/workflows/ci.yml's own AR_REPO.
+AR_REPO="kodomo-ai-images"
 SA_NAME="github-deployer"
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 POOL_ID="github-pool"
@@ -40,14 +43,16 @@ gcloud services enable \
   --project="$PROJECT_ID"
 
 echo "== Artifact Registry Docker repo =="
+# Verify only — never create. kodomo-ai-images and cloud-run-source-deploy already exist in this
+# project; per the Builder work order's "do not recreate infrastructure that already exists",
+# this script never runs `gcloud artifacts repositories create`.
 if ! gcloud artifacts repositories describe "$AR_REPO" --location="$REGION" --project="$PROJECT_ID" >/dev/null 2>&1; then
-  gcloud artifacts repositories create "$AR_REPO" \
-    --repository-format=docker \
-    --location="$REGION" \
-    --project="$PROJECT_ID" \
-    --description="kodomo-ai Cloud Run images"
+  echo "  ERROR: repo '$AR_REPO' not found in $REGION. Known existing repos: kodomo-ai-images,"
+  echo "  cloud-run-source-deploy — reconcile AR_REPO above against 'gcloud artifacts"
+  echo "  repositories list --location=$REGION --project=$PROJECT_ID'. Not creating a new repo."
+  exit 1
 else
-  echo "  already exists, skipping"
+  echo "  found, OK"
 fi
 
 echo "== Deploy service account =="

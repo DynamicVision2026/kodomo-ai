@@ -62,7 +62,14 @@ jobs:
       REGION: asia-northeast1
       SERVICE: kodomo-ai
       BACKEND_SERVICE: kodomo-ai-backend
-      AR_REPO: kodomo-ai
+      # Builder work order ("take ownership of production deployment"): the project already has
+      # two Artifact Registry Docker repos — `kodomo-ai-images` and `cloud-run-source-deploy`
+      # (Cloud Run's own auto-created default for `--source`-based deploys). Explicit constraint:
+      # "Do NOT recreate infrastructure that already exists." `kodomo-ai-images` is the
+      # purpose-named one (built for exactly this: pushed container images, not source uploads),
+      # so it's the default here — see the "Ensure the Artifact Registry repo exists" step below,
+      # which verifies rather than silently creates if this ever turns out to be wrong.
+      AR_REPO: kodomo-ai-images
     steps:
       - uses: actions/checkout@v4
 
@@ -85,14 +92,18 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      - name: Ensure the Artifact Registry repo exists (idempotent)
+      # Verify only — never create. `kodomo-ai-images` and `cloud-run-source-deploy` already
+      # exist in this project; a repo missing here means AR_REPO needs reconciling against the
+      # project's real repos (`gcloud artifacts repositories list --location=${{ env.REGION }}`),
+      # not that a new one should be created.
+      - name: Verify the Artifact Registry repo exists
         run: |
           gcloud artifacts repositories describe "${{ env.AR_REPO }}" \
-            --location="${{ env.REGION }}" >/dev/null 2>&1 || \
-          gcloud artifacts repositories create "${{ env.AR_REPO }}" \
-            --repository-format=docker \
-            --location="${{ env.REGION }}" \
-            --description="kodomo-ai Cloud Run images"
+            --location="${{ env.REGION }}" >/dev/null || {
+            echo "::error::Artifact Registry repo '${{ env.AR_REPO }}' not found in ${{ env.REGION }}."
+            echo "::error::Known existing repos: kodomo-ai-images, cloud-run-source-deploy — reconcile AR_REPO above, do not auto-create a new one."
+            exit 1
+          }
 
       # AD-13 §1: VITE_FAMILY_API_URL is the backend's own live Cloud Run URL — resolved from
       # the ALREADY-DEPLOYED kodomo-ai-backend service at build time (never hand-typed/stored
