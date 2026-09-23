@@ -151,6 +151,23 @@ jobs:
           fi
           echo "url=$URL" >> "$GITHUB_OUTPUT"
 
+      # Diagnostic only — never gates the deploy. Run #126's smoke test found the frontend's own
+      # same-origin proxy returning 404 for /api/v1/me instead of the expected 401, and there is no
+      # way to tell, from inside this sandbox (no network egress to Cloud Run), whether that's a
+      # bug in the proxy itself or in what's actually running on the live backend service — no CI
+      # job here ever deploys the backend, so its live code may predate this repo's own /api/v1
+      # router convention. This step asks the backend directly, bypassing the frontend/proxy
+      # entirely, so the next run's own log settles which side the bug is on.
+      - name: DIAGNOSTIC — query the live backend directly (bypasses the frontend proxy)
+        run: |
+          URL="${{ steps.backend-url.outputs.url }}"
+          echo "backend url: $URL"
+          for path in / /healthz /me /api/v1/me; do
+            STATUS=$(curl -s -o /tmp/diag_body -w '%{http_code}' "${URL}${path}")
+            echo "GET ${path} -> ${STATUS}"
+            head -c 300 /tmp/diag_body; echo
+          done
+
       - name: Build and push the frontend image
         env:
           IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE }}
