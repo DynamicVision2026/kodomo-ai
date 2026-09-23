@@ -7,10 +7,10 @@ export type EventName =
   | 'm1_start' | 'coop_selected' | 'prediction_made' | 'round_complete' | 'early_ok_tapped'
   | 'dig_layer_reached' | 'root_reached' | 'teachback_done' | 'teachback_skipped'
   | 'm1_complete' | 'parent_screen_view' | 'buy_click_from_app'
-  // Not in spec v0.5 §11's fixed event list — added for /play/unlock (Task 7's redemption
-  // screen) because "did the family code flow actually work" has no other signal. Flagging
-  // for founder sign-off rather than silently expanding a spec-enumerated list.
-  | 'code_redeemed'
+  // AD-13 §5: /login's own funnel signal — replaces the retired /play/unlock's `code_redeemed`
+  // (the unlock-code flow itself is gone; "did email OTP login actually work" is its
+  // Family-Account-era equivalent). Not in spec v0.5 §11's fixed event list.
+  | 'login_code_requested' | 'login_succeeded'
   // v0.6 (WO-03, AD-01 §5): the child's Gap Naming choice, classification only — 'target',
   // 'answered' or 'other-layer' — never a correct/incorrect judgment. Also not in spec v0.5 §11.
   | 'gap_named'

@@ -108,14 +108,14 @@ const continuousStageMissionIds = new Set<string>([
 ]);
 
 function seedProgress(doneStoryLabels: string[]) {
-  const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+  const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
   const profile = saved.profiles[0];
   profile.progress = profile.progress ?? {};
   for (const label of doneStoryLabels) {
     const story = STORY_MISSIONS.find((s) => s.label === label)!;
     profile.progress[story.mission.id] = { done: true, stamps: 0, coop: false };
   }
-  localStorage.setItem('m-app.v1', JSON.stringify(saved));
+  localStorage.setItem('m-app.v2', JSON.stringify(saved));
 }
 
 async function createProfile(user: ReturnType<typeof userEvent.setup>) {

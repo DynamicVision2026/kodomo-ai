@@ -324,7 +324,7 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
     await user.click(screen.getByText(layer0Deepen.text));
     await waitFor(() => expect(document.querySelector('.stage__hand-tray')).not.toBeInTheDocument());
 
-    const saved: AppState = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved: AppState = JSON.parse(localStorage.getItem('m-app.v2')!);
     const profile = saved.profiles[0]!;
     expect(profile.moveProgress?.['follow-tsumari']).toBeUndefined(); // never rendered/used
     expect(profile.milestones?.M1).toBeUndefined(); // no rung ever advanced to re-evaluate from

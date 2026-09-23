@@ -1,18 +1,28 @@
-import type { Env, IssuedCode } from '../types.js';
-import { generateFamilyCode } from '../codes.js';
-import { matchLineItems, verifyShopifyWebhook, type ShopifyOrderPayload } from '../shopify.js';
-import { addCodeToOrderIndex, getCodesForOrder, putIssuedCode } from '../store.js';
-import { attachCodesToOrderMetafield } from '../shopifyAdmin.js';
+import type { Env } from '../types.js';
+import type { EntitlementDoc, OrderDoc, OrderState } from '../schema.js';
+import { entitlementPath, orderPath } from '../schema.js';
+import {
+  matchLineItems,
+  matchRefundedModuleIds,
+  purchaserEmail,
+  verifyShopifyWebhook,
+  type ShopifyOrderPayload,
+  type ShopifyRefundPayload,
+} from '../shopify.js';
+import { getOrCreateFamilyIdInTx } from '../family.js';
+import { welcomeEmail } from '../email.js';
 
-const MAX_DEVICES = 5;
+function loginUrl(env: Env, email: string): string {
+  const base = env.APP_ORIGIN ?? '';
+  return `${base}/login?email=${encodeURIComponent(email)}`;
+}
 
 /**
- * POST /webhooks/shopify/orders-paid — the only entry point that ever issues a code from a
- * real purchase. Spec v0.5 §7: "Shopify order -> email with a family code."
- *
- * Always returns 2xx for a well-formed, correctly-signed request — even one with zero matched
- * line items (an order for products A-D only) — so Shopify never retry-storms this endpoint
- * over a delivery that never needed action. Only a bad signature is rejected outright.
+ * POST /webhooks/shopify/orders-paid — AD-13 §3/§5 step 1: "creates or finds the family and
+ * grants one entitlement per purchased module." Always answers 2xx for a well-formed,
+ * correctly-signed request — even one with zero matched line items or a missing email — so
+ * Shopify never retry-storms this over a delivery that never needed action or that this Worker
+ * has already flagged for manual review.
  */
 export async function handleShopifyOrderWebhook(request: Request, env: Env): Promise<Response> {
   const rawBody = await request.text();
@@ -30,42 +40,99 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
   const matched = matchLineItems(order);
   if (matched.length === 0) {
     // Products A-D (or anything else not in SKU_TO_MODULE_IDS) land here every time and this
-    // Worker does nothing further — no KV write, no Admin API call, no email trigger.
+    // handler does nothing further — no family created, no entitlement, no email.
     return new Response('ok (no matched line items)', { status: 200 });
   }
 
-  // Idempotency: Shopify redelivers webhooks. If this exact order already has issued codes,
-  // this is a redelivery (or a retry) — never mint a second code for the same purchase.
-  const alreadyIssued = await getCodesForOrder(env, order.id);
-  if (alreadyIssued.length > 0) {
-    return new Response('ok (already processed)', { status: 200 });
-  }
+  const moduleIds = [...new Set(matched.flatMap((m) => m.moduleIds))];
+  const email = purchaserEmail(order);
+  const webhookId = request.headers.get('X-Shopify-Webhook-Id') ?? '';
+  const orderId = String(order.id);
+  const now = new Date().toISOString();
 
-  const issuedCodes: string[] = [];
-  for (const item of matched) {
-    // One code per unit purchased, never one code silently shared across a quantity > 1.
-    for (let i = 0; i < item.quantity; i++) {
-      const code = generateFamilyCode();
-      const record: IssuedCode = {
-        code,
-        moduleIds: item.moduleIds,
-        founder: false,
-        devices: [],
-        maxDevices: MAX_DEVICES,
-        issuedAt: new Date().toISOString(),
-        shopifyOrderId: String(order.id),
-      };
-      await putIssuedCode(env, record);
-      await addCodeToOrderIndex(env, order.id, code);
-      issuedCodes.push(code);
+  const result = await env.db.runTransaction(async (tx) => {
+    const existing = await tx.get<OrderDoc>(orderPath(orderId));
+    if (existing) {
+      // Redelivery/retry of an order this Worker already processed — the entitlement (or its
+      // absence, for `needs_review`) is never re-derived a second time from the same order id.
+      if (webhookId && !existing.webhookIds.includes(webhookId)) {
+        tx.set(orderPath(orderId), { ...existing, webhookIds: [...existing.webhookIds, webhookId] });
+      }
+      return { alreadyProcessed: true as const, state: existing.state, familyId: existing.familyId };
     }
+
+    if (!email) {
+      const doc: OrderDoc = { familyId: null, moduleIds, state: 'needs_review', webhookIds: webhookId ? [webhookId] : [], processedAt: now };
+      tx.set(orderPath(orderId), doc);
+      return { alreadyProcessed: false as const, state: 'needs_review' as OrderState, familyId: null };
+    }
+
+    const { familyId } = await getOrCreateFamilyIdInTx(tx, email, now);
+    let anyDuplicate = false;
+    for (const moduleId of moduleIds) {
+      const entPath = entitlementPath(familyId, moduleId);
+      const existingEnt = await tx.get<EntitlementDoc>(entPath);
+      if (existingEnt && existingEnt.status === 'active') {
+        anyDuplicate = true; // this family already has this module active — never re-grant
+        continue;
+      }
+      const ent: EntitlementDoc = { status: 'active', shopifyOrderId: orderId, grantedAt: now, revokedAt: null };
+      tx.set(entPath, ent);
+    }
+
+    const state: OrderState = anyDuplicate ? 'duplicate' : 'granted';
+    const doc: OrderDoc = { familyId, moduleIds, state, webhookIds: webhookId ? [webhookId] : [], processedAt: now };
+    tx.set(orderPath(orderId), doc);
+    return { alreadyProcessed: false as const, state, familyId };
+  });
+
+  if (!result.alreadyProcessed && result.state === 'granted' && email) {
+    await env.email.send(welcomeEmail(email, loginUrl(env, email)));
   }
 
-  // Best-effort only — see shopifyAdmin.ts for why a failure here doesn't fail this request.
-  await attachCodesToOrderMetafield(env, order.id, issuedCodes);
-
-  return new Response(JSON.stringify({ ok: true, issued: issuedCodes.length }), {
+  return new Response(JSON.stringify({ ok: true, state: result.state }), {
     status: 200,
     headers: { 'content-type': 'application/json' },
   });
+}
+
+/**
+ * POST /webhooks/shopify/refunds-create — AD-13 §3 "new subscription": revokes the matching
+ * entitlement when a refunded line item carries the module's variant/SKU. A refund on an order
+ * this Worker never attributed to a family (missing email at purchase time -> `needs_review`)
+ * is a no-op here too — there is nothing to revoke, and support handles that order manually.
+ */
+export async function handleShopifyRefundWebhook(request: Request, env: Env): Promise<Response> {
+  const rawBody = await request.text();
+  const signature = request.headers.get('X-Shopify-Hmac-Sha256') ?? '';
+  const verified = await verifyShopifyWebhook(rawBody, signature, env.SHOPIFY_WEBHOOK_SECRET);
+  if (!verified) return new Response('invalid signature', { status: 401 });
+
+  let refund: ShopifyRefundPayload;
+  try {
+    refund = JSON.parse(rawBody) as ShopifyRefundPayload;
+  } catch {
+    return new Response('invalid JSON', { status: 400 });
+  }
+
+  const moduleIds = matchRefundedModuleIds(refund);
+  if (moduleIds.length === 0) return new Response('ok (no matched line items)', { status: 200 });
+
+  const orderId = String(refund.order_id);
+  const order = await env.db.get<OrderDoc>(orderPath(orderId));
+  if (!order || !order.familyId) return new Response('ok (order not attributed to a family)', { status: 200 });
+
+  const now = new Date().toISOString();
+  await env.db.runTransaction(async (tx) => {
+    for (const moduleId of moduleIds) {
+      const entPath = entitlementPath(order.familyId!, moduleId);
+      const ent = await tx.get<EntitlementDoc>(entPath);
+      if (ent && ent.status === 'active') {
+        tx.set(entPath, { ...ent, status: 'refunded', revokedAt: now });
+      }
+    }
+    tx.set(orderPath(orderId), { ...order, state: 'refunded' });
+  });
+
+  return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } });
 }

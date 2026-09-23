@@ -1,41 +1,42 @@
 import type { Env } from '../src/types.js';
-import { createKvStore } from './kvStore.js';
+import { createDb } from './dbStore.js';
+import { FakeEmailSender, LoggingEmailSender, type EmailSender } from '../src/email.js';
+import { PostmarkEmailSender } from './postmarkEmail.js';
 
-/** The secret names this backend actually needs — passed to loadMissingSecrets() in index.ts
- *  before this runs. (ANTHROPIC_API_KEY/DEEPSEEK_API_KEY are NOT here: those belong to the
- *  content pipeline, a separate CLI tool under pipeline/, never this HTTP service.) */
-export const REQUIRED_SECRET_NAMES = ['ADMIN_TOKEN', 'SHOPIFY_WEBHOOK_SECRET'] as const;
+/** Secrets required to start at all — a Cloud Run revision missing one of these, or still
+ *  carrying an unfilled placeholder, must never accept traffic. `EMAIL_API_KEY` is deliberately
+ *  NOT required: it's a launch blocker (no Postmark/SES account exists yet — see the launch
+ *  blockers list), and the service falls back to `LoggingEmailSender` rather than refusing to
+ *  start, so every other route stays testable/deployable ahead of that account existing. */
+export const REQUIRED_SECRET_NAMES = ['ADMIN_TOKEN', 'SHOPIFY_WEBHOOK_SECRET', 'AUTH_PEPPER'] as const;
 
-/**
- * WO-30 §10: catches exactly the literal placeholder text docs/launch-runbook.md's own setup
- * commands use as a stand-in before the real value is filled in — e.g.
- * `echo -n "<placeholder for now>" | gcloud secrets create shopify-webhook-secret ...` (Part 1
- * step 2, real value added later from Part 3 step 2) or `<a long random string YOU generate>`.
- * A secret genuinely left at that literal copy-pasted text would otherwise pass the plain
- * "is it set" check below and accept traffic with a webhook signature or admin token nobody
- * real could ever produce. Deliberately pattern-based, not a length/entropy check — a short
- * but genuine local-dev value (this file's own tests use 'test-admin') must keep working; only
- * unmistakable placeholder wording is rejected. */
 const PLACEHOLDER_PATTERN = /placeholder|change[_-]?me|\bTODO\b|\bTBD\b|<[^>]*>|\byour[_-]?(secret|token|key)\b|\bexample\b/i;
 
 function assertNotPlaceholder(name: string, value: string): void {
   if (PLACEHOLDER_PATTERN.test(value)) {
     throw new Error(
       `${name} looks like an unfilled placeholder value, not a real secret — refusing to start ` +
-      'with it. Set the real value (see docs/launch-runbook.md Part 1 step 2 / Part 3 step 2).',
+      'with it. Set the real value (see docs/launch-runbook.md).',
     );
   }
 }
 
-/**
- * Fails fast at startup rather than per-request: a Cloud Run revision that's missing a
- * required secret — or still carries an unfilled placeholder one — should never accept traffic
- * in the first place. Throwing here crashes the container before it starts listening, which
- * Cloud Run surfaces as a failed revision — an operator sees it immediately in
- * `gcloud run services describe` / the console, instead of it silently 500ing (or worse,
- * accepting a forged webhook nobody could ever produce the real signature for) on the first
- * real request.
- */
+function buildEmailSender(): EmailSender {
+  if (process.env.EMAIL_API_KEY && process.env.EMAIL_FROM) {
+    return new PostmarkEmailSender(process.env.EMAIL_API_KEY, process.env.EMAIL_FROM);
+  }
+  if (process.env.GOOGLE_CLOUD_PROJECT) {
+    // Deployed but no email account configured yet — log instead of silently dropping OTPs, and
+    // never crash the whole service over a still-pending launch blocker.
+    console.warn('[buildEnv] EMAIL_API_KEY/EMAIL_FROM not set — emails will only be logged, never actually sent.');
+    return new LoggingEmailSender();
+  }
+  return new FakeEmailSender();
+}
+
+/** Fails fast at startup — see the old KV-era version of this file for the same rationale
+ *  (a missing/placeholder required secret should crash the container before it accepts traffic,
+ *  not 500 or accept a forged webhook on the first real request). */
 export function buildEnv(): Env {
   const missing = REQUIRED_SECRET_NAMES.filter((name) => !process.env[name]);
   if (missing.length > 0) {
@@ -50,9 +51,13 @@ export function buildEnv(): Env {
   }
 
   return {
-    NAZE_CODES: createKvStore(),
+    db: createDb(),
+    email: buildEmailSender(),
     SHOPIFY_WEBHOOK_SECRET: process.env.SHOPIFY_WEBHOOK_SECRET!,
     ADMIN_TOKEN: process.env.ADMIN_TOKEN!,
+    AUTH_PEPPER: process.env.AUTH_PEPPER!,
+    APP_ORIGIN: process.env.APP_ORIGIN,
+    STORE_URL: process.env.STORE_URL,
     SHOPIFY_SHOP_DOMAIN: process.env.SHOPIFY_SHOP_DOMAIN,
     SHOPIFY_ADMIN_API_TOKEN: process.env.SHOPIFY_ADMIN_API_TOKEN,
   };

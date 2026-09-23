@@ -95,10 +95,10 @@ describe('WO-23 §15 — family-test regression suite', () => {
   });
 
   it('2. Mission Complete always exposes a next-navigation action when a next mission exists', async () => {
-    localStorage.setItem('m-app.v1', JSON.stringify({
-      // WO-30 §0: a real purchase now also requires the code itself, not just the derived
-      // entitlement tag — see src/engine/entitlements.ts's reconcileEntitlements().
-      profiles: [], entitlements: ['m1:full'], redeemedCode: 'NAZE-TEST-TEST', founder: false, abVariant: 'A', deviceId: 'd1',
+    localStorage.setItem('m-app.v2', JSON.stringify({
+      // AD-13: entitlement is server-authoritative — cachedEntitlements is the one field
+      // hasAccess() ever reads (src/engine/entitlements.ts).
+      profiles: [], familyId: 'f1', cachedEntitlements: ['m1'], pendingSyncKeys: [], abVariant: 'A', deviceId: 'd1',
     }));
     const user = userEvent.setup();
     render(
@@ -169,13 +169,13 @@ describe('WO-23 §15 — family-test regression suite', () => {
    *  done — the only way to legitimately reach a later Story/Bank in a single test now that
    *  free-skipping is gone. Requires a profile to already exist in storage. */
   function seedStoryProgress(doneCount: number) {
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     const profile = saved.profiles[0];
     profile.progress = {};
     for (let j = 0; j < doneCount; j++) {
       profile.progress[storyMissions[j]!.id] = { done: true, stamps: 0, coop: false };
     }
-    localStorage.setItem('m-app.v1', JSON.stringify(saved));
+    localStorage.setItem('m-app.v2', JSON.stringify(saved));
   }
 
   function renderShellWithBank() {

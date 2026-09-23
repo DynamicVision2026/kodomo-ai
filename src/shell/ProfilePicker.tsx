@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Profile } from '../engine/storage';
 import { MAX_PROFILES } from '../engine/storage';
 import type { Stage } from '../engine/types';
-import presets from './presets.json';
+import presets from '../../shared/presets.json';
 import './profile-picker.css';
 
 /**

@@ -241,7 +241,7 @@ describe('Story Missions — full interactive playthroughs prove the real UI sti
     expect(screen.getByText(dig.root.robotSays)).toBeInTheDocument();
     await user.click(screen.getByText(ui.earlyOk));
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     const moveProgress = saved.profiles[0].moveProgress;
     // Both moves in the hand were RENDERED (mihakken -> moratta fires for every deepen card
     // shown, played or not — WO-20's Dig.tsx change). Only the one actually PLAYED advances

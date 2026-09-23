@@ -77,17 +77,15 @@ async function createProfile(user: ReturnType<typeof userEvent.setup>) {
   await skipM0RitualIfPresent(user, ui);
 }
 
-/** Grants a real `m1:full` purchase entitlement to the just-created profile's own AppState —
- *  the same shape `applyRedemption` (src/engine/entitlements.ts) writes after a real Shopify
- *  redemption, never a familyTestMode bypass. WO-30 §0: also sets `redeemedCode`, now the actual
- *  credential reconcileEntitlements() requires before it will trust the `:full` tag at all — a
- *  bare `entitlements: ['m1:full']` with no code is exactly the forged-localStorage case WO-30
- *  closes, so this helper must supply both to still mean "a real purchase happened here". */
+/** Grants a real `m1` purchase entitlement to the just-created profile's own AppState — the
+ *  same shape a real `/me` response causes `hydrateFromServer` (src/family/session.ts) to write,
+ *  never a familyTestMode bypass. AD-13: `cachedEntitlements` is the one field hasAccess() ever
+ *  reads (src/engine/entitlements.ts). */
 function grantFullEntitlement() {
-  const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
-  saved.entitlements = ['m1:full'];
-  saved.redeemedCode = 'NAZE-TEST-TEST';
-  localStorage.setItem('m-app.v1', JSON.stringify(saved));
+  const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
+  saved.familyId = 'f1';
+  saved.cachedEntitlements = ['m1'];
+  localStorage.setItem('m-app.v2', JSON.stringify(saved));
 }
 
 // ===============================================================================================
@@ -193,7 +191,7 @@ describe('WO-27 — real production entitlement (no purchase): CURRENT => ENTERA
     await waitFor(() => expect(screen.getByText(ui.courseHomeHeading)).toBeInTheDocument());
     expect(screen.queryByText(ui.completeHeading)).not.toBeInTheDocument();
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].progress[genkanJson.id]).toBeUndefined(); // never marked done
     const genkanDepth = screen.getByText(genkanJson.title).closest('.course-home__depth')!;
     expect(genkanDepth.className).not.toContain('is-done');

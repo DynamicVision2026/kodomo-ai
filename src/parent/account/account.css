@@ -1,0 +1,70 @@
+.account {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 4rem;
+  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  line-height: 1.8;
+  color: #1c1c1c;
+}
+
+.account h1 { font-size: 1.3rem; margin-bottom: 0.75rem; }
+.account h2 { font-size: 1rem; margin-bottom: 0.5rem; }
+
+.account__lead { color: #555; font-size: 0.9rem; }
+
+.account__section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e5e5;
+}
+
+.account__device-list { list-style: none; padding: 0; margin: 0; }
+.account__device {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.account__device-signout, .account__button, .account__logout {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.account__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 20rem;
+}
+
+.account__input {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.account__button {
+  background: #2f6fb0;
+  color: #fff;
+  border: none;
+  font-weight: 700;
+}
+.account__button:disabled { background: #a9c3dc; cursor: not-allowed; }
+.account__button--danger { background: #b0322f; }
+
+.account__message { margin-top: 0.75rem; font-size: 0.85rem; }
+.account__message--error { color: #b0632f; }
+
+.account__logout {
+  display: block;
+  margin-top: 2.5rem;
+}
+
+.account__link { color: #2f6fb0; }

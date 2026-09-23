@@ -22,7 +22,7 @@ describe('LandingPage', () => {
     render(<LandingPage />);
     expect(plausible).toHaveBeenCalledWith('lp_view', expect.anything());
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(['A', 'B']).toContain(saved.abVariant);
 
     // Every subsequent event should carry that same persisted variant.
@@ -32,8 +32,8 @@ describe('LandingPage', () => {
 
   it('shows the same variant on a later mount instead of re-rolling it', () => {
     localStorage.setItem(
-      'm-app.v1',
-      JSON.stringify({ profiles: [], entitlements: ['m1:free'], founder: false, abVariant: 'B' }),
+      'm-app.v2',
+      JSON.stringify({ profiles: [], familyId: null, cachedEntitlements: [], pendingSyncKeys: [], abVariant: 'B' }),
     );
     render(<LandingPage />);
     expect(screen.getByText(/親子で、同じスタートラインから/)).toBeInTheDocument();

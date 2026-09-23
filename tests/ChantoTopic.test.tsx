@@ -217,7 +217,7 @@ describe('chanto (1-1) — playable end to end (たのむ -> ほる -> wrapper s
     expect(screen.getByText(ui.parentScreenHeading)).toBeInTheDocument();
 
     // Honest milestone/growth evidence for a genuine 2-layer chain:
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     const profile = saved.profiles[0];
     expect(profile.progress[chantoMission.id].done).toBe(true);
 

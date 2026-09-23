@@ -253,7 +253,7 @@ describe('Architect completion ritual — behaviour #8: Real AI Lab never popula
     await skipCompletionRitualIfPresent(user, ui);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones?.M5).toBeUndefined();
   });
 });

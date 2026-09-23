@@ -186,7 +186,7 @@ describe('WO-34 — invariants: no stored AI content, no M5, at most one parent-
     await playToReturnToChild(user, randoseru);
     await waitFor(() => expect(screen.getByText(ui.realAiLabHeading!)).toBeInTheDocument());
 
-    const before = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const before = JSON.parse(localStorage.getItem('m-app.v2')!);
     const m5Before = before.profiles[0].milestones?.M5;
 
     await user.click(screen.getByText(ui.handoffContinue));
@@ -194,7 +194,7 @@ describe('WO-34 — invariants: no stored AI content, no M5, at most one parent-
     await skipCompletionRitualIfPresent(user, ui);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
 
-    const after = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const after = JSON.parse(localStorage.getItem('m-app.v2')!);
     // M5 (そとで つかった) is a parent-initiated, per-move outside-use record — completely
     // unrelated to this screen, and must stay exactly as it was.
     expect(after.profiles[0].milestones?.M5).toEqual(m5Before);

@@ -72,10 +72,10 @@ describe('Growth Journey M0-M5 — reachable end to end through only real, relea
   }
 
   it('a real family reaches M0, M1, M2 (a+b), M3, M4, and M5 — all six — purely by playing real, release-clear Story/Bank content through the real product surface', async () => {
-    localStorage.setItem('m-app.v1', JSON.stringify({
-      // WO-30 §0: a real purchase now also requires the code itself, not just the derived
-      // entitlement tag — see src/engine/entitlements.ts's reconcileEntitlements().
-      profiles: [], entitlements: ['m1:full'], redeemedCode: 'NAZE-TEST-TEST', founder: false, abVariant: 'A', deviceId: 'd1',
+    localStorage.setItem('m-app.v2', JSON.stringify({
+      // AD-13: entitlement is server-authoritative — cachedEntitlements is the one field
+      // hasAccess() ever reads (src/engine/entitlements.ts).
+      profiles: [], familyId: 'f1', cachedEntitlements: ['m1'], pendingSyncKeys: [], abVariant: 'A', deviceId: 'd1',
     }));
     const user = userEvent.setup();
     render(
@@ -162,7 +162,7 @@ describe('Growth Journey M0-M5 — reachable end to end through only real, relea
     const m5Moves = within(document.querySelector('.mission-shell__m5-moves') as HTMLElement);
     await user.click(m5Moves.getByText(moduleJson.cardTypes['follow-tatoeba'].label));
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     const profile = saved.profiles[0];
 
     // M0.

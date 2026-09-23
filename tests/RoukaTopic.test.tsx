@@ -288,7 +288,7 @@ describe('rouka (1-3) — playable end to end (たのむ -> ほる x3 -> wrapper
     await user.click(screen.getByText(ui.handoffContinue)); // -> parent
     expect(screen.getByText(ui.parentScreenHeading)).toBeInTheDocument();
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     const profile = saved.profiles[0];
     expect(profile.progress[roukaMission.id].done).toBe(true);
 

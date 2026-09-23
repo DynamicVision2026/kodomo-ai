@@ -27,13 +27,13 @@ function seed(stage: 2 | 3) {
       id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage, progress: {},
       milestones: { M0: { achieved: true, achievedAt: 0 } },
     }],
-    entitlements: ['m1:free'],
-    redeemedCode: null,
-    founder: false,
+    familyId: null,
+    cachedEntitlements: [],
+    pendingSyncKeys: [],
     abVariant: 'A',
     deviceId: 'device-seed-1',
   };
-  localStorage.setItem('m-app.v1', JSON.stringify(state));
+  localStorage.setItem('m-app.v2', JSON.stringify(state));
 }
 
 beforeEach(() => localStorage.clear());

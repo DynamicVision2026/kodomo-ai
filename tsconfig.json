@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "types": ["vite/client", "node"]
   },
-  "include": ["src", "pipeline", "scripts", "tests", "backend"]
+  "include": ["src", "pipeline", "scripts", "tests", "backend", "shared"]
 }

@@ -1,55 +1,97 @@
 import type { Env } from './types.js';
-import { handleShopifyOrderWebhook } from './handlers/webhook.js';
-import { handleAdminIssue } from './handlers/adminIssue.js';
-import { handleUnlock } from './handlers/unlock.js';
+import { handleShopifyOrderWebhook, handleShopifyRefundWebhook } from './handlers/webhook.js';
+import { handleAdmin } from './handlers/admin.js';
+import { handleAuthRequest } from './handlers/authRequest.js';
+import { handleAuthVerify } from './handlers/authVerify.js';
+import { handleAuthLogout } from './handlers/authLogout.js';
+import { handleMe } from './handlers/me.js';
+import { handleCreateProfile, handleDeleteProfile, handleUpdateProfile } from './handlers/profiles.js';
+import { handleGetProgress, handlePutProgress } from './handlers/progress.js';
+import { handleImport } from './handlers/importHandler.js';
+import { handleDeleteSession, handleListSessions } from './handlers/sessions.js';
+import { handleAccountEmail, handleDeleteAccount } from './handlers/account.js';
 
 /**
- * WO-30: `/unlock` is the one route a real family's BROWSER calls directly (src/parent/unlock/
- * redeemCode.ts) — and the frontend and this backend are deployed as separate Cloud Run
- * services/origins (docs/launch-runbook.md Parts 1-2), so this is a genuinely cross-origin
- * fetch(). Without these headers the browser silently discards the response (a real production
- * WO-30 browser QA pass caught this: every redemption attempt failed as an opaque "network
- * error", never reaching handleUnlock's own actual 200/404 logic at all — the request lands
- * fine, only the RESPONSE gets blocked). `*` is fine here: no cookies/credentials are ever
- * involved (spec v0.5 §7's own "no accounts" design), the request body is a code + a
- * non-identifying device id, and the endpoint's own logic is already what decides what a given
- * code is allowed to see — an open origin adds no new exposure. The webhook and admin-issue
- * routes are never called from a browser (Shopify's own servers / a curl/admin tool
- * respectively), so neither needs this.
+ * AD-13 §1 "Domain requirement": every `/api/v1/*` route is a cookie-bearing, credentialed,
+ * cross-origin request under Option A (separate `app.<domain>`/`api.<domain>` subdomains) — an
+ * open `*` origin (the old `/unlock` route's own CORS, WO-30) is never correct once real session
+ * cookies are involved, so this only ever answers the ONE configured `APP_ORIGIN`, and answers
+ * nothing at all (no CORS headers, browser blocks the response) while it's still unset.
  */
-const UNLOCK_CORS_HEADERS: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'content-type',
-};
+function corsHeaders(env: Env): Record<string, string> {
+  if (!env.APP_ORIGIN) return {};
+  return {
+    'Access-Control-Allow-Origin': env.APP_ORIGIN,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'content-type',
+  };
+}
 
-/**
- * Platform-neutral request router — plain Web-standard Request in, Response out. No
- * Cloudflare-specific module shape (this used to be `export default { fetch }`, the Workers
- * convention). backend/server/ adapts this to Express/Cloud Run; nothing under backend/src/
- * needs to know what's calling it, same as before the platform switch.
- */
+function withCors(response: Response, env: Env): Response {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(corsHeaders(env))) headers.set(name, value);
+  return new Response(response.body, { status: response.status, headers });
+}
+
+/** Platform-neutral request router — plain Web-standard Request in, Response out. */
 export async function handleRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
+  const path = url.pathname;
 
-  if (request.method === 'OPTIONS' && url.pathname === '/unlock') {
-    // The browser's own CORS preflight for the POST below — never reaches handleUnlock, no
-    // body to read, no KV access, just the headers that let the real request through.
-    return new Response(null, { status: 204, headers: UNLOCK_CORS_HEADERS });
+  if (request.method === 'OPTIONS' && path.startsWith('/api/v1/')) {
+    return new Response(null, { status: 204, headers: corsHeaders(env) });
   }
 
-  if (request.method === 'POST' && url.pathname === '/webhooks/shopify/orders-paid') {
+  if (request.method === 'POST' && path === '/webhooks/shopify/orders-paid') {
     return handleShopifyOrderWebhook(request, env);
   }
-  if (request.method === 'POST' && url.pathname === '/admin/issue') {
-    return handleAdminIssue(request, env);
+  if (request.method === 'POST' && path === '/webhooks/shopify/refunds-create') {
+    return handleShopifyRefundWebhook(request, env);
   }
-  if (request.method === 'POST' && url.pathname === '/unlock') {
-    const res = await handleUnlock(request, env);
-    const headers = new Headers(res.headers);
-    for (const [name, value] of Object.entries(UNLOCK_CORS_HEADERS)) headers.set(name, value);
-    return new Response(res.body, { status: res.status, headers });
+  if (path.startsWith('/admin/')) {
+    return handleAdmin(request, env, url);
   }
+
+  if (path.startsWith('/api/v1/')) {
+    const response = await routeApi(request, env, path);
+    return withCors(response, env);
+  }
+
+  return new Response('not found', { status: 404 });
+}
+
+async function routeApi(request: Request, env: Env, path: string): Promise<Response> {
+  const segments = path.replace(/^\/api\/v1\//, '').split('/').filter(Boolean);
+  const method = request.method;
+
+  if (method === 'POST' && path === '/api/v1/auth/request') return handleAuthRequest(request, env);
+  if (method === 'POST' && path === '/api/v1/auth/verify') return handleAuthVerify(request, env);
+  if (method === 'POST' && path === '/api/v1/auth/logout') return handleAuthLogout(request, env);
+  if (method === 'GET' && path === '/api/v1/me') return handleMe(request, env);
+
+  if (method === 'POST' && path === '/api/v1/profiles') return handleCreateProfile(request, env);
+  if ((method === 'PATCH') && segments[0] === 'profiles' && segments.length === 2) {
+    return handleUpdateProfile(request, env, segments[1]!);
+  }
+  if (method === 'DELETE' && segments[0] === 'profiles' && segments.length === 2) {
+    return handleDeleteProfile(request, env, segments[1]!);
+  }
+  if (segments[0] === 'profiles' && segments[2] === 'progress' && segments.length === 4) {
+    const [, profileId, , moduleId] = segments;
+    if (method === 'GET') return handleGetProgress(request, env, profileId!, moduleId!);
+    if (method === 'PUT') return handlePutProgress(request, env, profileId!, moduleId!);
+  }
+
+  if (method === 'POST' && path === '/api/v1/import') return handleImport(request, env);
+
+  if (method === 'GET' && path === '/api/v1/sessions') return handleListSessions(request, env);
+  if (method === 'DELETE' && segments[0] === 'sessions' && segments.length === 2) {
+    return handleDeleteSession(request, env, segments[1]!);
+  }
+
+  if (method === 'POST' && path === '/api/v1/account/email') return handleAccountEmail(request, env);
+  if (method === 'DELETE' && path === '/api/v1/account') return handleDeleteAccount(request, env);
 
   return new Response('not found', { status: 404 });
 }

@@ -247,7 +247,7 @@ describe('genkan (1-2) — playable end to end (たのむ -> ほる -> wrapper s
     await user.click(screen.getByText(ui.handoffContinue)); // -> parent
     expect(screen.getByText(ui.parentScreenHeading)).toBeInTheDocument();
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     const profile = saved.profiles[0];
     expect(profile.progress[genkanMission.id].done).toBe(true);
     expect(profile.milestones.M1).toEqual({ achieved: true, achievedAt: expect.any(Number) });

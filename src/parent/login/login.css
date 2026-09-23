@@ -1,0 +1,69 @@
+.login {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 3rem 1.25rem 4rem;
+  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  line-height: 1.8;
+  color: #1c1c1c;
+}
+
+.login h1 {
+  font-size: 1.3rem;
+  margin-bottom: 0.75rem;
+}
+
+.login__lead {
+  color: #555;
+  font-size: 0.9rem;
+  margin-bottom: 1.75rem;
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.login__label {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.login__input {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+}
+
+.login__submit {
+  padding: 0.75rem 1.2rem;
+  border-radius: 999px;
+  border: none;
+  background: #2f6fb0;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.login__submit:disabled {
+  background: #a9c3dc;
+  cursor: not-allowed;
+}
+
+.login__message {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+}
+.login__message--success {
+  background: #f0f7f2;
+  color: #2f6f4f;
+  border: 1px solid #d9ead9;
+}
+.login__message--error {
+  background: #fff3e0;
+  color: #b0632f;
+  border: 1px solid #f0d9c0;
+}

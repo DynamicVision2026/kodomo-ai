@@ -137,7 +137,7 @@ describe('ice topic — playable end to end, and completing it triggers the exis
     expect(screen.getByText(digPhase.root.robotSays)).toBeInTheDocument();
     await user.click(screen.getByText(ui.earlyOk));
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M3).toEqual({ achieved: true, achievedAt: expect.any(Number) });
     expect(saved.profiles[0].memories.first_three_chain).toEqual({
       kind: 'first_three_chain', recordedAt: expect.any(Number), missionId: iceMission.id,

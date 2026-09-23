@@ -109,11 +109,6 @@ const bankMissionsById: Record<string, Mission> = Object.fromEntries(
 );
 
 const familyTestMode = import.meta.env.VITE_FAMILY_TEST_MODE === '1';
-// WO-30 §5: same VITE_UNLOCK_API_URL /play/unlock's own redemption screen reads — undefined
-// until the backend is actually deployed, same honest-not-configured fallback either way. Used
-// here to re-verify any stored redeemedCode against the real backend once per app open (see
-// MissionShell's own boot-time effect / src/engine/entitlements.ts's reconcileEntitlements()).
-const unlockApiBaseUrl: string | undefined = import.meta.env.VITE_UNLOCK_API_URL;
 
 const continuousStageMissionIds = new Set<string>([
   ...Object.keys(missions),
@@ -131,7 +126,6 @@ createRoot(document.getElementById('root')!).render(
     followMoves={moduleJson.followMoves}
     cardTypes={moduleJson.cardTypes}
     familyTestMode={familyTestMode}
-    unlockApiBaseUrl={unlockApiBaseUrl}
     continuousStageMissionIds={continuousStageMissionIds}
   />,
 );

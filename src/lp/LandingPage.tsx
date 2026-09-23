@@ -7,7 +7,7 @@ import './landing-page.css';
 // SKU kodomo-ai-m1 on https://soul-id-2.myshopify.com/), set at BUILD time once the Founder has
 // actually created that listing. Undefined today — this repo has never had a live Shopify
 // listing or deployment (launch-runbook.md's own opening line) — same honest-not-yet-configured
-// convention as VITE_UNLOCK_API_URL (src/parent/unlock/UnlockPage.tsx): the primary CTA below
+// convention as VITE_FAMILY_API_URL (src/family/api.ts): the primary CTA below
 // links straight to it once set, and shows a clearly-labelled "not yet available" state instead
 // of a dead `href="#"` until then. Never guess/fabricate a URL here — a wrong link sends a
 // family somewhere that isn't a real checkout.

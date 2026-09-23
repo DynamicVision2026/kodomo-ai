@@ -7,7 +7,7 @@ import { toFetchRequest, sendFetchResponse } from './expressAdapter.js';
 const PORT = Number(process.env.PORT) || 8080;
 
 async function main(): Promise<void> {
-  await loadMissingSecrets([...REQUIRED_SECRET_NAMES, 'SHOPIFY_ADMIN_API_TOKEN']);
+  await loadMissingSecrets([...REQUIRED_SECRET_NAMES, 'SHOPIFY_ADMIN_API_TOKEN', 'EMAIL_API_KEY']);
   const env = buildEnv(); // throws (and crashes the container) if a required secret is missing
 
   const app = express();

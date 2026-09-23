@@ -172,7 +172,7 @@ describe('Bank Digs — full interactive playthroughs prove the real UI plays a 
     await user.click(screen.getByText(ui.earlyOk));
     expect(plausible).toHaveBeenCalledWith('m1_complete', expect.anything());
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].progress[mission.id].done).toBe(true);
     expect(saved.profiles[0].milestones.M1.achieved).toBe(true);
   });

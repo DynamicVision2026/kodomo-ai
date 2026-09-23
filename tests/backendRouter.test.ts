@@ -1,62 +1,45 @@
+/** @vitest-environment node */
 import { describe, it, expect } from 'vitest';
 import { handleRequest } from '../backend/src/router';
 import type { Env } from '../backend/src/types';
+import { MemoryDb } from '../backend/server/memoryDb';
+import { FakeEmailSender } from '../backend/src/email';
 
-function fakeEnv(): Env {
-  const store = new Map<string, string>();
+function fakeEnv(overrides: Partial<Env> = {}): Env {
   return {
-    NAZE_CODES: {
-      get: async (k: string) => store.get(k) ?? null,
-      put: async (k: string, v: string) => { store.set(k, v); },
-      delete: async (k: string) => { store.delete(k); },
-    },
+    db: new MemoryDb(),
+    email: new FakeEmailSender(),
     SHOPIFY_WEBHOOK_SECRET: 'test-secret',
     ADMIN_TOKEN: 'test-admin',
+    AUTH_PEPPER: 'test-pepper',
+    APP_ORIGIN: 'https://app.example.com',
+    ...overrides,
   };
 }
 
-/**
- * WO-30: a real browser QA pass against a locally-running backend caught this — /unlock is the
- * one route a family's BROWSER calls directly (src/parent/unlock/redeemCode.ts), and the
- * frontend/backend are separate Cloud Run origins (docs/launch-runbook.md Parts 1-2), so it's a
- * genuinely cross-origin fetch(). Before this fix, every real redemption attempt would have
- * silently failed as an opaque "network error" — the request reached handleUnlock fine, only
- * the browser discarding the CORS-less response was invisible to any test that (like
- * tests/workerHandlers.test.ts) calls handleUnlock directly, bypassing the router entirely.
- */
-describe('handleRequest — CORS on /unlock (WO-30)', () => {
-  it('answers an OPTIONS preflight for /unlock with the CORS headers a browser requires, never reaching handleUnlock', async () => {
+describe('handleRequest — CORS on /api/v1/* (AD-13 §1)', () => {
+  it('answers an OPTIONS preflight for an /api/v1 route with the configured origin', async () => {
     const env = fakeEnv();
-    const res = await handleRequest(new Request('https://backend.example/unlock', { method: 'OPTIONS' }), env);
+    const res = await handleRequest(new Request('https://backend.example/api/v1/me', { method: 'OPTIONS' }), env);
     expect(res.status).toBe(204);
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
-    expect(res.headers.get('Access-Control-Allow-Methods')).toContain('POST');
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com');
+    expect(res.headers.get('Access-Control-Allow-Credentials')).toBe('true');
   });
 
-  it('the real POST /unlock response also carries Access-Control-Allow-Origin', async () => {
+  it('a real /api/v1 response also carries the CORS headers', async () => {
     const env = fakeEnv();
-    const res = await handleRequest(
-      new Request('https://backend.example/unlock', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ code: 'NAZE-0000-0000', deviceId: 'd1' }),
-      }),
-      env,
-    );
-    expect(res.status).toBe(404); // not_found is still the correct body — CORS doesn't change that
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
-    const body = await res.json();
-    expect(body).toEqual({ error: 'not_found' });
+    const res = await handleRequest(new Request('https://backend.example/api/v1/me', { method: 'GET' }), env);
+    expect(res.status).toBe(401); // no session cookie — CORS doesn't change that
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com');
   });
 
-  it('OPTIONS on any other path is not treated as a CORS preflight — falls through to the ordinary 404', async () => {
-    const env = fakeEnv();
-    const res = await handleRequest(new Request('https://backend.example/webhooks/shopify/orders-paid', { method: 'OPTIONS' }), env);
-    expect(res.status).toBe(404);
+  it('emits no CORS headers at all while APP_ORIGIN is unset (the pre-domain-setup blocker state)', async () => {
+    const env = fakeEnv({ APP_ORIGIN: undefined });
+    const res = await handleRequest(new Request('https://backend.example/api/v1/me', { method: 'GET' }), env);
     expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
   });
 
-  it('the webhook and admin-issue routes are never given CORS headers — neither is ever called from a browser', async () => {
+  it('the webhook and admin routes never carry CORS headers — neither is ever called from a browser', async () => {
     const env = fakeEnv();
     const webhookRes = await handleRequest(
       new Request('https://backend.example/webhooks/shopify/orders-paid', { method: 'POST', body: '{}' }),
@@ -64,16 +47,47 @@ describe('handleRequest — CORS on /unlock (WO-30)', () => {
     );
     expect(webhookRes.headers.get('Access-Control-Allow-Origin')).toBeNull();
 
-    const adminRes = await handleRequest(
-      new Request('https://backend.example/admin/issue', { method: 'POST', body: '{}' }),
-      env,
-    );
+    const adminRes = await handleRequest(new Request('https://backend.example/admin/family?email=x@example.com', { method: 'GET' }), env);
     expect(adminRes.headers.get('Access-Control-Allow-Origin')).toBeNull();
   });
 
-  it('an unknown path/method still 404s, unaffected by the CORS routing added above', async () => {
+  it('an unknown path/method 404s', async () => {
     const env = fakeEnv();
     const res = await handleRequest(new Request('https://backend.example/nonsense', { method: 'GET' }), env);
     expect(res.status).toBe(404);
+  });
+});
+
+describe('handleRequest — routing', () => {
+  it('POST /api/v1/auth/request always answers 200 (no enumeration) for a well-formed body', async () => {
+    const env = fakeEnv();
+    const res = await handleRequest(
+      new Request('https://backend.example/api/v1/auth/request', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', origin: 'https://app.example.com' },
+        body: JSON.stringify({ email: 'parent@example.com' }),
+      }),
+      env,
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it('an invalid signature on the orders-paid webhook is rejected with 401', async () => {
+    const env = fakeEnv();
+    const res = await handleRequest(
+      new Request('https://backend.example/webhooks/shopify/orders-paid', {
+        method: 'POST',
+        headers: { 'X-Shopify-Hmac-Sha256': 'not-a-real-signature' },
+        body: JSON.stringify({ id: 1, line_items: [] }),
+      }),
+      env,
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('/admin/* without a bearer token is rejected with 401', async () => {
+    const env = fakeEnv();
+    const res = await handleRequest(new Request('https://backend.example/admin/family?email=x@example.com', { method: 'GET' }), env);
+    expect(res.status).toBe(401);
   });
 });

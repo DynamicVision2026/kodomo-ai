@@ -51,7 +51,7 @@ describe('stage1-test extensibility fixture', () => {
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('おしえて ほしいな'));
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].progress['stage1-test-dummy'].done).toBe(true);
   });
 });

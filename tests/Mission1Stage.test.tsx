@@ -318,7 +318,7 @@ describe('WO-25 #6 (P0) — parent handoff repair', () => {
     expect(screen.queryByText(ui.stageHandoffPrompt)).not.toBeInTheDocument();
     expect(screen.queryByText(ui.stageParentGotItLabel)).not.toBeInTheDocument();
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].progress[chanto.id].done).toBe(true);
   });
 
@@ -350,14 +350,14 @@ describe('WO-25 #6 (P0) — parent handoff repair', () => {
     expect(screen.queryByText(ui.toolboxHeading)).not.toBeInTheDocument();
     expect(screen.queryByText(ui.bankHubButton)).not.toBeInTheDocument();
     expect(screen.queryByText(ui.m5Prompt)).not.toBeInTheDocument();
-    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    let saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones?.M2).toBeUndefined();
     await user.click(screen.getByText(ui.stageParentGotItLabel));
 
     // -> persistent, single "give it back" action — real M2b attestation already recorded.
     expect(screen.getByText(ui.stageReturnToChild)).toBeInTheDocument();
     expect(screen.queryByText(ui.parentScreenHeading)).not.toBeInTheDocument(); // never the dashboard
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: expect.any(Number) });
 
     await user.click(screen.getByText(ui.stageReturnToChild));
@@ -541,7 +541,7 @@ describe('Mission 1 stage — guidance (AD-07 §D per-verb thresholds, persisted
     await pickClearAndReachJudge(user);
     await passLayer0Gate(user); // resolves gapNaming -> hand: the FIRST erabu completion (slot pick)
 
-    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    let saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     // slot pick (1) + gap naming (1) = 2 erabu completions by the time the hand is open.
     expect(saved.profiles[0].guidance?.erabu).toBeGreaterThanOrEqual(2);
     expect(saved.profiles[0].guidance?.mikiwameru).toBe(1); // the one JUDGE resolution so far
@@ -549,7 +549,7 @@ describe('Mission 1 stage — guidance (AD-07 §D per-verb thresholds, persisted
     cleanup();
     renderShell();
     await user.click(screen.getByText('たぬき')); // the same, now-seeded profile — guidance survives
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].guidance?.erabu).toBeGreaterThanOrEqual(2);
   });
 });

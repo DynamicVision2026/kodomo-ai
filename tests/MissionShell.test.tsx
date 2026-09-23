@@ -155,7 +155,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles).toHaveLength(1);
     expect(saved.profiles[0].progress[mission.id]).toEqual({ done: true, stamps: 0, coop: true });
 
@@ -179,7 +179,7 @@ describe('MissionShell', () => {
 
     expect(plausible).not.toHaveBeenCalledWith('use', expect.anything());
     expect(plausible).not.toHaveBeenCalledWith('apt_use', expect.anything());
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].moveProgress ?? {}).not.toHaveProperty('undefined');
   });
 
@@ -229,7 +229,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('うさぎ'));
     await user.click(screen.getByText(ui.profileConfirm));
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles).toHaveLength(2);
     // Profile A's progress survived the reload untouched.
     expect(saved.profiles[0].moveProgress['follow-naze'].rung).toBe('moratta');
@@ -239,7 +239,7 @@ describe('MissionShell', () => {
 
   it('WO-07: reaching tsukaeru routes Gap Naming into Blind-first, and the complete unfiltered hand still appears after commit', async () => {
     // Seed storage with a profile whose follow-naze is already at tsukaeru.
-    localStorage.setItem('m-app.v1', JSON.stringify({
+    localStorage.setItem('m-app.v2', JSON.stringify({
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
@@ -276,12 +276,12 @@ describe('MissionShell', () => {
     expect(screen.getByText('パンは すきですか？')).toBeInTheDocument();
     expect(screen.getByText('もう いちど いって')).toBeInTheDocument();
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].moveProgress['follow-naze'].rung).toBe('hitoride');
   });
 
   it('WO-07: blind_selfreport is tracked but never changes moveProgress, whichever option is chosen', async () => {
-    localStorage.setItem('m-app.v1', JSON.stringify({
+    localStorage.setItem('m-app.v2', JSON.stringify({
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
@@ -306,19 +306,19 @@ describe('MissionShell', () => {
     await user.click(firstChoice as HTMLElement);
     await user.click(screen.getByText(ui.blindCommit));
 
-    const beforeSelfReport = JSON.parse(localStorage.getItem('m-app.v1')!).profiles[0].moveProgress;
+    const beforeSelfReport = JSON.parse(localStorage.getItem('m-app.v2')!).profiles[0].moveProgress;
     await user.click(screen.getByText(ui.blindSelfReportDifferent)); // "ちがった" — still non-evaluative
 
     expect(plausible).toHaveBeenCalledWith(
       'blind_selfreport',
       expect.objectContaining({ props: expect.objectContaining({ classification: 'different' }) }),
     );
-    const afterSelfReport = JSON.parse(localStorage.getItem('m-app.v1')!).profiles[0].moveProgress;
+    const afterSelfReport = JSON.parse(localStorage.getItem('m-app.v2')!).profiles[0].moveProgress;
     expect(afterSelfReport).toEqual(beforeSelfReport); // unchanged by self-report
   });
 
   it('WO-07: the Toolbox reflects hitoride after normal state propagation and a reload', async () => {
-    localStorage.setItem('m-app.v1', JSON.stringify({
+    localStorage.setItem('m-app.v2', JSON.stringify({
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         moveProgress: { 'follow-naze': { rung: 'hitoride', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
@@ -433,11 +433,11 @@ describe('MissionShell', () => {
     await user.click(screen.getByText(ui.coopSolo));
     await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
 
-    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    let saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones?.M1).toBeUndefined(); // hand not revealed yet
 
     await passGate(user); // reveals layer 0's hand -> onMoveRendered -> M1 derivation
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M1.achieved).toBe(true);
     expect(typeof saved.profiles[0].milestones.M1.achievedAt).toBe('number');
   });
@@ -452,7 +452,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('パンが ふくらむのは なぜ？'));
     await passGate(user);
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].m2Evidence.proxyMissionIds).toEqual([mission.id]);
     expect(saved.profiles[0].moveProgress['follow-naze'].rung).toBe('moratta');
     expect(saved.profiles[0].milestones.M1.achieved).toBe(true);
@@ -468,7 +468,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('イーストは なにを してるの？'));
     await passGate(user); // layer 1's Gap Naming — same mission.id again
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].m2Evidence.proxyMissionIds).toEqual([mission.id]);
     expect(saved.profiles[0].milestones?.M2).toBeUndefined(); // M2a alone never sets M2
   });
@@ -492,7 +492,7 @@ describe('MissionShell', () => {
     const [choice] = document.querySelectorAll('.dig__gap-naming-option');
     await user.click(choice as HTMLElement); // mission B's Gap Naming
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].m2Evidence.proxyMissionIds.sort()).toEqual([mission.id, missionB.id].sort());
     expect(saved.profiles[0].milestones?.M2).toBeUndefined();
   });
@@ -510,11 +510,11 @@ describe('MissionShell', () => {
     await passGate(user);
     await user.click(screen.getByText('なぜC3？')); // 3rd deepen reaches root directly
 
-    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    let saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones?.M3).toBeUndefined(); // not yet — onComplete hasn't fired
 
     await user.click(screen.getByText(ui.earlyOk)); // acknowledge ねっこ -> onComplete fires
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M3.achieved).toBe(true);
     expect(saved.profiles[0].memories.first_three_chain).toEqual({
       kind: 'first_three_chain',
@@ -535,13 +535,13 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('ガスが 出ると、どうして ふくらむの？'));
     await user.click(screen.getByText(ui.earlyOk));
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones?.M3).toBeUndefined();
     expect(saved.profiles[0].memories?.first_three_chain).toBeUndefined();
   });
 
   it('achieves M4 and records first_blind_commit through the existing blind_commit flow', async () => {
-    localStorage.setItem('m-app.v1', JSON.stringify({
+    localStorage.setItem('m-app.v2', JSON.stringify({
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
@@ -560,11 +560,11 @@ describe('MissionShell', () => {
     const [choice] = document.querySelectorAll('.dig__gap-naming-option');
     await user.click(choice as HTMLElement);
 
-    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    let saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones?.M4).toBeUndefined(); // Blind-first shown, not yet committed
 
     await user.click(screen.getByText(ui.blindCommit));
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M4.achieved).toBe(true);
     expect(saved.profiles[0].memories.first_blind_commit).toEqual({
       kind: 'first_blind_commit',
@@ -592,7 +592,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('うさぎ'));
     await user.click(screen.getByText(ui.profileConfirm));
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles).toHaveLength(2);
     expect(saved.profiles[0].milestones.M1.achieved).toBe(true); // profile A, survived the reload
     expect(saved.profiles[1].milestones ?? {}).toEqual({}); // profile B, fully independent
@@ -639,7 +639,7 @@ describe('MissionShell', () => {
   });
 
   it('WO-14: M2a proxy evidence alone never awards M2 — the parent screen still shows the unconfirmed prompt', async () => {
-    localStorage.setItem('m-app.v1', JSON.stringify({
+    localStorage.setItem('m-app.v2', JSON.stringify({
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         m2Evidence: { proxyMissionIds: ['other-mission-a', 'other-mission-b'] }, // hasM2Proxy() true
@@ -660,7 +660,7 @@ describe('MissionShell', () => {
 
     expect(screen.getByText(ui.m2ConfirmPrompt)).toBeInTheDocument(); // still unconfirmed
     expect(screen.queryByText(ui.m2ConfirmedMessage)).not.toBeInTheDocument();
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones?.M2).toBeUndefined();
   });
 
@@ -677,7 +677,7 @@ describe('MissionShell', () => {
 
     // Unconfirmed state first.
     expect(screen.getByText(ui.m2ConfirmPrompt)).toBeInTheDocument();
-    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    let saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones?.M2).toBeUndefined();
 
     // The parent's one binary action.
@@ -686,7 +686,7 @@ describe('MissionShell', () => {
     expect(screen.getByText(ui.m2ConfirmedMessage)).toBeInTheDocument();
     expect(screen.queryByText(ui.m2ConfirmPrompt)).not.toBeInTheDocument();
     expect(screen.queryByText(ui.m2ConfirmAction)).not.toBeInTheDocument();
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: expect.any(Number) });
   });
 
@@ -701,7 +701,7 @@ describe('MissionShell', () => {
     await createAndSelectProfile(user);
     await playThroughToParentScreen(user);
     await user.click(screen.getByText(ui.m2ConfirmAction));
-    const firstAchievedAt = JSON.parse(localStorage.getItem('m-app.v1')!).profiles[0].milestones.M2.achievedAt;
+    const firstAchievedAt = JSON.parse(localStorage.getItem('m-app.v2')!).profiles[0].milestones.M2.achievedAt;
 
     // Reload: a fresh MissionShell instance reading the same localStorage from scratch.
     unmount();
@@ -721,7 +721,7 @@ describe('MissionShell', () => {
     // tests/milestones.test.ts.)
     expect(screen.getByText(ui.m2ConfirmedMessage)).toBeInTheDocument();
     expect(screen.queryByText(ui.m2ConfirmAction)).not.toBeInTheDocument();
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M2).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // unchanged
   });
 
@@ -752,7 +752,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('うさぎ'));
     await user.click(screen.getByText(ui.profileConfirm));
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles).toHaveLength(2);
     expect(saved.profiles[0].milestones.M2.achieved).toBe(true); // profile A, unaffected by the reload
     expect(saved.profiles[1].milestones ?? {}).toEqual({}); // profile B, fully independent — never confirmed
@@ -760,7 +760,7 @@ describe('MissionShell', () => {
 
   it('WO-14: M2b coexists with M1/M4 without changing their own behavior', async () => {
     // Seed at tsukaeru so blind_commit (M4) fires during play, same setup as the WO-07 tests.
-    localStorage.setItem('m-app.v1', JSON.stringify({
+    localStorage.setItem('m-app.v2', JSON.stringify({
       profiles: [{
         id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2, progress: {},
         moveProgress: { 'follow-naze': { rung: 'tsukaeru', aptUseDomains: ['日常', 'ことば', '社会とひと'] } },
@@ -798,13 +798,13 @@ describe('MissionShell', () => {
     await user.click(screen.getByText(ui.handoffContinue));
     await user.click(screen.getByText(ui.handoffContinue));
 
-    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    let saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M1.achieved).toBe(true); // unaffected
     expect(saved.profiles[0].milestones.M4.achieved).toBe(true); // unaffected
     expect(saved.profiles[0].milestones.M2).toBeUndefined(); // not confirmed yet
 
     await user.click(screen.getByText(ui.m2ConfirmAction));
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M1.achieved).toBe(true); // still unaffected
     expect(saved.profiles[0].milestones.M4.achieved).toBe(true); // still unaffected
     expect(saved.profiles[0].milestones.M2.achieved).toBe(true); // now also confirmed
@@ -859,12 +859,12 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('たぬき'));
     await user.click(screen.getByText(ui.profileConfirm));
 
-    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    let saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones?.M0).toBeUndefined();
 
     await user.click(screen.getByText(ui.m0Action));
     expect(screen.getByText(ui.courseHomeHeading)).toBeInTheDocument();
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     const firstAchievedAt = saved.profiles[0].milestones.M0.achievedAt;
     expect(saved.profiles[0].milestones.M0).toEqual({ achieved: true, achievedAt: expect.any(Number) });
 
@@ -880,7 +880,7 @@ describe('MissionShell', () => {
     await user.click(screen.getByText('たぬき'));
     expect(screen.queryByText(ui.m0Action)).not.toBeInTheDocument();
     expect(screen.getByText(ui.courseHomeHeading)).toBeInTheDocument();
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M0).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // unchanged
 
     // The parent screen's own M0 fallback (for the edge case where it's somehow still
@@ -922,14 +922,14 @@ describe('MissionShell', () => {
     await createAndSelectProfile(user);
     await playThroughToParentScreen(user);
 
-    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    let saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones?.M5).toBeUndefined();
 
     const nazeButton = within(document.querySelector('.mission-shell__m5-moves')!)
       .getByText(moduleJson.cardTypes['follow-naze'].label);
     await user.click(nazeButton);
 
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].moveProgress['follow-naze'].rung).toBe('sotode');
     expect(saved.profiles[0].milestones.M5).toEqual({ achieved: true, achievedAt: expect.any(Number) });
     expect(saved.profiles[0].moveProgress['follow-tatoeba']?.rung ?? 'mihakken').toBe('mihakken'); // untouched
@@ -954,11 +954,11 @@ describe('MissionShell', () => {
     const nazeButton = () => within(document.querySelector('.mission-shell__m5-moves')!)
       .getByText(moduleJson.cardTypes['follow-naze'].label);
     await user.click(nazeButton());
-    const firstSaved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const firstSaved = JSON.parse(localStorage.getItem('m-app.v2')!);
     const firstAchievedAt = firstSaved.profiles[0].milestones.M5.achievedAt;
 
     await user.click(nazeButton()); // tap again — button stays available for other moves too
-    const secondSaved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const secondSaved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(secondSaved.profiles[0].moveProgress['follow-naze'].rung).toBe('sotode'); // unchanged
     expect(secondSaved.profiles[0].milestones.M5).toEqual({ achieved: true, achievedAt: firstAchievedAt }); // unchanged
   });
@@ -975,7 +975,7 @@ describe('MissionShell', () => {
     // Child progression completes normally, all the way to the parent screen — M0 already
     // sealed, no outside use recorded yet — proving neither gates the other's play.
     await playThroughToParentScreen(user);
-    let saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    let saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].progress[mission.id].done).toBe(true);
     expect(saved.profiles[0].milestones.M0.achieved).toBe(true); // sealed at first entry
     expect(saved.profiles[0].milestones.M1.achieved).toBe(true);
@@ -985,7 +985,7 @@ describe('MissionShell', () => {
       .getByText(moduleJson.cardTypes['follow-naze'].label);
     await user.click(nazeButton);
 
-    saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].milestones.M0.achieved).toBe(true);
     expect(saved.profiles[0].milestones.M1.achieved).toBe(true); // unaffected
     expect(saved.profiles[0].milestones.M2.achieved).toBe(true); // unaffected

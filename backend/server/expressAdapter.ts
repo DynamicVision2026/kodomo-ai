@@ -39,10 +39,20 @@ export async function sendFetchResponse(res: ExpressResponse, fetchRes: Response
   res.status(fetchRes.status);
   fetchRes.headers.forEach((value, key) => {
     // Node sets its own transfer-encoding/content-length; letting the Fetch Response's through
-    // verbatim can conflict with what Express/Node actually sends.
+    // verbatim can conflict with what Express/Node actually sends. `set-cookie` is handled
+    // separately below — the undici Headers class exempts it from `forEach`'s otherwise-joined
+    // value (per the Fetch spec's own "set-cookie" carve-out), so it never appears here at all.
     if (key.toLowerCase() === 'content-length' || key.toLowerCase() === 'transfer-encoding') return;
+    if (key.toLowerCase() === 'set-cookie') return;
     res.setHeader(key, value);
   });
+  // AD-13 §1: a session cookie response — a plain `setHeader('set-cookie', ...)` would silently
+  // keep only the LAST call if this were ever more than one cookie; `getSetCookie()` (Node's own
+  // undici Headers, spec-aligned) returns each Set-Cookie value separately, and `res.append` adds
+  // each as its own header line rather than overwriting.
+  for (const cookie of fetchRes.headers.getSetCookie?.() ?? []) {
+    res.append('set-cookie', cookie);
+  }
   const body = await fetchRes.text();
   res.send(body);
 }

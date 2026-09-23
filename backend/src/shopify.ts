@@ -25,6 +25,44 @@ export interface ShopifyLineItem {
 export interface ShopifyOrderPayload {
   id: number;
   line_items: ShopifyLineItem[];
+  /** AD-13 §3: read directly off the real `orders/paid` payload now — Shopify always includes
+   *  both `email` and `customer.email` (the latter absent only for a genuinely anonymous/guest
+   *  checkout with no account and no contact email at all, vanishingly rare for a paid order).
+   *  Prefer `customer.email` when present; `email` is the fallback. */
+  email?: string | null;
+  customer?: { email?: string | null } | null;
+}
+
+export interface ShopifyRefundLineItem {
+  line_item_id: number;
+  quantity: number;
+  line_item?: { sku: string | null } | null;
+}
+
+/** AD-13 §3: the `refunds/create` webhook payload — a refund references its order only by id, so
+ *  the handler must look up `orders/{orderId}` (already recorded by the `orders/paid` handler)
+ *  to know which family/entitlement it belongs to. */
+export interface ShopifyRefundPayload {
+  id: number;
+  order_id: number;
+  refund_line_items: ShopifyRefundLineItem[];
+}
+
+/** The purchaser's email, per AD-13 §3's own preference order. */
+export function purchaserEmail(order: ShopifyOrderPayload): string | null {
+  return order.customer?.email ?? order.email ?? null;
+}
+
+/** Module ids actually refunded, restricted to this integration's own SKU allowlist — a refund
+ *  touching only products A-D's line items returns `[]` and the webhook does nothing. */
+export function matchRefundedModuleIds(refund: ShopifyRefundPayload): string[] {
+  const moduleIds = new Set<string>();
+  for (const item of refund.refund_line_items) {
+    const sku = item.line_item?.sku;
+    if (!sku) continue;
+    for (const moduleId of SKU_TO_MODULE_IDS[sku] ?? []) moduleIds.add(moduleId);
+  }
+  return [...moduleIds];
 }
 
 export interface MatchedLineItem {

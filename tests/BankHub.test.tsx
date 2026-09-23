@@ -91,10 +91,10 @@ describe('Bank hub — reachable and playable from the real product surface', ()
   });
 
   it('with a real household purchase, a family can see, select, and fully play a Bank Dig through the existing Dig loop, then return to the Bank list with its own progress retained', async () => {
-    localStorage.setItem('m-app.v1', JSON.stringify({
-      // WO-30 §0: a real purchase now also requires the code itself, not just the derived
-      // entitlement tag — see src/engine/entitlements.ts's reconcileEntitlements().
-      profiles: [], entitlements: ['m1:full'], redeemedCode: 'NAZE-TEST-TEST', founder: false, abVariant: 'A', deviceId: 'd1',
+    localStorage.setItem('m-app.v2', JSON.stringify({
+      // AD-13: entitlement is server-authoritative now — `cachedEntitlements` is the one field
+      // hasAccess() ever reads (src/engine/entitlements.ts).
+      profiles: [], familyId: 'f1', cachedEntitlements: ['m1'], pendingSyncKeys: [], abVariant: 'A', deviceId: 'd1',
     }));
     const user = userEvent.setup();
     render(
@@ -137,7 +137,7 @@ describe('Bank hub — reachable and playable from the real product surface', ()
     const escalatorButton = screen.getByText(bankEscalator.title).closest('button')!;
     expect(escalatorButton.textContent).not.toContain(ui.bankDoneLabel);
 
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0].progress[bankAtode.id].done).toBe(true);
     expect(saved.profiles[0].progress[chantoMission.id].done).toBe(true);
   });

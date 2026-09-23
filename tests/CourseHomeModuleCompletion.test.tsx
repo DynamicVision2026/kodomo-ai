@@ -44,13 +44,13 @@ async function createProfileWithDoneStories(user: ReturnType<typeof userEvent.se
   await skipM0RitualIfPresent(user, ui);
 
   if (doneCount > 0) {
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     const profile = saved.profiles[0];
     profile.progress = {};
     for (let i = 0; i < doneCount; i++) {
       profile.progress[STORY[i]!.id] = { done: true, stamps: 0, coop: false };
     }
-    localStorage.setItem('m-app.v1', JSON.stringify(saved));
+    localStorage.setItem('m-app.v2', JSON.stringify(saved));
     cleanup();
     renderShell();
     await user.click(screen.getByText('たぬき'));

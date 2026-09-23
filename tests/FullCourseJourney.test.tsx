@@ -236,7 +236,7 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + Bank unlo
 
     // Milestones advanced through real play: M1 (a follow-up move was obtained) and M3 (a
     // genuine 3+ layer chain was completed — Story 3/4/5/8 are all 3-layer).
-    const saved = JSON.parse(localStorage.getItem('m-app.v1')!);
+    const saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     const profile = saved.profiles[0];
     expect(profile.milestones.M1.achieved).toBe(true);
     expect(profile.milestones.M3.achieved).toBe(true);
