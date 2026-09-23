@@ -21,9 +21,10 @@ import { GuidanceAffordance } from '../ad12/GuidanceAffordance';
 import { SlipCascade, type Slip } from '../ad12/SlipCascade';
 import { MoveTray, type TrayCard } from '../ad12/MoveTray';
 import { JudgeBar } from '../ad12/JudgeBar';
-import { DepthRow } from '../ad12/DepthRow';
 import { RootPlane } from '../ad12/RootPlane';
 import { VoicePlane } from '../ad12/VoicePlane';
+import { BreakthroughScene } from '../ad12/BreakthroughScene';
+import { FieldStage } from '../ad12/FieldStage';
 import { rootFormFor } from '../ad12/rootForm';
 import '../ad12/tokens.css';
 import '../ad12/primitives.css';
@@ -669,29 +670,48 @@ export function MissionStage({
     );
   }
 
+  // Builder work order §4: the actor row + world content, shared by both branches below —
+  // whatever BreakthroughScene's own `children` wraps for the FLIP, or FieldStage's plain
+  // background for the 'tip' screen (which never shows a depth row/breakthrough at all).
+  const worldContent = (
+    <>
+      <div className="stage__actor-row">
+        <Mascot state={mascotState} />
+      </div>
+      {world}
+    </>
+  );
+
   return (
     <div className={`ad12 stage${entering ? ' is-diving' : ''}${rising ? ' is-rising' : ''}`}>
       <div
         className={[
           'stage__world',
-          `ad12-field ad12-field--${fieldTone}`,
           descending ? 'is-descending' : '',
           worldImpact ? `is-impact-${worldImpact}` : '',
         ].filter(Boolean).join(' ')}
         data-depth={depthAttr}
       >
-        {part !== 'tip' && (
-          // AD-12 §4 state 6/11 DepthRow replaces the old plain dot meter — one filled tab per
-          // breakthrough, the root tab gold only once actually reached. `otherYellowActive`
-          // mutes that root tab's own accent exactly while RootPlane's own hairline (the more
-          // prominent "one yellow" at that exact moment, F7) is also on screen — the only window
-          // where both would otherwise show an active yellow at once.
-          <DepthRow total={depthTotal} current={depthCurrent} rootReached={state.atRoot} otherYellowActive={state.atRoot} />
+        {part !== 'tip' ? (
+          // AD-12 §4 state 6/11 + Builder work order §4: BreakthroughScene replaces the old
+          // plain-class field-tone toggle and bare DepthRow — one filled tab per breakthrough
+          // (root tab gold only once actually reached; `otherYellowActive` mutes that root tab's
+          // own accent exactly while RootPlane's own hairline, the more prominent "one yellow" at
+          // that exact moment, F7, is also on screen), PLUS the real FLIP travel/settle sequence
+          // whenever `depthCurrent` actually increases (a genuine deepening move) — never fires
+          // on a Miss (flatReply/VoicePlane, §3) or any other non-deepen state change.
+          <BreakthroughScene
+            tone={fieldTone}
+            total={depthTotal}
+            current={depthCurrent}
+            rootReached={state.atRoot}
+            otherYellowActive={state.atRoot}
+          >
+            {worldContent}
+          </BreakthroughScene>
+        ) : (
+          <FieldStage tone={fieldTone}>{worldContent}</FieldStage>
         )}
-        <div className="stage__actor-row">
-          <Mascot state={mascotState} />
-        </div>
-        {world}
       </div>
       {tray && <div className="stage__tray-anchor">{tray}</div>}
     </div>

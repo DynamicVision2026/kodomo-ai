@@ -276,6 +276,30 @@ describe('WO-25 #3/#4 — the question is visibly the shovel, and a stone is a r
     });
   });
 
+  it('Builder work order §4: a real deepening move is driven by BreakthroughScene, not a bare class toggle on .stage__world', async () => {
+    const user = userEvent.setup();
+    renderShell();
+    await enterStage(user);
+    await pickClearAndReachJudge(user);
+    await passLayer0Gate(user);
+
+    // The class-toggle imitation is gone: .stage__world itself never wears ad12-field--N; that
+    // treatment now lives on the nested BreakthroughScene/FieldStage element it wraps.
+    const world = document.querySelector('.stage__world')!;
+    expect(world.className).not.toMatch(/\bad12-field\b/);
+    expect(document.querySelector('.stage__world > .ad12-breakthrough-scene')).toBeInTheDocument();
+    expect(document.querySelector('.ad12-breakthrough-scene .ad12-field')).toBeInTheDocument();
+    expect(document.querySelector('.ad12-breakthrough-scene .ad12-depth-row')).toBeInTheDocument();
+
+    await user.click(screen.getByText('どういうこと？'));
+    await waitFor(() => {
+      expect(document.querySelector('.stage__world')!.getAttribute('data-depth')).toBe('2');
+    });
+    // Still the same live BreakthroughScene instance driving depth/field tone after the move.
+    expect(document.querySelector('.stage__world > .ad12-breakthrough-scene')).toBeInTheDocument();
+    expect(document.querySelector('.ad12-depth-row')!.getAttribute('aria-label')).toBe('2 / 3');
+  });
+
   it('a non-deepen play never dead-ends: the chip visibly hits a stone, stays visible as a blocked marker, gives a neutral recovery cue, and the rest stay live', async () => {
     const user = userEvent.setup();
     renderShell();

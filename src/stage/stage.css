@@ -19,16 +19,21 @@
   position: relative;
 }
 
-/* IP-1: stable anchors. Depth deepens the field ramp only (AD-12's own FieldStage tone classes,
- * applied directly alongside this one in MissionStage.tsx) — never a route change. */
+/* IP-1: stable anchors. Depth deepens the field ramp only (Builder work order §4: now AD-12's
+ * own BreakthroughScene, nested one level inside this structural region — see MissionStage.tsx)
+ * — never a route change. Padding moved onto the nested `.ad12-field` itself (FieldStage's own
+ * --space-6), so it isn't doubled by this wrapper's own. */
 .stage__world {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--space-4, 16px);
-  padding-bottom: var(--space-2, 8px);
   overflow-y: auto;
+}
+
+.stage__world > .ad12-breakthrough-scene,
+.stage__world > .ad12-field {
+  flex: 1 1 auto;
 }
 
 /* WO-25 #3/#4: the world's own reaction at the exact instant a dig action resolves — makes the
