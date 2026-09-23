@@ -5,18 +5,40 @@
   border-radius: var(--ad12-radius-chip);
   padding: 0.75rem 1rem;
   min-height: 48px;
+  min-width: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
+  transition: background-color var(--ad12-t-settle), opacity var(--ad12-t-settle);
 }
 
+/** Builder work order §6: "the plane morphs into a RefrainSlot card with YELLOW slots for the
+ *  missing words" — the waiting-for-ポン太 state, before she completes the line. */
 .ad12-refrain-slot.is-empty {
-  opacity: 0.5;
+  border-color: var(--ad12-accent);
+  background: color-mix(in srgb, var(--ad12-accent) 18%, transparent);
+  opacity: 1;
 }
 
 .ad12-refrain-slot.is-filled {
   border-style: solid;
+  border-color: var(--ad12-recess-1);
   background: var(--ad12-paper);
   opacity: 1;
+}
+
+/** Builder work order §6: the row of slots representing one refrain completion — same
+ *  `.ad12-recess` dark step SlipCascade's own gap uses, since this is the same "recall" surface. */
+.ad12-refrain-slot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad12-refrain-slot {
+    transition-duration: var(--ad12-t-reduced);
+  }
 }

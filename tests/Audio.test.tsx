@@ -415,7 +415,8 @@ describe('Builder work order §0/§4 — CHECKPOINT solo completion: afterCompar
     await waitFor(() => expect(document.querySelector('[data-audio-role="CHECKPOINT"]')).toBeInTheDocument());
     const audioButtons = document.querySelectorAll('[data-audio-role] button');
     await user.click(audioButtons[0] as HTMLElement); // さいせいする — actually played
-    await user.click(audioButtons[audioButtons.length - 1] as HTMLElement); // continue
+    const skipButton = document.querySelector('[data-audio-role] .ad12-listening-pocket__skip')!;
+    await user.click(skipButton as HTMLElement); // とばす
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
 
     let saved: AppState = JSON.parse(localStorage.getItem('m-app.v2')!);
@@ -450,7 +451,8 @@ describe('Builder work order §0/§4 — CHECKPOINT solo completion: afterCompar
     await waitFor(() => expect(document.querySelector('[data-audio-role="CHECKPOINT"]')).toBeInTheDocument());
     const audioButtons = document.querySelectorAll('[data-audio-role] button');
     await user.click(audioButtons[0] as HTMLElement);
-    await user.click(audioButtons[audioButtons.length - 1] as HTMLElement);
+    const skipButton = document.querySelector('[data-audio-role] .ad12-listening-pocket__skip')!;
+    await user.click(skipButton as HTMLElement);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
 
     const saved1: AppState = JSON.parse(localStorage.getItem('m-app.v2')!);
@@ -516,7 +518,8 @@ describe('Builder work order §0/§4 — CHECKPOINT solo completion: afterCompar
     // THEN the comparison audio is actually heard.
     const audioButtons = document.querySelectorAll('[data-audio-role] button');
     await user.click(audioButtons[0] as HTMLElement); // さいせいする — actually played
-    await user.click(audioButtons[audioButtons.length - 1] as HTMLElement); // continue
+    const skipButton = document.querySelector('[data-audio-role] .ad12-listening-pocket__skip')!;
+    await user.click(skipButton as HTMLElement); // とばす
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
 
     saved = JSON.parse(localStorage.getItem('m-app.v2')!);

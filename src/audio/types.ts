@@ -81,4 +81,14 @@ export interface AudioLine {
   text: string;
   audioUrl: string;
   pauseAfterMs: number;
+  /**
+   * Builder work order §6 (Listening Pocket — R2 refrains): present ONLY on a GUIDE line that
+   * mechanically matches the refrain-split rule (scripts/tag-refrain-splits.ts is the one place
+   * that decides this — never hand-authored). `refrain` identifies which of the 3 canonical
+   * refrains this is (1-4/1-6/1-7 each carry all three, in order); `completion` is the exact
+   * text (ruby-free — these are short kana/kanji fragments already covered by the mission's own
+   * kanji-grade lint) the VERY NEXT line (always PONTA, verified by the same rule) starts with.
+   * scripts/lint-refrain-splits.ts fails the build if this field and the rule ever disagree.
+   */
+  refrainSplit?: { refrain: 1 | 2 | 3; completion: string };
 }

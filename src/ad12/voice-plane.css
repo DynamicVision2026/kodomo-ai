@@ -13,6 +13,14 @@
   margin-bottom: 0.35rem;
 }
 
+/** Builder work order §6 (Listening Pocket): long lines break at phrase boundaries rather than
+ *  an arbitrary character wrap. `auto-phrase` is still an emerging CSS value — unsupported
+ *  browsers simply ignore the declaration and keep the browser's own default wrapping, which is
+ *  exactly the documented fallback (never a hard requirement). */
+.ad12-voice-plane p.ad12-reading-text {
+  word-break: auto-phrase;
+}
+
 /** ポン太 — warm tan border, never the yellow accent (F7). */
 .ad12-voice-plane--ponta {
   border-left-color: var(--ad12-ponta);

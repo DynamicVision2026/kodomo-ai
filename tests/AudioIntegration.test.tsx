@@ -135,13 +135,14 @@ describe('Final Module 1 Audio Integration Pass — 2. ready manifests actually 
     await user.click(screen.getByText(ui.coopSolo));
 
     expect(document.querySelector('[data-audio-role="GUIDED"]')).toBeInTheDocument();
-    // Real committed MP3s exist (audioStatus 'ready') — FullAudioScene, not the text-anchor
-    // fallback: a play button, not the two-tap .speech-bubble sequence.
-    expect(screen.getByText(ui.audioPlayLabel!)).toBeInTheDocument();
+    // Real committed MP3s exist (audioStatus 'ready') — the Listening Pocket, not the text-anchor
+    // fallback: an interactive play plane (aria-labelled, not visible text), not the two-tap
+    // .speech-bubble sequence.
+    expect(screen.getByRole('button', { name: ui.audioPlayLabel! })).toBeInTheDocument();
     expect(document.querySelector('.speech-bubble')).not.toBeInTheDocument();
     expect(screen.queryByText(ui.stageQuestionPrompt)).not.toBeInTheDocument(); // practice hasn't started
 
-    await user.click(screen.getByText(ui.handoffContinue)); // the always-available continue action
+    await user.click(screen.getByText(ui.audioSkipLabel!)); // 「とばす」, the always-available skip action
     expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument();
     expect(screen.getByText(ui.stageQuestionPrompt)).toBeInTheDocument(); // now the real stage
   });
@@ -167,7 +168,7 @@ describe('Final Module 1 Audio Integration Pass — 2. ready manifests actually 
 
     await user.click(screen.getByText(ui.stageReturnToChild));
     expect(document.querySelector('[data-audio-role="CHECKPOINT"]')).toBeInTheDocument();
-    expect(screen.getByText(ui.audioPlayLabel!)).toBeInTheDocument(); // real playback, not text-anchor
+    expect(screen.getByRole('button', { name: ui.audioPlayLabel! })).toBeInTheDocument(); // real playback, not text-anchor
 
     await skipCheckpointAudioIfPresent(user);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
@@ -188,7 +189,7 @@ describe('Final Module 1 Audio Integration Pass — 2. ready manifests actually 
     await waitFor(() => expect(screen.getByText(ui.teachbackSkip)).toBeInTheDocument());
     await user.click(screen.getByText(ui.teachbackSkip));
     expect(document.querySelector('[data-audio-role="CHECKPOINT"]')).toBeInTheDocument();
-    expect(screen.getByText(ui.audioPlayLabel!)).toBeInTheDocument(); // real playback, not text-anchor
+    expect(screen.getByRole('button', { name: ui.audioPlayLabel! })).toBeInTheDocument(); // real playback, not text-anchor
 
     await skipCheckpointAudioIfPresent(user);
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
@@ -207,11 +208,11 @@ describe('Final Module 1 Audio Integration Pass — 2. ready manifests actually 
 
     // Right here — solo, no teach-back/M2b ever happened, yet the audio still shows.
     await waitFor(() => expect(document.querySelector('[data-audio-role="TRANSFER"]')).toBeInTheDocument());
-    expect(screen.getByText(ui.audioPlayLabel!)).toBeInTheDocument(); // real playback, not text-anchor
+    expect(screen.getByRole('button', { name: ui.audioPlayLabel! })).toBeInTheDocument(); // real playback, not text-anchor
     expect(screen.queryByText(ui.completeHeading)).not.toBeInTheDocument(); // before course-complete
     expect(screen.queryByText(ui.stageHandoffPrompt)).not.toBeInTheDocument(); // never a parent gate
 
-    await user.click(screen.getByText(ui.handoffContinue));
+    await user.click(screen.getByText(ui.audioSkipLabel!));
     expect(document.querySelector('[data-audio-role]')).not.toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
   });
@@ -228,7 +229,7 @@ describe('Final Module 1 Audio Integration Pass — 2. ready manifests actually 
     await waitFor(() => expect(document.querySelector('[data-audio-role="TRANSFER"]')).toBeInTheDocument());
     expect(screen.queryByText(ui.stageHandoffPrompt)).not.toBeInTheDocument(); // audio comes first
 
-    await user.click(screen.getByText(ui.handoffContinue));
+    await user.click(screen.getByText(ui.audioSkipLabel!));
     await waitFor(() => expect(screen.getByText(ui.stageHandoffPrompt)).toBeInTheDocument());
     await user.click(screen.getByText(ui.stageHandoffGiven));
     await waitFor(() => expect(screen.getByText(janken.teachBack)).toBeInTheDocument());

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Ruby } from '../engine/ruby';
 import { animate, tokenMs } from './motion';
 import { GuidanceAffordance } from './GuidanceAffordance';
@@ -31,6 +31,11 @@ export interface VoicePlaneProps {
   /** Same meaning as AnswerPlane's own `guidanceLevel` — only consulted when `onAdvance` is
    *  passed. Defaults to 'independent' (no cue) otherwise, matching AnswerPlane's own default. */
   guidanceLevel?: GuidanceLevel;
+  /** Builder work order §6: the Listening Pocket's own start screen — "the first voice plane
+   *  carrying a large play glyph" — renders an extra element inside the plane, below the reading
+   *  text. Omitted for every other caller (ordinary lines, Miss/Challenge) — this component never
+   *  renders one on its own. */
+  overlay?: ReactNode;
 }
 
 /**
@@ -45,7 +50,7 @@ export interface VoicePlaneProps {
  * speaker change (that's a different plane's identity, not a line swap on this one).
  */
 export function VoicePlane({
-  speaker, text, speakerLabel, variant = 'normal', onAdvance, advanceLabel, guidanceLevel,
+  speaker, text, speakerLabel, variant = 'normal', onAdvance, advanceLabel, guidanceLevel, overlay,
 }: VoicePlaneProps) {
   const textRef = useRef<HTMLParagraphElement>(null);
   const prevRef = useRef<{ speaker: Speaker; text: string }>({ speaker, text });
@@ -66,6 +71,7 @@ export function VoicePlane({
     <>
       <p className="ad12-ui-text ad12-voice-plane__speaker">{speakerLabel}</p>
       <p ref={textRef} className="ad12-reading-text"><Ruby text={text} /></p>
+      {overlay}
     </>
   );
 

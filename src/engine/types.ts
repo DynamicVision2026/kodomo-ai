@@ -263,6 +263,14 @@ export interface ModuleUiStrings {
   // (DigLayer.earlyOk.challenger); the robot has no such field, so its name is fixed UI
   // chrome here instead (CI gate 3: no child-facing string lives in component code).
   stageRobotName: string;
+  /** Builder work order §6 (Listening Pocket rebuild): ポン太's own speaker name, needed once
+   *  outside the in-mission challenge context (where it already comes from the mission's own
+   *  authored `earlyOk.challenger`, always this same value — pipeline/03_render.ts hardcodes it
+   *  for every mission) — the Listening Pocket has no mission-content access at all, only the
+   *  audio manifest's own `speaker: 'PONTA'` tag, so this is fixed UI chrome here too, same
+   *  reasoning as `stageRobotName` immediately above. Optional so an existing module fixture
+   *  without it keeps working unchanged (falls back to the same literal in AudioScene.tsx). */
+  stagePontaName?: string;
   // AD-07 beat 13: the large, non-dialogue きょうのコツ moment's one permitted generic
   // continuation action — the sole surviving つぎへ, everywhere else replaced by tap-to-read.
   stageNextLabel: string;
@@ -316,6 +324,17 @@ export interface ModuleUiStrings {
    *  `handoffContinue`/always-available exit is unaffected either way — this screen still can
    *  never block on actually listening. */
   audioPlayLabel?: string;
+  /** Builder work order §6 (Listening Pocket rebuild): accessible names for the pocket's own
+   *  icon controls — pause/resume/replay are icon-only (≥48px tap targets), never visible text,
+   *  so these exist purely for screen readers/testing, same contract as AnswerPlane's own
+   *  `readOnLabel`. `audioSkipLabel` IS visible (quiet corner text, §6: "a quiet text
+   *  「とばす」") — the pocket's own skip action, replacing the old plain `handoffContinue`
+   *  button this screen used before the rebuild. All four optional, same reasoning as
+   *  `audioListenPrompt` above — only ever rendered for a mission with a registered AudioScript. */
+  audioPauseLabel?: string;
+  audioResumeLabel?: string;
+  audioReplayLabel?: string;
+  audioSkipLabel?: string;
 
   // --- WO-34: Real AI Lab (one optional parent-supervised session, after Story 1-8, before the
   // course-complete screen) ---------------------------------------------------------------------

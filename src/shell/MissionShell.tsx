@@ -824,6 +824,8 @@ export function MissionShell({
         robotLine={script?.robotLine ?? ''}
         lines={script?.lines}
         ui={ui}
+        guidanceUses={profile?.guidance ?? {}}
+        onGuidanceUse={guidanceUsed}
         onDone={(played) => {
           if (placement === 'pre') { setAudioActuallyPlayed(played); setScreen({ kind: 'stage' }); return; }
           if (placement === 'post-ungated') { finishStageWork(); return; }

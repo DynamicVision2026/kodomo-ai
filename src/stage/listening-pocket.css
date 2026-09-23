@@ -1,0 +1,92 @@
+@import '../ad12/tokens.css';
+
+/**
+ * Builder work order §6: the Listening Pocket — real sequential playback rebuilt onto AD-12's
+ * own VoicePlane/RefrainSlot. Layout only; the voice plane/refrain-slot/guidance-affordance
+ * visuals themselves are entirely their own components' own CSS, unchanged here.
+ */
+.ad12-listening-pocket {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ad12-listening-pocket__play-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--ad12-ink);
+  align-self: center;
+}
+
+.ad12-listening-pocket__progress {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+}
+
+/** One mark per manifest line — no scrubber, no time display (§6's own explicit "No scrubber, no
+ *  time display"). Past lines white, the current line yellow, everything else neutral. */
+.ad12-listening-pocket__mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ad12-recess-1);
+  transition: background-color var(--ad12-t-settle);
+}
+
+.ad12-listening-pocket__mark.is-past {
+  background: var(--ad12-paper);
+  box-shadow: 0 0 0 1px var(--ad12-recess-1) inset;
+}
+
+.ad12-listening-pocket__mark.is-current {
+  background: var(--ad12-accent);
+}
+
+.ad12-listening-pocket__controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/** Icons >= 48px (F8's own tap-target minimum, `ad12-tappable`) — pause/resume and replay. */
+.ad12-listening-pocket__control {
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  border: none;
+  border-radius: var(--ad12-radius-chip);
+  background: var(--ad12-paper);
+  color: var(--ad12-ink);
+  cursor: pointer;
+}
+
+.ad12-listening-pocket__control:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/** §6: "a quiet text 「とばす」 in the corner" — deliberately plain, never styled as a primary
+ *  action (that's the point: it's the escape hatch, not the invitation). */
+.ad12-listening-pocket__skip {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  color: var(--ad12-ink);
+  opacity: 0.6;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad12-listening-pocket__mark {
+    transition-duration: var(--ad12-t-reduced);
+  }
+}

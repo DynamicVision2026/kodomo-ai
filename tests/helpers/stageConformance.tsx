@@ -223,11 +223,12 @@ async function skipBattleIfPresent(user: ReturnType<typeof userEvent.setup>, ui:
 }
 
 /**
- * WO-33/WO-35: dismisses whichever of the two AudioScene screens is showing (src/stage/
- * AudioScene.tsx's own dispatch): the text-anchor fallback (`.speech-bubble` x2, tap-to-advance)
- * for a mission whose audio is still pending production, or the real full-playback screen (a
- * play button plus an always-available continue button) for one with real committed MP3s
- * (chanto/1-1 today). Either way the continue action alone is enough to leave the screen — never
+ * WO-33/WO-35 + Builder work order §6 (Listening Pocket rebuild): dismisses whichever of the two
+ * AudioScene screens is showing (src/stage/AudioScene.tsx's own dispatch): the text-anchor
+ * fallback (`.speech-bubble` x2, tap-to-advance) for a mission whose audio is still pending
+ * production, or the real Listening Pocket (an interactive first voice plane carrying the play
+ * glyph, plus an always-available quiet 「とばす」 skip action) for one with real committed MP3s
+ * (chanto/1-1 today). Either way the skip action alone is enough to leave the screen — never
  * requires actually pressing play, matching the screen's own "optional, never blocks" contract.
  */
 async function dismissAudioScene(user: ReturnType<typeof userEvent.setup>) {
@@ -237,14 +238,14 @@ async function dismissAudioScene(user: ReturnType<typeof userEvent.setup>) {
     await user.click(document.querySelector('.speech-bubble') as HTMLElement); // the robotSays anchor
     return;
   }
-  const buttons = document.querySelectorAll('[data-audio-role] button');
-  await user.click(buttons[buttons.length - 1] as HTMLElement); // the continue button
+  const skip = document.querySelector('[data-audio-role] .ad12-listening-pocket__skip') as HTMLElement;
+  await user.click(skip); // 「とばす」
 }
 
-/** Builder work order §5: the "actually played" counterpart of `dismissAudioScene` — presses
- *  さいせいする (the FIRST button on the real full-playback screen) before continuing, so
+/** Builder work order §5/§6: the "actually played" counterpart of `dismissAudioScene` — taps the
+ *  Listening Pocket's own first voice plane (the play glyph's tap target) before skipping, so
  *  `MissionShell`'s own `audioActuallyPlayed` state is true. A no-op text-anchor fallback (still
- *  pending-production content) has no real play button at all, so it falls back to a plain
+ *  pending-production content) has no real play affordance at all, so it falls back to a plain
  *  dismiss — priming never applies to that path regardless (see AudioScene.tsx's own doc
  *  comment on `TextAnchorAudioScene`). */
 async function playThenDismissAudioScene(user: ReturnType<typeof userEvent.setup>) {
@@ -252,9 +253,10 @@ async function playThenDismissAudioScene(user: ReturnType<typeof userEvent.setup
     await dismissAudioScene(user);
     return;
   }
-  const buttons = document.querySelectorAll('[data-audio-role] button');
-  await user.click(buttons[0] as HTMLElement); // さいせいする
-  await user.click(buttons[buttons.length - 1] as HTMLElement); // continue, mid/after playback
+  const playPlane = document.querySelector('[data-audio-role] .ad12-voice-plane--interactive') as HTMLElement;
+  await user.click(playPlane); // さいせいする — starts playback
+  const skip = document.querySelector('[data-audio-role] .ad12-listening-pocket__skip') as HTMLElement;
+  await user.click(skip); // 「とばす」, mid/after playback
 }
 
 /**
