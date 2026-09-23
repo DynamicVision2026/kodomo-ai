@@ -2,247 +2,310 @@
 
 Repo: `DynamicVision2026/kodomo-ai` · Branch: `claude/sprint-1-setup-ok4oym` · Store: `https://soul-id-2.myshopify.com/`
 
-This is the single, ordered checklist from "code merged" to "a real family can buy, get a
-code, and play." Every step below needs an account or credential this session does not have —
-Google Cloud, Shopify Admin, Anthropic, DeepSeek. Nothing here has been run live; this is
-written so whoever has that access can follow it top to bottom with no further decisions to
-make.
+This is the single, ordered checklist from "code merged" to "a real family can log in, buy, and
+play." Every step below needs an account or credential this session does not have — Google
+Cloud, Shopify Admin, Anthropic, DeepSeek. Nothing here has been run live; this is written so
+whoever has that access can follow it top to bottom with no further decisions to make.
 
-**Architecture, standardized on one console:** Firebase Hosting (frontend — the LP, `/play`
-app, print deck, legal pages) + Cloud Run (backend — the Shopify webhook, code issuance,
-redemption API) + Firestore (persistent family-code store) + Secret Manager (backend secrets),
-all in the same Google Cloud/Firebase project.
+**AD-16 §5 architecture — three Cloud Run services, one Firestore database, no Firebase
+Hosting:**
+- **Public frontend** (`Dockerfile.frontend`) — the LP, `/play`, `/login`, `/account`, `/claim`,
+  print deck/kit, legal pages. A plain static file server, no product code of its own.
+- **Public backend** (`Dockerfile`) — the Shopify webhooks, Family Account auth/session API,
+  purchase-intent/claim API, `/units/{id}/open`. `--allow-unauthenticated`; its own HMAC/session
+  checks are the real security boundary (see `backend/src/router.ts`).
+- **`kodomo-ai-admin`** (`Dockerfile.admin`) — the staff dashboard (search/family/order+refund/
+  queues/audit log) and its `/admin-api/*`. Deployed behind Google Identity-Aware Proxy, never
+  `--allow-unauthenticated`; nothing here is reachable from the other two services' origins, and
+  nothing admin-related ships in either of them.
+- **Firestore (Native mode)** — the one production database, shared by the public backend and
+  `kodomo-ai-admin`; families, sessions, orders, purchase intents, claims, the `staff/` allowlist,
+  and the append-only audit log (`backend/src/schema.ts`).
+- **Firebase** is used ONLY for Firestore rules/indexes deployment (`firebase.json` today has no
+  `hosting` block at all) — Firebase *Hosting* is abandoned. Do not add one back.
 
-Do the four parts **in this order** — 2 depends on 1's output, 3 depends on 1 and 2, and 4 is
+Do the parts **in this order** — 2 and 2B depend on 1's output, 3 depends on 1 and 2, and 4 is
 independent (do it whenever, including in parallel with 1-3).
 
 ```
-1. Deploy the Cloud Run backend         ──┐
-                                           ├──> 3. Shopify webhook + Flow + test order
-2. Deploy to Firebase Hosting  ───────────┘
-                                           (needs 1's URL as an env var, and 2 deployed to receive it)
+1. Deploy the Cloud Run backend            ──┐
+                                              ├──> 3. Shopify webhook + real order test
+2. Deploy the public frontend to Cloud Run ──┘
+                                              (needs 1's URL as a build arg, and 2 deployed to receive it)
+
+2B. Deploy kodomo-ai-admin (IAP) ── independent of 2, needs 1's Firestore project
 
 4. Content pipeline keys ──> real Mission content (independent of 1-3)
 ```
 
 ---
 
-## Part 1 — Deploy the backend to Cloud Run
+## Part 1 — Deploy the public backend to Cloud Run
 
-Full detail and the *why* behind each design choice: `docs/task7-shopify-backend-runbook.md`.
-This section is the condensed, ordered command sequence. Backend source: `backend/src/` (the
-platform-neutral logic — webhook/HMAC/isolation/redemption, unchanged from its original
-design) + `backend/server/` (Express + Firestore + Secret Manager, the Cloud-Run-specific
-glue). Builds via the repo-root `Dockerfile`.
+Backend source: `backend/src/` (platform-neutral — webhook/HMAC/session/entitlement logic,
+`backend/src/router.ts` is the actual route table) + `backend/server/` (Express + Firestore +
+Secret Manager, the Cloud-Run-specific glue). Builds via the repo-root `Dockerfile`.
+`docs/task7-shopify-backend-runbook.md` documents the ORIGINAL (pre-AD-13) unlock-code design in
+detail and is useful background on the Shopify-isolation mechanism (still true today: exact-SKU
+matching, `backend/src/shopify.ts`), but its own concrete routes/curl examples describe a system
+this repo no longer runs — this Part is the current, accurate one.
 
 **Prerequisite:** a Google Cloud project with the Cloud Run, Artifact Registry, Firestore, and
-(if you want the optional runtime-fetch path in `backend/server/secrets.ts`) Secret Manager
-APIs enabled, and the `gcloud` CLI authenticated (`gcloud auth login`,
+Secret Manager APIs enabled, and the `gcloud` CLI authenticated (`gcloud auth login`,
 `gcloud config set project <PROJECT_ID>`).
 
 ```sh
-# 1. Create the Firestore database, once per project (Native mode — not Datastore mode).
+# 1. Create the Firestore database, once per project (Native mode — not Datastore mode; AD-13
+#    §1/AD-16 confirm Firestore Native is the one production database, shared with kodomo-ai-admin).
 gcloud firestore databases create --location=asia-northeast1
 # Pick whatever region you'll also deploy Cloud Run into — same-region keeps latency low.
 
-# 2. Create the three secrets in Secret Manager (values, not names, are what's private here).
+# 2. Create the three REQUIRED secrets (backend/server/buildEnv.ts's own REQUIRED_SECRET_NAMES —
+#    the container refuses to start, and refuses a placeholder value, without all three).
 echo -n "<a long random string YOU generate>" | \
-  gcloud secrets create admin-token --data-file=-
+  gcloud secrets create admin-token --data-file=-          # legacy CLI-only bearer surface, backend/src/handlers/admin.ts
+echo -n "<a long random string YOU generate — never reused elsewhere>" | \
+  gcloud secrets create auth-pepper --data-file=-           # HMACs every login code/session/purchase token
 echo -n "<placeholder for now>" | \
   gcloud secrets create shopify-webhook-secret --data-file=-
 # real value comes from Part 3 step 2 below — update it after with:
 #   echo -n "<real value>" | gcloud secrets versions add shopify-webhook-secret --data-file=-
+
+# 3. Optional secrets — only if/when you have them; the backend degrades honestly without them
+#    (no Shopify Admin API calls, no email actually sent — see backend/server/buildEnv.ts's own
+#    LoggingEmailSender fallback) rather than crashing.
 echo -n "<a custom app Admin API token, scope: write_orders>" | \
   gcloud secrets create shopify-admin-api-token --data-file=-
+echo -n "<Postmark/SES API key>" | gcloud secrets create email-api-key --data-file=-
 
-# 3. Build and deploy directly from source — gcloud builds the Dockerfile in Cloud Build and
+# 4. Build and deploy directly from source — gcloud builds the Dockerfile in Cloud Build and
 #    deploys the result, no separate docker build/push needed.
-gcloud run deploy naze-family-code-backend \
+gcloud run deploy kodomo-ai-backend \
   --source . \
   --region asia-northeast1 \
   --allow-unauthenticated \
-  --set-env-vars=SHOPIFY_SHOP_DOMAIN=soul-id-2.myshopify.com \
-  --set-secrets=ADMIN_TOKEN=admin-token:latest,SHOPIFY_WEBHOOK_SECRET=shopify-webhook-secret:latest,SHOPIFY_ADMIN_API_TOKEN=shopify-admin-api-token:latest
+  --set-env-vars=SHOPIFY_SHOP_DOMAIN=soul-id-2.myshopify.com,APP_ORIGIN=https://<your-public-frontend-url>,EMAIL_FROM=<verified-sender@yourdomain> \
+  --set-secrets=ADMIN_TOKEN=admin-token:latest,AUTH_PEPPER=auth-pepper:latest,SHOPIFY_WEBHOOK_SECRET=shopify-webhook-secret:latest,SHOPIFY_ADMIN_API_TOKEN=shopify-admin-api-token:latest,EMAIL_API_KEY=email-api-key:latest
 ```
 
-`--allow-unauthenticated` is required — Shopify's webhook and a buyer's browser both need to
-reach this service without a Google-issued auth token. The service is still safe: the webhook
-route checks Shopify's HMAC signature, and `/admin/issue` checks `ADMIN_TOKEN` — see
-`docs/task7-shopify-backend-runbook.md` section 0 for the actual security model.
+`--allow-unauthenticated` is required — Shopify's webhook and a family's browser both need to
+reach this service without a Google-issued auth token. The service is still safe: every webhook
+route checks Shopify's HMAC signature, every `/api/v1/*` route is session/CSRF-checked, and the
+legacy `/admin/*` bearer routes check `ADMIN_TOKEN` (`backend/src/router.ts`,
+`backend/src/handlers/admin.ts`). `APP_ORIGIN` matters for two separate reasons: it's the one
+origin `/api/v1/*` answers CORS for at all (`backend/src/router.ts#corsHeaders` — unset means no
+browser can use the API), and it's baked into every email link (`/login`, `/claim?token=...`),
+so it must be set to the PUBLIC FRONTEND's own URL (Part 2), not this backend's own URL.
 
 `gcloud run deploy` prints the service's URL — something like
-`https://naze-family-code-backend-<hash>-an.a.run.app`, or your own domain if you map one
-afterward (`gcloud run domain-mappings create`). **Save this URL** — Part 2 needs it.
+`https://kodomo-ai-backend-<hash>-an.a.run.app`, or your own domain if you map one afterward
+(`gcloud run domain-mappings create`). **Save this URL** — Part 2 needs it as
+`VITE_FAMILY_API_URL`.
 
 **Sanity check before moving on:**
 ```sh
-curl -i -X POST https://<your-cloud-run-url>/unlock \
-  -H 'content-type: application/json' \
-  -d '{"code":"NAZE-0000-0000","deviceId":"smoke-test"}'
-```
-Expect `404` with `{"error":"not_found"}` — that's correct (no such code exists yet), and it
-proves the service is actually deployed and routing requests rather than erroring or timing
-out. Also try `curl https://<your-cloud-run-url>/healthz` — expect a bare `200 ok`.
+curl https://<your-cloud-run-url>/healthz
+# expect a bare 200 "ok"
 
-**Issue yourself a real test code** (needs the `ADMIN_TOKEN` from step 2):
-```sh
-curl -s -X POST https://<your-cloud-run-url>/admin/issue \
-  -H "authorization: Bearer <ADMIN_TOKEN>" \
-  -H 'content-type: application/json' \
-  -d '{"moduleIds":["m1"],"founder":true,"note":"deploy smoke test"}'
+curl -i -X POST https://<your-cloud-run-url>/api/v1/auth/request \
+  -H 'content-type: application/json' -H 'origin: https://<your-public-frontend-url>' \
+  -d '{"email":"smoke-test@example.com"}'
+# expect 200 (AD-13 §5: always the same response, known or unknown email — "no enumeration").
+# If EMAIL_API_KEY isn't set yet, the code is only LOGGED (Cloud Run console → Logs), never sent —
+# that's the honest not-yet-configured fallback, not a bug.
+
+curl -i -X POST https://<your-cloud-run-url>/api/v1/auth/request \
+  -H 'content-type: application/json' -H 'origin: https://evil.example.com' \
+  -d '{"email":"smoke-test@example.com"}'
+# expect 403 — confirms the CORS/origin check is actually live against the real APP_ORIGIN value.
 ```
-Returns `{"code":"NAZE-XXXX-XXXX"}` — keep this one for Part 2's end-to-end check.
 
 **If you'd rather build/push the image yourself** instead of `--source .` (e.g. to inspect it
 first, or wire it into your own CI):
-`docker build -t <region>-docker.pkg.dev/<project>/<repo>/naze-family-code-backend .`,
-`docker push` that tag, then `gcloud run deploy naze-family-code-backend --image <that tag> ...`
-with the same `--set-env-vars`/`--set-secrets` flags. The Dockerfile itself doesn't change
-either way.
+`docker build -t <region>-docker.pkg.dev/<project>/<repo>/kodomo-ai-backend .`,
+`docker push` that tag, then `gcloud run deploy kodomo-ai-backend --image <that tag> ...` with
+the same `--set-env-vars`/`--set-secrets` flags. The Dockerfile itself doesn't change either
+way.
 
 ---
 
-## Part 2 — Deploy the static site to Firebase Hosting
+## Part 2 — Deploy the public frontend to Cloud Run
 
-Not built or configured anywhere yet — there is no existing hosting project for it, and the
-GitHub Actions workflow (`.github/workflows/ci.yml`) only runs the test/gate suite, it does
-not deploy. Standardized on Firebase Hosting (not Cloudflare Pages) so the whole stack —
-Hosting + Cloud Run + Firestore + Secret Manager — lives in one Google Cloud/Firebase project,
-one console, one `gcloud`/`firebase` auth session.
-
-`firebase.json` and `.firebaserc` already exist at the repo root — **verified against this
-repo's actual build** (not just written from memory): ran a real `npm run build`, served the
-resulting `dist/` through the Firebase Hosting emulator, and confirmed every route this app
-has resolves correctly:
-
-```json
-// firebase.json
-{
-  "hosting": {
-    "public": "dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "cleanUrls": true,
-    "trailingSlash": false,
-    "headers": [
-      {
-        "source": "/assets/**",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
-      }
-    ]
-  }
-}
-```
-
-**Why there's no `rewrites` block** — the one thing almost every Firebase Hosting tutorial
-tells you to add, and the one thing that would break this specific app: this is a **multi-page**
-static build, not a client-side-routed single-page app. Vite already emits a real
-`index.html` at every route this app has (`dist/index.html`, `dist/play/index.html`,
-`dist/play/unlock/index.html`, `dist/print/deck/index.html`,
-`dist/legal/tokushoho/index.html`, `dist/legal/privacy/index.html` — confirmed by listing the
-actual build output). Firebase Hosting's own default file resolution (try the exact path, then
-`path + ".html"`, then `path + "/index.html"`) already serves every one of those correctly with
-zero configuration. Adding the usual SPA catch-all (`"source": "**", "destination": "/index.html"`)
-would instead serve the *landing page* for every route — `/play`, `/legal/privacy`, all of it —
-which is exactly backwards. `cleanUrls: true` is what makes `/play/unlock` (no `.html`, no
-trailing slash) resolve at all; without it you'd need the literal `/play/unlock/index.html`
-URL, which nothing in this app links to.
-
-```json
-// .firebaserc — replace the placeholder with your real Firebase project id
-{
-  "projects": {
-    "default": "REPLACE_WITH_REAL_FIREBASE_PROJECT_ID"
-  }
-}
-```
-
-Use the **same GCP project** Part 1 deployed the Cloud Run backend into if you want the
-one-console setup the whole point of this migration was for — `firebase projects:addfirebase
-<PROJECT_ID>` turns an existing GCP project into a Firebase one in place, no new project needed.
+**Firebase Hosting is abandoned** (WO-22B: Firebase CLI auth was blocked on the original
+deployment machine; the founder never revisited it once Cloud Run worked, and AD-16 §5 makes it
+official — Firebase is used only for Firestore rules/indexes now, `firebase.json` carries no
+`hosting` block at all). This is a **multi-page static site, not a client-side-routed SPA** —
+serve it with a plain static file server, never a catch-all rewrite to `index.html` (that would
+silently serve the landing page for `/play`, `/legal/privacy`, etc.). `Dockerfile.frontend`
+already does this correctly (`serve`, no `-s`/`--single` flag) — see its own header comment.
 
 ```sh
-# 1. One-time: log in and confirm the CLI sees your project.
-npx firebase-tools login
-npx firebase-tools projects:list
-
-# 2. Build with the backend's real URL baked in (from Part 1 step 3).
-VITE_UNLOCK_API_URL=https://<your-cloud-run-url> npm run build
-
-# 3. Deploy.
-npx firebase-tools deploy --only hosting
+# Build and deploy directly from source. VITE_FAMILY_API_URL (Part 1's URL) and
+# VITE_SHOPIFY_PRODUCT_URL are BUILD ARGS, not container env vars — Vite inlines
+# import.meta.env.* into the static bundle at build time (src/family/api.ts,
+# src/lp/LandingPage.tsx) — omitting either ships the existing, honest "not configured"
+# fallback instead of pointing at nothing, so it's safe to deploy without them, just non-functional.
+gcloud run deploy kodomo-ai-frontend \
+  --source . \
+  --config /dev/null \
+  --region asia-northeast1 \
+  --allow-unauthenticated \
+  --build-env-vars=VITE_FAMILY_API_URL=https://<your-backend-cloud-run-url>,VITE_SHOPIFY_PRODUCT_URL=https://soul-id-2.myshopify.com/products/kodomo-ai-m1
 ```
 
-`firebase deploy` prints the hosting URL — `https://<project-id>.web.app` and
-`https://<project-id>.firebaseapp.com` both work out of the box; map a custom domain afterward
-with `firebase hosting:sites` / the Firebase console if you want one (separate step, not
-covered here).
+(`gcloud run deploy --source .` auto-detects `Dockerfile` at the repo root by default — pass
+`--dockerfile Dockerfile.frontend` explicitly, since this repo has three Dockerfiles now, or
+build/push the image yourself: `docker build -f Dockerfile.frontend -t
+<region>-docker.pkg.dev/<project>/<repo>/kodomo-ai-frontend --build-arg
+VITE_FAMILY_API_URL=... --build-arg VITE_SHOPIFY_PRODUCT_URL=... .`, `docker push`, then
+`gcloud run deploy kodomo-ai-frontend --image <that tag> --allow-unauthenticated`.)
 
-**Sanity check** (the exact six routes this repo actually builds — verified locally against
-the emulator before this runbook was written, confirm the same against the real deployment):
+`gcloud run deploy` prints the service's URL — something like
+`https://kodomo-ai-frontend-<hash>-an.a.run.app`, or your own domain if you map one afterward.
+**Save this URL** — go back to Part 1 and redeploy the backend with `APP_ORIGIN` set to it (a
+circular dependency between the two services is normal here; do one more backend redeploy once
+this URL exists, `gcloud run services update kodomo-ai-backend --update-env-vars
+APP_ORIGIN=https://<this-url>`).
+
+**Sanity check** (every real route `vite.config.ts`'s own multi-page `input` map builds):
 - `https://<your-site-url>/` — the LP loads, headline + trust banner visible.
-- `https://<your-site-url>/play` — Mission 1-1 (bread) is playable end to end.
-- `https://<your-site-url>/play/unlock` — paste the test code from Part 1's last step, submit,
-  confirm it shows "登録が完了しました" (not the "not live yet" message — if you see that,
-  `VITE_UNLOCK_API_URL` wasn't set before the build in step 2; rebuild and redeploy).
-- `https://<your-site-url>/print/deck` and `/legal/tokushoho` / `/legal/privacy` all load.
-- An unrelated path (e.g. `/nonsense`) returns Firebase's own 404, not the LP — confirms there's
-  no accidental catch-all rewrite silently swallowing bad links.
+- `https://<your-site-url>/play` — Mission 1-1 is playable as a guest, no login prompt yet
+  (client-side `hasAccess` still passes a free mission before any server call — AD-16 §6's real
+  gate only engages once `VITE_FAMILY_API_URL` is actually configured, which it now is).
+- `https://<your-site-url>/login` — request a code, confirm the email arrives (needs Part 1's
+  `EMAIL_API_KEY` configured) or check Cloud Run logs for the logged code otherwise, log in.
+- `https://<your-site-url>/account` — while logged in, shows the device list and (AD-16 §1) a
+  purchase button.
+- `https://<your-site-url>/print/deck`, `/legal/tokushoho`, `/legal/privacy` all load.
+- An unrelated path (e.g. `/nonsense`) 404s — confirms there's no accidental SPA catch-all
+  silently swallowing bad links.
 
 **Before this URL goes anywhere public:** `gate:no-llm` (already green in CI) only checks the
 build output has no LLM/API hostnames baked in — it does not check for the two content
 caveats already flagged in `docs/work-order-w1.md`: no native-speaker review stamp on Mission
 1-1 or the LP copy yet, and the LP's §1A alignment claims + legal pages are still founder-review
-drafts. Don't route real traffic here until those are cleared.
+drafts. Don't route real traffic here until those are cleared. The LP's own "no account
+required" framing (`src/lp/LandingPage.tsx`'s trust banner) is also now stale against the real
+AD-15/16 account-first trial model — a parent has to log in before Mission 1-1's own trial
+clock can start server-side — and needs a founder-approved copy pass before launch; this runbook
+does not silently rewrite marketing copy.
 
-**Continuous deploy (optional):** `firebase init hosting:github` wires a GitHub Actions
-workflow that runs `npm run build` + `firebase deploy` on every push to a chosen branch —
-worth doing once this branch is merged and stable, not required for a first manual deploy.
+**Continuous deploy (optional):** wire `gcloud run deploy` into `.github/workflows/ci.yml` (or a
+separate deploy workflow) on push to a chosen branch — worth doing once this branch is merged
+and stable, not required for a first manual deploy.
 
 ---
 
-## Part 3 — Shopify: webhook, Flow automation, real order test
+## Part 2B — Deploy `kodomo-ai-admin` to Cloud Run, behind Identity-Aware Proxy
 
-Full detail (why SKU over tag, why Flow over a template edit):
-`docs/task7-shopify-backend-runbook.md` sections 0, 1, 4. Condensed sequence:
+AD-16 §8's staff dashboard — search / family / order+refund / queues / audit log. A THIRD,
+separate Cloud Run service; never merge this into Part 1 or Part 2's own deploy.
+
+```sh
+# 1. Deploy the service itself — never --allow-unauthenticated; IAP is what protects it.
+gcloud run deploy kodomo-ai-admin \
+  --source . \
+  --dockerfile Dockerfile.admin \
+  --region asia-northeast1 \
+  --no-allow-unauthenticated \
+  --set-env-vars=IAP_AUDIENCE=/projects/<PROJECT_NUMBER>/apps/kodomo-ai-admin \
+  --set-secrets=ADMIN_TOKEN=admin-token:latest,AUTH_PEPPER=auth-pepper:latest,SHOPIFY_WEBHOOK_SECRET=shopify-webhook-secret:latest,SHOPIFY_ADMIN_API_TOKEN=shopify-admin-api-token:latest,EMAIL_API_KEY=email-api-key:latest
+# (Same required secrets as Part 1 — backend/server/adminIndex.ts loads the same REQUIRED_SECRET_NAMES
+# via the same buildEnv(); ADMIN_TOKEN/SHOPIFY_WEBHOOK_SECRET are unused by this service's own
+# routes but still required to start, since buildEnv() doesn't distinguish which service calls it.)
+
+# 2. Enable Identity-Aware Proxy for this Cloud Run service (console: Security → Identity-Aware
+#    Proxy → find kodomo-ai-admin → toggle on) — this is what actually protects it; the service
+#    itself trusts the x-goog-iap-jwt-assertion header it only ever sees once IAP is in front of
+#    it (backend/src/iap.ts). Grant "IAP-secured Web App User" (roles/iap.httpsResourceAccessor)
+#    to each staff member's own Google account — IAP is WHO, this grant is "may reach the app at
+#    all"; the staff/ Firestore allowlist below is "may this dashboard actually do anything."
+#    The exact IAP_AUDIENCE value (/projects/<NUMBER>/apps/<SERVICE>, note PROJECT NUMBER not
+#    project id) is shown on that same IAP settings page once enabled — set it as an env var
+#    (redeploy step 1 with the real value once you have it).
+
+# 3. Seed the staff/ allowlist — one Firestore doc per staff member, role 'viewer' or 'operator'.
+#    No UI for this yet (AD-16 §8 doesn't build one) — gcloud/console directly:
+gcloud firestore documents create staff/you@yourdomain.com \
+  --fields role=operator
+# (or add the doc via the Firestore console — collection "staff", document id is the exact
+# lower-cased email IAP will report, field "role" is the string "viewer" or "operator")
+```
+
+**Sanity check:**
+- Visiting the service's own URL while NOT logged into the granted Google account redirects to
+  Google sign-in (IAP's own behavior) — never shows any dashboard content.
+- Logging in as a granted-but-unseeded account (no `staff/` doc yet) reaches the dashboard shell
+  but shows "アクセス権を確認できませんでした" — confirms the allowlist check is live, not just
+  IAP alone.
+- Once seeded, `検索`/`キュー`/`監査ログ` all load; a `viewer` role sees masked family emails and
+  no mutating buttons anywhere; an `operator` role sees the real thing and every write requires
+  typing a reason first.
+
+---
+
+## Part 3 — Shopify: webhooks, purchase-intent variant, real order test
+
+AD-14/AD-16 replaced the original unlock-code design's Shopify Flow / metafield / custom-email
+approach entirely — the backend now sends its own emails directly (`backend/src/email.ts`) and
+binds a purchase to a family via a token, an existing account's email, or a claim link
+(`backend/src/handlers/webhook.ts`, AD-16 §1/§2). `docs/task7-shopify-backend-runbook.md`'s own
+Flow/metafield steps no longer apply — do not follow them.
 
 1. **Product listing.** Create (or confirm) the product with **SKU `kodomo-ai-m1`** — must
    match `backend/src/shopify.ts`'s `SKU_TO_MODULE_IDS` key exactly, this is the entire
-   isolation mechanism. ¥4,980, household licence, 30-day guarantee wording per spec v0.5 §9.
-   Products A-D need zero changes.
-2. **Webhook.** Admin → **Settings → Notifications** → **Webhooks** → **Create webhook**:
+   isolation mechanism (exact SKU only, never a title/prefix match — AD-14). ¥4,980, household
+   licence (profiles capped at 3 — AD-15). Products A-D (`KD-*`, `SOULID-*`) need zero changes;
+   the webhook writes nothing at all for an order that doesn't include `kodomo-ai-m1`. The
+   refund-window wording (AD-16 §7: 10-day voluntary window, contingent on whether paid content
+   was actually opened) is still pending final legal copy — don't publish specific refund terms
+   on the product page yet.
+2. **Record the variant ID** — `backend/server/buildEnv.ts` reads `SHOPIFY_VARIANT_IDS` as a
+   JSON map (`{"m1":"<numeric variant id>"}`), needed for the purchase-intent cart permalink
+   (AD-16 §1, `POST /api/v1/purchase-intents`) to point at a real product. Set it on the
+   backend service:
+   ```sh
+   gcloud run services update kodomo-ai-backend --region asia-northeast1 \
+     --update-env-vars=SHOPIFY_VARIANT_IDS='{"m1":"<the real numeric variant id>"}'
+   ```
+   Until this is set, the "purchase" button on `/account` answers `not_configured` rather than a
+   broken link — a direct storefront purchase (no purchase-intent token) still works either way.
+3. **Orders webhook.** Admin → **Settings → Notifications** → **Webhooks** → **Create webhook**:
    - Event: **Order payment** (`orders/paid`) — not `orders/create`.
    - Format: JSON.
-   - URL: `https://<your-cloud-run-url>/webhooks/shopify/orders-paid` (from Part 1).
+   - URL: `https://<your-backend-cloud-run-url>/webhooks/shopify/orders-paid` (Part 1).
    - Save — Shopify shows a **signing secret once**. That's the real value for
-     `SHOPIFY_WEBHOOK_SECRET` — go back and run:
+     `SHOPIFY_WEBHOOK_SECRET`:
      ```sh
      echo -n "<the real signing secret>" | \
        gcloud secrets versions add shopify-webhook-secret --data-file=-
+     gcloud run services update kodomo-ai-backend --region asia-northeast1   # picks up the new version
      ```
-     Cloud Run picks up the new secret version on its next revision — redeploy (even a no-op
-     `gcloud run services update naze-family-code-backend --region asia-northeast1`) to pick
-     it up immediately rather than waiting for a natural restart.
-3. **Buyer email — Shopify Flow.** Admin → **Apps → Flow** → **Create workflow**:
-   - Trigger: **Order metafield updated**, namespace `naze`, key `family_code`.
-   - Action: **Send custom email** → to `{{order.customer.email}}`, body includes
-     `{{order.metafields.naze.family_code}}`.
-   - This is a brand-new workflow, not an edit to any existing template — products A-D's
-     confirmation/shipping emails are untouched by construction.
-4. **Test the webhook without a real order.** Shopify Admin → the webhook's detail page →
+4. **Refunds webhook.** Same Notifications page, a second webhook:
+   - Event: **Refund create** (`refunds/create`).
+   - URL: `https://<your-backend-cloud-run-url>/webhooks/shopify/refunds-create`.
+   - Same signing secret as step 3 (Shopify signs every webhook on the store with the one
+     secret shown when notifications were first configured — confirm this in the Shopify docs
+     for your API version before assuming it, rather than guessing).
+5. **Test each webhook without a real order.** Shopify Admin → each webhook's detail page →
    **Send test notification**. This uses placeholder SKUs (not `kodomo-ai-m1`), so it proves
-   the backend responds `200` and doesn't error — it will NOT issue a code (the SKU won't match
-   the allowlist, which is correct behavior, not a bug).
-5. **Test with a real order** (the actual proof, and spec v0.5's own DoD): buy the product for
-   real (¥4,980, real card or PayPay) → confirm the webhook fired (Cloud Run console → your
-   service → **Logs**, or `gcloud run services logs read naze-family-code-backend`) → confirm
-   the Flow email arrived with a code → paste that code into `/play/unlock` on the site from
-   Part 2 → confirm it unlocks. Refund the order after, via the existing 30-day guarantee — no
-   special-cased refund logic exists in code, it's an ordinary Shopify refund.
-6. **Confirm isolation held.** Check products A-D's own confirmation/shipping emails are
-   byte-for-byte unchanged, and that nothing about their orders looks different. (They should
-   be — nothing in this integration ever calls the Admin API for a non-`kodomo-ai-m1` order —
-   but this is the step that actually proves it against your real store, not just the 65+ tests
-   that prove it against fakes.)
+   the backend responds `200` and writes nothing — it will NOT bind or grant anything (the SKU
+   won't match the allowlist, which is correct, not a bug).
+6. **Test with a real order** (the actual proof): have a parent log in on the public frontend
+   FIRST (Part 2's `/login`), then buy the product for real using the purchase-intent link from
+   their own `/account` page → confirm the webhook fired (Cloud Run console → `kodomo-ai-backend`
+   → **Logs**, or `gcloud run services logs read kodomo-ai-backend`) → confirm the "モジュール1が
+   使えるようになりました" email arrived and the module unlocked on `/account`/`/play`. Then, as a
+   SECOND real order, buy directly from the storefront with NO purchase-intent link and an email
+   that has never logged in before → confirm it lands in `awaiting_claim` (visible in
+   `kodomo-ai-admin`'s Queues page, Part 2B) and the "ご購入の受け取り" claim email arrives with a
+   working `/claim?token=...` link. Issue a real refund on one of the two test orders afterward →
+   confirm the entitlement is revoked (account/progress must remain untouched — AD-16 §7).
+7. **Confirm isolation held.** Check products A-D's own confirmation/shipping emails are
+   byte-for-byte unchanged, and that nothing about their orders looks different — nothing in
+   this integration ever calls the Admin API for a non-`kodomo-ai-m1` order, but this is the
+   step that actually proves it against your real store, not just the tests that prove it
+   against fakes.
 
 ---
 
@@ -343,9 +406,9 @@ reports. Once they sign off, add the review stamp directly to that JSON file (ma
 Each new topic/mission needs `main.tsx`'s and/or `module.json`'s `missionOrder` updated to
 include it (see `src/shell/missionLibrary.ts#pickNextMission` — Sprint 1-A already made mission
 selection stage-generic, so wiring in a second real mission is a content change, not a code
-change). Once you have real content ready, re-deploy Part 2 (`npm run build` +
-`firebase deploy --only hosting`, or automatically if you set up the GitHub Actions integration
-mentioned there) to publish it.
+change). Once you have real content ready, re-deploy Part 2 (`gcloud run deploy
+kodomo-ai-frontend --source . --dockerfile Dockerfile.frontend ...`, same command as Part 2's
+own first deploy) to publish it.
 
 ---
 
@@ -362,12 +425,19 @@ as the deploy steps:
       especially — currently marked "draft, pending native and legal check").
 - [ ] Founder's own legal sign-off on `/legal/tokushoho` and `/legal/privacy` (real company
       data is already in, per `src/legal/company.ts` — the review itself hasn't happened).
-- [ ] A real ¥4,980 test purchase completes with both card and PayPay, and the family code
-      arrives and redeems (Part 3, step 5 above).
-- [ ] Products A-D's own order flow confirmed untouched (Part 3, step 6 above).
+- [ ] A real ¥4,980 test purchase completes with both card and PayPay, and the module unlocks
+      via the purchase-intent path AND the claim-email path (Part 3, step 6 above).
+- [ ] Products A-D's own order flow confirmed untouched (Part 3, step 7 above).
 - [ ] `docs/spec-v0.5.md` §1A's four "Allowed" alignment sentences get real, stable MEXT source
       URLs (currently literal `#` placeholders in `src/lp/LandingPage.tsx` — this session
       would not guess a specific government URL to cite on a trust-sensitive section).
+- [ ] AD-16 §7's refund policy (10-day voluntary window, contingent on paid-content use) gets its
+      final server-side wording and Japanese legal copy before any real refund request is
+      recorded through `kodomo-ai-admin` — the data model is ready (`OrderDoc.refund`); the
+      policy text a family actually reads is not.
+- [ ] The LP's "no account required" trust-banner framing is reconciled with the real AD-15/16
+      account-first trial model (a parent must log in before Mission 1-1's trial clock can start)
+      — founder/legal copy decision, not something this runbook or its code changes silently.
 
 ---
 
@@ -377,6 +447,16 @@ Parts 1 and 3 originally targeted Cloudflare Workers + KV; the founder later mov
 and webhook deployment target to Google Cloud Run (`backend/` was `worker/` before that — see
 `docs/task7-shopify-backend-runbook.md`'s own "Platform history" note for what did and didn't
 change in the code itself). Part 2 first documented Cloudflare Pages as a low-effort option,
-never a requirement, then was standardized on Firebase Hosting for one-console consistency with
-the rest of the stack — this only ever changed documentation and the two Firebase config files
-(`firebase.json`, `.firebaserc`); the built app itself (`dist/`) is identical either way.
+then Firebase Hosting for one-console consistency, then (WO-22B, once Firebase CLI auth turned
+out to be blocked on the deployment machine) Cloud Run — the same static-`serve` packaging this
+runbook's own Part 2 now documents, unchanged since.
+
+Separately, AD-13 replaced the entire original product model this document once described: a
+single anonymous "redeem a unlock code at `/play/unlock`" flow, issued by Shopify Flow emailing
+a metafield-stored code, redeemed against a KV/Firestore code store with a soft per-device cap.
+AD-13 through AD-16 replaced all of it with Family Accounts (email OTP login, Firestore-backed
+family/profile/session/entitlement records), server-authoritative purchase binding (purchase
+intents, claim links — AD-16 §1/§2), and a separate IAP-protected `kodomo-ai-admin` staff
+dashboard (AD-16 §8, Part 2B above) — this Part 1/2/2B/3 rewrite reflects that; anything else in
+this repo (`docs/task7-shopify-backend-runbook.md` and `docs/work-order-w1.md` in particular)
+that still describes the unlock-code flow is describing a system this repo no longer runs.

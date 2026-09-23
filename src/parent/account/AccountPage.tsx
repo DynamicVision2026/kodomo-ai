@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   confirmEmailChange,
+  createPurchaseIntent,
   deleteAccount,
   deleteSession,
   fetchMe,
@@ -12,10 +13,17 @@ import {
   type SessionInfo,
 } from '../../family/api';
 import { COMPANY } from '../../legal/company';
+import moduleJson from '../../modules/m1/module.json';
 import './account.css';
 
 type EmailChangeStep = { kind: 'idle' } | { kind: 'awaiting-code'; newEmail: string } | { kind: 'error'; message: string };
 type DeleteStep = { kind: 'idle' } | { kind: 'code-sent' } | { kind: 'confirming' } | { kind: 'error'; message: string };
+type PurchaseStep = { kind: 'idle' } | { kind: 'loading' } | { kind: 'error'; message: string };
+
+/** AD-16 §1: the one module this storefront sells today — same source module.json already
+ *  supplies the play surface's own moduleId/title, never a second hand-typed copy of either. */
+const PURCHASE_MODULE_ID = moduleJson.id;
+const PURCHASE_MODULE_TITLE = moduleJson.title;
 
 /**
  * /account — AD-13 §3/§5 step 6: device list + sign-out, email change (two-step, OTP to the new
@@ -29,11 +37,29 @@ export function AccountPage() {
   const [emailStep, setEmailStep] = useState<EmailChangeStep>({ kind: 'idle' });
   const [deleteCodeInput, setDeleteCodeInput] = useState('');
   const [deleteStep, setDeleteStep] = useState<DeleteStep>({ kind: 'idle' });
+  const [purchaseStep, setPurchaseStep] = useState<PurchaseStep>({ kind: 'idle' });
 
   useEffect(() => {
     fetchMe().then(setMe);
     listSessions().then(setSessions);
   }, []);
+
+  /** AD-16 §1: the purchase-intent is bound server-side to THIS session's own family — never a
+   *  `family_id` this code supplies — and the returned Shopify cart URL never carries a prefilled
+   *  purchaser email either (AD-16: "whoever pays types their own email"). This function's own
+   *  job ends at handing the browser off to that URL. */
+  async function startPurchase() {
+    setPurchaseStep({ kind: 'loading' });
+    const result = await createPurchaseIntent(PURCHASE_MODULE_ID);
+    if (!('url' in result)) {
+      const message = result.reason === 'not_configured'
+        ? 'ただいま購入手続きの準備中です。しばらくしてから、もう一度お試しください。'
+        : '購入手続きを開始できませんでした。しばらくしてから、もう一度お試しください。';
+      setPurchaseStep({ kind: 'error', message });
+      return;
+    }
+    window.location.href = result.url;
+  }
 
   async function handleSignOutDevice(id: string) {
     await deleteSession(id);
@@ -100,10 +126,31 @@ export function AccountPage() {
     );
   }
 
+  const purchasedModule = me.entitlements.find((e) => e.moduleId === PURCHASE_MODULE_ID);
+  const alreadyEntitled = purchasedModule?.status === 'active';
+
   return (
     <main className="account">
       <h1>アカウント</h1>
       <p className="account__lead">ログイン中のメールアドレス：{me.email}</p>
+
+      {!alreadyEntitled && (
+        <section className="account__section">
+          <h2>購入</h2>
+          <p>「{PURCHASE_MODULE_TITLE}」を購入すると、すべてのミッションが使えるようになります。</p>
+          <button
+            type="button"
+            className="account__button"
+            onClick={startPurchase}
+            disabled={purchaseStep.kind === 'loading'}
+          >
+            購入手続きへ進む
+          </button>
+          {purchaseStep.kind === 'error' && (
+            <p className="account__message account__message--error">{purchaseStep.message}</p>
+          )}
+        </section>
+      )}
 
       <section className="account__section">
         <h2>使用中の端末</h2>

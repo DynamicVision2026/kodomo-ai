@@ -3,7 +3,7 @@ import type { Mission, ModuleUiStrings } from '../engine/types';
 import { audioPlacement, type AudioRole } from '../audio/types';
 import { load, save, MAX_PROFILES, type AppState, type Profile } from '../engine/storage';
 import { hasAccess } from '../engine/entitlements';
-import { createProfile as createRemoteProfile, fetchMe } from '../family/api';
+import { createProfile as createRemoteProfile, fetchMe, isFamilyApiConfigured, openUnit } from '../family/api';
 import { flushPendingSync, hydrateFromServer, markProgressDirty } from '../family/session';
 import { applyMoveRendered, applyAptUse, applyBlindCommit, applyOutsideUse } from '../engine/scaffold';
 import {
@@ -101,7 +101,12 @@ type Screen =
    *  only when that profile hasn't sealed M0 yet (`afterProfileChosen` below). Never any other
    *  way, so it can never appear after any teaching content, Story 1-1's own audio included. */
   | { kind: 'm0-ritual' }
-  | { kind: 'locked' }
+  /** AD-16 §6: `reason: 'unauthorized'` is the one case with a genuinely different remedy (log
+   *  in, not purchase) — see `ui.lockedLoginPrompt`/`lockedLoginLinkLabel`. Every other refusal
+   *  (`not_entitled`, `trial_expired`, or a network/server error — fail closed the same way)
+   *  shows the original generic entitlement message; the distinction was never meaningful to a
+   *  family in those other cases, just "you can't dig here yet." */
+  | { kind: 'locked'; reason: 'unauthorized' | 'entitlement' }
   | { kind: 'course-home' }
   | { kind: 'coop' }
   | { kind: 'phase'; index: number }
@@ -263,16 +268,39 @@ export function MissionShell({
    *  silently inherited that blocked mission's identity. `mission` is now only ever set once
    *  entry is actually authorized, so a locked attempt leaves every other screen's context
    *  exactly as it was. */
+  /**
+   * AD-16 §6: the server's own `POST /units/{unitId}/open` answer is what actually authorizes
+   * entry now — never a client-side guess — and is also the one place a module's trial clock
+   * lazily starts and first-paid-use evidence is recorded. `familyTestMode` (real production
+   * never sets it) and a genuinely unconfigured backend (local dev / every test — neither ever
+   * true in a real deployment) both fall back to the exact pre-AD16 client-only `hasAccess()`
+   * check instead, synchronously, so every existing local/test flow behaves identically to
+   * before this call existed; only when a real backend is actually configured does this ever
+   * take the async network path at all.
+   */
   function enterMission(m: Mission) {
-    // AD-13 §1: `appState.cachedEntitlements` is written ONLY from a real `/me` response
-    // (src/family/session.ts) — see src/engine/entitlements.ts's own doc comment for why that
-    // single write path is what makes hand-editing localStorage alone unable to authorize entry.
-    if (!familyTestMode && !hasAccess(appState.cachedEntitlements, moduleId, m.id, freeMissionIds)) {
-      setScreen({ kind: 'locked' });
+    if (familyTestMode || !isFamilyApiConfigured()) {
+      // AD-13 §1: `appState.cachedEntitlements` is written ONLY from a real `/me` response
+      // (src/family/session.ts) — see src/engine/entitlements.ts's own doc comment for why that
+      // single write path is what makes hand-editing localStorage alone unable to authorize entry.
+      if (familyTestMode || hasAccess(appState.cachedEntitlements, moduleId, m.id, freeMissionIds)) {
+        setMission(m);
+        setScreen({ kind: 'coop' });
+      } else {
+        setScreen({ kind: 'locked', reason: 'entitlement' });
+      }
       return;
     }
-    setMission(m);
-    setScreen({ kind: 'coop' });
+    if (!profile) return;
+    const profileId = profile.id;
+    void openUnit(profileId, moduleId, m.id).then((result) => {
+      if (result.ok) {
+        setMission(m);
+        setScreen({ kind: 'coop' });
+        return;
+      }
+      setScreen({ kind: 'locked', reason: result.reason === 'unauthorized' ? 'unauthorized' : 'entitlement' });
+    });
   }
 
   /** WO-27: the SAME authorization `enterMission` itself checks, exposed as a pure predicate so
@@ -649,6 +677,18 @@ export function MissionShell({
   if (screen.kind === 'locked') {
     // WO-23 (AD-06 RC-1): "locked state is a dead end" — the one thing missing here was any way
     // back at all. The lock/entitlement decision itself is unchanged (hasAccess, real).
+    // AD-16 §6: 'unauthorized' (no session at all) gets its own remedy — log in — when the
+    // caller's module fixture actually supplies that copy; every existing fixture without it,
+    // and every other reason, keeps the exact original generic message + back-to-map button.
+    if (screen.reason === 'unauthorized' && ui.lockedLoginPrompt && ui.lockedLoginLinkLabel) {
+      return (
+        <div className="mission-shell__locked">
+          <p><Ruby text={ui.lockedLoginPrompt} /></p>
+          <a className="mission-shell__locked-login" href="/login/">{ui.lockedLoginLinkLabel}</a>
+          <button type="button" onClick={goToCourseHome}>{ui.completeBackToMapLabel}</button>
+        </div>
+      );
+    }
     return (
       <div className="mission-shell__locked">
         <p><Ruby text={ui.lockedMessage} /></p>

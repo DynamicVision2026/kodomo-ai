@@ -3,6 +3,7 @@
 # the backend service or actively shouldn't ship in it.
 node_modules
 dist
+dist-admin
 dist-server
 .git
 .github
@@ -10,10 +11,16 @@ dist-server
 # Client app + build tooling — not part of this image.
 src
 play
+login
+account
+claim
 print
 legal
+design
+admin-dashboard
 index.html
 vite.config.ts
+vite.admin.config.ts
 tsconfig.json
 
 # Content pipeline — a separate CLI tool, never runs inside this service.

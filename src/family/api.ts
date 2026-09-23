@@ -20,8 +20,25 @@ async function apiFetch(path: string, init?: RequestInit): Promise<Response | Ap
   }
 }
 
+/** `apiFetch` returns either a genuine `fetch()` Response (whatever its status — including a
+ *  real 4xx/5xx, which also has `ok: false`) or this module's own `ApiFailure` sentinel for the
+ *  two cases where no request was even attempted. Checking `'ok' in res && res.ok === false`
+ *  would wrongly match BOTH — a real Response's `.ok` is `false` for any non-2xx status too — so
+ *  a genuine server refusal (401/403/...) would be misread as "never attempted" and its actual
+ *  status/body lost. `reason` is the one field only the sentinel ever carries — a real (or
+ *  test-mocked) Response never has it — so it's the unambiguous discriminator, and (unlike
+ *  `instanceof Response`) still works against a plain `{ ok, json }` fetch mock, not just a real
+ *  `Response` instance. */
 function isFailure(res: Response | ApiFailure): res is ApiFailure {
-  return 'ok' in res && res.ok === false;
+  return 'reason' in res;
+}
+
+/** AD-16 §6: whether a real backend is configured at all — the one thing that decides whether
+ *  `openUnit` below can be trusted to answer authoritatively. `false` in local dev/every test
+ *  (VITE_FAMILY_API_URL is never set there) — callers fall back to their own pre-AD16 local-only
+ *  check in that case, same honest not-yet-configured convention as every other feature here. */
+export function isFamilyApiConfigured(): boolean {
+  return !!API_BASE_URL;
 }
 
 export interface MeResponse {
@@ -29,6 +46,9 @@ export interface MeResponse {
   email: string;
   entitlements: { moduleId: string; status: string }[];
   profiles: { id: string; avatarId: string; nicknameId: string; stage: number }[];
+  /** AD-16 §5: per-module trial state — absent/empty for a family with no trial history for a
+   *  given module yet. */
+  trials: { moduleId: string; state: 'not_started' | 'active' | 'expired'; endsAt: string | null }[];
 }
 
 export async function requestLoginCode(email: string): Promise<{ ok: true } | ApiFailure> {
@@ -139,4 +159,71 @@ export async function deleteAccount(code: string): Promise<{ ok: true } | ApiFai
     return { ok: false, reason: body.error ?? 'server' };
   }
   return { ok: true };
+}
+
+/** AD-16 §1: creates a purchase-intent bound server-side to THIS session's own family (never a
+ *  client-asserted `family_id`) and returns the Shopify cart permalink to send the browser to —
+ *  carrying only the intent token, never the purchaser's email or any family identifier. Requires
+ *  a session; the caller (a logged-in parent's own purchase CTA) is the only place this is ever
+ *  called from. */
+export async function createPurchaseIntent(moduleId: string): Promise<{ ok: true; url: string } | ApiFailure> {
+  const res = await apiFetch('/purchase-intents', { method: 'POST', body: JSON.stringify({ moduleId }) });
+  if (isFailure(res)) return res;
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: 'server' }));
+    return { ok: false, reason: res.status === 503 ? 'not_configured' : (body.error ?? 'server') };
+  }
+  const body = (await res.json()) as { url: string };
+  return { ok: true, url: body.url };
+}
+
+export type UnitOpenReason = 'trial_expired' | 'not_entitled' | 'unauthorized' | 'not_found' | 'not_configured' | 'network' | 'server';
+
+/** AD-16 §6: the ONE call that decides whether `unitId` (a mission id) may actually be entered —
+ *  never a client-side guess. Also the one place a module's own trial clock lazily starts (for
+ *  its free/trial unit) and the one place first-paid-use evidence is recorded (for anything
+ *  else) — both purely server-side side effects of a successful call, nothing the caller needs
+ *  to do differently either way. */
+export async function openUnit(profileId: string, moduleId: string, unitId: string): Promise<{ ok: true } | { ok: false; reason: UnitOpenReason }> {
+  const res = await apiFetch(`/units/${encodeURIComponent(unitId)}/open`, {
+    method: 'POST',
+    body: JSON.stringify({ profileId, moduleId }),
+  });
+  if (isFailure(res)) {
+    return { ok: false, reason: res.reason === 'not_configured' ? 'not_configured' : res.reason === 'network' ? 'network' : 'server' };
+  }
+  if (res.ok) return { ok: true };
+  if (res.status === 401) return { ok: false, reason: 'unauthorized' };
+  if (res.status === 404) return { ok: false, reason: 'not_found' };
+  if (res.status === 403) {
+    const body = await res.json().catch(() => null);
+    if (body?.error === 'trial_expired' || body?.error === 'not_entitled') return { ok: false, reason: body.error };
+    return { ok: false, reason: 'unauthorized' }; // CSRF-forbidden or an unrecognized reason — fail closed
+  }
+  return { ok: false, reason: 'server' };
+}
+
+/** AD-16 §2: the claim screen's own two calls — GET to show what the order is for, POST to
+ *  actually bind it to the caller's own logged-in session family. Both require a session; neither
+ *  ever accepts or sends a client-asserted family id. */
+export interface ClaimInfo {
+  orderName: string;
+  moduleIds: string[];
+}
+
+export async function getClaim(token: string): Promise<{ ok: true; claim: ClaimInfo } | ApiFailure> {
+  const res = await apiFetch(`/claims/${encodeURIComponent(token)}`, { method: 'GET' });
+  if (isFailure(res)) return res;
+  if (!res.ok) return { ok: false, reason: res.status === 401 ? 'unauthorized' : res.status === 404 ? 'not_found' : 'server' };
+  return { ok: true, claim: (await res.json()) as ClaimInfo };
+}
+
+export async function confirmClaim(token: string): Promise<{ ok: true; orderName: string } | ApiFailure> {
+  const res = await apiFetch(`/claims/${encodeURIComponent(token)}`, { method: 'POST', body: '{}' });
+  if (isFailure(res)) return res;
+  if (!res.ok) {
+    return { ok: false, reason: res.status === 401 ? 'unauthorized' : res.status === 410 ? 'invalid_or_expired' : 'server' };
+  }
+  const body = (await res.json()) as { orderName: string };
+  return { ok: true, orderName: body.orderName };
 }

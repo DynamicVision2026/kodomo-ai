@@ -16,17 +16,26 @@ type Step =
   | { kind: 'signed-in' }
   | { kind: 'not-configured' };
 
+// AD-16 §0: login is never gated by trial state any more — `verifyLoginCode`'s own outcome type
+// is now exactly 'ok' | 'invalid' | 'expired' | 'locked' (backend/src/loginCode.ts), so a
+// 'trial_expired' code-verify failure can no longer actually happen; the old AD-15-era branch
+// for it is retired along with the bug it used to work around.
 const CODE_ERROR_MESSAGE: Record<string, string> = {
   invalid: 'コードが正しくありません。もう一度ご確認ください。',
   expired: 'コードの有効期限が切れました。もう一度お送りします。',
   locked: '試行回数の上限に達しました。もう一度コードをお送りします。',
-  // AD-15: an unpurchased Family Account whose 72-hour trial has ended — the account and its
-  // progress are still there, purchasing is what re-opens login (AD-15: "trial progress
-  // continues after purchase").
-  trial_expired: 'お試し期間が終了しました。ご購入いただくと、これまでの進み具合そのままでお使いいただけます。',
   network: `通信エラーが発生しました。しばらくしてから、もう一度お試しください。`,
   server: `エラーが発生しました。しばらくしてから、もう一度お試しください。解決しない場合は、${COMPANY.email} までご連絡ください。`,
 };
+
+/** AD-16 §2: the claim flow (and any other future flow) sends a parent here with
+ *  `?next=/some/path` so a successful login returns them to where they came from instead of
+ *  always landing on `/play/`. Only ever a same-origin absolute path — never an open redirect to
+ *  an arbitrary external URL, whatever `next` claims. */
+function resolveNextPath(): string {
+  const next = new URLSearchParams(window.location.search).get('next');
+  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/play/';
+}
 
 /**
  * /login — AD-13 §5 step 3: email -> 6-digit code -> session cookie -> guest import -> profile
@@ -72,7 +81,7 @@ export function LoginPage() {
     appState = await hydrateFromServer(appState, result.me, moduleJson.id);
     save(appState);
     setStep({ kind: 'signed-in' });
-    window.location.href = '/play/';
+    window.location.href = resolveNextPath();
   }
 
   return (
@@ -126,10 +135,7 @@ export function LoginPage() {
             </button>
           </form>
           {step.kind === 'code-error' && (
-            <>
-              <p className="login__message login__message--error">{CODE_ERROR_MESSAGE[step.reason] ?? CODE_ERROR_MESSAGE.server}</p>
-              {step.reason === 'trial_expired' && <a className="login__cta" href="/">ご購入はこちら</a>}
-            </>
+            <p className="login__message login__message--error">{CODE_ERROR_MESSAGE[step.reason] ?? CODE_ERROR_MESSAGE.server}</p>
           )}
         </>
       )}

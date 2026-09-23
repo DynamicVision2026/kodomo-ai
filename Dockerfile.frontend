@@ -1,8 +1,11 @@
-# WO-22B: frontend static site for Cloud Run — a SEPARATE Cloud Run service from the backend
-# (kodomo-ai-backend, untouched by this file). Serves the Vite production build (dist/): the LP
-# at /, the app at /play/, family-code redemption at /play/unlock/, the printable deck/kit at
-# /print/deck/ and /print/kit/, legal pages at /legal/tokushoho/ and /legal/privacy/ — every real
-# route from vite.config.ts's own multi-page `input` map, each with its own real index.html.
+# WO-22B / AD-16 §5: frontend static site for Cloud Run — a SEPARATE Cloud Run service from the
+# public backend (kodomo-ai-backend, untouched by this file) AND from kodomo-ai-admin
+# (Dockerfile.admin — never built or served from here, per AD-16: "nothing admin-related ships
+# in the public frontend"). Serves the Vite production build (dist/): the LP at /, the app at
+# /play/, the AD-13/16 Family Account screens at /login/, /account/, /claim/, the printable
+# deck/kit at /print/deck/ and /print/kit/, legal pages at /legal/tokushoho/ and /legal/privacy/
+# — every real route from vite.config.ts's own multi-page `input` map, each with its own real
+# index.html.
 #
 # This is a MULTI-PAGE static site, not a client-side-routed single-page app — there is no
 # client-side router anywhere in this codebase. The one thing that would break it is a SPA
@@ -21,19 +24,20 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-# VITE_UNLOCK_API_URL must be supplied at BUILD time, not runtime — Vite inlines
-# import.meta.env.VITE_UNLOCK_API_URL into the static bundle at build time (see
-# src/parent/unlock/UnlockPage.tsx), so it has to be a build arg here, never a container env var.
-# Omit it and the build ships the existing, already-shipped honest "not configured" fallback
-# (src/parent/unlock/redeemCode.ts) instead of silently pointing at nothing.
-ARG VITE_UNLOCK_API_URL
-ENV VITE_UNLOCK_API_URL=$VITE_UNLOCK_API_URL
-# Same build-time-only requirement as VITE_UNLOCK_API_URL above, for the same reason:
+# AD-13 §1: the Family Account API base URL — inlined at BUILD time (Vite bakes
+# import.meta.env.VITE_FAMILY_API_URL into the static bundle; see src/family/api.ts), so it must
+# be a build arg here, never a container env var. Omit it and every family feature (/login,
+# /account, /claim, purchase, unit-open/trial gating) keeps the existing, already-shipped honest
+# "not configured" fallback instead of silently pointing at nothing — but omitting it in a real
+# production build means the app can never actually reach the backend, so this MUST be supplied
+# once kodomo-ai-backend has a real, stable URL (docs/launch-runbook.md).
+ARG VITE_FAMILY_API_URL
+ENV VITE_FAMILY_API_URL=$VITE_FAMILY_API_URL
+# Same build-time-only requirement as VITE_FAMILY_API_URL above, for the same reason:
 # import.meta.env.VITE_SHOPIFY_PRODUCT_URL is inlined at build time (src/lp/LandingPage.tsx).
-# WO-32 found this one never wired into this Dockerfile at all — the frontend's own fallback
-# (an honest "お申し込みは近日公開予定です" pending state, never a dead href="#") already covers
-# its absence correctly, so omitting this ARG has never been unsafe; it just meant there was no
-# way to ever supply the real Shopify product URL at deploy time once the Founder has one.
+# The frontend's own fallback (an honest "お申し込みは近日公開予定です" pending state, never a
+# dead href="#") already covers its absence correctly, so omitting this ARG has never been
+# unsafe; it just means there's no way to supply the real Shopify product URL at deploy time.
 ARG VITE_SHOPIFY_PRODUCT_URL
 ENV VITE_SHOPIFY_PRODUCT_URL=$VITE_SHOPIFY_PRODUCT_URL
 RUN npm run build

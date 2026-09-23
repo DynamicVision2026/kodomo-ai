@@ -6,7 +6,9 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(process.cwd(), 'src');
-const EXCLUDE = ['src/lp', 'src/parent'];
+// AD-16 §8: src/admin is staff-only tooling (search box, operator reason field) — never part of
+// the child flow this gate protects, same reasoning as src/lp/src/parent.
+const EXCLUDE = ['src/lp', 'src/parent', 'src/admin'];
 const PATTERNS: [RegExp, string][] = [
   [/<textarea/i, '<textarea>'],
   [/contenteditable/i, 'contenteditable'],

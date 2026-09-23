@@ -53,6 +53,13 @@ export async function handleAdminApi(request: Request, env: Env, url: URL): Prom
   const segments = url.pathname.replace(/^\/admin-api\//, '').split('/').filter(Boolean);
   const method = request.method;
 
+  // GET /admin-api/me — the dashboard's own "who am I / what can I do" check, so it can hide or
+  // disable operator-only controls up front instead of letting a viewer discover the 403 by
+  // trying. Never anything more than the identity `resolveStaffIdentity` already resolved above.
+  if (method === 'GET' && segments[0] === 'me') {
+    return jsonResponse({ email: staff.email, role: staff.role });
+  }
+
   // GET /admin-api/search?q=...
   if (method === 'GET' && segments[0] === 'search') {
     return handleSearch(request, env, url);

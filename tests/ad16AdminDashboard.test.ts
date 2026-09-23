@@ -81,6 +81,25 @@ describe('AD-16 §8 — admin authentication: IAP JWT + staff/ allowlist, never 
   });
 });
 
+describe('AD-16 §8 — GET /admin-api/me: the dashboard\'s own "who am I" check', () => {
+  it('reports the verified email and allowlisted role, nothing else', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'operator@example.com', 'operator');
+    const { request, url } = adminRequest('/admin-api/me', 'valid-jwt-for-operator@example.com', { method: 'GET' });
+    const res = await handleAdminApi(request, env, url);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ email: 'operator@example.com', role: 'operator' });
+  });
+
+  it('reports viewer role for a viewer, distinctly from operator', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'viewer@example.com', 'viewer');
+    const { request, url } = adminRequest('/admin-api/me', 'valid-jwt-for-viewer@example.com', { method: 'GET' });
+    const res = await handleAdminApi(request, env, url);
+    expect((await res.json()).role).toBe('viewer');
+  });
+});
+
 describe('AD-16 §8 — role-based authorization: viewer reads, only operator writes', () => {
   it('a viewer can read a family\'s detail page', async () => {
     const env = fakeEnv();

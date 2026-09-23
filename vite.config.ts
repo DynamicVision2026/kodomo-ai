@@ -3,8 +3,9 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
 
 // Multi-page static build: LP at /, app at /play, AD-13 Family Account screens at /login and
-// /account (outside /play — parent voice, never part of the child play surface), printable deck
-// at /print/deck, printable home-kit production containers at /print/kit (WO-19 Phase 4 — pending
+// /account (outside /play — parent voice, never part of the child play surface), AD-16 §2's own
+// purchase-claim screen at /claim (same "outside /play" reasoning), printable deck at
+// /print/deck, printable home-kit production containers at /print/kit (WO-19 Phase 4 — pending
 // placeholders today; real pages once content lands, no rebuild logic needed here).
 export default defineConfig({
   plugins: [react()],
@@ -16,6 +17,7 @@ export default defineConfig({
         play: resolve(__dirname, 'play/index.html'),
         login: resolve(__dirname, 'login/index.html'),
         account: resolve(__dirname, 'account/index.html'),
+        claim: resolve(__dirname, 'claim/index.html'),
         deck: resolve(__dirname, 'print/deck/index.html'),
         kit: resolve(__dirname, 'print/kit/index.html'),
         printCentre: resolve(__dirname, 'print/centre/index.html'),

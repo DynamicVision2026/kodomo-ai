@@ -21,7 +21,10 @@
     "pipeline:lint": "tsx pipeline/04_lint.ts",
     "dev:server": "tsx watch backend/server/index.ts",
     "build:server": "tsc -p tsconfig.server.json",
-    "start:server": "node dist-server/backend/server/index.js"
+    "start:server": "node dist-server/backend/server/index.js",
+    "dev:admin": "tsx watch backend/server/adminIndex.ts",
+    "build:admin": "tsc -p tsconfig.json --noEmit && vite build --config vite.admin.config.ts",
+    "start:admin-server": "node dist-server/backend/server/adminIndex.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",

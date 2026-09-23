@@ -1,0 +1,50 @@
+# AD-16 §8: the `kodomo-ai-admin` Cloud Run service — a THIRD, separate service from the public
+# frontend (Dockerfile.frontend) and public backend (Dockerfile). Serves the admin dashboard's own
+# static UI (vite.admin.config.ts's own build, dist-admin/admin-dashboard) AND the IAP-verified
+# `/admin-api/*` routes (backend/src/adminRouter.ts) from the SAME origin — deploy this behind
+# Google Identity-Aware Proxy, never in front of the public services. Nothing built here is ever
+# copied into Dockerfile/Dockerfile.frontend, and nothing built there is ever copied into this one
+# (AD-16: "nothing admin-related ships in the public frontend or backend").
+
+# ---- 1. build the admin dashboard's static UI ----------------------------------------------
+FROM node:22-slim AS build-ui
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY tsconfig.json vite.admin.config.ts ./
+COPY src ./src
+COPY backend ./backend
+COPY admin-dashboard ./admin-dashboard
+RUN npx vite build --config vite.admin.config.ts
+
+# ---- 2. compile backend/**/*.ts -> dist-server/**/*.js (same as Dockerfile's own step 1) ---
+FROM node:22-slim AS build-server
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY tsconfig.server.json ./
+COPY backend ./backend
+RUN npx tsc -p tsconfig.server.json
+
+# ---- 3. production-only node_modules (no devDependencies) ----------------------------------
+FROM node:22-slim AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# ---- 4. runtime — small, no build tools, no source, no devDependencies ---------------------
+FROM node:22-slim
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build-server /app/dist-server ./dist-server
+COPY --from=build-ui /app/dist-admin ./dist-admin
+COPY package.json ./
+
+# Cloud Run injects PORT at runtime (default 8080 if unset, matching adminIndex.ts's own
+# fallback); EXPOSE here is documentation, Cloud Run does not read it.
+EXPOSE 8080
+
+USER node
+
+CMD ["node", "dist-server/backend/server/adminIndex.js"]

@@ -6,7 +6,9 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(process.cwd(), 'src');
-const EXCLUDE = ['src/lp', 'src/parent', 'src/modules', 'src/legal'];
+// AD-16 §8: src/admin is the staff-only kodomo-ai-admin dashboard — never reachable by a child,
+// same "parent/staff voice, not gated by this lint" reasoning as src/lp/src/parent already have.
+const EXCLUDE = ['src/lp', 'src/parent', 'src/modules', 'src/legal', 'src/admin'];
 const JA = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/;
 
 const files: string[] = [];

@@ -141,6 +141,13 @@ export interface ModuleUiStrings {
   parentUnlockPrompt?: string;
   parentUnlockLinkLabel?: string;
   lockedMessage: string;
+  /** AD-16 §0/§6: shown instead of `lockedMessage` when the server refuses entry specifically
+   *  because there is no session at all (never logged in on this device) — the one case with a
+   *  genuinely different remedy ("log in", not "purchase"). Optional so an existing module
+   *  fixture without it keeps working unchanged, falling back to the generic `lockedMessage` +
+   *  back-to-map action exactly as before this pair existed. */
+  lockedLoginPrompt?: string;
+  lockedLoginLinkLabel?: string;
   /** WO-02: the 「これでOK？」 judgment gate's "not enough" response, opposite of earlyOk. */
   judgeNotEnough: string;
   /** WO-05: heading for 問いのどうぐばこ, the Toolbox growth surface on the parent screen. */

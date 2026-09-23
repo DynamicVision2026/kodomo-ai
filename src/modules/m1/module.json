@@ -55,6 +55,8 @@
     "parentUnlockPrompt": "ほかの端末で すでに ご購入いただいている場合は、家族用コードをこの端末でも登録できます。",
     "parentUnlockLinkLabel": "家族用コードを登録する",
     "lockedMessage": "ここは まだ ほれないよ。ご購入いただくと つづきが ほれます。",
+    "lockedLoginPrompt": "つづきを ほるには、おうちの方の ログインが ひつようです。",
+    "lockedLoginLinkLabel": "ログインする",
     "judgeNotEnough": "もっと きいてみる",
     "toolboxHeading": "といの どうぐばこ",
     "blindCommit": "いえた",
