@@ -18,6 +18,16 @@ export interface MoveCardProps {
    *  before Pass 2. The two modes never mix for one card. */
   variant?: MoveCardVariant;
   onCommit?: () => void;
+  /** Real-coverage addition (not one of AD-12 §4's 12 sample states, but a real requirement the
+   *  live dig hand has): a card that already resolved non-deepen this layer — kept visible
+   *  (never removed, F9's own "still occupies its place" discipline applied here too), disabled,
+   *  and dimmed via the SAME opacity treatment BankPlane already uses for an unavailable item
+   *  (`.is-unavailable`) rather than inventing a new token. Independent of `variant`: a blocked
+   *  card is always shown at rest, dimmed. */
+  blocked?: boolean;
+  /** A small decorative glyph marking a blocked card — mirrors QuestionChip's own pre-AD-12
+   *  badge convention (never child-facing text, so it's exempt from the copy gate). */
+  badge?: string;
 }
 
 /**
@@ -35,12 +45,12 @@ export interface MoveCardProps {
  * press and the slower settle — need different durations off one `transform` property; WAAPI is
  * the tool for that, and it already resolves to a short reduced-motion crossfade automatically.
  */
-export function MoveCard({ text, variant, onCommit }: MoveCardProps) {
+export function MoveCard({ text, variant, onCommit, blocked, badge }: MoveCardProps) {
   const [phase, setPhase] = useState<MoveCardVariant>('rest');
   const committedRef = useRef(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const controlled = variant !== undefined;
-  const effective = controlled ? variant : phase;
+  const effective = blocked ? 'rest' : controlled ? variant : phase;
 
   function handlePointerDown() {
     if (controlled || committedRef.current) return;
@@ -76,13 +86,15 @@ export function MoveCard({ text, variant, onCommit }: MoveCardProps) {
     <button
       ref={buttonRef}
       type="button"
-      className={`ad12-move-card ad12-tappable ad12-reading-text ad12-move-card--${effective}`}
+      disabled={blocked}
+      className={`ad12-move-card ad12-tappable ad12-reading-text ad12-move-card--${effective}${blocked ? ' ad12-move-card--blocked' : ''}`}
       onPointerDown={handlePointerDown}
       onPointerLeave={handlePointerLeave}
       onPointerCancel={handlePointerLeave}
       onClick={handleClick}
     >
-      <Ruby text={text} />
+      <span className="ad12-move-card__text"><Ruby text={text} /></span>
+      {badge && <span className="ad12-move-card__badge" aria-hidden="true">{badge}</span>}
     </button>
   );
 }

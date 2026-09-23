@@ -18,3 +18,9 @@
 .ad12-home-plane__title {
   margin: 0;
 }
+
+/** Real-coverage addition (see HomePlane.tsx `locked`): dimmed, never hidden — the same
+ *  treatment BankPlane's own unavailable items and MoveCard's own blocked cards use. */
+.ad12-home-plane--locked {
+  opacity: 0.5;
+}

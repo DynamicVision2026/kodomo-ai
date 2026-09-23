@@ -8,8 +8,14 @@ export interface TrayCard {
   id: string;
   text: string;
   /** Only used to pick which card renders which static variant for a screenshot fixture (e.g.
-   *  "the pressed one") — never rendered as a colour/size difference tied to move/tag/domain. */
+   *  "the pressed one"), or — for a live, engine-driven tray — to keep the caller as the sole
+   *  authority over each card's own moment in the grammar (rest/pressed/magnified/committed)
+   *  rather than letting the card manage that itself; never rendered as a colour/size difference
+   *  tied to move/tag/domain. */
   variant?: MoveCardVariant;
+  /** Real-coverage addition — see MoveCard.tsx's own `blocked`/`badge`. */
+  blocked?: boolean;
+  badge?: string;
 }
 
 export interface MoveTrayProps {
@@ -30,6 +36,8 @@ export function MoveTray({ cards, guidanceLevel, onCommit }: MoveTrayProps) {
             key={card.id}
             text={card.text}
             variant={card.variant}
+            blocked={card.blocked}
+            badge={card.badge}
             onCommit={() => onCommit?.(card.id)}
           />
         ))}

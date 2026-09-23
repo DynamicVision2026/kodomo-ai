@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import type { ModuleUiStrings } from '../engine/types';
 import { Ruby } from '../engine/ruby';
+import { Plane } from '../ad12/Plane';
+import '../ad12/tokens.css';
+import '../ad12/primitives.css';
+import './completion-ritual.css';
 
 export interface CompletionRitualProps {
   ui: ModuleUiStrings;
@@ -33,47 +37,66 @@ type Step = 'write' | 'compare' | 'certificate';
  *    parent, by hand, ever writes on the printed page.
  *
  * `onDone` leads to the existing, unchanged course-complete `MissionComplete` screen.
+ *
+ * AD-12 cutover: a parent-register surface, restyled with AD-12's own Plane/ink-button treatment
+ * (F7: "parent actions use ink, never yellow") — its own dedicated wrapper class (not the shared
+ * `.mission-shell__wrapper`/`--parent`, whose own button styling several OTHER, out-of-scope
+ * MissionShell screens still depend on unchanged) so this restyle can't leak into them.
+ * `.mission-shell__completion-ritual` itself stays, unchanged, as the test suite's own stable
+ * "which screen is showing" hook.
  */
 export function CompletionRitual({ ui, onDone }: CompletionRitualProps) {
   const [step, setStep] = useState<Step>('write');
 
   if (step === 'write') {
     return (
-      <div className="mission-shell__wrapper mission-shell__wrapper--parent mission-shell__completion-ritual">
-        <p className="mission-shell__m0-child-prompt"><Ruby text={ui.m0ChildPrompt ?? ''} /></p>
-        <div className="mission-shell__m0-parent-instruction">
-          <p>{ui.m0ParentIntro}</p>
-          <p>{ui.m0ParentStep1}</p>
-          <p>{ui.m0ParentStep2}</p>
-          <p>{ui.m0ParentStep3}</p>
-          <p>{ui.m0ParentStep4}</p>
-        </div>
-        <button type="button" onClick={() => setStep('compare')}>{ui.handoffContinue}</button>
+      <div className="ad12 completion-ritual mission-shell__completion-ritual">
+        <Plane className="completion-ritual__plane">
+          <p className="ad12-reading-text"><Ruby text={ui.m0ChildPrompt ?? ''} /></p>
+          <div className="completion-ritual__parent-instruction">
+            <p className="ad12-ui-text">{ui.m0ParentIntro}</p>
+            <p className="ad12-ui-text">{ui.m0ParentStep1}</p>
+            <p className="ad12-ui-text">{ui.m0ParentStep2}</p>
+            <p className="ad12-ui-text">{ui.m0ParentStep3}</p>
+            <p className="ad12-ui-text">{ui.m0ParentStep4}</p>
+          </div>
+          <button type="button" className="ad12-ink-button ad12-tappable" onClick={() => setStep('compare')}>
+            {ui.handoffContinue}
+          </button>
+        </Plane>
       </div>
     );
   }
 
   if (step === 'compare') {
     return (
-      <div className="mission-shell__wrapper mission-shell__wrapper--parent mission-shell__completion-ritual">
-        <p>{ui.m0ParentForward}</p>
-        <button type="button" onClick={() => setStep('certificate')}>{ui.handoffContinue}</button>
+      <div className="ad12 completion-ritual mission-shell__completion-ritual">
+        <Plane className="completion-ritual__plane">
+          <p className="ad12-reading-text">{ui.m0ParentForward}</p>
+          <button type="button" className="ad12-ink-button ad12-tappable" onClick={() => setStep('certificate')}>
+            {ui.handoffContinue}
+          </button>
+        </Plane>
       </div>
     );
   }
 
   return (
-    <div className="mission-shell__wrapper mission-shell__wrapper--parent mission-shell__completion-ritual">
-      <p className="mission-shell__certificate-heading">{ui.certificateHeading}</p>
-      <p className="mission-shell__certificate-blank">{ui.certificateBlankLabel}</p>
-      <button
-        type="button"
-        className="mission-shell__certificate-kit-link"
-        onClick={() => window.open('/print/centre/', '_blank', 'noopener')}
-      >
-        {ui.courseHomeKitLabel}
-      </button>
-      <button type="button" onClick={onDone}>{ui.handoffContinue}</button>
+    <div className="ad12 completion-ritual mission-shell__completion-ritual">
+      <Plane className="completion-ritual__plane">
+        <p className="ad12-reading-text completion-ritual__certificate-heading">{ui.certificateHeading}</p>
+        <p className="ad12-ui-text">{ui.certificateBlankLabel}</p>
+        <button
+          type="button"
+          className="ad12-ink-button ad12-tappable"
+          onClick={() => window.open('/print/centre/', '_blank', 'noopener')}
+        >
+          {ui.courseHomeKitLabel}
+        </button>
+        <button type="button" className="ad12-ink-button ad12-tappable" onClick={onDone}>
+          {ui.handoffContinue}
+        </button>
+      </Plane>
     </div>
   );
 }

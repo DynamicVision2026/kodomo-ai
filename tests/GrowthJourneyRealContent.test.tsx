@@ -123,7 +123,7 @@ describe('Growth Journey M0-M5 — reachable end to end through only real, relea
     // --- Mission 3: bank-kotoba (B09, real 2-layer chain, domain ことば — the 3rd distinct
     // domain, so follow-naze reaches tsukaeru partway through this mission's own layer 0). -----
     await user.click(screen.getByText(ui.bankHubButton));
-    await user.click(screen.getByText(titleMatcher(bankKotoba.title)));
+    await user.click(screen.getAllByText<HTMLElement>(titleMatcher(bankKotoba.title)).at(-1)!);
     await user.click(screen.getByText(ui.coopSolo));
     await playDigChain(user, bankKotoba.phases[0] as DigPhase);
     await throughWrapperScreensToParent(user);

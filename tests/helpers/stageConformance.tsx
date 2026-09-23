@@ -34,6 +34,13 @@ function getByAuthoredText(raw: string): HTMLElement {
   return deepest ?? matches[0]!;
 }
 
+/** AD-12 cutover: an ordinary dig-layer reading beat is always `.speech-bubble` (SpeechBubble,
+ *  now internally AD-12's AnswerPlane) — but the ROOT reveal specifically renders AD-12's own
+ *  RootPlane (`.ad12-root-plane--tappable`) whenever the mission's rootType resolves to one of
+ *  the three authored forms, which is true for every real Story/Bank mission today. Either way
+ *  it's the one "tap anywhere to advance" surface currently on screen. */
+const ADVANCE_SELECTOR = '.speech-bubble, .ad12-root-plane--tappable';
+
 /**
  * WO-26 §26: reusable, CONTENT-AGNOSTIC conformance helper — walks any Story Mission or Bank
  * Dig's real content through the real `MissionStage` component (the same golden-grammar
@@ -82,6 +89,9 @@ export async function playMissionStageToCompletion(
 
     // §9 ほる/non-deepen recovery: a non-CLEAR pick (VAGUE or OFFTOPIC) must visibly hit a
     // stone, stay visible/badged/disabled, never disappear — proven once here per mission.
+    // AD-12 cutover: the slot round's own tray is now MoveTray/MoveCard (equal-weight choice —
+    // slot cards never carried real per-choice colour differentiation even before the cutover,
+    // see cardKinds.ts's own doc comment on the dig-hand 'dig' kind), never ChoiceTray/QuestionChip.
     const nonClear = slotPhase.cards.find((c) => c.tag !== 'clear');
     if (nonClear) {
       await user.click(getByAuthoredText(nonClear.text));
@@ -92,9 +102,9 @@ export async function playMissionStageToCompletion(
       });
       await user.click(document.querySelector('.speech-bubble') as HTMLElement);
       await waitFor(() => {
-        expect(getByAuthoredText(nonClear.text).closest('.question-chip')!.className).toContain('is-blocked');
+        expect(getByAuthoredText(nonClear.text).closest('.ad12-move-card')!.className).toContain('ad12-move-card--blocked');
       });
-      expect(within(getByAuthoredText(nonClear.text).closest('.question-chip') as HTMLElement).getByText('🪨')).toBeInTheDocument();
+      expect(within(getByAuthoredText(nonClear.text).closest('.ad12-move-card') as HTMLElement).getByText('🪨')).toBeInTheDocument();
       expect(screen.getByText(ui.stageQuestionPrompt)).toBeInTheDocument(); // still named after recovery
     }
 
@@ -125,9 +135,10 @@ export async function playMissionStageToCompletion(
     });
     await user.click(screen.getByText(ui.judgeNotEnough));
 
-    // §10: GAP Naming explicitly names the decision.
+    // §10: GAP Naming explicitly names the decision. AD-12 §4 state 2's own SlipCascade
+    // (`.ad12-recess .ad12-slip`) replaces ChoiceTray/QuestionChip for this moment.
     expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument();
-    const [gapChoice] = document.querySelectorAll('.choice-tray .question-chip');
+    const [gapChoice] = document.querySelectorAll('.ad12-recess .ad12-slip');
     await user.click(gapChoice as HTMLElement);
 
     expect(screen.getByText(ui.stageQuestionPrompt)).toBeInTheDocument();
@@ -144,7 +155,7 @@ export async function playMissionStageToCompletion(
         expect(screen.queryByText('不正解')).not.toBeInTheDocument(); // no punishment semantics
         await user.click(document.querySelector('.speech-bubble') as HTMLElement);
         await waitFor(() => {
-          expect(getByAuthoredText(nonDeepen.text).closest('.question-chip')!.className).toContain('is-blocked');
+          expect(getByAuthoredText(nonDeepen.text).closest('.ad12-move-card')!.className).toContain('ad12-move-card--blocked');
         });
         expect(screen.getByText(ui.digContinuePrompt)).toBeInTheDocument();
       }
@@ -164,7 +175,11 @@ export async function playMissionStageToCompletion(
         expect(screen.getByText(ui.stageRootDiscoveryLabel)).toBeInTheDocument();
       });
       expect(screen.queryByText(/\d+\s*点/)).not.toBeInTheDocument();
-      const rootBubble = document.querySelector('.speech-bubble') as HTMLElement;
+      // AD-12 cutover: the root reveal renders RootPlane (`.ad12-root-plane--tappable`) whenever
+      // the mission's own rootType resolves to one of the three authored forms — true for every
+      // real Story/Bank mission today — falling back to the ordinary SpeechBubble treatment
+      // (`.speech-bubble`) only for a rootType outside that set.
+      const rootBubble = document.querySelector(ADVANCE_SELECTOR) as HTMLElement;
       await user.click(rootBubble); // ONE tap -> tip
     } else {
       // Next layer's own opening line — ONE tap advances.
@@ -359,7 +374,7 @@ export async function playMissionScreenToCompletion(
     await skipBattleIfPresent(user, ui);
     await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
     await user.click(screen.getByText(ui.judgeNotEnough));
-    const [gapChoice] = document.querySelectorAll('.choice-tray .question-chip');
+    const [gapChoice] = document.querySelectorAll('.ad12-recess .ad12-slip');
     await user.click(gapChoice as HTMLElement);
     // Blind-first (WO-07): once a layer's single deepen move has reached `tsukaeru` on this
     // profile (real, accumulated moveProgress — this helper is also used across a long,
@@ -375,7 +390,8 @@ export async function playMissionScreenToCompletion(
     await waitFor(() => expect(document.querySelector('.stage__hand-tray')).not.toBeInTheDocument());
     if (i === digPhase.layers.length - 1) {
       await waitFor(() => expect(screen.getByText(ui.stageRootDiscoveryLabel)).toBeInTheDocument());
-      await user.click(document.querySelector('.speech-bubble') as HTMLElement);
+      // AD-12 cutover: see the matching comment in playMissionStageToCompletion above.
+      await user.click(document.querySelector(ADVANCE_SELECTOR) as HTMLElement);
     } else {
       await waitFor(() => expect(document.querySelector('.speech-bubble')).toBeInTheDocument());
       await user.click(document.querySelector('.speech-bubble') as HTMLElement);

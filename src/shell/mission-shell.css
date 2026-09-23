@@ -69,11 +69,6 @@
   padding-top: 3rem;
   font-family: var(--font-parent, system-ui), sans-serif;
 }
-.mission-shell__stage-teachback-ouchi {
-  font-size: 0.95rem;
-  color: var(--ink-soft, #6b5d4f);
-}
-
 /* WO-34: Real AI Lab — same parent-register wrapper as stage-teachback above, just its own
  * heading/note treatment. */
 .mission-shell__real-ai-lab-heading {

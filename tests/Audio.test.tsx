@@ -201,7 +201,7 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
     await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
     await user.click(screen.getByText(ui.judgeNotEnough));
     await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
-    const [gapChoice] = document.querySelectorAll('.choice-tray .question-chip');
+    const [gapChoice] = document.querySelectorAll('.ad12-recess .ad12-slip');
     await user.click(gapChoice as HTMLElement);
 
     await waitFor(() => expect(screen.getByText(ui.stageQuestionPrompt)).toBeInTheDocument()); // the hand tray, reached
@@ -234,7 +234,7 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
     await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
     await user.click(screen.getByText(ui.judgeNotEnough));
     await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
-    await user.click(document.querySelectorAll('.choice-tray .question-chip')[0] as HTMLElement);
+    await user.click(document.querySelectorAll('.ad12-recess .ad12-slip')[0] as HTMLElement);
     const layer0Deepen = digPhase.layers[0].hand.find((c: any) => c.tag === 'deepen');
     await waitFor(() => expect(screen.getByText(layer0Deepen.text)).toBeInTheDocument());
     await user.click(screen.getByText(layer0Deepen.text));
@@ -248,7 +248,7 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
     await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
     await user.click(screen.getByText(ui.judgeNotEnough));
     await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
-    await user.click(document.querySelectorAll('.choice-tray .question-chip')[0] as HTMLElement);
+    await user.click(document.querySelectorAll('.ad12-recess .ad12-slip')[0] as HTMLElement);
 
     expect(onGapNamed).toHaveBeenCalledTimes(1);
     expect(onGapNamed).toHaveBeenCalledWith({ missionId: chanto.id });
@@ -283,7 +283,7 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
     await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
     await user.click(screen.getByText(ui.judgeNotEnough));
     await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
-    await user.click(document.querySelectorAll('.choice-tray .question-chip')[0] as HTMLElement);
+    await user.click(document.querySelectorAll('.ad12-recess .ad12-slip')[0] as HTMLElement);
 
     // Blind-first's own commit chip ("いえた") replaces the ordinary hand tray when eligible.
     const blindCommitButton = await screen.findByText(ui.blindCommit!);
@@ -318,7 +318,7 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
     await waitFor(() => expect(screen.getByText(ui.judgeNotEnough)).toBeInTheDocument());
     await user.click(screen.getByText(ui.judgeNotEnough));
     await waitFor(() => expect(screen.getByText(ui.stageGapPrompt)).toBeInTheDocument());
-    await user.click(document.querySelectorAll('.choice-tray .question-chip')[0] as HTMLElement);
+    await user.click(document.querySelectorAll('.ad12-recess .ad12-slip')[0] as HTMLElement);
     const layer0Deepen = digPhase.layers[0].hand.find((c: any) => c.tag === 'deepen');
     await waitFor(() => expect(screen.getByText(layer0Deepen.text)).toBeInTheDocument());
     await user.click(screen.getByText(layer0Deepen.text));

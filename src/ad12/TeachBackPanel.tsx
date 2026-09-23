@@ -5,7 +5,11 @@ import './teach-back-panel.css';
 export interface TeachBackPanelProps {
   teachBack: string;
   ouchiTalk: string;
-  m2ConfirmPrompt: string;
+  /** Real-coverage addition: optional — a caller whose own action button needs no separate lead-
+   *  in line (e.g. MissionShell's Mission-1-only stage-teachback screen, which shows only
+   *  teachBack + ouchiTalk + one action) simply omits it; the generic parent dashboard's own M2b
+   *  block (this component's original shape) still passes a real one. */
+  m2ConfirmPrompt?: string;
   m2ConfirmAction: string;
   m2Confirmed: boolean;
   m2ConfirmedMessage: string;
@@ -29,7 +33,7 @@ export function TeachBackPanel({
         <p className="ad12-ui-text">{m2ConfirmedMessage}</p>
       ) : (
         <>
-          <p className="ad12-ui-text">{m2ConfirmPrompt}</p>
+          {m2ConfirmPrompt && <p className="ad12-ui-text">{m2ConfirmPrompt}</p>}
           <button type="button" className="ad12-ink-button ad12-tappable" onClick={onConfirm}>
             {m2ConfirmAction}
           </button>

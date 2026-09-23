@@ -2,7 +2,9 @@ import { useState } from 'react';
 import type { Mission } from '../engine/types';
 import type { Progress } from '../engine/storage';
 import { bankState } from './progression';
-import { Ruby } from '../engine/ruby';
+import { BankPlane, type BankItem } from '../ad12/BankPlane';
+import '../ad12/tokens.css';
+import '../ad12/primitives.css';
 import './bank-select.css';
 
 export interface BankSelectUi {
@@ -34,12 +36,35 @@ export interface BankSelectProps {
  * WO-26 §5/§7: a Bank Dig LOCKED by the derived unlock schedule is still shown (never hidden —
  * "must not look broken"), just dimmed and unenterable; tapping it shows a short diegetic
  * explanation instead of entering.
+ *
+ * AD-12 §4 state 11 (Bank): reuses BankPlane directly. `sectionLocked` is always false here —
+ * BankSelect is itself only ever reached once Course Home's own Bank nav button is showing
+ * (`hasBank`), so there is no separate "whole section still closed" moment this screen needs to
+ * render; each item's own real prerequisite (Story 1-4 floor, then its own rootType/move gate —
+ * `bankState`, unchanged) already governs whether it's `available`.
  */
 export function BankSelect({ bankOrder, missions, progress, storyMissionsInOrder, ui, onSelect, onBack }: BankSelectProps) {
   const [lockedTapId, setLockedTapId] = useState<string | null>(null);
 
-  function tapTopic(id: string, state: ReturnType<typeof bankState>) {
-    if (state === 'locked') {
+  const entries = bankOrder
+    .map((id) => missions[id])
+    .filter((m): m is Mission => !!m)
+    .map((mission) => ({
+      mission,
+      state: bankState(mission, storyMissionsInOrder, progress),
+    }));
+
+  const items: BankItem[] = entries.map(({ mission, state }) => ({
+    id: mission.id,
+    title: mission.title,
+    available: state !== 'locked',
+    done: state === 'completed',
+    doneLabel: ui.bankDoneLabel,
+  }));
+
+  function tapTopic(id: string) {
+    const entry = entries.find((e) => e.mission.id === id);
+    if (entry?.state === 'locked') {
       setLockedTapId(id);
       return;
     }
@@ -48,33 +73,16 @@ export function BankSelect({ bankOrder, missions, progress, storyMissionsInOrder
   }
 
   return (
-    <div className="bank-select">
+    <div className="ad12 bank-select">
       <p className="bank-select__heading">{ui.bankHeading}</p>
-      <div className="bank-select__grid">
-        {bankOrder.map((id) => {
-          const mission = missions[id];
-          if (!mission) return null;
-          const state = bankState(mission, storyMissionsInOrder, progress);
-          const done = state === 'completed';
-          const locked = state === 'locked';
-          return (
-            <div key={mission.id} className="bank-select__cell">
-              <button
-                type="button"
-                className={`bank-select__topic${locked ? ' is-locked' : ''}`}
-                onClick={() => tapTopic(mission.id, state)}
-              >
-                <span className="bank-select__topic-icon" aria-hidden="true">🕳️</span>
-                <span className="bank-select__title"><Ruby text={mission.title} /></span>
-                {done && <span className="bank-select__done">{ui.bankDoneLabel}</span>}
-              </button>
-              {locked && lockedTapId === mission.id && (
-                <p className="bank-select__locked-note"><Ruby text={ui.bankLockedMessage} /></p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <BankPlane
+        sectionLocked={false}
+        items={items}
+        onSelect={tapTopic}
+        tappableWhenUnavailable
+        noteForId={lockedTapId ?? undefined}
+        note={ui.bankLockedMessage}
+      />
       <button type="button" className="bank-select__back" onClick={onBack}>
         {ui.bankBackButton}
       </button>

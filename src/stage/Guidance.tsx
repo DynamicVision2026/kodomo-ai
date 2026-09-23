@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import './guidance.css';
 
 /** AD-07 §9: SHOW -> NUDGE -> FADE -> INDEPENDENT, per verb, per profile. */
 export type GuidanceLevel = 'show' | 'nudge' | 'fade' | 'independent';
@@ -57,18 +56,3 @@ export function useStall(active: boolean, resetKey: unknown, delayMs: number): b
   return stalled;
 }
 
-export interface GuidancePulseProps {
-  level: GuidanceLevel;
-}
-
-/**
- * WO-24 (AD-07 §9): the overlay guidance affordance. Points at the TRAY AREA this wraps —
- * never at a specific chip, never at one of JUDGE's two answers — and fades with `level`. At
- * 'fade' it's barely visible; at 'independent' it renders nothing at all. Diegetic guidance
- * (Mascot state, Pon太's stall line) lives directly in MissionStage instead — this component is
- * the overlay layer only.
- */
-export function GuidancePulse({ level }: GuidancePulseProps) {
-  if (level === 'independent') return null;
-  return <div className={`guidance-pulse guidance-pulse--${level}`} aria-hidden="true" />;
-}

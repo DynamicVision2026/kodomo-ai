@@ -23,6 +23,10 @@
   display: block;
 }
 
+.ad12-bank-plane__row {
+  width: 100%;
+}
+
 .ad12-bank-plane__item {
   background: transparent;
   border: 1px solid var(--ad12-field-2);
@@ -31,9 +35,23 @@
   color: var(--ad12-ink);
   text-align: left;
   cursor: pointer;
+  width: 100%;
 }
 
 .ad12-bank-plane__item.is-unavailable {
   opacity: 0.35;
   cursor: default;
+}
+
+.ad12-bank-plane__done {
+  margin-left: 0.5rem;
+  opacity: 0.6;
+}
+
+.ad12-bank-plane__note {
+  margin: 0.35rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--ad12-radius-chip);
+  background: var(--ad12-field-1);
+  font-size: 0.85rem;
 }

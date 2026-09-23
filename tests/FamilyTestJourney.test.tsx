@@ -156,7 +156,7 @@ describe('WO-23 §15 — family-test regression suite', () => {
 
     expect(screen.getByText(ui.courseHomeHeading)).toBeInTheDocument();
     const currentTitle = within(document.querySelector('.course-home__depth.is-current')!).getByText(
-      (_c, el) => el?.tagName === 'SPAN' && el.className === 'course-home__depth-title',
+      (_c, el) => el?.tagName === 'SPAN' && el.className.includes('ad12-home-plane__title'),
     );
     expect(currentTitle).toBeInTheDocument();
     expect(screen.getByText(ui.courseHomeContinueLabel)).toBeInTheDocument();
@@ -202,7 +202,7 @@ describe('WO-23 §15 — family-test regression suite', () => {
       const user = userEvent.setup();
       const { unmount } = renderShellWithBank();
       await user.click(screen.getByText('たぬき')); // the same, seeded profile
-      const depthButtons = document.querySelectorAll('.course-home__depth-button');
+      const depthButtons = document.querySelectorAll('.ad12-home-plane');
       expect(depthButtons).toHaveLength(8);
       await user.click(depthButtons[i] as HTMLElement);
 
@@ -227,7 +227,7 @@ describe('WO-23 §15 — family-test regression suite', () => {
       const { unmount } = renderShellWithBank();
       await user.click(screen.getByText('たぬき'));
       await user.click(screen.getByText(ui.courseHomeBankLabel));
-      const topicButtons = document.querySelectorAll('.bank-select__topic');
+      const topicButtons = document.querySelectorAll('.ad12-bank-plane__item');
       expect(topicButtons).toHaveLength(12);
       await user.click(topicButtons[i] as HTMLElement);
 
@@ -297,7 +297,7 @@ describe('WO-23 §15 — family-test regression suite', () => {
 
     // The LAST story, deliberately not the current one, is LOCKED — tapping it stays on Course
     // Home with a short diegetic explanation, never a browser-style error, never a navigation.
-    const depthButtons = document.querySelectorAll('.course-home__depth-button');
+    const depthButtons = document.querySelectorAll('.ad12-home-plane');
     await user.click(depthButtons[7] as HTMLElement);
     expect(document.querySelector('.mission-shell__locked')).not.toBeInTheDocument();
     expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument(); // never entered

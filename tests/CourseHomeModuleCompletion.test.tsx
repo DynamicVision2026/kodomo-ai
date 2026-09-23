@@ -115,12 +115,12 @@ describe('WO-26A — Course Home Module Completion CTA', () => {
     expect(screen.getByText(ui.bankHeading)).toBeInTheDocument();
     for (const bank of BANKS) {
       const btn = screen.getByText(bank.title).closest('button')!;
-      expect(btn.className).not.toContain('is-locked'); // both unlock well before Story 8
+      expect(btn.className).not.toContain('is-unavailable'); // both unlock well before Story 8
     }
 
     // A COMPLETED Story Mission's own replay affordance (tapping it) is untouched by this patch.
     await user.click(screen.getByText(ui.bankBackButton));
-    const doneDepth = screen.getByText(STORY[0]!.title).closest('.course-home__depth-button')!;
+    const doneDepth = screen.getByText(STORY[0]!.title).closest('.ad12-home-plane')!;
     await user.click(doneDepth);
     expect(screen.getByText(ui.coopQuestion)).toBeInTheDocument();
   });

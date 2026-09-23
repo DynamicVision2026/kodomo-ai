@@ -1,12 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Mission, ModuleUiStrings } from '../engine/types';
+import type { DigPhase, Mission, ModuleUiStrings } from '../engine/types';
 import type { Progress } from '../engine/storage';
 import type { MoveProgressMap } from '../engine/scaffold';
 import { storyState } from './progression';
 import { Toolbox } from './Toolbox';
 import { Mascot } from './Mascot';
 import { Ruby } from '../engine/ruby';
+import { HomePlane } from '../ad12/HomePlane';
+import '../ad12/tokens.css';
+import '../ad12/primitives.css';
 import './course-home.css';
+
+/** A Story Mission's own depth-tab total (dig layer count + root) — HomePlane's own `depthTotal`
+ *  contract, matching how MissionStage itself computes `depth()`'s `total`. A mission with no dig
+ *  phase at all (shouldn't happen for a real Story Mission, but content-agnostic regardless)
+ *  falls back to 1 rather than throwing on unauthored/malformed content. */
+function depthTotalOf(mission: Mission): number {
+  const digPhase = mission.phases.find((p) => p.template === 'dig') as DigPhase | undefined;
+  return digPhase ? digPhase.layers.length + 1 : 1;
+}
 
 export interface CourseHomeUi extends ModuleUiStrings {}
 
@@ -89,7 +101,7 @@ export function CourseHome({
   }
 
   return (
-    <div className="course-home">
+    <div className="ad12 course-home">
       <div className="course-home__scroll">
         <div className="course-home__header">
           <Mascot state="curious" />
@@ -104,7 +116,7 @@ export function CourseHome({
         />
 
         <ol className="course-home__shaft" aria-label={ui.courseHomeHeading}>
-          {missionOrder.map((id, i) => {
+          {missionOrder.map((id) => {
             const m = missions[id];
             if (!m) return null;
             const state = storyState(id, progress, currentMissionId);
@@ -127,19 +139,26 @@ export function CourseHome({
             ].filter(Boolean).join(' ');
             return (
               <li key={id} ref={isCurrent || needsPurchase ? currentRef : undefined} className={cls}>
-                <button type="button" className="course-home__depth-button" onClick={() => tapDepth(id, locked)}>
-                  <span className="course-home__depth-index">{i + 1}</span>
-                  <span className="course-home__depth-title"><Ruby text={m.title} /></span>
-                  {/* WO-24 (AD-07 §12): "completed Mission 1 -> gold root becomes visible." A
-                     plain visual marker alongside the existing text label, never replacing it —
-                     no percentage, no score, just the world itself showing progress. */}
-                  {done && <span className="course-home__depth-root" aria-hidden="true">◆</span>}
-                  {done && <span className="course-home__depth-mark">{ui.courseHomeDoneLabel}</span>}
-                  {locked && <span className="course-home__depth-mark course-home__depth-mark--ahead">{ui.courseHomeNotYetLabel}</span>}
-                  {/* WO-24 (AD-07 §12): "Robot stands at the current dig site" — a small, plain
-                     positional cue, not a second mascot with its own reactive state. */}
-                  {isCurrent && <span className="course-home__depth-robot" aria-hidden="true">🤖</span>}
-                </button>
+                {/* AD-12 §4 state 11 (Home) / F9: "each lesson is a white plane... no numbers,
+                   no stars — the only completion signal is the depth-tab row itself" — replaces
+                   the old gold "◆" marker + text done-label with HomePlane's own DepthRow.
+                   `current`/`locked` are real-coverage additions to HomePlane (not one of the 12
+                   sample states) covering Course Home's own 3-state model. */}
+                <HomePlane
+                  title={m.title}
+                  done={done}
+                  depthTotal={done ? depthTotalOf(m) : undefined}
+                  current={isCurrent}
+                  locked={locked}
+                  onSelect={() => tapDepth(id, locked)}
+                />
+                {/* WO-24 (AD-07 §12): "Robot stands at the current dig site" — a small, plain
+                   positional cue (never a reward badge), not a second mascot with its own
+                   reactive state. */}
+                {isCurrent && <span className="course-home__depth-robot" aria-hidden="true">🤖</span>}
+                {locked && (
+                  <p className="course-home__depth-mark course-home__depth-mark--ahead">{ui.courseHomeNotYetLabel}</p>
+                )}
                 {/* WO-26 §7 / WO-27: LOCKED must "not look broken" — a short diegetic
                    explanation right where the tap happened, never a browser-style error, never
                    a navigation. `needsPurchase` reuses the SAME message the real entry gate

@@ -35,6 +35,18 @@
   outline-offset: 2px;
 }
 
+/** Real-coverage addition (see MoveCard.tsx): the SAME dimmed-and-inert treatment
+ *  BankPlane's own `.is-unavailable` already uses — a blocked card stays visible, never
+ *  removed, just no longer live. */
+.ad12-move-card--blocked {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ad12-move-card__badge {
+  margin-left: 0.5rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ad12-move-card {
     transition-duration: var(--ad12-t-reduced);

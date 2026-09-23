@@ -1,0 +1,43 @@
+/**
+ * AD-12 cutover: the completion ritual (write/compare/certificate) gets its own dedicated
+ * wrapper — NOT the shared `.mission-shell__wrapper`/`--parent` (several other, out-of-scope
+ * MissionShell screens still depend on THAT class's own button styling unchanged) — so this
+ * restyle can't leak into them. `.mission-shell__completion-ritual` itself stays as the test
+ * suite's stable "which screen is showing" hook; layout/paper/ink chrome all comes from AD-12
+ * (Plane, `.ad12-ink-button` — F7: parent actions use ink, never yellow) via this file only for
+ * what AD-12 doesn't already decide (screen centring/max-width).
+ */
+.completion-ritual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100dvh;
+  padding: 2rem 1rem;
+  background: var(--ad12-field-0);
+}
+
+.completion-ritual__plane {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  max-width: 28rem;
+  width: 100%;
+  text-align: center;
+}
+
+.completion-ritual__parent-instruction {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.completion-ritual__certificate-heading {
+  font-weight: 700;
+}
+
+/* This screen's own centred layout (unlike TeachBackPanel's left-aligned one) — override the
+ * shared `.ad12-ink-button`'s own `align-self: flex-start` just here. */
+.completion-ritual__plane .ad12-ink-button {
+  align-self: center;
+}

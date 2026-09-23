@@ -53,9 +53,13 @@ function TextAnchorAudioScene({ role, robotLine, ui, onDone }: Omit<AudioScenePr
     <div className="mission-shell__wrapper" data-audio-role={role}>
       <Mascot state="curious" />
       {!revealed ? (
-        <SpeechBubble text={ui.audioListenPrompt ?? ''} onAdvance={() => setRevealed(true)} />
+        <SpeechBubble
+          text={ui.audioListenPrompt ?? ''}
+          onAdvance={() => setRevealed(true)}
+          advanceLabel={ui.handoffContinue}
+        />
       ) : (
-        <SpeechBubble speaker={ui.stageRobotName} text={robotLine} onAdvance={onDone} />
+        <SpeechBubble speaker={ui.stageRobotName} text={robotLine} onAdvance={onDone} advanceLabel={ui.handoffContinue} />
       )}
     </div>
   );

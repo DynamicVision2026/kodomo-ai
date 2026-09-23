@@ -32,3 +32,13 @@
   border: 3px solid var(--ad12-recess-1);
   border-radius: 0.4rem;
 }
+
+/** The tappable variant (RootPlane.tsx: root reveal is still a real yomu advance moment) —
+ *  reset the browser's own default button chrome, same discipline as AnswerPlane's own root. */
+.ad12-root-plane--tappable {
+  width: 100%;
+  border: none;
+  border-top: 2px solid var(--ad12-accent);
+  font: inherit;
+  cursor: pointer;
+}

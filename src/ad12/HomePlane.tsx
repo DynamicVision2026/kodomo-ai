@@ -12,13 +12,28 @@ export interface HomePlaneProps {
    *  numbers or stars." */
   depthTotal?: number;
   onSelect?: () => void;
+  /** Real-coverage addition (WO-26's own CURRENT state, not one of AD-12 §4's 12 sample states):
+   *  the ONE depth Course Home is inviting the child to play next. F7's one active yellow per
+   *  screen holds structurally here — Course Home only ever marks a single depth `current` at a
+   *  time, so this plane's own accent can never collide with a `done` row's own (deliberately
+   *  muted, `otherYellowActive`) root tab elsewhere on the same shaft. */
+  current?: boolean;
+  /** Real-coverage addition: a depth ahead of current, not yet reachable (WO-26 §7's own LOCKED
+   *  state — "shown dimmed, never hidden, never a dead end"; still tappable, so still shows its
+   *  own real cursor, just visually quieter). */
+  locked?: boolean;
 }
 
 /** AD-12 §4 state 11 (Home): "each lesson is a white plane" (F9). No numbers, no stars — the
  *  only completion signal is the depth-tab row itself, reused unchanged from the dig stage. */
-export function HomePlane({ title, done, depthTotal, onSelect }: HomePlaneProps) {
+export function HomePlane({ title, done, depthTotal, onSelect, current, locked }: HomePlaneProps) {
+  const cls = [
+    'ad12-home-plane', 'ad12-tappable',
+    current ? 'ad12-accent-active' : '',
+    locked ? 'ad12-home-plane--locked' : '',
+  ].filter(Boolean).join(' ');
   return (
-    <button type="button" className="ad12-home-plane ad12-tappable" onClick={onSelect}>
+    <button type="button" className={cls} onClick={onSelect}>
       <span className="ad12-reading-text ad12-home-plane__title"><Ruby text={title} /></span>
       {done && depthTotal ? (
         // F7 (≤1 active yellow per screen): Home can show several completed lessons at once —

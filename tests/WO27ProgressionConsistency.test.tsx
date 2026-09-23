@@ -135,7 +135,7 @@ describe('WO-27 — real production entitlement (no purchase): CURRENT => ENTERA
     await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
     await user.click(screen.getByText(ui.completeBackToMapLabel));
 
-    const roukaDepth = screen.getByText(roukaJson.title).closest('.course-home__depth-button')!;
+    const roukaDepth = screen.getByText(roukaJson.title).closest('.ad12-home-plane')!;
     await user.click(roukaDepth);
     expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument();
     expect(screen.getByText(ui.courseHomeSequentialLockedMessage)).toBeInTheDocument();
@@ -337,7 +337,7 @@ describe('WO-27 — real production entitlement, PURCHASED family: full Story pr
     const allBanks = [...bankMeate, ...bankWakare];
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const b of allBanks) {
-      expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className, (b as unknown as Mission).id).toContain('is-locked');
+      expect(screen.getAllByText<HTMLElement>(titleMatcher((b as unknown as Mission).title)).at(-1)!.closest('button')!.className, (b as unknown as Mission).id).toContain('is-unavailable');
     }
     await user.click(screen.getByText(ui.bankBackButton));
 
@@ -348,10 +348,10 @@ describe('WO-27 — real production entitlement, PURCHASED family: full Story pr
     // rootType prerequisite.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const b of bankMeate) {
-      expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className, (b as unknown as Mission).id).not.toContain('is-locked');
+      expect(screen.getAllByText<HTMLElement>(titleMatcher((b as unknown as Mission).title)).at(-1)!.closest('button')!.className, (b as unknown as Mission).id).not.toContain('is-unavailable');
     }
     for (const b of bankWakare) {
-      expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className, (b as unknown as Mission).id).toContain('is-locked');
+      expect(screen.getAllByText<HTMLElement>(titleMatcher((b as unknown as Mission).title)).at(-1)!.closest('button')!.className, (b as unknown as Mission).id).toContain('is-unavailable');
     }
     await user.click(screen.getByText(ui.bankBackButton));
 
@@ -359,7 +359,7 @@ describe('WO-27 — real production entitlement, PURCHASED family: full Story pr
 
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const b of bankWakare) {
-      expect(screen.getByText(titleMatcher((b as unknown as Mission).title)).closest('button')!.className, (b as unknown as Mission).id).not.toContain('is-locked');
+      expect(screen.getAllByText<HTMLElement>(titleMatcher((b as unknown as Mission).title)).at(-1)!.closest('button')!.className, (b as unknown as Mission).id).not.toContain('is-unavailable');
     }
   }, 20000);
 });

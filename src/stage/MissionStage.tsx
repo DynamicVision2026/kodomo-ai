@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type {
   DigCard, DigPhase, Mission, ModuleUiStrings, SlotAssemblyPhase, SlotId,
 } from '../engine/types';
-import type { CardKind } from '../ui/cardKinds';
 import {
   initDig, playCard, tapEarlyOk, judgeNotEnough, chooseGap, commitBlind, giveSelfReport,
   depth, currentAnswer, type DigState,
@@ -14,11 +13,20 @@ import { track } from '../engine/analytics';
 import { Ruby } from '../engine/ruby';
 import { Mascot, type MascotState } from '../shell/Mascot';
 import { SpeechBubble } from './SpeechBubble';
-import { ChoiceTray } from './ChoiceTray';
-import { GuidancePulse, guidanceLevelFor, useStall, type GuidanceUses } from './Guidance';
+import { guidanceLevelFor, useStall, type GuidanceUses } from './Guidance';
 import { useStageSfx } from './audioHooks';
 import { PredictionBattle } from '../templates/prediction-battle';
 import type { DigResult, UseEvidence, BlindSelfReportEvidence } from '../templates/dig';
+import { GuidanceAffordance } from '../ad12/GuidanceAffordance';
+import { SlipCascade, type Slip } from '../ad12/SlipCascade';
+import { MoveTray, type TrayCard } from '../ad12/MoveTray';
+import { JudgeBar } from '../ad12/JudgeBar';
+import { DepthRow } from '../ad12/DepthRow';
+import { RootPlane } from '../ad12/RootPlane';
+import { rootFormFor } from '../ad12/rootForm';
+import '../ad12/tokens.css';
+import '../ad12/primitives.css';
+import '../ad12/field-stage.css';
 import './stage.css';
 
 export interface MissionStageProps {
@@ -372,6 +380,14 @@ export function MissionStage({
 
   const depthAttr = state.atRoot || part === 'tip' ? 'root' : String(Math.min(state.layer + 1, 3));
 
+  // ---- AD-12 cutover: every SpeechBubble advance below is a real yomu completion; the field
+  // ramp (§3 "the field steps one tone deeper") replaces the old soil-1/2/3/root palette, one
+  // step per breakthrough, 'deep' at root/listening — read straight off DigState/atRoot, decided
+  // nowhere in this file's own visual layer. ---------------------------------------------------
+  const yomuGuidance = guidanceLevelFor('yomu', guidanceUses);
+  const fieldTone: 0 | 1 | 2 | 'deep' = (part === 'tip' || state.atRoot) ? 'deep' : (Math.min(state.layer, 2) as 0 | 1 | 2);
+  const BADGE_BLOCKED = '🪨'; // a decorative glyph only (never child-facing text) — see MoveCard's own doc comment.
+
   // ---- what's on the STAGE right now (mascot/dialogue/context — never the decision itself) ---
   let world: ReactNode = null;
   // ---- what's in the TRAY right now (the one live decision, pinned to the thumb zone) --------
@@ -395,24 +411,39 @@ export function MissionStage({
         />
       );
     } else if (slotResolved) {
-      world = <SpeechBubble speaker={ui.stageRobotName} text={slotResolved.archetype.robotSays} onAdvance={slotDialogueRead} />;
+      world = (
+        <SpeechBubble
+          speaker={ui.stageRobotName}
+          text={slotResolved.archetype.robotSays}
+          onAdvance={slotDialogueRead}
+          guidanceLevel={yomuGuidance}
+          advanceLabel={ui.handoffContinue}
+        />
+      );
     } else {
+      const slotLevel = slotStalled ? 'show' : slotGuidance;
       tray = (
         <div className="stage__hand-tray">
           {/* WO-25 #2: names the decision explicitly (L2 context) — the choice group below
              stays the single L1; guidance may spotlight the group, never one chip over another. */}
           <p className="stage__tray-prompt">{ui.stageQuestionPrompt}</p>
-          <GuidancePulse level={slotStalled ? 'show' : slotGuidance} />
-          {slotPhase.slots.map((slot) => (
-            <ChoiceTray
+          {slotPhase.slots.map((slot, i) => (
+            // F7 (≤1 active yellow per screen): only the FIRST slot's own tray carries the real
+            // guidance level — Mission-1-only prototype content never has more than one slot
+            // (chanto's own single "what" slot), same documented scope limit ChoiceTray.tsx's
+            // predecessor already carried; a hypothetical future multi-slot mission would need
+            // its own guidance-conflict design here, not silently stack a second active cue.
+            <MoveTray
               key={slot}
-              // Mission-1-only prototype: chanto's one slot id ("what") is also a valid CardKind.
-              // A future mission with a slot id outside that vocabulary would need its own
-              // mapping here — out of WO-24's scope (Mission 1 only).
-              items={slotPhase!.cards.filter((c) => c.slot === slot).map((c) => ({ id: c.id, text: c.text, kind: slot as CardKind }))}
-              onSelect={(id) => pickSlotCard(slot, id)}
-              drivingId={slotDrivingId}
-              blockedIds={slotBlockedIds}
+              guidanceLevel={i === 0 ? slotLevel : 'independent'}
+              cards={slotPhase!.cards.filter((c) => c.slot === slot).map((c): TrayCard => ({
+                id: c.id,
+                text: c.text,
+                variant: slotDrivingId === c.id ? 'pressed' : 'rest',
+                blocked: slotBlockedIds.has(c.id),
+                badge: slotBlockedIds.has(c.id) ? BADGE_BLOCKED : undefined,
+              }))}
+              onCommit={(id) => pickSlotCard(slot, id)}
             />
           ))}
           {slotBlockedIds.size > 0 && (
@@ -425,27 +456,60 @@ export function MissionStage({
     }
   } else if (part === 'dig') {
     if (state.challenge) {
-      world = <SpeechBubble speaker={state.challenge.challenger} text={state.challenge.asks} onAdvance={dismissChallenge} />;
-    } else if (!answerRead) {
-      // AD-07 §13/beat 11 + WO-25 #5: the root gets its own explicit discovery label — "found
-      // it", not just a colour change — on top of the bubble's own reveal motion.
       world = (
-        <>
-          {state.atRoot && (
+        <SpeechBubble
+          speaker={state.challenge.challenger}
+          text={state.challenge.asks}
+          onAdvance={dismissChallenge}
+          guidanceLevel={yomuGuidance}
+          advanceLabel={ui.handoffContinue}
+        />
+      );
+    } else if (!answerRead) {
+      if (state.atRoot) {
+        // AD-12 §4 state 8 / AD-07 §13 beat 11 + WO-25 #5: the root gets its own explicit
+        // discovery label — "found it", not just a colour change — above one of the three
+        // authored static forms (F5), when the mission's own rootType resolves to one; a mission
+        // whose rootType isn't one of the three known forms (or has none) keeps the ordinary
+        // reading-plane treatment rather than guessing a form.
+        const form = rootFormFor(mission.rootType);
+        world = (
+          <>
             <p className="stage__root-discovery stage__root-reveal">{ui.stageRootDiscoveryLabel}</p>
-          )}
+            {form ? (
+              <RootPlane
+                text={currentAnswer(digPhase, state)}
+                form={form}
+                onAdvance={onRootRead}
+                guidanceLevel={yomuGuidance}
+                readOnLabel={ui.handoffContinue}
+              />
+            ) : (
+              <SpeechBubble
+                speaker={ui.stageRobotName}
+                text={currentAnswer(digPhase, state)}
+                onAdvance={onRootRead}
+                guidanceLevel={yomuGuidance}
+                advanceLabel={ui.handoffContinue}
+                className="stage__root-reveal"
+              />
+            )}
+          </>
+        );
+      } else {
+        world = (
           <SpeechBubble
             speaker={ui.stageRobotName}
             text={currentAnswer(digPhase, state)}
             onAdvance={() => {
-              if (state.atRoot) { onRootRead(); return; }
               onGuidanceUse('yomu');
               setAnswerRead(true);
             }}
-            className={state.atRoot ? 'stage__root-reveal' : undefined}
+            guidanceLevel={yomuGuidance}
+            advanceLabel={ui.handoffContinue}
           />
-        </>
-      );
+        );
+      }
     } else if (digPendingBattle) {
       world = (
         <PredictionBattle
@@ -464,38 +528,47 @@ export function MissionStage({
       );
     } else if (state.gate === 'gate') {
       // AD-07 §4C: "the previous robot answer remains visible as context" — still on screen,
-      // already-read, while the two JUDGE buttons wait in the tray below.
+      // already-read, while JUDGE waits in the tray below.
       world = <p className="stage__judge-context"><Ruby text={currentAnswer(digPhase, state)} /></p>;
       tray = (
         <div className="stage__judge stage__beat-enter">
-          {/* AD-07 §4C/§9: "both buttons pulse alternately, never one alone" at SHOW; a plain
-             glow at NUDGE; nothing non-diegetic once FADE/INDEPENDENT. This level is NEVER
-             boosted by the 12s JUDGE stall (that raises only Pon太's whisper below, per AD-07
-             §10's own explicit "never step back on JUDGE for thinking time" rule). */}
-          <div className={`stage__judge-buttons stage__judge-buttons--${judgeGuidance}`}>
-            <button type="button" className="stage__judge-button stage__judge-button--yes" onClick={judgeGotIt}>
-              {ui.earlyOk}
-            </button>
-            <button type="button" className="stage__judge-button stage__judge-button--no" onClick={judgeNotYet}>
-              {ui.judgeNotEnough}
-            </button>
-          </div>
+          {/* AD-12's JudgeBar (§3 "Judge | judgment bar | press-scale") replaces the old gold/
+             outline button pair; the guidance cue wraps the bar AS ONE GROUP (F1), never one
+             half over the other. Never boosted by the 12s JUDGE stall itself (that raises only
+             Pon太's whisper below, per AD-07 §10's own explicit "never step back on JUDGE for
+             thinking time" rule). */}
+          <GuidanceAffordance level={judgeStalled ? 'show' : judgeGuidance}>
+            <JudgeBar
+              gotItLabel={ui.earlyOk}
+              notEnoughLabel={ui.judgeNotEnough}
+              onGotIt={judgeGotIt}
+              onNotEnough={judgeNotYet}
+            />
+          </GuidanceAffordance>
           {judgeStalled && <p className="stage__judge-stall">{ui.stageJudgeStallPrompt}</p>}
         </div>
       );
     } else if (state.gate === 'gapNaming') {
       tray = (
         <div className="stage__hand-tray">
-          {/* WO-25 #2: "何が まだ わからない？" — names the Gap Naming decision explicitly. */}
+          {/* WO-25 #2: ui.stageGapPrompt names the Gap Naming decision explicitly. */}
+          {/* AD-12 §4 state 2's own SlipCascade: equal weight, no `kind` field at all (F1/F3) —
+             structurally incapable of pointing at the target slip. */}
           <p className="stage__tray-prompt">{ui.stageGapPrompt}</p>
-          <ChoiceTray
-            items={state.gapChoices!.map((c, i) => ({ id: String(i), text: c.text }))}
-            onSelect={(id) => gapChosen(Number(id))}
+          <SlipCascade
+            slips={state.gapChoices!.map((c, i): Slip => ({ id: String(i), text: c.text })) as [Slip, Slip, Slip]}
+            onChoose={(id) => gapChosen(Number(id))}
           />
         </div>
       );
     } else if (state.gate === 'blindCommit') {
-      tray = <ChoiceTray items={[{ id: 'commit', text: ui.blindCommit }]} onSelect={blindCommitTapped} />;
+      tray = (
+        <MoveTray
+          guidanceLevel="independent"
+          cards={[{ id: 'commit', text: ui.blindCommit, variant: 'rest' }]}
+          onCommit={blindCommitTapped}
+        />
+      );
     } else if (state.flatReply && !flatReplyRead && !flatReplyPending) {
       // WO-25 #4: the settle/impact beat (below) has already played by the time this shows —
       // the robot's own authored reply, never a red X / 不正解 verdict.
@@ -507,33 +580,44 @@ export function MissionStage({
             onGuidanceUse('yomu');
             setFlatReplyRead(true);
           }}
+          guidanceLevel={yomuGuidance}
+          advanceLabel={ui.handoffContinue}
         />
       );
     } else {
+      const handLevel = handStalled ? 'show' : handGuidance;
       tray = (
         <div className="stage__hand-tray">
           {/* WO-25 #2: ui.stageQuestionPrompt names the hand decision explicitly, every time
              the tray is showing (first reveal AND after a stone recovery). */}
           <p className="stage__tray-prompt">{ui.stageQuestionPrompt}</p>
-          <GuidancePulse level={handStalled ? 'show' : handGuidance} />
           {state.awaitingSelfReport && (
-            <ChoiceTray
-              items={[
-                { id: 'same', text: ui.blindSelfReportSame },
-                { id: 'better', text: ui.blindSelfReportBetter },
-                { id: 'different', text: ui.blindSelfReportDifferent },
+            <MoveTray
+              guidanceLevel="independent"
+              cards={[
+                { id: 'same', text: ui.blindSelfReportSame, variant: 'rest' },
+                { id: 'better', text: ui.blindSelfReportBetter, variant: 'rest' },
+                { id: 'different', text: ui.blindSelfReportDifferent, variant: 'rest' },
               ]}
-              onSelect={(id) => selfReportTapped(id as SelfReportKind)}
+              onCommit={(id) => selfReportTapped(id as SelfReportKind)}
             />
           )}
           {/* WO-25 #4: every hand card stays in the tray, even once blocked — a stone-hit chip
-             is a visible, disabled, badged marker of "already tried," never removed. */}
-          <ChoiceTray
-            items={digPhase.layers[state.layer]!.hand.map((c) => ({ id: c.id, text: c.text }))}
-            onSelect={playHandCard}
-            settlingId={impactingId}
-            drivingId={drivingCardId}
-            blockedIds={blockedIds}
+             is a visible, disabled, badged marker of "already tried," never removed (MoveCard's
+             own `blocked` — a real-coverage addition to AD-12's grammar, dimmed like BankPlane's
+             own unavailable items, never a new colour/celebration). `drivingCardId`/`impactingId`
+             map onto MoveCard's own pressed/magnified variants — MissionStage stays the sole
+             authority over each card's moment, never the card's own uncontrolled interactivity. */}
+          <MoveTray
+            guidanceLevel={handLevel}
+            cards={digPhase.layers[state.layer]!.hand.map((c): TrayCard => ({
+              id: c.id,
+              text: c.text,
+              variant: drivingCardId === c.id ? 'pressed' : impactingId === c.id ? 'magnified' : 'rest',
+              blocked: blockedIds.has(c.id),
+              badge: blockedIds.has(c.id) ? BADGE_BLOCKED : undefined,
+            }))}
+            onCommit={playHandCard}
           />
           {blockedIds.size > 0 && flatReplyRead && (
             // WO-25 #4's own "short neutral recovery cue" — the SAME continuation nudge WO-23
@@ -562,21 +646,23 @@ export function MissionStage({
   }
 
   return (
-    <div className={`stage${entering ? ' is-diving' : ''}${rising ? ' is-rising' : ''}`}>
+    <div className={`ad12 stage${entering ? ' is-diving' : ''}${rising ? ' is-rising' : ''}`}>
       <div
         className={[
           'stage__world',
+          `ad12-field ad12-field--${fieldTone}`,
           descending ? 'is-descending' : '',
           worldImpact ? `is-impact-${worldImpact}` : '',
         ].filter(Boolean).join(' ')}
         data-depth={depthAttr}
       >
         {part !== 'tip' && (
-          <ol className="stage__meter" aria-label="depth">
-            {Array.from({ length: depthTotal }, (_, i) => (
-              <li key={i} className={i < depthCurrent ? 'stage__meter-dot is-filled' : 'stage__meter-dot'} />
-            ))}
-          </ol>
+          // AD-12 §4 state 6/11 DepthRow replaces the old plain dot meter — one filled tab per
+          // breakthrough, the root tab gold only once actually reached. `otherYellowActive`
+          // mutes that root tab's own accent exactly while RootPlane's own hairline (the more
+          // prominent "one yellow" at that exact moment, F7) is also on screen — the only window
+          // where both would otherwise show an active yellow at once.
+          <DepthRow total={depthTotal} current={depthCurrent} rootReached={state.atRoot} otherYellowActive={state.atRoot} />
         )}
         <div className="stage__actor-row">
           <Mascot state={mascotState} />

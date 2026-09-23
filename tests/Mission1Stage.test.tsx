@@ -81,7 +81,7 @@ async function pickClearAndReachJudge(user: ReturnType<typeof userEvent.setup>) 
 
 async function passLayer0Gate(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText(ui.judgeNotEnough));
-  const [target] = document.querySelectorAll('.choice-tray .question-chip');
+  const [target] = document.querySelectorAll('.ad12-recess .ad12-slip');
   await user.click(target as HTMLElement);
 }
 
@@ -116,7 +116,7 @@ async function reachRoot(user: ReturnType<typeof userEvent.setup>, coop: 'solo' 
   await user.click(screen.getByText((_c, el) => el?.tagName === 'BUTTON' && (el.textContent ?? '').includes('かたづけるとき')));
   if (coop === 'yes') await user.click(screen.getByText(ui.predictionSkip));
   await user.click(screen.getByText(ui.judgeNotEnough));
-  const [target] = document.querySelectorAll('.choice-tray .question-chip');
+  const [target] = document.querySelectorAll('.ad12-recess .ad12-slip');
   await user.click(target as HTMLElement);
   await clickDeepen(user, 'たとえば、食べるときは？');
   await waitFor(() => {
@@ -126,7 +126,10 @@ async function reachRoot(user: ReturnType<typeof userEvent.setup>, coop: 'solo' 
 
 /** Reads the root, taps 今日のコツ's own real つぎへ button, and waits out the ~480ms rise. */
 async function readRootAndTip(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByText((_c, el) => el?.className === 'speech-bubble__text' && (el.textContent ?? '').includes('こぼさないように')).closest('button')!);
+  // AD-12 cutover: chanto's own rootType resolves to one of the three authored forms, so the
+  // root reveal renders AD-12's RootPlane (`.ad12-root-plane--tappable`), not the ordinary
+  // SpeechBubble/AnswerPlane treatment — the whole plane is the one tap target either way.
+  await user.click(document.querySelector('.speech-bubble, .ad12-root-plane--tappable') as HTMLElement);
   expect(screen.getByText(chanto.tip)).toBeInTheDocument();
   await user.click(screen.getByText(ui.stageNextLabel));
 }
@@ -190,7 +193,7 @@ describe('WO-25 #2 — explicit task prompts', () => {
     const prompt = screen.getByText(ui.stageGapPrompt);
     expect(prompt).toBeInTheDocument();
     expect(prompt.tagName).toBe('P'); // L2 context, not a chip
-    expect(document.querySelectorAll('.choice-tray .question-chip')).toHaveLength(3);
+    expect(document.querySelectorAll('.ad12-recess .ad12-slip')).toHaveLength(3);
   });
 
   it('the question tray names the decision, both at first reveal and after a stone recovery', async () => {
@@ -222,8 +225,8 @@ describe('WO-25 #3/#4 — the question is visibly the shovel, and a stone is a r
     await passLayer0Gate(user);
 
     await user.click(screen.getByText('どういうこと？'));
-    const chip = screen.getByText('どういうこと？').closest('.question-chip')!;
-    expect(chip.className).toContain('is-driving'); // still visible, mid-drive — never an instant fade
+    const chip = screen.getByText('どういうこと？').closest('.ad12-move-card')!;
+    expect(chip.className).toContain('ad12-move-card--pressed'); // still visible, mid-drive — never an instant fade
     expect(document.querySelector('.stage__world')!.getAttribute('data-depth')).toBe('1');
 
     await waitFor(() => {
@@ -240,11 +243,11 @@ describe('WO-25 #3/#4 — the question is visibly the shovel, and a stone is a r
     await passLayer0Gate(user);
 
     await user.click(screen.getByText('ロボは何がすき？')); // offtopic
-    const chip = screen.getByText('ロボは何がすき？').closest('.question-chip')!;
-    expect(chip.className).toContain('is-driving'); // still visible, mid-drive
+    const chip = screen.getByText('ロボは何がすき？').closest('.ad12-move-card')!;
+    expect(chip.className).toContain('ad12-move-card--pressed'); // still visible, mid-drive
 
     await waitFor(() => {
-      expect(screen.getByText('ロボは何がすき？').closest('.question-chip')!.className).toContain('is-settling');
+      expect(screen.getByText('ロボは何がすき？').closest('.ad12-move-card')!.className).toContain('ad12-move-card--magnified');
     });
 
     // The robot's own authored reply, never a red X / 不正解 verdict.
@@ -257,24 +260,24 @@ describe('WO-25 #3/#4 — the question is visibly the shovel, and a stone is a r
     // WO-25 #4: the used chip stays VISIBLE (never disappears), badged, disabled — and the
     // short neutral continuation nudge (existing UI-string architecture, WO-23's own
     // digContinuePrompt) invites another pick.
-    const settledChip = screen.getByText('ロボは何がすき？').closest('.question-chip') as HTMLElement;
-    expect(settledChip.className).toContain('is-blocked');
+    const settledChip = screen.getByText('ロボは何がすき？').closest('.ad12-move-card') as HTMLElement;
+    expect(settledChip.className).toContain('ad12-move-card--blocked');
     expect(within(settledChip).getByText('🪨')).toBeInTheDocument();
     expect((settledChip as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText(ui.digContinuePrompt)).toBeInTheDocument();
 
     // The rest are still live, still clickable.
     expect(screen.getByText('どういうこと？')).toBeInTheDocument();
-    expect((screen.getByText('もういちどいって').closest('.question-chip') as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByText('もういちどいって').closest('.ad12-move-card') as HTMLButtonElement).disabled).toBe(false);
     await clickNonDeepenAndReadReply(user, 'もういちどいって', 'いっても、同じだよ。');
 
     // Only the deepen card remains active — progression is guaranteed by construction, and
     // every card is STILL in the tray (2 blocked, visible, + 1 active), none removed.
-    expect(document.querySelectorAll('.stage__hand-tray .question-chip')).toHaveLength(3);
-    expect(document.querySelectorAll('.stage__hand-tray .question-chip.is-blocked')).toHaveLength(2);
+    expect(document.querySelectorAll('.stage__hand-tray .ad12-move-card')).toHaveLength(3);
+    expect(document.querySelectorAll('.stage__hand-tray .ad12-move-card.ad12-move-card--blocked')).toHaveLength(2);
     await clickDeepen(user, 'どういうこと？');
     await waitFor(() => {
-      expect(document.querySelectorAll('.stage__meter-dot.is-filled')).toHaveLength(2);
+      expect(document.querySelectorAll('.ad12-depth-row__tab.is-filled')).toHaveLength(2);
     });
   });
 });
@@ -370,8 +373,8 @@ describe('WO-25B (G5) — the exact reported live path: a non-deepen SLOT pick r
 
     // The exact reported path: the VAGUE card ("ちゃんとって、よくきくよね"), not the CLEAR one.
     await user.click(screen.getByText('ちゃんとって、よくきくよね'));
-    const drivingChip = screen.getByText('ちゃんとって、よくきくよね').closest('.question-chip')!;
-    expect(drivingChip.className).toContain('is-driving'); // still visible mid-drive, never an instant fade
+    const drivingChip = screen.getByText('ちゃんとって、よくきくよね').closest('.ad12-move-card')!;
+    expect(drivingChip.className).toContain('ad12-move-card--pressed'); // still visible mid-drive, never an instant fade
 
     // The robot's own shallow (VAGUE) reply — never a verdict.
     await waitFor(() => {
@@ -386,9 +389,9 @@ describe('WO-25B (G5) — the exact reported live path: a non-deepen SLOT pick r
     // The settled screen: the attempted card stays VISIBLE, badged, disabled — it can never come
     // back as an apparently-untried option again.
     await waitFor(() => {
-      expect(screen.getByText('ちゃんとって、よくきくよね').closest('.question-chip')!.className).toContain('is-blocked');
+      expect(screen.getByText('ちゃんとって、よくきくよね').closest('.ad12-move-card')!.className).toContain('ad12-move-card--blocked');
     });
-    const blockedChip = screen.getByText('ちゃんとって、よくきくよね').closest('.question-chip') as HTMLButtonElement;
+    const blockedChip = screen.getByText('ちゃんとって、よくきくよね').closest('.ad12-move-card') as HTMLButtonElement;
     expect(within(blockedChip).getByText('🪨')).toBeInTheDocument();
     expect(blockedChip.disabled).toBe(true);
     // Short neutral recovery cue — no punishment semantics anywhere.
@@ -396,9 +399,9 @@ describe('WO-25B (G5) — the exact reported live path: a non-deepen SLOT pick r
     expect(screen.queryByText(/不正解|ざんねん|まちがい/)).not.toBeInTheDocument();
 
     // Nothing was removed: all 3 original cards are still present, and the untried ones are live.
-    expect(document.querySelectorAll('.stage__hand-tray .question-chip')).toHaveLength(3);
-    const clearChip = screen.getByText('『ちゃんと』って、どういういみ？').closest('.question-chip') as HTMLButtonElement;
-    const offtopicChip = screen.getByText('ロボは何がすき？').closest('.question-chip') as HTMLButtonElement;
+    expect(document.querySelectorAll('.stage__hand-tray .ad12-move-card')).toHaveLength(3);
+    const clearChip = screen.getByText('『ちゃんと』って、どういういみ？').closest('.ad12-move-card') as HTMLButtonElement;
+    const offtopicChip = screen.getByText('ロボは何がすき？').closest('.ad12-move-card') as HTMLButtonElement;
     expect(clearChip.disabled).toBe(false);
     expect(offtopicChip.disabled).toBe(false);
 
@@ -443,12 +446,12 @@ describe('WO-25B (G8) — every mid-mission co-play parent turn uses the full ha
       expect(screen.getByText(ui.stageHandbackPrompt)).toBeInTheDocument();
     });
     expect(screen.getByText(ui.stageReturnToChild)).toBeInTheDocument();
-    expect(document.querySelectorAll('.choice-tray .question-chip')).toHaveLength(0); // never a direct jump
+    expect(document.querySelectorAll('.ad12-recess .ad12-slip')).toHaveLength(0); // never a direct jump
     await user.click(screen.getByText(ui.stageReturnToChild));
 
     // Only NOW does the child's own next decision (the slot cards) reappear.
     await waitFor(() => {
-      expect(screen.getByText('『ちゃんと』って、どういういみ？').closest('.question-chip')).toBeTruthy();
+      expect(screen.getByText('『ちゃんと』って、どういういみ？').closest('.ad12-move-card')).toBeTruthy();
     });
   });
 
@@ -515,7 +518,9 @@ describe('Mission 1 continuous stage — completion and map return', () => {
     expect(screen.getByText(ui.courseHomeHeading)).toBeInTheDocument();
     const chantoDepth = screen.getByText(chanto.title).closest('.course-home__depth')!;
     expect(chantoDepth.className).toContain('is-done');
-    expect(within(chantoDepth as HTMLElement).getByText('◆')).toBeInTheDocument(); // the gold root marker
+    // AD-12 §4 state 11 / F9: "no numbers, no stars — the only completion signal is the depth-
+    // tab row itself" replaces the old gold "◆" text marker with HomePlane's own DepthRow.
+    expect(within(chantoDepth as HTMLElement).getByRole('img')).toBeInTheDocument();
     // WO-27: genkan is sequentially next, but not in freeMissionIds and there is no purchase —
     // it must never render as "is-current" (that would claim it's freely enterable when it
     // isn't). It gets the same locked treatment as a genuinely future Story, and the ordinary
@@ -576,7 +581,7 @@ describe('Mission 1 stage — engine parity (mastery stays first-attempt only, n
     });
     await user.click(screen.getByText('『ちゃんと』は、きちんとすることだよ。')); // one tap -> JUDGE
     await user.click(screen.getByText(ui.judgeNotEnough));
-    const [target] = document.querySelectorAll('.choice-tray .question-chip');
+    const [target] = document.querySelectorAll('.ad12-recess .ad12-slip');
     await user.click(target as HTMLElement);
 
     await clickNonDeepenAndReadReply(user, 'ロボは何がすき？', 'ぼくは今『ちゃんと』の話をしてるよ。'); // offtopic FIRST

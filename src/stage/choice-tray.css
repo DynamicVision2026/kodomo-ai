@@ -1,7 +1,0 @@
-/* WO-24 (AD-07 §4B): the tray that rises from the bottom for every "choose" moment. Anchored in
- * the thumb zone (its parent, .stage__tray-anchor, already sits at the bottom of the stage). */
-.choice-tray {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 8px);
-}

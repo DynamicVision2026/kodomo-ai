@@ -4,22 +4,23 @@
  * first (390x844 primary target, AD-07 §11): capped to the viewport, the dialogue/answer region
  * scrolls if it must, the interactive tray stays pinned in the bottom thumb zone.
  *
- * Motion primitives (AD-07 §13) — semantic only, applied via one class per beat, never stacked
- * gratuitously. Durations are approximate per AD-07: dive ~500ms, descend ~400ms, settle ~250ms,
- * root reveal ~800ms, rise ~500ms, tray/bubble enter 150-200ms.
+ * AD-12 cutover: the field's own colour ramp (soil-1/2/3/root), the depth meter, the JUDGE
+ * buttons and the hand/gap/slot chip grammar have all moved to src/ad12/ components
+ * (FieldStage's own tone classes, DepthRow, JudgeBar, SlipCascade, MoveTray/MoveCard) — see
+ * MissionStage.tsx. What's left here is layout/motion that isn't part of AD-12's own visual
+ * grammar: the stage's own dive/rise/descend/impact choreography, and the structural regions
+ * (`.stage__world`/`.stage__tray-anchor`) AD-12's components render inside.
  */
 .stage {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  background: var(--surface, #f7f3ec);
-  color: var(--ink, #2b2622);
-  font-family: var(--font-child, system-ui), sans-serif;
   overflow: hidden;
   position: relative;
 }
 
-/* IP-1: stable anchors. Depth deepens the soil colour only — never a route change. */
+/* IP-1: stable anchors. Depth deepens the field ramp only (AD-12's own FieldStage tone classes,
+ * applied directly alongside this one in MissionStage.tsx) — never a route change. */
 .stage__world {
   flex: 1 1 auto;
   min-height: 0;
@@ -28,19 +29,6 @@
   padding: var(--space-4, 16px);
   padding-bottom: var(--space-2, 8px);
   overflow-y: auto;
-  background: var(--soil-1, #e8dcc8);
-  transition: background-color 400ms ease;
-}
-.stage__world[data-depth='1'] { background: var(--soil-1, #e8dcc8); }
-.stage__world[data-depth='2'] { background: var(--soil-2, #c9b08a); }
-.stage__world[data-depth='3'] { background: var(--soil-3, #a6845c); color: #fff; }
-/* WO-28 §4: root discovery = "the emotional payoff," never confetti — a soft warm glow radiating
-   from the centre of the world itself, as if the buried thing is now lit from within. */
-.stage__world[data-depth='root'] {
-  background:
-    radial-gradient(circle at 50% 35%, rgba(255, 244, 214, 0.55) 0%, transparent 55%),
-    var(--root, #c8922e);
-  color: #fff;
 }
 
 /* WO-25 #3/#4: the world's own reaction at the exact instant a dig action resolves — makes the
@@ -60,22 +48,6 @@
 .stage__world.is-impact-deepen { animation: stage-impact-deepen 250ms ease-out both; }
 .stage__world.is-impact-stone { animation: stage-impact-stone 250ms ease-out both; }
 
-.stage__meter {
-  display: flex;
-  gap: var(--space-2, 8px);
-  list-style: none;
-  margin: 0 0 var(--space-3, 12px);
-  padding: 0;
-  justify-content: center;
-}
-.stage__meter-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.15);
-}
-.stage__meter-dot.is-filled { background: var(--root, #c8922e); }
-
 /* L1/L2/L3 attention hierarchy anchors (AD-07 §8): robot up top (L2 context once a decision is
  * live), the answer/dialogue below it, the tray pinned at the bottom (L1 — the one thing the
  * child can do right now). Irrelevant elements are unmounted by MissionStage, never dimmed. */
@@ -90,8 +62,6 @@
 .stage__tray-anchor {
   flex: none;
   padding: var(--space-3, 12px) var(--space-4, 16px) var(--space-4, 16px);
-  background: var(--surface, #f7f3ec);
-  color: var(--ink, #2b2622);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
@@ -101,15 +71,14 @@
   margin: 0 0 var(--space-2, 8px);
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--ink-soft, #6b5d4f);
   text-align: center;
+  opacity: 0.7;
 }
 /* WO-25 #4: the short recovery nudge (ui.digContinuePrompt) shown once a stone-blocked chip is
  * visible and its own recovery line has been read — inviting another pick, never a verdict. */
 .stage__continue-prompt {
   margin: var(--space-2, 8px) 0 0;
   font-size: 0.85rem;
-  color: var(--root, #c8922e);
   font-weight: 700;
   text-align: center;
 }
@@ -136,23 +105,6 @@
 }
 .stage__world.is-descending { animation: stage-descend 400ms ease both; }
 
-/* ---- drive (the selected chip drives down into the soil before a deepen descent, ~260ms) ------
- * AD-07's own central metaphor: "the question is the shovel." */
-@keyframes chip-drive {
-  0%   { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(18px) scale(0.85); opacity: 0; }
-}
-.question-chip.is-driving { animation: chip-drive 260ms ease-in both; pointer-events: none; }
-
-/* ---- settle (a chip hits stone, ~250ms) ------------------------------------------------------ */
-@keyframes chip-settle {
-  0%   { transform: translateX(0) rotate(0deg); }
-  30%  { transform: translateX(-4px) rotate(-2deg); }
-  60%  { transform: translateX(3px) rotate(1deg); }
-  100% { transform: translateX(0) rotate(0deg); opacity: 0.35; }
-}
-.question-chip.is-settling { animation: chip-settle 250ms ease both; pointer-events: none; }
-
 /* ---- reveal (root, ~800ms) -------------------------------------------------------------------- */
 @keyframes stage-reveal {
   from { opacity: 0; transform: scale(0.85); }
@@ -170,7 +122,7 @@
   font-size: 1.15rem;
   font-weight: 900;
   letter-spacing: 0.02em;
-  text-shadow: 0 0 18px rgba(255, 244, 214, 0.9);
+  text-shadow: 0 0 18px rgba(255, 210, 63, 0.55);
 }
 
 /* ---- enter (tray/bubble, 150-200ms) ------------------------------------------------------------ */
@@ -206,8 +158,8 @@
   padding: var(--space-3, 12px) var(--space-8, 32px);
   border: none;
   border-radius: var(--radius-pill, 999px);
-  background: var(--root, #c8922e);
-  color: #fff;
+  background: var(--ad12-accent, #ffd23f);
+  color: var(--ad12-ink, #1b1f3a);
   font-weight: 700;
   font-size: 1.05rem;
   cursor: pointer;
@@ -226,52 +178,17 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-2, 8px);
-}
-.stage__judge-buttons {
-  display: flex;
-  gap: var(--space-3, 12px);
   width: 100%;
 }
-.stage__judge-button {
-  flex: 1;
-  min-height: 56px;
-  border: none;
-  border-radius: var(--radius-pill, 999px);
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-}
-.stage__judge-button--yes { background: var(--root, #c8922e); color: #fff; }
-.stage__judge-button--no { background: #fff; border: 2px solid var(--ink-soft, #6b5d4f); color: var(--ink, #2b2622); }
 .stage__judge-stall {
   font-size: 0.85rem;
-  color: var(--ink-soft, #6b5d4f);
   text-align: center;
+  opacity: 0.7;
 }
-
-/* AD-07 §4C/§9: SHOW — both JUDGE buttons pulse, out of phase with each other, so neither is
- * ever the one that looks "more active." NUDGE — a plain static glow, no motion. FADE/
- * INDEPENDENT — no non-diegetic decoration (the buttons themselves are enough by then). */
-.stage__judge-buttons--show .stage__judge-button {
-  animation: stage-pulse 1.4s ease-in-out infinite;
-}
-.stage__judge-buttons--show .stage__judge-button--no { animation-delay: 0.7s; }
-.stage__judge-buttons--nudge .stage__judge-button {
-  box-shadow: 0 0 0 3px rgba(200, 146, 46, 0.25);
-}
-
-/* ---- pulse (guidance only — never on a specific answer, see Guidance.tsx) --------------------- */
-@keyframes stage-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 146, 46, 0.45); }
-  50%      { box-shadow: 0 0 0 8px rgba(200, 146, 46, 0); }
-}
-.stage__pulse { animation: stage-pulse 1400ms ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   .stage.is-diving, .stage.is-rising, .stage__world.is-descending,
-  .question-chip.is-settling, .question-chip.is-driving,
-  .stage__root-reveal, .stage__beat-enter, .stage__pulse,
-  .stage__judge-buttons--show .stage__judge-button,
+  .stage__root-reveal, .stage__beat-enter,
   .stage__world.is-impact-deepen, .stage__world.is-impact-stone {
     animation: none !important;
   }

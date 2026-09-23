@@ -114,7 +114,7 @@ async function playCurrentStoryToMap(user: ReturnType<typeof userEvent.setup>, m
 
 async function playBankToCompletion(user: ReturnType<typeof userEvent.setup>, mission: Mission) {
   await user.click(screen.getByText(ui.courseHomeBankLabel));
-  await user.click(screen.getByText(titleMatcher(mission.title)));
+  await user.click(screen.getAllByText<HTMLElement>(titleMatcher(mission.title)).at(-1)!);
   await user.click(screen.getByText(ui.coopSolo));
   await playMissionScreenToCompletion(user, mission, ui);
   // Final Module 1 Audio Integration Pass: every Bank Dig now has its own registered TRANSFER
@@ -147,7 +147,7 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + Bank unlo
     // No Bank Dig is reachable yet — the blueprint-frozen gate is Story 1-4 (oyatsu) done, and
     // nothing has been played at all.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
-    await user.click(screen.getByText(titleMatcher(ALL_BANKS[0]!.title)));
+    await user.click(screen.getAllByText<HTMLElement>(titleMatcher(ALL_BANKS[0]!.title)).at(-1)!);
     expect(screen.getByText(ui.bankLockedMessage)).toBeInTheDocument();
     expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument();
     await user.click(screen.getByText(ui.bankBackButton)); // back to Course Home
@@ -165,7 +165,7 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + Bank unlo
 
     // Story 4 (oyatsu) is now CURRENT — Story 5-8 remain LOCKED (never freely skippable).
     {
-      const lockedStory = screen.getByText(STORY[7]!.title).closest('.course-home__depth-button')!;
+      const lockedStory = screen.getByText(STORY[7]!.title).closest('.ad12-home-plane')!;
       await user.click(lockedStory);
       expect(screen.queryByText(ui.coopQuestion)).not.toBeInTheDocument(); // never entered
       expect(screen.getByText(ui.courseHomeSequentialLockedMessage)).toBeInTheDocument();
@@ -175,8 +175,8 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + Bank unlo
     // Practices, all one tier) stays LOCKED until Story 1-4 itself is done.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const bank of ALL_BANKS) {
-      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
-      expect(btn.className, bank.id).toContain('is-locked');
+      const btn = screen.getAllByText<HTMLElement>(titleMatcher(bank.title)).at(-1)!.closest('button')!;
+      expect(btn.className, bank.id).toContain('is-unavailable');
     }
     await user.click(screen.getByText(ui.bankBackButton));
 
@@ -188,12 +188,12 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + Bank unlo
     // Bank Digs stay LOCKED, since Story 1-5 (minna, the first わかれ-rooted Story) isn't done yet.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const bank of BANK_MEATE) {
-      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
-      expect(btn.className, bank.id).not.toContain('is-locked');
+      const btn = screen.getAllByText<HTMLElement>(titleMatcher(bank.title)).at(-1)!.closest('button')!;
+      expect(btn.className, bank.id).not.toContain('is-unavailable');
     }
     for (const bank of BANK_WAKARE) {
-      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
-      expect(btn.className, bank.id).toContain('is-locked');
+      const btn = screen.getAllByText<HTMLElement>(titleMatcher(bank.title)).at(-1)!.closest('button')!;
+      expect(btn.className, bank.id).toContain('is-unavailable');
     }
     await user.click(screen.getByText(ui.bankBackButton));
 
@@ -206,15 +206,15 @@ describe('WO-26 §25 — full Module 1 course playthrough (Story 1-8 + Bank unlo
     // Its own completion evidence is retained (COMPLETED, not just AVAILABLE) without touching
     // the Story spine at all.
     await user.click(screen.getByText(ui.courseHomeBankLabel));
-    expect(screen.getByText(titleMatcher(BANK_MEATE[0]!.title)).closest('button')!.textContent).toContain(ui.bankDoneLabel);
+    expect(screen.getAllByText<HTMLElement>(titleMatcher(BANK_MEATE[0]!.title)).at(-1)!.closest('button')!.textContent).toContain(ui.bankDoneLabel);
     await user.click(screen.getByText(ui.bankBackButton));
 
     // Story 5 (minna) — opens the 5 わかれ Bank Digs, their own real rootType prerequisite.
     await playCurrentStoryToMap(user, STORY[4]!);
     await user.click(screen.getByText(ui.courseHomeBankLabel));
     for (const bank of BANK_WAKARE) {
-      const btn = screen.getByText(titleMatcher(bank.title)).closest('button')!;
-      expect(btn.className, bank.id).not.toContain('is-locked');
+      const btn = screen.getAllByText<HTMLElement>(titleMatcher(bank.title)).at(-1)!.closest('button')!;
+      expect(btn.className, bank.id).not.toContain('is-unavailable');
     }
     await user.click(screen.getByText(ui.bankBackButton));
 

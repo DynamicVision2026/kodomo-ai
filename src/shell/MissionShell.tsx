@@ -26,7 +26,11 @@ import { audioScriptFor } from '../audio/registry';
 import { RealAiLab } from './RealAiLab';
 import { M0Ritual } from './M0Ritual';
 import { CompletionRitual } from './CompletionRitual';
+import { TeachBackPanel } from '../ad12/TeachBackPanel';
+import '../ad12/tokens.css';
+import '../ad12/primitives.css';
 import './mission-shell.css';
+import './stage-teachback.css';
 
 /**
  * WO-34: Story 1-8 (randoseru), the Boss mission and last Story in Module 1's own spine — the
@@ -912,6 +916,10 @@ export function MissionShell({
     // multi-control parent screen (Toolbox/M0/M5/Bank) — Mission 1 routes around it entirely,
     // exactly as the audit's P0 finding requires; nothing about that screen itself changes for
     // a parent who opens it independently via Course Home's own standing おうちの方へ button.
+    // AD-12 cutover: this screen's own dedicated wrapper (not the shared `.mission-shell__wrapper`/
+    // `--parent`, whose own button styling several OTHER, out-of-scope MissionShell screens still
+    // depend on unchanged) — TeachBackPanel for step 1 (F7: parent actions use ink, never yellow),
+    // a plain ink-button surface for step 2 (no teachBack/ouchiTalk content left to show by then).
     if (!parentGaveTeachBack) {
       const gotIt = () => {
         addStamp();
@@ -920,20 +928,23 @@ export function MissionShell({
         setParentGaveTeachBack(true);
       };
       return (
-        <div className="mission-shell__wrapper mission-shell__wrapper--parent">
-          <p><Ruby text={mission.teachBack} /></p>
-          <p className="mission-shell__stage-teachback-ouchi"><Ruby text={mission.ouchiTalk} /></p>
-          <button type="button" onClick={gotIt}>
-            {ui.stageParentGotItLabel}
-          </button>
+        <div className="ad12 stage-teachback">
+          <TeachBackPanel
+            teachBack={mission.teachBack}
+            ouchiTalk={mission.ouchiTalk}
+            m2ConfirmAction={ui.stageParentGotItLabel}
+            m2Confirmed={false}
+            m2ConfirmedMessage=""
+            onConfirm={gotIt}
+          />
         </div>
       );
     }
     return (
-      <div className="mission-shell__wrapper mission-shell__wrapper--parent">
+      <div className="ad12 stage-teachback">
         <button
           type="button"
-          className="mission-shell__stage-return-to-child"
+          className="ad12-ink-button ad12-tappable stage-teachback__return"
           onClick={() => {
             // WO-33/WO-34: this is the one place CHECKPOINT audio (1-4/oyatsu) and the Real AI
             // Lab (1-8/randoseru) can ever be reached — strictly after teach-back (just given,

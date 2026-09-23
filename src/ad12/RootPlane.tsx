@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import { Ruby } from '../engine/ruby';
 import type { RootForm } from './rootForm';
+import { GuidanceAffordance } from './GuidanceAffordance';
+import type { GuidanceLevel } from '../stage/Guidance';
 import { animate, tokenMs } from './motion';
 import './primitives.css';
 import './root-plane.css';
@@ -13,6 +15,12 @@ export interface RootPlaneProps {
   /** Resolved by `rootFormFor` (rootForm.ts) from the mission's own authored rootType — this
    *  component never sees or interprets the raw rootType string itself. */
   form: RootForm;
+  /** Real-coverage addition: the root reveal is still a real よむ/yomu tap-to-advance moment
+   *  (AnswerPlane's own "whole plane is the tap target" contract, reused here) — omitted for the
+   *  gallery's own passive state-8 fixture, which has nothing to advance to. */
+  onAdvance?: () => void;
+  guidanceLevel?: GuidanceLevel;
+  readOnLabel?: string;
 }
 
 /**
@@ -26,8 +34,8 @@ export interface RootPlaneProps {
  * (SlipCascade's entrance, MoveCard's magnify->committed), at the same --ad12-t-settle duration.
  * Deliberately not a distinct "root" motion of its own; that would read as a celebration.
  */
-export function RootPlane({ text, form }: RootPlaneProps) {
-  const planeRef = useRef<HTMLDivElement>(null);
+export function RootPlane({ text, form, onAdvance, guidanceLevel, readOnLabel }: RootPlaneProps) {
+  const planeRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
 
   useEffect(() => {
     const el = planeRef.current;
@@ -44,10 +52,33 @@ export function RootPlane({ text, form }: RootPlaneProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, text]);
 
-  return (
-    <div ref={planeRef} className="ad12-root-plane">
+  const body = (
+    <>
       <p className="ad12-reading-text"><Ruby text={text} /></p>
       <RootFormGlyph form={form} />
+    </>
+  );
+
+  if (onAdvance) {
+    return (
+      <button
+        ref={planeRef as RefObject<HTMLButtonElement>}
+        type="button"
+        className="ad12-root-plane ad12-root-plane--tappable"
+        onClick={onAdvance}
+        aria-label={readOnLabel}
+      >
+        {body}
+        <GuidanceAffordance level={guidanceLevel ?? 'independent'}>
+          <span className="ad12-answer-plane__advance" aria-hidden="true">▼</span>
+        </GuidanceAffordance>
+      </button>
+    );
+  }
+
+  return (
+    <div ref={planeRef as RefObject<HTMLDivElement>} className="ad12-root-plane">
+      {body}
     </div>
   );
 }
