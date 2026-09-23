@@ -417,9 +417,17 @@ export function MissionShell({
   function addStamp() {
     persistProfile((current) => {
       const prior = current.progress[mission.id];
+      // Builder work order correction (1): the per-mission teach-back record — see Progress's
+      // own doc comment (src/engine/storage.ts) for why this exists alongside milestones.M2's
+      // own afterCompare rather than relying on that alone. Sticky, same as the milestone's own:
+      // once true for this mission, a later stamp never flips it back to false.
+      const afterCompare = (prior?.afterCompare ?? false) || (current.checkpointAudioHeard ?? []).includes(mission.id);
       return {
         ...current,
-        progress: { ...current.progress, [mission.id]: { done: prior?.done ?? false, stamps: (prior?.stamps ?? 0) + 1, coop: !solo } },
+        progress: {
+          ...current.progress,
+          [mission.id]: { done: prior?.done ?? false, stamps: (prior?.stamps ?? 0) + 1, coop: !solo, afterCompare },
+        },
       };
     });
   }
@@ -539,14 +547,25 @@ export function MissionShell({
    *  function or milestones.M2 by any other path; reuses the existing applyM2Confirmed seam
    *  (src/engine/milestones.ts) unchanged — monotonic and idempotent by construction, same as
    *  every other milestone here. */
-  function confirmM2b() {
+  /**
+   * Builder work order §4/correction (1): `confirmingMissionId` is explicit, never read off the
+   * ambient `mission` closure — WO-27's own hardened P0 invariant is that `mission` is reliable
+   * proof of "what this is actually for" ONLY inside the live in-mission stage-teachback flow, or
+   * when the parent screen's own `afterMission` is true (a real mission handoff just finished).
+   * When the standing dashboard is opened independently (`afterMission: false`), `mission` is
+   * merely Course Home's own CURRENT-highlight — possibly a Story the family never entered, or
+   * (as WO27ProgressionConsistency.test.tsx's own "parent isolation" test exists specifically to
+   * prove) one blocked by entitlement — and must never be attributed anything mission-specific.
+   * Omitting `confirmingMissionId` there (see the dashboard's own call site below) is what keeps
+   * this confirmation exactly as mission-agnostic as it was before this field existed: it still
+   * achieves the once-ever-profile-wide M2 milestone, just with afterCompare left `false` rather
+   * than guessed from an unrelated mission id.
+   */
+  function confirmM2b(confirmingMissionId?: string) {
     persistProfile((current) => {
-      // Builder work order §4: afterCompare records whether the mission this confirmation is
-      // FOR (whatever `mission` currently is — the live in-mission stage-teachback flow and the
-      // standing parent-dashboard button both call this with `mission` already set to the
-      // relevant mission) already had its CHECKPOINT comparison audio actually heard, via the
-      // solo ui.teachbackSkip path, before this confirmation happened.
-      const afterCompare = (current.checkpointAudioHeard ?? []).includes(mission.id);
+      const afterCompare = confirmingMissionId
+        ? (current.checkpointAudioHeard ?? []).includes(confirmingMissionId)
+        : false;
       return {
         ...current,
         milestones: applyM2Confirmed(current.milestones ?? {}, Date.now(), afterCompare),
@@ -1033,7 +1052,7 @@ export function MissionShell({
       const gotIt = () => {
         addStamp();
         track('teachback_done');
-        confirmM2b();
+        confirmM2b(mission.id); // always reliable here — the live in-mission flow, not the dashboard
         setParentGaveTeachBack(true);
       };
       return (
@@ -1097,6 +1116,7 @@ export function MissionShell({
     );
   }
 
+  const parentScreenAfterMission = screen.kind === 'parent' && screen.afterMission; // see its own comment below
   const m2Achieved = profile?.milestones?.M2?.achieved ?? false;
   const m0Achieved = profile?.milestones?.M0?.achieved ?? false;
   return (
@@ -1134,7 +1154,28 @@ export function MissionShell({
         ) : (
           <div className="mission-shell__m2">
             <p>{ui.m2ConfirmPrompt}</p>
-            <button type="button" onClick={confirmM2b}>{ui.m2ConfirmAction}</button>
+            {/* Builder work order correction (1): a per-mission teach-back record (addStamp,
+                afterCompare included) is only ever safe to write when `screen.afterMission` is
+                true — a real mission handoff just finished, so `mission` legitimately names it
+                (WO-27 §11's own invariant, unchanged: `mission` is otherwise just Course Home's
+                CURRENT-highlight, possibly unentitled/never-entered — see
+                WO27ProgressionConsistency.test.tsx's own "parent isolation" test, which is
+                exactly what catches writing a stamp for the wrong mission here). Opened
+                independently (afterMission: false), confirmM2b still fires with no mission id —
+                the M2 milestone itself stays exactly as mission-agnostic as it always was. */}
+            <button
+              type="button"
+              onClick={() => {
+                if (parentScreenAfterMission) {
+                  addStamp();
+                  confirmM2b(mission.id);
+                } else {
+                  confirmM2b();
+                }
+              }}
+            >
+              {ui.m2ConfirmAction}
+            </button>
           </div>
         )}
         {followMoves.length > 0 && (

@@ -14,6 +14,7 @@ export function moduleProgressFromProfile(profile: Profile): ModuleProgressState
     m2Evidence: profile.m2Evidence ?? base.m2Evidence,
     memories: profile.memories ?? base.memories,
     guidance: profile.guidance ?? base.guidance,
+    checkpointAudioHeard: profile.checkpointAudioHeard ?? base.checkpointAudioHeard,
   };
 }
 
@@ -28,5 +29,6 @@ export function applyModuleProgressToProfile(profile: Profile, state: ModuleProg
     m2Evidence: state.m2Evidence,
     memories: state.memories as Profile['memories'],
     guidance: state.guidance,
+    checkpointAudioHeard: state.checkpointAudioHeard,
   };
 }

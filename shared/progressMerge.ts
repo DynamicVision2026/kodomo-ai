@@ -17,23 +17,37 @@
  *  - `missions[id].done`                 -> OR
  *  - `missions[id].stamps`               -> max (scalar counter; see note above)
  *  - `missions[id].coop`                 -> OR
+ *  - `missions[id].afterCompare`         -> sticky OR (same reasoning as milestones' own, below —
+ *                                            per-mission since milestones.M2 itself only ever
+ *                                            achieves once, profile-wide)
  *  - `milestones[id]`                    -> union; both achieved -> earliest achievedAt kept
  *  - `memories[kind]`                    -> union; both present -> earliest recordedAt kept
  *  - `m2Evidence.proxyMissionIds`        -> union (distinct mission ids)
  *  - `moveProgress[moveId].rung`         -> max by scaffold rung order (a guidance counter)
  *  - `moveProgress[moveId].aptUseDomains`-> union
  *  - `guidance[verb]`                    -> max (a guidance counter)
+ *  - `milestones[id].afterCompare`       -> sticky OR (once true on either side, stays true —
+ *                                            same "never lose a real signal" reasoning as the
+ *                                            union rules above, not a scalar counter to max)
+ *  - `checkpointAudioHeard`              -> union (distinct mission ids, same shape/reasoning as
+ *                                            m2Evidence.proxyMissionIds — a device syncing after
+ *                                            another device already recorded a mission's
+ *                                            CHECKPOINT audio as heard must never lose that fact)
  */
 
 export interface MergeMissionProgress {
   done: boolean;
   stamps: number;
   coop: boolean;
+  afterCompare?: boolean;
 }
 
 export interface MergeMilestoneState {
   achieved: boolean;
   achievedAt: number | null;
+  /** M2 only — see this file's own header comment ("sticky OR"). Absent on every other
+   *  milestone and on any M2 achieved before this field existed; both read as `false`. */
+  afterCompare?: boolean;
 }
 
 export interface MergeMemoryMoment {
@@ -54,6 +68,11 @@ export interface ModuleProgressState {
   m2Evidence: { proxyMissionIds: string[] };
   memories: Partial<Record<string, MergeMemoryMoment>>;
   guidance: Partial<Record<string, number>>;
+  /** Builder work order correction (2): mission ids whose CHECKPOINT comparison audio this
+   *  profile has actually heard — same shape and merge rule as `m2Evidence.proxyMissionIds`, so
+   *  a fact recorded on one device is never lost when another device syncs. Absent on any
+   *  ModuleProgressState persisted before this field existed; reads the same as `[]`. */
+  checkpointAudioHeard: string[];
 }
 
 export function emptyModuleProgress(): ModuleProgressState {
@@ -64,6 +83,7 @@ export function emptyModuleProgress(): ModuleProgressState {
     m2Evidence: { proxyMissionIds: [] },
     memories: {},
     guidance: {},
+    checkpointAudioHeard: [],
   };
 }
 
@@ -84,7 +104,12 @@ function unionStrings(a: string[], b: string[]): string[] {
 function mergeMission(a?: MergeMissionProgress, b?: MergeMissionProgress): MergeMissionProgress {
   if (!a) return b!;
   if (!b) return a;
-  return { done: a.done || b.done, stamps: Math.max(a.stamps, b.stamps), coop: a.coop || b.coop };
+  return {
+    done: a.done || b.done,
+    stamps: Math.max(a.stamps, b.stamps),
+    coop: a.coop || b.coop,
+    afterCompare: (a.afterCompare ?? false) || (b.afterCompare ?? false),
+  };
 }
 
 function mergeMoveProgress(a?: MergeMoveProgress, b?: MergeMoveProgress): MergeMoveProgress {
@@ -96,12 +121,16 @@ function mergeMoveProgress(a?: MergeMoveProgress, b?: MergeMoveProgress): MergeM
 function mergeMilestone(a?: MergeMilestoneState, b?: MergeMilestoneState): MergeMilestoneState {
   if (!a) return b!;
   if (!b) return a;
+  // afterCompare is sticky-OR across BOTH branches below, never dropped just because one side's
+  // object happens to get returned/rebuilt without it explicitly carried over.
+  const afterCompare = (a.afterCompare ?? false) || (b.afterCompare ?? false);
   if (a.achieved && b.achieved) {
     const earliest =
       a.achievedAt === null ? b.achievedAt : b.achievedAt === null ? a.achievedAt : Math.min(a.achievedAt, b.achievedAt);
-    return { achieved: true, achievedAt: earliest };
+    return { achieved: true, achievedAt: earliest, afterCompare };
   }
-  return a.achieved ? a : b;
+  const winner = a.achieved ? a : b;
+  return { ...winner, afterCompare };
 }
 
 function mergeMemory(a?: MergeMemoryMoment, b?: MergeMemoryMoment): MergeMemoryMoment {
@@ -139,5 +168,6 @@ export function mergeModuleProgress(a: ModuleProgressState, b: ModuleProgressSta
       b.guidance as Record<string, number>,
       (x, y) => Math.max(x ?? 0, y ?? 0),
     ),
+    checkpointAudioHeard: unionStrings(a.checkpointAudioHeard ?? [], b.checkpointAudioHeard ?? []),
   };
 }

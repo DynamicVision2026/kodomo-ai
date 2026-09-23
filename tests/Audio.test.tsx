@@ -378,16 +378,22 @@ describe('WO-33 — 1-1 demonstrated-layer growth suppression (rev.3 §E)', () =
 });
 
 /**
- * Builder work order §4 ("CHECKPOINT audio — fix solo completion", acceptance §7F): a child plays
- * 1-4 (oyatsu) solo, defers teach-back via 「あとでやる」, actually hears the CHECKPOINT
- * comparison audio, and completes the mission. A parent LATER opens the standing parent
- * dashboard (Course Home's own 「おうちの方へ」, reachable any time, independent of the
- * in-mission flow) and confirms teach-back there — proving `confirmM2b` correctly tags that
+ * Builder work order §4 ("CHECKPOINT audio — fix solo completion", acceptance §7F) + correction
+ * (1): a child plays 1-4 (oyatsu) solo, defers teach-back via 「あとでやる」, actually hears the
+ * CHECKPOINT comparison audio, and completes the mission. A parent LATER opens the parent
+ * dashboard and confirms teach-back there — proving `confirmM2b`/`addStamp` correctly tag that
  * confirmation `afterCompare: true` end to end through the real MissionShell, not a direct
  * milestones.ts unit call.
+ *
+ * WO-27 §11's own hardened invariant (see WO27ProgressionConsistency.test.tsx's own "parent
+ * isolation" test) is that `mission` is only reliably "what this confirmation is actually for"
+ * when the dashboard is reached via a genuine just-finished-mission context
+ * (`screen.afterMission === true` — MissionComplete's own 「おうちで やってみる」/
+ * completeTryOutsideLabel button, used below), never when opened independently from Course
+ * Home's standing 「おうちの方へ」 button. Both paths are covered here.
  */
 describe('Builder work order §4 — CHECKPOINT solo completion: afterCompare end to end', () => {
-  it('solo あとでやる + actually-played comparison audio, then a LATER parent-dashboard M2b confirmation, is tagged afterCompare: true', async () => {
+  it('solo あとでやる + actually-played comparison audio, then a LATER M2b confirmation via the just-finished-mission dashboard path (おうちで やってみる), is tagged afterCompare: true', async () => {
     const user = userEvent.setup();
     renderSingleMission(oyatsu);
     await createProfile(user);
@@ -407,14 +413,48 @@ describe('Builder work order §4 — CHECKPOINT solo completion: afterCompare en
     let saved: AppState = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0]!.checkpointAudioHeard).toContain(oyatsu.id);
     expect(saved.profiles[0]!.milestones?.M2).toBeUndefined(); // no teach-back given yet
+    expect(saved.profiles[0]!.progress[oyatsu.id]?.afterCompare).toBeUndefined(); // no stamp yet either
 
-    // LATER: the parent opens the standing dashboard directly from Course Home and confirms.
-    await user.click(screen.getByText(ui.completeBackToMapLabel));
-    await user.click(screen.getByText(ui.parentScreenHeading));
+    // LATER, still on the 'complete' screen for oyatsu: 「おうちで やってみる」 — the ONE path
+    // that reaches the dashboard with a real, mission-attributed context (afterMission: true).
+    await user.click(screen.getByText(ui.completeTryOutsideLabel!));
     await waitFor(() => expect(screen.getByText(ui.m2ConfirmAction)).toBeInTheDocument());
     await user.click(screen.getByText(ui.m2ConfirmAction));
 
     saved = JSON.parse(localStorage.getItem('m-app.v2')!);
     expect(saved.profiles[0]!.milestones!.M2).toEqual({ achieved: true, achievedAt: expect.any(Number), afterCompare: true });
+    // The per-mission teach-back record (correction 1) — not just the once-ever M2 milestone.
+    expect(saved.profiles[0]!.progress[oyatsu.id]).toEqual({ done: true, stamps: 1, coop: false, afterCompare: true });
+  });
+
+  it('the SAME facts, but confirmed from the standing dashboard opened independently (not just-finished), is NOT attributed afterCompare — WO-27\'s own "mission may be unrelated" invariant', async () => {
+    const user = userEvent.setup();
+    renderSingleMission(oyatsu);
+    await createProfile(user);
+    await user.click(screen.getByText(ui.courseHomeContinueLabel));
+    await user.click(screen.getByText(ui.coopSolo));
+    await playMissionScreenToCompletion(user, oyatsu, ui);
+    await waitFor(() => expect(screen.getByText(ui.teachbackSkip)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.teachbackSkip));
+    await waitFor(() => expect(document.querySelector('[data-audio-role="CHECKPOINT"]')).toBeInTheDocument());
+    const audioButtons = document.querySelectorAll('[data-audio-role] button');
+    await user.click(audioButtons[0] as HTMLElement);
+    await user.click(audioButtons[audioButtons.length - 1] as HTMLElement);
+    await waitFor(() => expect(screen.getByText(ui.completeHeading)).toBeInTheDocument());
+
+    const saved1: AppState = JSON.parse(localStorage.getItem('m-app.v2')!);
+    expect(saved1.profiles[0]!.checkpointAudioHeard).toContain(oyatsu.id); // the fact IS recorded…
+
+    // …but confirming from the INDEPENDENTLY-opened dashboard (back to map, then Course Home's
+    // own standing button) must not attribute it to `mission`, which is unreliable there.
+    await user.click(screen.getByText(ui.completeBackToMapLabel));
+    await user.click(screen.getByText(ui.parentScreenHeading));
+    await waitFor(() => expect(screen.getByText(ui.m2ConfirmAction)).toBeInTheDocument());
+    await user.click(screen.getByText(ui.m2ConfirmAction));
+
+    const saved2: AppState = JSON.parse(localStorage.getItem('m-app.v2')!);
+    expect(saved2.profiles[0]!.milestones!.M2).toEqual({ achieved: true, achievedAt: expect.any(Number), afterCompare: false });
+    // No per-mission stamp was written for oyatsu from this path either.
+    expect(saved2.profiles[0]!.progress[oyatsu.id]?.stamps ?? 0).toBe(0);
   });
 });

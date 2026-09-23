@@ -9,20 +9,44 @@ describe('mergeModuleProgress — monotonic merge (AD-13 §2)', () => {
   it('missions: done is OR, stamps is max, coop is OR', () => {
     const a = state({ missions: { m1: { done: true, stamps: 2, coop: false } } });
     const b = state({ missions: { m1: { done: false, stamps: 5, coop: true } } });
-    expect(mergeModuleProgress(a, b).missions.m1).toEqual({ done: true, stamps: 5, coop: true });
+    expect(mergeModuleProgress(a, b).missions.m1).toEqual({ done: true, stamps: 5, coop: true, afterCompare: false });
   });
 
   it('milestones: both achieved keeps the earliest achievedAt', () => {
     const a = state({ milestones: { M1: { achieved: true, achievedAt: 500 } } });
     const b = state({ milestones: { M1: { achieved: true, achievedAt: 100 } } });
-    expect(mergeModuleProgress(a, b).milestones.M1).toEqual({ achieved: true, achievedAt: 100 });
+    expect(mergeModuleProgress(a, b).milestones.M1).toEqual({ achieved: true, achievedAt: 100, afterCompare: false });
   });
 
   it('milestones: only one side achieved wins outright, never re-derived', () => {
     const a = state({ milestones: { M1: { achieved: true, achievedAt: 100 } } });
     const b = state({ milestones: { M1: { achieved: false, achievedAt: null } } });
-    expect(mergeModuleProgress(a, b).milestones.M1).toEqual({ achieved: true, achievedAt: 100 });
-    expect(mergeModuleProgress(b, a).milestones.M1).toEqual({ achieved: true, achievedAt: 100 });
+    expect(mergeModuleProgress(a, b).milestones.M1).toEqual({ achieved: true, achievedAt: 100, afterCompare: false });
+    expect(mergeModuleProgress(b, a).milestones.M1).toEqual({ achieved: true, achievedAt: 100, afterCompare: false });
+  });
+
+  // Builder work order correction (2): afterCompare is a sticky-OR across a sync, and
+  // checkpointAudioHeard unions like m2Evidence.proxyMissionIds — neither is ever lost when two
+  // devices merge, in either order.
+  it('milestones: afterCompare is a sticky OR — true on either side survives the merge, in either order', () => {
+    const a = state({ milestones: { M2: { achieved: true, achievedAt: 100, afterCompare: true } } });
+    const b = state({ milestones: { M2: { achieved: true, achievedAt: 100, afterCompare: false } } });
+    expect(mergeModuleProgress(a, b).milestones.M2!.afterCompare).toBe(true);
+    expect(mergeModuleProgress(b, a).milestones.M2!.afterCompare).toBe(true);
+  });
+
+  it('missions: afterCompare is also a sticky OR, same as the milestone-level one', () => {
+    const a = state({ missions: { m1: { done: true, stamps: 1, coop: false, afterCompare: true } } });
+    const b = state({ missions: { m1: { done: true, stamps: 1, coop: false, afterCompare: false } } });
+    expect(mergeModuleProgress(a, b).missions.m1!.afterCompare).toBe(true);
+    expect(mergeModuleProgress(b, a).missions.m1!.afterCompare).toBe(true);
+  });
+
+  it('checkpointAudioHeard: unions distinct mission ids from both sides, in either order', () => {
+    const a = state({ checkpointAudioHeard: ['m1-s2-1-4'] });
+    const b = state({ checkpointAudioHeard: ['m1-s2-1-7', 'm1-s2-1-4'] });
+    expect(mergeModuleProgress(a, b).checkpointAudioHeard.sort()).toEqual(['m1-s2-1-4', 'm1-s2-1-7']);
+    expect(mergeModuleProgress(b, a).checkpointAudioHeard.sort()).toEqual(['m1-s2-1-4', 'm1-s2-1-7']);
   });
 
   it('memories: dated, first-occurrence — keeps the earliest recordedAt, never duplicates a kind', () => {
@@ -59,7 +83,7 @@ describe('mergeModuleProgress — monotonic merge (AD-13 §2)', () => {
 
   it('is idempotent: merging a state with itself changes nothing — a re-sent/duplicated flush never corrupts progress', () => {
     const a = state({
-      missions: { m1: { done: true, stamps: 3, coop: true } },
+      missions: { m1: { done: true, stamps: 3, coop: true, afterCompare: false } },
       moveProgress: { follownaze: { rung: 'tsukaeru', aptUseDomains: ['home'] } },
       guidance: { yomu: 2 },
     });
