@@ -105,6 +105,12 @@ jobs:
       EMAIL_FROM: no-reply@domo-ai.com
       EMAIL_FROM_NAME: ナゼホリ
       EMAIL_REPLY_TO: info@domo-ai.com
+      # Founder-confirmed, from the live Shopify product JSON: kodomo-ai-m1 (product 10349669679352,
+      # SKU kodomo-ai-m1, ¥4,980, requires_shipping: false) -> variant 50615530029304. Backend
+      # matching itself (SKU_TO_MODULE_IDS, backend/src/shopify.ts) was already correct — this was
+      # only ever missing its runtime config. See the deploy step below for why
+      # SHOPIFY_VARIANT_IDS's own JSON value isn't set via a plain ${{ }} substitution here.
+      SHOPIFY_SHOP_DOMAIN: soul-id-2.myshopify.com
     steps:
       - uses: actions/checkout@v4
 
@@ -150,13 +156,17 @@ jobs:
       # (ADMIN_TOKEN, SHOPIFY_WEBHOOK_SECRET, AUTH_PEPPER, EMAIL_API_KEY) to this service's
       # runtime SA and removed the four placeholder plain env vars the old prototype revision
       # carried, so there's no plain-env/secret name collision here.
-      # SHOPIFY_SHOP_DOMAIN/SHOPIFY_VARIANT_IDS are deliberately left unset — real values pending
-      # Founder confirmation; both are optional (purchase-intent cart permalinks only).
       - name: Deploy the candidate revision (no traffic yet)
         id: deploy
         env:
           IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE }}
           TAG: candidate-${{ github.run_number }}
+          # A plain shell env var, deliberately NOT referenced below via ${{ env.X }} — GH
+          # Actions' own ${{ }} substitution happens BEFORE bash ever parses this script, so a
+          # quote character arriving that way becomes real (and here, unbalanced) shell syntax
+          # inside --set-env-vars="...". Read via ordinary bash `$VAR` expansion instead (in the
+          # `run:` step below), whose quote characters are just literal text to bash, not syntax.
+          SHOPIFY_VARIANT_IDS_JSON: '{"m1":"50615530029304"}'
         run: |
           gcloud run deploy "${{ env.SERVICE }}" \
             --image="$IMAGE:${{ github.sha }}" \
@@ -165,7 +175,7 @@ jobs:
             --allow-unauthenticated \
             --no-traffic \
             --tag="$TAG" \
-            --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }}" \
+            --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }},SHOPIFY_SHOP_DOMAIN=${{ env.SHOPIFY_SHOP_DOMAIN }},SHOPIFY_VARIANT_IDS=$SHOPIFY_VARIANT_IDS_JSON" \
             --set-secrets="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest,EMAIL_API_KEY=EMAIL_API_KEY:latest"
           BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
             --region="${{ env.REGION }}" --format='value(status.url)')
