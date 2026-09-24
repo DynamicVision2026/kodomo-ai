@@ -37,6 +37,13 @@ const PURCHASE_MODULE_ID = moduleJson.id;
  *   AD-13-era claims instead: email-only sign-up (no password), no child name/birthdate ever
  *   collected, and progress synced to the account (not to "the cloud" in the vague sense the old
  *   slogan implied avoiding).
+ * - Founder positioning decision (post-launch-check, wording only — no logic change): lessons
+ *   stay designed for Grades 3-4 (the grade picker is unchanged), but the product is marketed as
+ *   a whole-family experience — hero badge, a family-note line under the subhead, and a line in
+ *   親子で遊びかた framing the child as the one who teaches the family back. The profile/device
+ *   caps (3 profiles / 5 devices, AD-15) are now framed as a per-child record limit, paired with
+ *   an explicit "no limit on how many family members join in" statement. All of this copy is
+ *   pending 酒井先生's review, same as every other section marked so above.
  */
 
 const HEADLINES: Record<'A' | 'B', string> = {
@@ -135,9 +142,10 @@ export function LandingPage() {
   return (
     <main className="lp">
       <section className="lp__hero">
-        <p className="lp__door">小学3・4年生向け</p>
+        <p className="lp__door">小学3・4年生から、家族みんなで</p>
         <h1>{HEADLINES[variant]}</h1>
         <p className="lp__subhead">{SUBHEAD}</p>
+        <p className="lp__family-note">問う力に、年齢はありません。お子さまを中心に、家族みんなで「もう一問」。</p>
         <div className="lp__cta-row">
           {/* Architect decision (AD-15 §4): a new visitor always signs in first — no profile
              created before login. `?next=/play/` returns them straight to the app once they
@@ -201,6 +209,7 @@ export function LandingPage() {
 
       <section className="lp__section">
         <h2>親子で遊べる仕掛け</h2>
+        <p>いちばん早く上達するのは、きっとお子さま。覚えたことを家族に「おしえてあげる」のも、学びの一部です。</p>
         <ul>
           <li>よそうバトル — 親子でどちらの予想が当たるか、いっしょに考える</li>
           <li>おしえてあげようカード — 子どもが今日学んだことを家族に説明する</li>
@@ -262,9 +271,10 @@ export function LandingPage() {
         <p className="lp__price-anchor">AIスクール1か月分より安く、家族みんなで、買い切り。</p>
         <p className="lp__price-amount">¥4,980（税込・買い切り・月額なし）</p>
         <ul>
-          <li>世帯ライセンス — ひとつの購入で、ご家庭のお子さま・保護者の方すべてが使えます（プロフィールは最大3人まで作成可能）</li>
+          <li>世帯ライセンス — ひとつの購入で、ご家庭のお子さま・保護者の方すべてが使えます</li>
+          <li>一緒に参加するご家族の人数に制限はありません</li>
+          <li>学習の記録はお子さま3人まで（3プロフィール）／5台の端末</li>
           <li>アプリ本体とあそべる印刷キット（質問カードなど）の両方が届きます</li>
-          <li>同時に使える端末は最大5台まで</li>
           {/* AD-15: the old "30-day guarantee" copy is retired. The new refund policy (a 10-day
               voluntary window, contingent on whether paid content was actually used) is not yet
               finalized/server-enforced — see backend/src/schema.ts's OrderDoc/EntitlementDoc
@@ -302,7 +312,9 @@ export function LandingPage() {
               section's own note. */}
           <dd>返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。</dd>
           <dt>兄弟姉妹で使えますか？</dt>
-          <dd>世帯ライセンスのため、ご家庭のお子さま・保護者の方すべてでお使いいただけます（プロフィールは最大3人まで、同時に使える端末は最大5台までです）。</dd>
+          <dd>
+            世帯ライセンスのため、ご家庭のお子さま・保護者の方すべてでお使いいただけます。一緒に参加するご家族の人数に制限はありません。学習の記録はお子さま3人まで（3プロフィール）／5台の端末です。
+          </dd>
           <dt>毎月お金がかかりますか？</dt>
           <dd>いいえ。¥4,980の買い切りで、月額料金や自動更新はありません。</dd>
         </dl>

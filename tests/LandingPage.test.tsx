@@ -189,8 +189,11 @@ describe('LandingPage', () => {
     expect(text).toContain('世帯ライセンス');
     expect(text).not.toContain('household licence'); // no untranslated placeholder copy
     expect(text).toContain('印刷キット'); // digital app + printable kit, both mentioned
-    expect(text).toContain('最大3人'); // MAX_PROFILES (AD-15: lowered from 6)
-    expect(text).toContain('最大5台'); // MAX_DEVICES
+    // Founder positioning decision (post-launch-check): "最大N人/台" reworded to "3人まで（3プロフィール）／5台の端末"
+    // — same MAX_PROFILES/MAX_DEVICES facts, framed as a per-child record cap rather than a family-size limit.
+    expect(text).toContain('お子さま3人まで（3プロフィール）'); // MAX_PROFILES
+    expect(text).toContain('5台の端末'); // MAX_DEVICES
+    expect(text).toContain('一緒に参加するご家族の人数に制限はありません'); // family size itself is uncapped
     // AD-15: the old 30-day guarantee copy is retired everywhere — the new (10-day, usage-
     // contingent) policy isn't finalized/server-enforced yet, so neither surface should claim it.
     expect(text).not.toContain('30日間');
@@ -201,5 +204,18 @@ describe('LandingPage', () => {
     // gated to 創設ファミリー特典 only (in the price section, asserted above), never promised to
     // every buyer.
     expect(document.querySelector('.lp__price')?.textContent).toContain('冬休みスペシャルシート');
+  });
+
+  it('Founder positioning decision: markets as a whole-family experience while lessons stay Grades 3-4', () => {
+    render(<LandingPage />);
+    expect(screen.getByText('小学3・4年生から、家族みんなで')).toBeInTheDocument();
+    expect(screen.getByText('問う力に、年齢はありません。お子さまを中心に、家族みんなで「もう一問」。')).toBeInTheDocument();
+    expect(
+      screen.getByText('いちばん早く上達するのは、きっとお子さま。覚えたことを家族に「おしえてあげる」のも、学びの一部です。'),
+    ).toBeInTheDocument();
+    // The grade picker itself (1・2年 / 3・4年 / 5・6年) is unchanged by this decision.
+    expect(screen.getByText('1・2年')).toBeInTheDocument();
+    expect(screen.getByText('3・4年')).toBeInTheDocument();
+    expect(screen.getByText('5・6年')).toBeInTheDocument();
   });
 });
