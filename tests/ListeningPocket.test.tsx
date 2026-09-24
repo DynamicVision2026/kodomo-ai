@@ -84,9 +84,15 @@ describe('ListeningPocket — start screen', () => {
   it('opens with the first line\'s own voice plane carrying a play glyph, and a quiet skip action', () => {
     renderPocket(LINES);
     const plane = screen.getByRole('button', { name: ui.audioPlayLabel! });
-    expect(within(plane).getByText('GUIDE')).toBeInTheDocument();
+    // Post-launch-check work order §B5: GUIDE shows the round "？" mascot glyph, never the old
+    // English "GUIDE" text placeholder.
+    expect(within(plane).getByText('？')).toBeInTheDocument();
+    expect(within(plane).queryByText('GUIDE')).not.toBeInTheDocument();
     expect(within(plane).getByText('いっぽんめの せりふだよ。')).toBeInTheDocument();
-    expect(within(plane).getByText('▶')).toBeInTheDocument();
+    // §B2: an inline-SVG play icon, never the bare Unicode ▶ character (emoji-eligible, renders
+    // in colour emoji presentation on iOS Safari).
+    expect(plane.querySelector('svg')).toBeInTheDocument();
+    expect(within(plane).queryByText('▶')).not.toBeInTheDocument();
     expect(screen.getByText(ui.audioSkipLabel!)).toBeInTheDocument();
   });
 

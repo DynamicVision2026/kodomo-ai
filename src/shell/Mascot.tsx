@@ -49,11 +49,15 @@ export function Mascot({ state, label }: MascotProps) {
       aria-hidden={label ? undefined : true}
     >
       {/* WO-28 §5: a soft gradient in place of a flat fill — pure visual polish, referenced only
-         from mascot.css (`fill: url(#mascot-body-gradient)`), never changes what state means. */}
+         from mascot.css (`fill: url(#mascot-body-gradient)`), never changes what state means.
+         AD-12 (post-launch-check work order): the old cream/tan stops (#fffaf0/#fbe4b8) read as
+         the pre-AD-12 theme — tan is reserved for ポン太 only, and this mascot isn't ポン太 (it
+         renders on CourseHome/MissionComplete/MissionStage's actor row, never as ポン太 itself).
+         White-to-field-1 keeps the same soft roundness cue without any cream/tan tone. */}
       <defs>
         <radialGradient id="mascot-body-gradient" cx="35%" cy="30%" r="75%">
-          <stop offset="0%" stopColor="#fffaf0" />
-          <stop offset="100%" stopColor="#fbe4b8" />
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#e3e6f0" />
         </radialGradient>
       </defs>
       <ellipse cx="0" cy="34" rx="20" ry="3" className="mascot__shadow" />

@@ -2,7 +2,7 @@
  * miniature playing card. 64-80px tall, full width up to a comfortable line length, no mm units
  * anywhere. Uses tokens.css's shared colour identities (D5: "share tokens, never layout"). */
 .question-chip {
-  --chip-accent: var(--ink-soft, #888);
+  --chip-accent: var(--ad12-ink, #1b1f3a);
   position: relative;
   display: flex;
   align-items: center;
@@ -11,8 +11,8 @@
   min-height: 64px;
   max-height: 80px;
   padding: 0.6rem 1rem;
-  background: #fff;
-  color: var(--ink, #1c1c1c);
+  background: var(--ad12-paper, #fff);
+  color: var(--ad12-ink, #1b1f3a);
   border: 2px solid var(--chip-accent);
   border-radius: var(--radius-chip, 0.85rem);
   box-shadow: var(--shadow-low, none);
@@ -72,7 +72,7 @@ button.question-chip:not(:disabled):active { transform: scale(0.97) translateY(1
 }
 .question-chip.is-disabled { opacity: 0.45; cursor: default; box-shadow: none; }
 .question-chip__badge { flex: none; font-size: 1rem; line-height: 1; }
-.question-chip.is-blocked { opacity: 0.55; cursor: default; background: var(--soil-1, #efe6d8); box-shadow: none; }
+.question-chip.is-blocked { opacity: 0.55; cursor: default; background: var(--ad12-field-1, #e3e6f0); box-shadow: none; }
 
 @media (max-width: 480px) {
   .question-chip { min-height: 64px; font-size: 0.95rem; }

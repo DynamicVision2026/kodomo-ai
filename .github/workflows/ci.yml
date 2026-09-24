@@ -55,6 +55,8 @@ jobs:
         run: npm run gate:claims
       - name: Gate — no purchase/price copy in any /play string (AD-15 §6, post-incident)
         run: npm run gate:no-purchase-copy
+      - name: Gate — no pre-AD-12 cream/gold theme in any /play stylesheet (post-launch-check)
+        run: npm run gate:no-old-theme
       - name: Content lint (kanji grade, ruby, length, tags, banned words, PII)
         run: npm run lint:content
       - name: Unit tests
@@ -93,6 +95,16 @@ jobs:
       # from (APP_BASE_URL). Update the day domo-ai.com goes live — see the matching comment on
       # deploy-frontend's own CANONICAL_HOST.
       CANONICAL_ORIGIN: https://kodomo-ai-421702481956.asia-northeast1.run.app
+      # Founder-confirmed final sender identity (postmarkEmail.ts's own optional fromName/replyTo
+      # support) — EMAIL_FROM alone was missing from the live service entirely before this. Not a
+      # secret: EMAIL_API_KEY (the actual Postmark server token) is the one that gates whether
+      # PostmarkEmailSender is ever constructed at all (buildEnv.ts's own buildEmailSender) — it
+      # stays unset here until the Founder confirms it exists in Secret Manager with
+      # secretAccessor granted, so the service keeps falling back to the logging-only sender
+      # (never a failed deploy over a missing secret in the meantime).
+      EMAIL_FROM: no-reply@domo-ai.com
+      EMAIL_FROM_NAME: ナゼホリ
+      EMAIL_REPLY_TO: info@domo-ai.com
     steps:
       - uses: actions/checkout@v4
 
@@ -152,8 +164,12 @@ jobs:
             --allow-unauthenticated \
             --no-traffic \
             --tag="$TAG" \
-            --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }}" \
+            --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }}" \
             --set-secrets="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest"
+          # EMAIL_API_KEY is deliberately NOT in --set-secrets above — add it only once the
+          # Founder confirms the secret exists in Secret Manager with secretAccessor granted to
+          # this service's runtime SA; adding it before that fails the deploy (gcloud errors on a
+          # --set-secrets reference to a secret that doesn't exist).
           BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
             --region="${{ env.REGION }}" --format='value(status.url)')
           CANDIDATE_URL="https://${TAG}---$(echo "$BASE_URL" | sed 's#https://##')"

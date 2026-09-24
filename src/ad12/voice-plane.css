@@ -13,6 +13,23 @@
   margin-bottom: 0.35rem;
 }
 
+/** Post-launch-check work order §B5 (Founder decision): the round "？" mascot glyph GUIDE shows
+ *  in place of any text name — small, on the plane, same spot .ad12-voice-plane__speaker would
+ *  otherwise sit. */
+.ad12-voice-plane__guide-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 0.35rem;
+  border-radius: 50%;
+  background: var(--ad12-ink);
+  color: var(--ad12-paper);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 /** Builder work order §6 (Listening Pocket): long lines break at phrase boundaries rather than
  *  an arbitrary character wrap. `auto-phrase` is still an emerging CSS value — unsupported
  *  browsers simply ignore the declaration and keep the browser's own default wrapping, which is

@@ -67,9 +67,18 @@ export function VoicePlane({
   }, [speaker, text]);
 
   const className = `ad12-voice-plane ad12-voice-plane--${speaker.toLowerCase()} ad12-voice-plane--${variant}`;
+  // Post-launch-check work order §B5 (Founder decision): the GUIDE speaker shows the round "？"
+  // mascot glyph instead of a text name — GUIDE has no authored, reviewed Japanese display name
+  // (see src/stage/AudioScene.tsx's own speakerLabelFor), and showing the English placeholder
+  // "GUIDE" read as a leftover engineering label rather than a character. ROBOT/PONTA keep their
+  // own small Japanese names via speakerLabel, unaffected.
   const body = (
     <>
-      <p className="ad12-ui-text ad12-voice-plane__speaker">{speakerLabel}</p>
+      {speaker === 'GUIDE' ? (
+        <span className="ad12-voice-plane__guide-glyph" aria-hidden="true">？</span>
+      ) : (
+        <p className="ad12-ui-text ad12-voice-plane__speaker">{speakerLabel}</p>
+      )}
       <p ref={textRef} className="ad12-reading-text"><Ruby text={text} /></p>
       {overlay}
     </>

@@ -90,7 +90,9 @@ export function LoginPage() {
 
       {step.kind === 'email' || step.kind === 'email-loading' ? (
         <>
-          <p className="login__lead">ご購入時のメールアドレスを入力してください。ログイン用のコードをお送りします。</p>
+          <p className="login__lead">
+            メールアドレスを入力してください。ログイン用のコードをお送りします。はじめての方も、このまま登録できます。
+          </p>
           <form className="login__form" onSubmit={submitEmail}>
             <label className="login__label" htmlFor="email">メールアドレス</label>
             <input

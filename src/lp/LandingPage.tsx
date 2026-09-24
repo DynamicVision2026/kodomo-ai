@@ -1,17 +1,14 @@
 import { useEffect, useState } from 'react';
 import { load, save } from '../engine/storage';
 import { track, setVariant } from '../engine/analytics';
+import { createPurchaseIntent, fetchMe } from '../family/api';
+import moduleJson from '../modules/m1/module.json';
 import './landing-page.css';
 
-// WO-30 §3/§4: the real Shopify product/checkout URL (docs/launch-runbook.md Part 3 step 1 —
-// SKU kodomo-ai-m1 on https://soul-id-2.myshopify.com/), set at BUILD time once the Founder has
-// actually created that listing. Undefined today — this repo has never had a live Shopify
-// listing or deployment (launch-runbook.md's own opening line) — same honest-not-yet-configured
-// convention as VITE_FAMILY_API_URL (src/family/api.ts): the primary CTA below
-// links straight to it once set, and shows a clearly-labelled "not yet available" state instead
-// of a dead `href="#"` until then. Never guess/fabricate a URL here — a wrong link sends a
-// family somewhere that isn't a real checkout.
-const SHOPIFY_PRODUCT_URL: string | undefined = import.meta.env.VITE_SHOPIFY_PRODUCT_URL;
+/** AD-16 §1: the one module this storefront sells today — same source module.json already
+ *  supplies the play surface's own moduleId/title, never a second hand-typed copy of either
+ *  (mirrors src/parent/account/AccountPage.tsx's own PURCHASE_MODULE_ID). */
+const PURCHASE_MODULE_ID = moduleJson.id;
 
 /**
  * Parent-voice landing page. Spec v0.5 §10. Child-facing copy rules do NOT apply here —
@@ -33,14 +30,13 @@ const SHOPIFY_PRODUCT_URL: string | undefined = import.meta.env.VITE_SHOPIFY_PRO
  * - Section 11's legal links point to this app's own /legal/tokushoho and /legal/privacy pages
  *   (src/legal), built from real company data the founder confirmed from soul-id.jp — still
  *   drafts pending the founder's own legal review, not a substitute for one.
- * - The trust banner (lp__trust, right after the hero) states the founder's own three-part
- *   privacy slogan verbatim, then elaborates each clause precisely against what this repo
- *   actually does — not a blanket "works fully offline" claim (there is no service worker/PWA
- *   caching in this repo, so a fresh page load still needs a network fetch for the app itself);
- *   "ローカル完結" here is scoped to what it factually means: mission content and progress are
- *   processed and stored on-device, never sent to an external server during play. Distinct from
- *   §7's 安心設計 list below, which covers the simulator/no-text-input/no-ads claims instead —
- *   not a duplicate of it.
+ * - AD-13 correction (post-launch-check work order): the trust banner used to claim
+ *   「登録不要・子ども情報のクラウド保存なし・完全ローカル完結」 — true of the pre-AD-13 local-only
+ *   build, but false since Family Accounts shipped (sign-up IS required; progress IS stored on
+ *   the server, by design, so it survives a device change). Replaced with three factual
+ *   AD-13-era claims instead: email-only sign-up (no password), no child name/birthdate ever
+ *   collected, and progress synced to the account (not to "the cloud" in the vague sense the old
+ *   slogan implied avoiding).
  */
 
 const HEADLINES: Record<'A' | 'B', string> = {
@@ -51,11 +47,10 @@ const SUBHEAD =
   '3・4年生の「なぜ？」が深くなる時期に。保護者も一緒に学べる思考トレーニング。' +
   '子どもにとっては、ただ楽しいゲームです。';
 
-const TRUST_SLOGAN = '登録不要・子ども情報のクラウド保存なし・完全ローカル完結';
 const TRUST_POINTS = [
-  'アプリの利用にアカウント登録は不要です。',
-  'お子さまのプロフィールや遊びの記録は、すべてお使いの端末（ブラウザ）の中だけに保存されます。外部のクラウドサーバーに送信されることはありません。',
-  'ミッションの進行やお子さまの記録の処理は、すべて端末内で行われます。',
+  'メールアドレスだけで、かんたん登録（パスワード不要）',
+  'お子さまのお名前や生年月日は登録しません',
+  '学習の記録はアカウントに保存され、機種を変えても続きから遊べます',
 ];
 
 const GRADE_BANDS = ['1・2年', '3・4年', '5・6年'] as const;
@@ -97,9 +92,12 @@ const KIT_ITEMS = [
   'おとなの見守り付き・本物のAIを使う特別セッションのガイド（1回）',
 ];
 
+type PurchaseStep = { kind: 'idle' } | { kind: 'loading' } | { kind: 'error' };
+
 export function LandingPage() {
   const [variant, setLocalVariant] = useState<'A' | 'B'>('A');
   const [gradePick, setGradePick] = useState<GradeBand | null>(null);
+  const [purchaseStep, setPurchaseStep] = useState<PurchaseStep>({ kind: 'idle' });
 
   useEffect(() => {
     const state = load();
@@ -112,6 +110,26 @@ export function LandingPage() {
   function pickGrade(band: GradeBand) {
     setGradePick(band);
     track('grade_pick', { band });
+  }
+
+  /** A logged-out visitor is sent to /login/ first — no purchase-intent is ever created for an
+   *  anonymous session — and lands back on /account/, where the exact same purchase flow this
+   *  function runs is already wired up (AccountPage.tsx's own startPurchase). A logged-in parent
+   *  skips straight to the real purchase-intent call, same as that screen. */
+  async function startPurchase() {
+    track('cta_buy_click');
+    setPurchaseStep({ kind: 'loading' });
+    const me = await fetchMe();
+    if (!me) {
+      window.location.href = '/login/?next=/account/';
+      return;
+    }
+    const result = await createPurchaseIntent(PURCHASE_MODULE_ID);
+    if (!('url' in result)) {
+      setPurchaseStep({ kind: 'error' });
+      return;
+    }
+    window.location.href = result.url;
   }
 
   return (
@@ -129,14 +147,13 @@ export function LandingPage() {
           <a className="lp__cta lp__cta--primary" href="/login/?next=/play/" onClick={() => track('cta_play_click')}>
             無料でミッション1を体験する
           </a>
-          <a className="lp__cta lp__cta--secondary" href="#price" onClick={() => track('cta_buy_click')}>
-            創設ファミリーとして申し込む ¥4,980
-          </a>
+          <button type="button" className="lp__cta lp__cta--secondary" onClick={startPurchase}>
+            購入する ¥4,980（税込）
+          </button>
         </div>
       </section>
 
-      <section className="lp__trust" aria-label="プライバシーへの取り組み">
-        <p className="lp__trust-badge">「{TRUST_SLOGAN}」</p>
+      <section className="lp__trust" aria-label="登録とデータの取り扱い">
         <ul className="lp__trust-list">
           {TRUST_POINTS.map((point) => (
             <li key={point}>{point}</li>
@@ -255,21 +272,16 @@ export function LandingPage() {
               the founder/legal review this whole section still needs regardless. */}
           <li>創設ファミリー特典（冬休みスペシャルシート 全9枚 を含む）</li>
         </ul>
-        {SHOPIFY_PRODUCT_URL ? (
-          <a
-            className="lp__cta lp__cta--primary"
-            href={SHOPIFY_PRODUCT_URL}
-            onClick={() => track('cta_buy_click')}
-          >
-            創設ファミリーとして申し込む
-          </a>
-        ) : (
-          // WO-30 §3: never a dead `href="#"` — an honest, clearly-labelled not-yet-available
-          // state instead, same pattern /play/unlock already uses for its own not-configured
-          // backend. Still fires the same click event, so demand can be measured before launch.
-          <p className="lp__cta lp__cta--primary lp__cta--pending" onClick={() => track('cta_buy_click')}>
-            お申し込みは近日公開予定です
-          </p>
+        {/* Same startPurchase() as the hero CTA above — a real, always-clickable button (never a
+            dead href="#"), routing through /login/ when logged out and straight to the real
+            purchase-intent flow when logged in. Its own not_configured fallback (SHOPIFY_VARIANT_IDS
+            unset for kodomo-ai-m1 — src/family/api.ts's createPurchaseIntent) surfaces as the same
+            honest error message the hero CTA's own purchaseStep state shows. */}
+        <button type="button" className="lp__cta lp__cta--primary" onClick={startPurchase} disabled={purchaseStep.kind === 'loading'}>
+          購入する
+        </button>
+        {purchaseStep.kind === 'error' && (
+          <p className="lp__cta-error">購入手続きを開始できませんでした。しばらくしてから、もう一度お試しください。</p>
         )}
       </section>
 
@@ -280,6 +292,10 @@ export function LandingPage() {
           <dd>いいえ。アプリの中で子どもが操作するのはすべて事前に用意された内容で、実際のAIには接続しません。</dd>
           <dt>個人情報を入力する場面はありますか？</dt>
           <dd>ありません。名前・住所・学校名などの入力欄はどこにもありません。</dd>
+          <dt>ログインコードのメールが届きません</dt>
+          <dd>
+            ログインコードは no-reply@domo-ai.com から届きます。届かない場合は、迷惑メールフォルダをご確認いただくか、このアドレスからの受信を許可してください。
+          </dd>
           <dt>返金はできますか？</dt>
           {/* AD-15: old 30-day guarantee copy retired; the new policy (10-day voluntary window,
               contingent on actual paid-content use) isn't finalized yet — see the price

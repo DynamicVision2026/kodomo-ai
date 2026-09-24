@@ -7,11 +7,13 @@
      motion, but kept minimal there for consistency with the rest of the product's restraint. */
   filter: drop-shadow(0 2px 3px rgba(43, 38, 34, 0.18));
 }
-.mascot__shadow { fill: var(--ink, #2b2622); opacity: 0.12; }
-.mascot__body { fill: url(#mascot-body-gradient); stroke: var(--soil-3, #a6845c); stroke-width: 2; }
-.mascot__eye { stroke: var(--ink, #2b2622); }
-.mascot__curl { stroke: var(--root, #c8922e); }
-.mascot__curl-dot { fill: var(--root, #c8922e); }
+.mascot__shadow { fill: var(--ad12-ink, #1b1f3a); opacity: 0.12; }
+.mascot__body { fill: url(#mascot-body-gradient); stroke: var(--ad12-ink, #1b1f3a); stroke-width: 2; }
+.mascot__eye { stroke: var(--ad12-ink, #1b1f3a); }
+.mascot__curl { stroke: var(--ad12-ink, #1b1f3a); }
+.mascot__curl-dot { fill: var(--ad12-ink, #1b1f3a); }
 
-.mascot--discovery .mascot__body { stroke: var(--root, #c8922e); }
-.mascot--challenge .mascot__body { fill: #fdeee0; }
+/* AD-12: the same "root reached" instant BreakthroughScene/RootPlane mark with the one active
+   accent yellow — reinforcing that single accent, never a second competing one. */
+.mascot--discovery .mascot__body { stroke: var(--ad12-accent, #ffd23f); }
+.mascot--challenge .mascot__body { fill: var(--ad12-field-1, #e3e6f0); }

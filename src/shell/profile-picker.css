@@ -11,8 +11,8 @@
   margin: 0 auto;
   padding: var(--space-8, 32px) var(--space-4, 16px);
   text-align: center;
-  background: var(--surface, #f7f3ec);
-  color: var(--ink, #2b2622);
+  background: var(--ad12-field-0, #eef0f4);
+  color: var(--ad12-ink, #1b1f3a);
   font-family: var(--font-child, system-ui), sans-serif;
   box-sizing: border-box;
 }
@@ -43,7 +43,7 @@
   padding: var(--space-2, 8px);
   border-radius: var(--radius-card, 1.1rem);
   border: 2px solid transparent;
-  background: #fff;
+  background: var(--ad12-paper, #fff);
   box-shadow: var(--shadow-low, none);
   font-size: 2rem;
   line-height: 1;
@@ -54,9 +54,12 @@
 .profile-picker__profile:active {
   transform: scale(0.96);
 }
+/* AD-12: the one active accent per screen — this tile is the child's own current pick. Same
+   selected-state convention as src/ad12/refrain-slot.css (border + a soft accent wash, never a
+   filled yellow tile). */
 .profile-picker__choice[aria-pressed='true'] {
-  border-color: var(--root, #c8922e);
-  background: var(--soil-1, #eaf2fa);
+  border-color: var(--ad12-accent, #ffd23f);
+  background: color-mix(in srgb, var(--ad12-accent, #ffd23f) 18%, transparent);
   box-shadow: var(--shadow-current, none);
 }
 
@@ -67,18 +70,20 @@
 .profile-picker__nickname {
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--ink-soft, #6b5d4f);
+  color: var(--ad12-ink, #1b1f3a);
+  opacity: 0.7;
 }
 
+/* No gold/tan buttons (AD-12): ink-filled with white text. */
 .profile-picker__create,
 .profile-picker__confirm {
   min-height: 56px;
   padding: var(--space-3, 12px) var(--space-8, 32px);
   border-radius: var(--radius-pill, 999px);
   border: none;
-  background: var(--root, #c8922e);
+  background: var(--ad12-ink, #1b1f3a);
   box-shadow: var(--shadow-mid, none);
-  color: #fff;
+  color: var(--ad12-paper, #fff);
   font-weight: 700;
   font-size: 1.05rem;
   cursor: pointer;
@@ -90,6 +95,7 @@
 }
 
 .profile-picker__max {
-  color: var(--ink-soft, #6b5d4f);
+  color: var(--ad12-ink, #1b1f3a);
+  opacity: 0.7;
   font-size: 0.9rem;
 }

@@ -21,10 +21,18 @@
   align-self: center;
 }
 
+/** Post-launch-check work order §B1: this row must fit the screen width for any manifest length —
+ *  wrap to a second row rather than ever running off the edge (missions can have well over a
+ *  dozen lines). flex-wrap handles the wrap itself; the width cap + box-sizing keep the row from
+ *  ever exceeding its own plane's padding even on the narrowest supported viewport. */
 .ad12-listening-pocket__progress {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
   justify-content: center;
+  max-width: 100%;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
 }
 
 /** One mark per manifest line — no scrubber, no time display (§6's own explicit "No scrubber, no
@@ -32,6 +40,7 @@
 .ad12-listening-pocket__mark {
   width: 8px;
   height: 8px;
+  flex: none;
   border-radius: 50%;
   background: var(--ad12-recess-1);
   transition: background-color var(--ad12-t-settle);

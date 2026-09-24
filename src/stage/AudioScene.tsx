@@ -102,17 +102,15 @@ function TextAnchorAudioScene({ role, robotLine, ui, onDone }: Omit<AudioScenePr
   );
 }
 
-/** GUIDE has no authored, reviewed Japanese display name yet — the design gallery's own Section
- *  9 demo (src/ad12/gallery/main.tsx) already flags this exact gap and uses this same literal
- *  placeholder, with its own comment explaining why: VoicePlane's speakerLabel is caller-supplied
- *  and content-agnostic, and no one has authored/reviewed a real name for this speaker yet. Not
- *  new content — the gallery's own pre-existing stand-in, reused here for consistency. */
-const GUIDE_LABEL_PLACEHOLDER = 'GUIDE';
-
+/** GUIDE has no authored, reviewed Japanese display name — Founder decision (post-launch-check
+ *  work order §B5): GUIDE shows the round "？" mascot glyph instead of any text name, so this
+ *  never needs one (VoicePlane.tsx ignores speakerLabel entirely when speaker === 'GUIDE'). The
+ *  empty string here is never rendered — kept only because speakerLabelFor's return type is a
+ *  plain string every caller can pass straight through. */
 function speakerLabelFor(speaker: AudioLine['speaker'], ui: ModuleUiStrings): string {
   if (speaker === 'ROBOT') return ui.stageRobotName;
   if (speaker === 'PONTA') return ui.stagePontaName ?? '';
-  return GUIDE_LABEL_PLACEHOLDER;
+  return '';
 }
 
 /** Strips a GUIDE-completing PONTA line's own leading `「……<completion>」` fragment off, leaving
@@ -179,6 +177,37 @@ function playGlyphLevel(uses: number): 'show' | 'nudge' | 'independent' {
   if (uses === 0) return 'show';
   if (uses === 1) return 'nudge';
   return 'independent';
+}
+
+/** Post-launch-check work order §B2: "simple ink line icons... No emoji (⏸)". The Unicode media-
+ *  control glyphs this screen used before (▶/⏸/↻) are emoji-eligible characters — iOS Safari (the
+ *  Founder's own test device) renders them in colour emoji presentation by default, not as plain
+ *  monochrome symbols, however this screen's own CSS colours them. Plain inline-SVG line icons
+ *  (stroke: currentColor, so they always pick up the button's own `color: var(--ad12-ink)`)
+ *  sidestep that entirely — no font/platform can substitute an emoji presentation for an SVG
+ *  path. */
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true">
+      <path d="M6 4 L20 12 L6 20 Z" fill="currentColor" />
+    </svg>
+  );
+}
+function PauseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true">
+      <rect x="5" y="4" width="5" height="16" rx="1" fill="currentColor" />
+      <rect x="14" y="4" width="5" height="16" rx="1" fill="currentColor" />
+    </svg>
+  );
+}
+function ReplayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 12 a8 8 0 1 1 2.6 5.9" />
+      <path d="M4 17 L4 12 L9 12" />
+    </svg>
+  );
 }
 
 /**
@@ -306,7 +335,7 @@ function ListeningPocket({
           advanceLabel={ui.audioPlayLabel ?? ''}
           overlay={
             <GuidanceAffordance level={playGlyphLevel(guidanceUses.pocketPlay ?? 0)}>
-              <span className="ad12-listening-pocket__play-glyph ad12-tappable" aria-hidden="true">▶</span>
+              <span className="ad12-listening-pocket__play-glyph ad12-tappable"><PlayIcon /></span>
             </GuidanceAffordance>
           }
         />
@@ -357,7 +386,7 @@ function ListeningPocket({
           disabled={finished}
           aria-label={paused ? ui.audioResumeLabel : ui.audioPauseLabel}
         >
-          <span aria-hidden="true">{paused ? '▶' : '⏸'}</span>
+          {paused ? <PlayIcon /> : <PauseIcon />}
         </button>
         <button
           type="button"
@@ -365,7 +394,7 @@ function ListeningPocket({
           onClick={replay}
           aria-label={ui.audioReplayLabel}
         >
-          <span aria-hidden="true">↻</span>
+          <ReplayIcon />
         </button>
       </div>
 

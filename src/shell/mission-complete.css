@@ -8,7 +8,7 @@
   margin: 0 auto;
   padding: var(--space-6, 24px) var(--space-4, 16px) var(--thumb-zone, 120px);
   text-align: center;
-  background: var(--surface, #f7f3ec);
+  background: var(--ad12-field-0, #eef0f4);
   min-height: 100dvh;
   border: 3px solid transparent;
   font-family: var(--font-child, system-ui), sans-serif;
@@ -18,7 +18,7 @@
   font-weight: 900;
 }
 .mission-complete__discovered {
-  background: #fff;
+  background: var(--ad12-paper, #fff);
   border-radius: var(--radius-card, 1.1rem);
   box-shadow: var(--shadow-low, none);
   padding: var(--space-4, 16px);
@@ -27,19 +27,22 @@
 /* WO-28 §8: Module 1's own finish line — a journey artifact, not a score. A warm bordered
  * "certificate" frame around the SAME content (no new copy, no percentage, no stars); a single
  * seal glyph above the mascot is the only added element. `nextMission === null` (unchanged
- * completion logic) is all that decides this — no new prop, no new state. */
+ * completion logic) is all that decides this — no new prop, no new state. AD-12: this is the one
+ * genuinely rare, one-time moment (course completion) that earns the single accent yellow this
+ * screen ever shows — never repeated on the tools-list chips below. */
 .mission-complete--course-complete {
-  border-color: var(--root, #c8922e);
+  border-color: var(--ad12-accent, #ffd23f);
 }
 .mission-complete__seal {
   font-size: 2.4rem;
-  color: var(--root, #c8922e);
+  color: var(--ad12-ink, #1b1f3a);
 }
 .mission-complete__discovered-text { line-height: 1.7; }
 
 .mission-complete__tools-label {
   font-size: 0.8rem;
-  color: var(--ink-soft, #6b5d4f);
+  color: var(--ad12-ink, #1b1f3a);
+  opacity: 0.7;
 }
 .mission-complete__tools-list {
   list-style: none;
@@ -53,15 +56,16 @@
 .mission-complete__tools-list li {
   padding: 0.3rem 0.8rem;
   border-radius: var(--radius-pill, 999px);
-  background: var(--root, #c8922e);
-  color: #fff;
+  background: var(--ad12-ink, #1b1f3a);
+  color: var(--ad12-paper, #fff);
   font-size: 0.85rem;
   font-weight: 700;
 }
 
 .mission-complete__next-preview {
   font-size: 0.95rem;
-  color: var(--ink-soft, #6b5d4f);
+  color: var(--ad12-ink, #1b1f3a);
+  opacity: 0.7;
 }
 
 .mission-complete__actions {
@@ -71,12 +75,13 @@
   width: 100%;
   margin-top: var(--space-4, 16px);
 }
+/* No gold/tan buttons (AD-12): ink-filled with white text. */
 .mission-complete__primary {
   min-height: 56px;
   border: none;
   border-radius: var(--radius-pill, 999px);
-  background: var(--root, #c8922e);
-  color: #fff;
+  background: var(--ad12-ink, #1b1f3a);
+  color: var(--ad12-paper, #fff);
   font-weight: 700;
   font-size: 1.05rem;
   cursor: pointer;
@@ -85,10 +90,10 @@
 .mission-complete__tertiary,
 .mission-complete__replay {
   min-height: 48px;
-  border: 1px solid var(--ink-soft, #6b5d4f);
+  border: 1px solid var(--ad12-ink, #1b1f3a);
   border-radius: var(--radius-pill, 999px);
-  background: #fff;
-  color: var(--ink, #2b2622);
+  background: var(--ad12-paper, #fff);
+  color: var(--ad12-ink, #1b1f3a);
   font-weight: 700;
   cursor: pointer;
 }

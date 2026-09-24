@@ -1,20 +1,32 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LandingPage } from '../src/lp/LandingPage';
 
 let plausible: ReturnType<typeof vi.fn>;
+let originalLocation: Location;
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+}
 
 beforeEach(() => {
   localStorage.clear();
   plausible = vi.fn();
   window.plausible = plausible;
+  originalLocation = window.location;
+  // Same pattern tests/ad16PurchaseCta.test.tsx already established: jsdom's real
+  // window.location.href setter throws "Not implemented: navigation", so every startPurchase()
+  // path (which ends in a real assignment to it) needs the whole object stubbed.
+  Object.defineProperty(window, 'location', { value: { ...originalLocation, href: '' }, writable: true });
 });
 
 afterEach(() => {
   cleanup();
   delete window.plausible;
   vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+  Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
 });
 
 describe('LandingPage', () => {
@@ -52,26 +64,61 @@ describe('LandingPage', () => {
     await user.click(screen.getByText('無料でミッション1を体験する'));
     expect(plausible).toHaveBeenCalledWith('cta_play_click', expect.anything());
 
-    await user.click(screen.getByText('創設ファミリーとして申し込む ¥4,980'));
+    await user.click(screen.getByText('購入する ¥4,980（税込）'));
     expect(plausible).toHaveBeenCalledWith('cta_buy_click', expect.anything());
   });
 
-  // WO-30 §3: "No dead purchase button" — the price section's own CTA, distinct from the hero's
-  // #price anchor-scroll button above, must never be a bare href="#".
-  it('the price section CTA is an honest "not yet available" state, never a dead href="#", when no Shopify URL is configured', () => {
+  // Post-launch-check work order: both buy buttons are now always real, clickable <button>
+  // elements (never a bare href="#" or a text-only pending paragraph) — startPurchase() itself
+  // decides where to send the browser once it knows the session's login state.
+  it('a logged-out visitor clicking either buy button is sent to /login/, never straight to a purchase-intent call', async () => {
+    const user = userEvent.setup();
     render(<LandingPage />);
-    const cta = screen.getByText('お申し込みは近日公開予定です');
-    expect(cta.tagName).not.toBe('A'); // not a link at all, so there's nothing dead to click
+    expect(screen.getByText('購入する ¥4,980（税込）').tagName).toBe('BUTTON');
+    expect(screen.getByText('購入する', { selector: 'button' }).tagName).toBe('BUTTON');
+
+    await user.click(screen.getByText('購入する ¥4,980（税込）'));
+    await waitFor(() => expect(window.location.href).toBe('/login/?next=/account/'));
   });
 
-  it('the price section CTA links straight to the real Shopify product once VITE_SHOPIFY_PRODUCT_URL is configured', async () => {
+  it('a logged-in parent clicking a buy button goes straight to the real purchase-intent checkout URL', async () => {
     vi.resetModules();
-    vi.stubEnv('VITE_SHOPIFY_PRODUCT_URL', 'https://soul-id-2.myshopify.com/products/naze-m1');
-    const { LandingPage: LandingPageWithShopifyUrl } = await import('../src/lp/LandingPage');
-    render(<LandingPageWithShopifyUrl />);
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/me')) {
+        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [] });
+      }
+      if (url.endsWith('/purchase-intents')) {
+        return jsonResponse({ url: 'https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc', expiresAt: '2026-02-01T00:00:00.000Z' }, 201);
+      }
+      return new Response('not found', { status: 404 });
+    }));
+    const { LandingPage: LoggedInLandingPage } = await import('../src/lp/LandingPage');
+    const user = userEvent.setup();
+    render(<LoggedInLandingPage />);
 
-    const cta = screen.getByText('創設ファミリーとして申し込む', { selector: 'a.lp__cta--primary' });
-    expect(cta).toHaveAttribute('href', 'https://soul-id-2.myshopify.com/products/naze-m1');
+    await user.click(screen.getByText('購入する', { selector: 'button' }));
+    await waitFor(() => expect(window.location.href).toBe('https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc'));
+  });
+
+  it('shows an honest error, never a silent failure, when the purchase-intent call itself fails', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/me')) {
+        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [] });
+      }
+      if (url.endsWith('/purchase-intents')) return jsonResponse({ error: 'server' }, 500);
+      return new Response('not found', { status: 404 });
+    }));
+    const { LandingPage: LoggedInLandingPage } = await import('../src/lp/LandingPage');
+    const user = userEvent.setup();
+    render(<LoggedInLandingPage />);
+
+    await user.click(screen.getByText('購入する', { selector: 'button' }));
+    await waitFor(() => expect(screen.getByText(/購入手続きを開始できませんでした/)).toBeInTheDocument());
   });
 
   it('renders all four section 1A alignment rows, each with its own source link', () => {
@@ -113,9 +160,11 @@ describe('LandingPage', () => {
     expect(screen.getByText('無料でミッション1を体験する').closest('a')).toHaveAttribute('href', '/login/?next=/play/');
   });
 
-  it('prominently features the privacy slogan right after the hero, before any other section', () => {
+  it('post-launch-check work order: shows the new registration/data-handling facts right after the hero, before any other section', () => {
     render(<LandingPage />);
-    expect(screen.getByText('「登録不要・子ども情報のクラウド保存なし・完全ローカル完結」')).toBeInTheDocument();
+    expect(screen.getByText('メールアドレスだけで、かんたん登録（パスワード不要）')).toBeInTheDocument();
+    expect(screen.getByText('お子さまのお名前や生年月日は登録しません')).toBeInTheDocument();
+    expect(screen.getByText('学習の記録はアカウントに保存され、機種を変えても続きから遊べます')).toBeInTheDocument();
 
     const main = document.querySelector('main.lp')!;
     const children = Array.from(main.children);
@@ -124,12 +173,13 @@ describe('LandingPage', () => {
     expect(trustIndex).toBe(heroIndex + 1);
   });
 
-  it('elaborates each clause of the privacy slogan without overclaiming full offline use', () => {
+  it('never claims registration is unnecessary or that nothing is stored on a server — both are now false since Family Accounts shipped', () => {
     render(<LandingPage />);
-    const trust = document.querySelector('.lp__trust')!;
-    expect(trust.textContent).toContain('アカウント登録は不要');
-    expect(trust.textContent).toContain('端末');
-    expect(trust.textContent).not.toMatch(/オフライン|インターネット接続なし/);
+    const text = document.body.textContent ?? '';
+    expect(text).not.toContain('登録不要');
+    expect(text).not.toContain('子ども情報のクラウド保存なし');
+    expect(text).not.toContain('完全ローカル完結');
+    expect(text).not.toContain('創設ファミリーとして申し込む');
   });
 
   it('WO-21 Phase 7/AD-15: consistently states every required commercial fact — price, household licence (in natural Japanese, not raw English), digital+printable, profile/device caps, no subscription, and founders\' bonus; no longer overclaims the retired refund guarantee', () => {

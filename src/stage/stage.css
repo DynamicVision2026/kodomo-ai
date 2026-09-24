@@ -23,11 +23,21 @@
  * own BreakthroughScene, nested one level inside this structural region — see MissionStage.tsx)
  * — never a route change. Padding moved onto the nested `.ad12-field` itself (FieldStage's own
  * --space-6), so it isn't doubled by this wrapper's own. */
+/* Post-launch-check work order §C: the same "short content stranded top-anchored, leaving a
+   tall empty field below it and above the pinned tray" issue WO-32 already fixed for tablet
+   widths below (the question-choice moment's own guide-mascot-only worldContent is the phone-
+   width instance of the identical problem — see stage__world's own WO-32 comment further down
+   for the full original write-up) also reaches phone width, not just tablet+. Centering here
+   unconditionally (rather than only inside the >=768px media query) makes the card group the
+   dominant object on screen at every width, while overflow-y: auto still lets genuinely tall
+   content (a long dialogue beat, a tall scene) scroll exactly as before — centering a
+   shorter-than-container flex child never prevents a taller one from scrolling normally. */
 .stage__world {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   overflow-y: auto;
 }
 
@@ -199,15 +209,9 @@
   }
 }
 
-/* WO-32: at phone height (100dvh ~844px or less), .stage__world's mascot/dialogue content
-   roughly fills the space `flex: 1 1 auto` gives it. At tablet heights that same fixed-size
-   content left hundreds of px of dead space below it, top-anchored, with the tray stranded far
-   below — the single most time-spent surface in the product reading as broken on every tablet
-   orientation. Centering the content vertically within the available world area (the tray stays
-   in its own separate, already-pinned-bottom region below, untouched) and capping the stage's
-   own width to the same 40rem the rest of the app already uses for tablet (course-home.css)
-   fixes both without changing anything about the phone layout this component was built for. */
+/* WO-32: at tablet widths, cap the stage's own width to the same 40rem the rest of the app
+   already uses for tablet (course-home.css) — .stage__world's own vertical centering (now
+   unconditional, see its own comment above) no longer needs to be repeated here. */
 @media (min-width: 768px) {
   .stage { max-width: 40rem; margin: 0 auto; }
-  .stage__world { justify-content: center; }
 }

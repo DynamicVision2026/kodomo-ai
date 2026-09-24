@@ -40,8 +40,15 @@
   display: inline-block;
   padding: 0.75rem 1.6rem;
   border-radius: 999px;
+  border: none;
   text-decoration: none;
+  font: inherit;
   font-weight: 700;
+  cursor: pointer;
+}
+.lp__cta:disabled {
+  cursor: default;
+  opacity: 0.7;
 }
 .lp__cta--primary {
   background: #2f6fb0;
@@ -52,13 +59,11 @@
   color: #2f6fb0;
   border: 1px solid #2f6fb0;
 }
-/* WO-30 §3: the honest not-yet-available state — visually distinct from a real, clickable CTA
-   (no pointer cursor, muted tone) rather than looking broken or identical to a working link. */
-.lp__cta--pending {
-  background: #e8e8e8;
-  color: #666;
-  cursor: default;
-  margin: 0;
+.lp__cta-error {
+  margin: 0.5rem 0 0;
+  color: #b0342f;
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 .lp__trust {
@@ -67,13 +72,6 @@
   border-radius: 0.9rem;
   background: #f0f7f2;
   border: 1px solid #d9ead9;
-}
-.lp__trust-badge {
-  font-weight: 700;
-  font-size: 1rem;
-  text-align: center;
-  color: #2f6f4f;
-  margin: 0 0 0.9rem;
 }
 .lp__trust-list {
   padding-left: 1.2rem;

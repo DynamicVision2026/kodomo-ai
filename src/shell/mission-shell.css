@@ -8,8 +8,8 @@
   margin: 0 auto;
   padding: 2rem 1rem;
   text-align: center;
-  background: var(--surface, #f7f3ec);
-  color: var(--ink, #2b2622);
+  background: var(--ad12-field-0, #eef0f4);
+  color: var(--ad12-ink, #1b1f3a);
   font-family: var(--font-child, system-ui), sans-serif;
 }
 
@@ -26,8 +26,8 @@
   flex-direction: column;
   height: 100dvh;
   text-align: center;
-  background: var(--parent-surface, #fff);
-  color: var(--parent-ink, #2b2622);
+  background: var(--ad12-paper, #fff);
+  color: var(--ad12-ink, #1b1f3a);
   font-family: var(--font-parent, system-ui), sans-serif;
 }
 
@@ -62,8 +62,8 @@
 /* WO-24 (AD-07 beat 15/H): the parent register — white/clean, no soil, distinct within one
  * second of the child's own soil-toned stage. */
 .mission-shell__wrapper--parent {
-  background: var(--parent-surface, #fff);
-  color: var(--parent-ink, #2b2622);
+  background: var(--ad12-paper, #fff);
+  color: var(--ad12-ink, #1b1f3a);
   min-height: 100dvh;
   padding-top: 3rem;
   font-family: var(--font-parent, system-ui), sans-serif;
@@ -76,23 +76,27 @@
 }
 .mission-shell__real-ai-lab-note {
   font-size: 0.9rem;
-  color: var(--ink-soft, #6b5d4f);
+  color: var(--ad12-ink, #1b1f3a);
+  opacity: 0.7;
 }
 .mission-shell__real-ai-lab-guide-link {
   background: none !important;
-  border: 2px solid var(--root, #c8922e) !important;
-  color: var(--root, #c8922e) !important;
+  border: 2px solid var(--ad12-ink, #1b1f3a) !important;
+  color: var(--ad12-ink, #1b1f3a) !important;
 }
 
+/* No gold/tan buttons (AD-12): ink-filled with white text, same convention as the shared
+   .ad12-ink-button class (src/ad12/teach-back-panel.css) — kept as its own rule here (rather
+   than requiring every call site to add that class) since these buttons are plain <button> tags
+   MissionShell.tsx renders without one. */
 .mission-shell__wrapper button,
 .mission-shell__coop-choices button {
   min-height: 48px;
   padding: 0.6rem 1.4rem;
   border-radius: var(--radius-pill, 999px);
   border: none;
-  background: var(--root, #c8922e);
-  box-shadow: var(--shadow-mid, none);
-  color: #fff;
+  background: var(--ad12-ink, #1b1f3a);
+  color: var(--ad12-paper, #fff);
   font-weight: 700;
   cursor: pointer;
 }
@@ -105,7 +109,8 @@
 .mission-shell__skip {
   border: none;
   background: none;
-  color: var(--ink-soft, #888);
+  color: var(--ad12-ink, #1b1f3a);
+  opacity: 0.7;
   text-decoration: underline;
   cursor: pointer;
   font-size: 0.9rem;
@@ -118,7 +123,8 @@
 .mission-shell__parent-reassurance {
   margin-top: -0.5rem;
   font-size: 0.9rem;
-  color: var(--ink-soft, #6b5d4f);
+  color: var(--ad12-ink, #1b1f3a);
+  opacity: 0.7;
 }
 
 /* WO-30 §6 / AD-15 rule #3 (hotfix): purchase recovery — a quiet utility note, not another
@@ -198,8 +204,8 @@
   padding: 0.6rem 1.4rem;
   border-radius: var(--radius-pill, 999px);
   border: none;
-  background: var(--root, #c8922e);
-  color: #fff;
+  background: var(--ad12-ink, #1b1f3a);
+  color: var(--ad12-paper, #fff);
   font-weight: 700;
   cursor: pointer;
 }
@@ -207,7 +213,7 @@
 .mission-shell__m2-confirmed {
   margin-top: 1.5rem;
   font-size: 1rem;
-  color: var(--root, #c8922e);
+  color: var(--ad12-ink, #1b1f3a);
   font-weight: 700;
 }
 
@@ -231,8 +237,8 @@
   padding: 0.6rem 1.4rem;
   border-radius: var(--radius-pill, 999px);
   border: none;
-  background: var(--root, #c8922e);
-  color: #fff;
+  background: var(--ad12-ink, #1b1f3a);
+  color: var(--ad12-paper, #fff);
   font-weight: 700;
   cursor: pointer;
 }
@@ -240,7 +246,7 @@
 .mission-shell__m0-sealed {
   margin-top: 1.5rem;
   font-size: 1rem;
-  color: var(--root, #c8922e);
+  color: var(--ad12-ink, #1b1f3a);
   font-weight: 700;
 }
 
@@ -274,9 +280,9 @@
   min-height: 48px;
   padding: 0.5rem 1rem;
   border-radius: var(--radius-pill, 999px);
-  border: 1px solid var(--root, #c8922e);
-  background: #fff;
-  color: var(--root, #c8922e);
+  border: 1px solid var(--ad12-ink, #1b1f3a);
+  background: var(--ad12-paper, #fff);
+  color: var(--ad12-ink, #1b1f3a);
   font-weight: 700;
   cursor: pointer;
 }

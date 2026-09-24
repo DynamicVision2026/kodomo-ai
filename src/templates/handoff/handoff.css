@@ -7,8 +7,8 @@
   margin: 0 auto;
   padding: 3rem 1rem;
   text-align: center;
-  background: var(--surface, #f7f3ec);
-  color: var(--ink, #2b2622);
+  background: var(--ad12-field-0, #eef0f4);
+  color: var(--ad12-ink, #1b1f3a);
   font-family: var(--font-child, system-ui), sans-serif;
 }
 
@@ -32,14 +32,15 @@
   font-weight: 700;
 }
 
+/* No gold/tan buttons (AD-12): ink-filled with white text. */
 .handoff__continue {
   min-height: 56px;
   padding: 0.7rem 1.8rem;
   border-radius: var(--radius-pill, 999px);
   border: none;
-  background: var(--root, #c8922e);
+  background: var(--ad12-ink, #1b1f3a);
   box-shadow: var(--shadow-mid, none);
-  color: #fff;
+  color: var(--ad12-paper, #fff);
   font-weight: 700;
   cursor: pointer;
 }
@@ -47,7 +48,8 @@
 .handoff__skip {
   border: none;
   background: none;
-  color: var(--ink-soft, #888);
+  color: var(--ad12-ink, #1b1f3a);
+  opacity: 0.7;
   text-decoration: underline;
   cursor: pointer;
   font-size: 0.9rem;
