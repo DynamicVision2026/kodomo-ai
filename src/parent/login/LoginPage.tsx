@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { load, save } from '../../engine/storage';
-import { requestLoginCode, verifyLoginCode } from '../../family/api';
+import { fetchMe, requestLoginCode, verifyLoginCode } from '../../family/api';
 import { hydrateFromServer, importGuestProfiles } from '../../family/session';
 import { track } from '../../engine/analytics';
 import { COMPANY } from '../../legal/company';
@@ -8,6 +8,7 @@ import moduleJson from '../../modules/m1/module.json';
 import './login.css';
 
 type Step =
+  | { kind: 'checking' }
   | { kind: 'email' }
   | { kind: 'email-loading' }
   | { kind: 'code'; email: string }
@@ -43,9 +44,29 @@ function resolveNextPath(): string {
  * the old /play/unlock screen was — never something a child operates).
  */
 export function LoginPage() {
-  const [step, setStep] = useState<Step>({ kind: 'email' });
+  const [step, setStep] = useState<Step>({ kind: 'checking' });
   const [emailInput, setEmailInput] = useState('');
   const [codeInput, setCodeInput] = useState('');
+
+  // Post-launch-check fix: a parent whose session cookie is still valid must never see the login
+  // form at all — /play/ already sends them straight to the profile picker on a fresh session, so
+  // landing here instead (e.g. a stale bookmark, or the trial/purchase CTA's own `/login/?next=…`
+  // redirect) should bounce straight to `next` without a form flash in between.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const me = await fetchMe();
+      if (cancelled) return;
+      if (me) {
+        window.location.href = resolveNextPath();
+        return;
+      }
+      setStep({ kind: 'email' });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function submitEmail(e: FormEvent) {
     e.preventDefault();
@@ -87,6 +108,8 @@ export function LoginPage() {
   return (
     <main className="login">
       <h1>ログイン</h1>
+
+      {step.kind === 'checking' && <p className="login__message">確認しています…</p>}
 
       {step.kind === 'email' || step.kind === 'email-loading' ? (
         <>
