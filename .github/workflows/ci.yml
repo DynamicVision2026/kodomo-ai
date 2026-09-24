@@ -96,12 +96,12 @@ jobs:
       # deploy-frontend's own CANONICAL_HOST.
       CANONICAL_ORIGIN: https://kodomo-ai-421702481956.asia-northeast1.run.app
       # Founder-confirmed final sender identity (postmarkEmail.ts's own optional fromName/replyTo
-      # support) — EMAIL_FROM alone was missing from the live service entirely before this. Not a
-      # secret: EMAIL_API_KEY (the actual Postmark server token) is the one that gates whether
-      # PostmarkEmailSender is ever constructed at all (buildEnv.ts's own buildEmailSender) — it
-      # stays unset here until the Founder confirms it exists in Secret Manager with
-      # secretAccessor granted, so the service keeps falling back to the logging-only sender
-      # (never a failed deploy over a missing secret in the meantime).
+      # support) — EMAIL_FROM alone was missing from the live service entirely before this.
+      # EMAIL_API_KEY (the actual Postmark server token — buildEnv.ts's own buildEmailSender
+      # gates PostmarkEmailSender construction on it) is a real secret, set via --set-secrets
+      # below, now that the Founder has confirmed it exists in Secret Manager with
+      # secretAccessor granted to this service's runtime SA and that domo-ai.com's DKIM/
+      # Return-Path are verified in Postmark.
       EMAIL_FROM: no-reply@domo-ai.com
       EMAIL_FROM_NAME: ナゼホリ
       EMAIL_REPLY_TO: info@domo-ai.com
@@ -146,9 +146,10 @@ jobs:
 
       # Deploy with --no-traffic first, same reasoning as deploy-frontend's own step. Plain config
       # via --set-env-vars, real secrets via --set-secrets (Secret Manager, `<name>:latest`) — the
-      # Founder has already granted roles/secretmanager.secretAccessor on all three secrets to
-      # this service's runtime SA and removed the four placeholder plain env vars the old
-      # prototype revision carried, so there's no plain-env/secret name collision here.
+      # Founder has already granted roles/secretmanager.secretAccessor on all four secrets
+      # (ADMIN_TOKEN, SHOPIFY_WEBHOOK_SECRET, AUTH_PEPPER, EMAIL_API_KEY) to this service's
+      # runtime SA and removed the four placeholder plain env vars the old prototype revision
+      # carried, so there's no plain-env/secret name collision here.
       # SHOPIFY_SHOP_DOMAIN/SHOPIFY_VARIANT_IDS are deliberately left unset — real values pending
       # Founder confirmation; both are optional (purchase-intent cart permalinks only).
       - name: Deploy the candidate revision (no traffic yet)
@@ -165,11 +166,7 @@ jobs:
             --no-traffic \
             --tag="$TAG" \
             --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }}" \
-            --set-secrets="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest"
-          # EMAIL_API_KEY is deliberately NOT in --set-secrets above — add it only once the
-          # Founder confirms the secret exists in Secret Manager with secretAccessor granted to
-          # this service's runtime SA; adding it before that fails the deploy (gcloud errors on a
-          # --set-secrets reference to a secret that doesn't exist).
+            --set-secrets="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest,EMAIL_API_KEY=EMAIL_API_KEY:latest"
           BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
             --region="${{ env.REGION }}" --format='value(status.url)')
           CANDIDATE_URL="https://${TAG}---$(echo "$BASE_URL" | sed 's#https://##')"
