@@ -318,19 +318,45 @@ jobs:
           if [ -n "$IAP_AUDIENCE" ]; then
             ENV_VARS="$ENV_VARS,IAP_AUDIENCE=$IAP_AUDIENCE"
           fi
+          SECRETS="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest,EMAIL_API_KEY=EMAIL_API_KEY:latest"
 
-          gcloud run deploy "${{ env.SERVICE }}" \
-            --image="$IMAGE:${{ github.sha }}" \
-            --region="${{ env.REGION }}" \
-            --platform=managed \
-            --no-allow-unauthenticated \
-            --no-traffic \
-            --tag="$TAG" \
-            --set-env-vars="$ENV_VARS" \
-            --set-secrets="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest,EMAIL_API_KEY=EMAIL_API_KEY:latest"
-          BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
-            --region="${{ env.REGION }}" --format='value(status.url)')
-          CANDIDATE_URL="https://${TAG}---$(echo "$BASE_URL" | sed 's#https://##')"
+          # `--no-traffic` is rejected by gcloud on a service's very first-ever deploy ("not
+          # supported when creating a new service") — there is no earlier revision for it to
+          # protect traffic away from yet, and Cloud Run gives a brand new service's first
+          # revision 100% traffic unconditionally regardless of --tag. kodomo-ai-admin (unlike
+          # kodomo-ai/kodomo-ai-backend, both long-since-existing services) hits exactly this case
+          # on its actual first deploy. Detected and handled once here; every deploy after this
+          # one finds the service already exists and takes the normal tagged/no-traffic/promote
+          # path. Low real risk even if this first revision were broken: --no-allow-unauthenticated
+          # still holds, and IAP isn't enabled yet at this point in the rollout (docs/launch-
+          # runbook.md Part 2B), so nothing but an already-IAM-authorized caller could reach it.
+          if gcloud run services describe "${{ env.SERVICE }}" --region="${{ env.REGION }}" >/dev/null 2>&1; then
+            gcloud run deploy "${{ env.SERVICE }}" \
+              --image="$IMAGE:${{ github.sha }}" \
+              --region="${{ env.REGION }}" \
+              --platform=managed \
+              --no-allow-unauthenticated \
+              --no-traffic \
+              --tag="$TAG" \
+              --set-env-vars="$ENV_VARS" \
+              --set-secrets="$SECRETS"
+            BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
+              --region="${{ env.REGION }}" --format='value(status.url)')
+            CANDIDATE_URL="https://${TAG}---$(echo "$BASE_URL" | sed 's#https://##')"
+            echo "first_deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::kodomo-ai-admin does not exist yet — first-ever deploy goes live immediately (--no-traffic isn't valid until a second revision exists)."
+            gcloud run deploy "${{ env.SERVICE }}" \
+              --image="$IMAGE:${{ github.sha }}" \
+              --region="${{ env.REGION }}" \
+              --platform=managed \
+              --no-allow-unauthenticated \
+              --set-env-vars="$ENV_VARS" \
+              --set-secrets="$SECRETS"
+            CANDIDATE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
+              --region="${{ env.REGION }}" --format='value(status.url)')
+            echo "first_deploy=true" >> "$GITHUB_OUTPUT"
+          fi
           echo "candidate_url=$CANDIDATE_URL" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
@@ -366,12 +392,20 @@ jobs:
           fi
 
           if [ "$FAIL" != "0" ]; then
-            echo "::error::Smoke tests failed — traffic NOT promoted, production still on the previous revision."
+            if [ "${{ steps.deploy.outputs.first_deploy }}" = "true" ]; then
+              echo "::error::Smoke tests failed on the service's first-ever revision — it is already live (see the 'Deploy' step's own comment on why --no-traffic can't apply here) and needs a follow-up fix/redeploy."
+            else
+              echo "::error::Smoke tests failed — traffic NOT promoted, production still on the previous revision."
+            fi
             exit 1
           fi
 
-      # Only reached once the candidate revision has passed every smoke test.
+      # Skipped on the service's first-ever deploy — it already has 100% traffic (Cloud Run
+      # gives a brand new service's only revision all of it unconditionally; see the 'Deploy'
+      # step's own comment). Only reached on a later deploy, once the candidate revision has
+      # passed every smoke test.
       - name: Promote the candidate revision to 100% traffic
+        if: steps.deploy.outputs.first_deploy != 'true'
         run: |
           gcloud run services update-traffic "${{ env.SERVICE }}" \
             --region="${{ env.REGION }}" \
