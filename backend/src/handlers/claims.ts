@@ -50,30 +50,37 @@ export async function handleConfirmClaim(request: Request, env: Env, token: stri
   const now = new Date().toISOString();
 
   const result = await env.db.runTransaction(async (tx) => {
+    // ---- READS first (real Firestore transactions require every read before any write). ----
     const claim = await tx.get<ClaimDoc>(claimPath(hash));
     if (!claim || claim.redeemedAt || new Date(claim.expiresAt).getTime() <= Date.now()) return { ok: false as const };
     const order = await tx.get<OrderDoc>(orderPath(claim.orderId));
     if (!order || order.bindingState !== 'awaiting_claim') return { ok: false as const };
 
-    tx.set(claimPath(hash), { ...claim, redeemedAt: now, familyId });
+    const existingEntitlements = new Map<string, EntitlementDoc | null>();
+    const existingTrials = new Map<string, TrialDoc | null>();
+    for (const line of order.lines) {
+      existingEntitlements.set(line.moduleId, await tx.get<EntitlementDoc>(entitlementPath(familyId, line.moduleId)));
+      existingTrials.set(line.moduleId, await tx.get<TrialDoc>(trialPath(familyId, line.moduleId)));
+    }
 
+    // ---- DECIDE. ----
     let entitlementState: OrderDoc['entitlementState'] = 'none';
     let trialConverted = false;
+    const entitlementWrites: { path: string; doc: EntitlementDoc }[] = [];
+    const trialWrites: { path: string; doc: TrialDoc }[] = [];
     for (const line of order.lines) {
-      const entPath = entitlementPath(familyId, line.moduleId);
-      const existingEnt = await tx.get<EntitlementDoc>(entPath);
+      const existingEnt = existingEntitlements.get(line.moduleId) ?? null;
       if (existingEnt && existingEnt.status === 'active') {
         entitlementState = 'duplicate';
         continue;
       }
       const ent: EntitlementDoc = { status: 'active', shopifyOrderId: order.shopifyOrderId, grantedAt: now, revokedAt: null, revokedReason: null };
-      tx.set(entPath, ent);
+      entitlementWrites.push({ path: entitlementPath(familyId, line.moduleId), doc: ent });
       entitlementState = entitlementState === 'duplicate' ? 'duplicate' : 'granted';
 
-      const trialDocPath = trialPath(familyId, line.moduleId);
-      const trial = await tx.get<TrialDoc>(trialDocPath);
+      const trial = existingTrials.get(line.moduleId) ?? null;
       if (trial && !trial.convertedAt) {
-        tx.set(trialDocPath, { ...trial, convertedAt: now, convertedOrderId: order.shopifyOrderId });
+        trialWrites.push({ path: trialPath(familyId, line.moduleId), doc: { ...trial, convertedAt: now, convertedOrderId: order.shopifyOrderId } });
         trialConverted = true;
       }
     }
@@ -81,6 +88,11 @@ export async function handleConfirmClaim(request: Request, env: Env, token: stri
     const updatedOrder: OrderDoc = {
       ...order, familyId, bindingMethod: 'claim', bindingState: 'bound', entitlementState, trialConverted, updatedAt: now,
     };
+
+    // ---- WRITES (every read above has already happened). ----
+    tx.set(claimPath(hash), { ...claim, redeemedAt: now, familyId });
+    for (const w of entitlementWrites) tx.set(w.path, w.doc);
+    for (const w of trialWrites) tx.set(w.path, w.doc);
     tx.set(orderPath(order.shopifyOrderId), updatedOrder);
     return { ok: true as const, order: updatedOrder };
   });

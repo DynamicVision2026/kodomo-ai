@@ -1,8 +1,8 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi } from 'vitest';
 import type { Env } from '../backend/src/types';
-import type { FamilyDoc, OrderDoc, StaffDoc } from '../backend/src/schema';
-import { auditLogCollection, emptyRefundInfo, familyPath, orderPath, staffPath } from '../backend/src/schema';
+import type { EntitlementDoc, FamilyDoc, OrderDoc, StaffDoc } from '../backend/src/schema';
+import { auditLogCollection, emptyRefundInfo, entitlementPath, familyPath, orderPath, staffPath } from '../backend/src/schema';
 import { MemoryDb } from '../backend/server/memoryDb';
 import { FakeEmailSender } from '../backend/src/email';
 
@@ -226,5 +226,44 @@ describe('AD-16 §8 — the operator queues (equality-filtered, not a full-colle
     const res = await handleAdminApi(request, env, url);
     const body: OrderDoc[] = await res.json();
     expect(body.map((o) => o.shopifyOrderId)).toEqual(['201']);
+  });
+});
+
+describe('AD-16 §8 — admin bind: reads-before-writes regression (production incident, 2026-09)', () => {
+  /** A live `orders/paid` order for `kodomo-ai-m1` only ever has one line — this multi-line order
+   *  is synthetic, standing in for the second module a real order would carry once one exists.
+   *  Admin-bind's own transaction reads each line's entitlement in a loop, exactly like the
+   *  webhook's own orders/paid transaction did — a single-line order can never exercise the
+   *  "read module 2 AFTER module 1's write" ordering bug, only a multi-line one can. */
+  it('binds a multi-line order without hitting "Firestore transactions require all reads to be executed before all writes"', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'operator@example.com', 'operator');
+    await seedFamily(env, 'fam-multi', 'parent-multi@example.com');
+    const now = new Date().toISOString();
+    const order: OrderDoc = {
+      shopifyOrderId: '9001', orderName: '#9001',
+      lines: [
+        { sku: 'kodomo-ai-m1', variantId: 1, moduleId: 'm1', quantity: 1, lineTotal: 4980 },
+        { sku: 'kodomo-ai-m2', variantId: 2, moduleId: 'm2', quantity: 1, lineTotal: 4980 },
+      ],
+      currency: 'JPY', financialStatus: 'paid', shopifyCreatedAt: now, paidAt: now,
+      purchaserEmail: 'parent-multi@example.com', familyId: null, bindingMethod: null,
+      bindingState: 'needs_review', entitlementState: 'none', trialConverted: false,
+      refund: emptyRefundInfo(), webhookIds: [], createdAt: now, updatedAt: now,
+    };
+    await env.db.set(orderPath('9001'), order);
+
+    const { request, url } = adminRequest('/admin-api/orders/9001/bind', 'valid-jwt-for-operator@example.com', {
+      method: 'POST', body: JSON.stringify({ familyId: 'fam-multi', reason: 'manual support fix' }),
+    });
+    const res = await handleAdminApi(request, env, url);
+
+    expect(res.status).toBe(200);
+    const body: OrderDoc = await res.json();
+    expect(body.entitlementState).toBe('granted');
+    const entM1 = await env.db.get<EntitlementDoc>(entitlementPath('fam-multi', 'm1'));
+    const entM2 = await env.db.get<EntitlementDoc>(entitlementPath('fam-multi', 'm2'));
+    expect(entM1?.status).toBe('active');
+    expect(entM2?.status).toBe('active');
   });
 });

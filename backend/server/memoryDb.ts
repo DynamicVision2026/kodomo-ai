@@ -53,12 +53,27 @@ export class MemoryDb implements Db {
 
   async runTransaction<R>(fn: (tx: DbTx) => Promise<R>): Promise<R> {
     const writes: { type: 'set' | 'delete'; path: string; value?: unknown }[] = [];
+    // Real Firestore transactions require every `tx.get` to execute before any `tx.set`/
+    // `tx.delete` — violating that throws at the READ, not the write (the production incident
+    // this fake now reproduces: "Firestore transactions require all reads to be executed before
+    // all writes"). MemoryDb applies writes only after the callback resolves (see below), so
+    // without this check it would silently accept an interleaved read/write order that fails for
+    // real — every handler in this repo has to pass this exact same check locally, in a test,
+    // before it can ever reach production.
+    let hasWritten = false;
     const tx: DbTx = {
-      get: <T,>(path: string) => this.get<T>(path),
+      get: <T,>(path: string) => {
+        if (hasWritten) {
+          throw new Error('Firestore transactions require all reads to be executed before all writes.');
+        }
+        return this.get<T>(path);
+      },
       set: <T,>(path: string, value: T) => {
+        hasWritten = true;
         writes.push({ type: 'set', path, value });
       },
       delete: (path: string) => {
+        hasWritten = true;
         writes.push({ type: 'delete', path });
       },
     };

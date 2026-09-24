@@ -250,16 +250,24 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
 
     const now = new Date().toISOString();
     const updated = await env.db.runTransaction(async (tx) => {
-      let entitlementState: OrderDoc['entitlementState'] = 'none';
+      // Reads first — a multi-line order would otherwise read line 2's entitlement AFTER line
+      // 1's write, the same class of bug webhook.ts's orders/paid transaction had.
+      const existingEntitlements = new Map<string, EntitlementDoc | null>();
       for (const line of order.lines) {
-        const entPath = entitlementPath(targetFamilyId, line.moduleId);
-        const existingEnt = await tx.get<EntitlementDoc>(entPath);
+        existingEntitlements.set(line.moduleId, await tx.get<EntitlementDoc>(entitlementPath(targetFamilyId, line.moduleId)));
+      }
+
+      let entitlementState: OrderDoc['entitlementState'] = 'none';
+      const entitlementWrites: { path: string; doc: EntitlementDoc }[] = [];
+      for (const line of order.lines) {
+        const existingEnt = existingEntitlements.get(line.moduleId) ?? null;
         if (existingEnt && existingEnt.status === 'active') { entitlementState = 'duplicate'; continue; }
         const ent: EntitlementDoc = { status: 'active', shopifyOrderId: orderId, grantedAt: now, revokedAt: null, revokedReason: null };
-        tx.set(entPath, ent);
+        entitlementWrites.push({ path: entitlementPath(targetFamilyId, line.moduleId), doc: ent });
         entitlementState = entitlementState === 'duplicate' ? 'duplicate' : 'granted';
       }
       const doc: OrderDoc = { ...order, familyId: targetFamilyId, bindingMethod: 'admin', bindingState: 'bound', entitlementState, updatedAt: now };
+      for (const w of entitlementWrites) tx.set(w.path, w.doc);
       tx.set(orderPath(orderId), doc);
       return doc;
     });

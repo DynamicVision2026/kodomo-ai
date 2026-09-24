@@ -83,29 +83,38 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
   const emailHash = email ? await emailHashOf(email) : null;
 
   const result = await env.db.runTransaction(async (tx) => {
-    let familyId: string | null = null;
-    let bindingMethod: BindingMethod | null = null;
+    // ---- READS (every one of them, before any write — real Firestore transactions require
+    // this exact ordering; MemoryDb's own runTransaction now enforces it too, see its comment). ----
+    const intentPath = tokenHash ? purchaseIntentPath(tokenHash) : null;
+    const intent = intentPath ? await tx.get<PurchaseIntentDoc>(intentPath) : null;
+    const tokenBindingValid =
+      !!intent && !intent.redeemedAt && new Date(intent.expiresAt).getTime() > now.getTime() && moduleIds.includes(intent.moduleId);
 
-    if (tokenHash) {
-      const intentPath = purchaseIntentPath(tokenHash);
-      const intent = await tx.get<PurchaseIntentDoc>(intentPath);
-      if (intent && !intent.redeemedAt && new Date(intent.expiresAt).getTime() > now.getTime() && moduleIds.includes(intent.moduleId)) {
-        tx.set(intentPath, { ...intent, redeemedAt: nowIso, orderId });
-        familyId = intent.familyId;
-        bindingMethod = 'token';
+    let familyId: string | null = tokenBindingValid ? intent!.familyId : null;
+    let bindingMethod: BindingMethod | null = tokenBindingValid ? 'token' : null;
+
+    const indexEntry = !familyId && emailHash ? await tx.get<EmailIndexDoc>(emailIndexPath(emailHash)) : null;
+    if (!familyId && indexEntry) {
+      familyId = indexEntry.familyId;
+      bindingMethod = 'email_match';
+    }
+
+    // Reading these unconditionally (never gated on whether the moduleId turns out to need a
+    // write) is what keeps this loop's reads separate from — and entirely before — its writes,
+    // even though only SOME of them end up used below.
+    const existingEntitlements = new Map<string, EntitlementDoc | null>();
+    const existingTrials = new Map<string, TrialDoc | null>();
+    if (familyId) {
+      for (const moduleId of moduleIds) {
+        existingEntitlements.set(moduleId, await tx.get<EntitlementDoc>(entitlementPath(familyId, moduleId)));
+        existingTrials.set(moduleId, await tx.get<TrialDoc>(trialPath(familyId, moduleId)));
       }
     }
 
-    if (!familyId && emailHash) {
-      const indexEntry = await tx.get<EmailIndexDoc>(emailIndexPath(emailHash));
-      if (indexEntry) {
-        familyId = indexEntry.familyId;
-        bindingMethod = 'email_match';
-      }
-    }
-
+    // ---- DECIDE (pure computation from the reads above — no further reads or writes yet). ----
     let bindingState: BindingState;
     let claim: { token: string; hash: string } | null = null;
+    let claimDoc: ClaimDoc | null = null;
     if (familyId) {
       bindingState = 'bound';
     } else if (email) {
@@ -113,10 +122,10 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
       const claimToken = randomToken(32);
       const claimHash = await hmacHex(claimToken, env.AUTH_PEPPER);
       claim = { token: claimToken, hash: claimHash };
-      tx.set(claimPath(claimHash), {
+      claimDoc = {
         orderId, createdAt: nowIso, expiresAt: new Date(now.getTime() + CLAIM_TTL_MS).toISOString(),
         redeemedAt: null, familyId: null,
-      } satisfies ClaimDoc);
+      };
     } else {
       // AD-16 §2: "order email missing -> awaiting_claim cannot be emailed -> needs_review."
       bindingState = 'needs_review';
@@ -128,22 +137,22 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
 
     let entitlementState: EntitlementState = 'none';
     let trialConverted = false;
+    const entitlementWrites: { path: string; doc: EntitlementDoc }[] = [];
+    const trialWrites: { path: string; doc: TrialDoc }[] = [];
     if (familyId) {
       for (const moduleId of moduleIds) {
-        const entPath = entitlementPath(familyId, moduleId);
-        const existingEnt = await tx.get<EntitlementDoc>(entPath);
+        const existingEnt = existingEntitlements.get(moduleId) ?? null;
         if (existingEnt && existingEnt.status === 'active') {
           entitlementState = 'duplicate';
           continue;
         }
         const ent: EntitlementDoc = { status: 'active', shopifyOrderId: orderId, grantedAt: nowIso, revokedAt: null, revokedReason: null };
-        tx.set(entPath, ent);
+        entitlementWrites.push({ path: entitlementPath(familyId, moduleId), doc: ent });
         entitlementState = entitlementState === 'duplicate' ? 'duplicate' : 'granted';
 
-        const trialDocPath = trialPath(familyId, moduleId);
-        const trial = await tx.get<TrialDoc>(trialDocPath);
+        const trial = existingTrials.get(moduleId) ?? null;
         if (trial && !trial.convertedAt) {
-          tx.set(trialDocPath, { ...trial, convertedAt: nowIso, convertedOrderId: orderId });
+          trialWrites.push({ path: trialPath(familyId, moduleId), doc: { ...trial, convertedAt: nowIso, convertedOrderId: orderId } });
           trialConverted = true;
         }
       }
@@ -168,6 +177,12 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
       createdAt: nowIso,
       updatedAt: nowIso,
     };
+
+    // ---- WRITES (every read above has already happened). ----
+    if (tokenBindingValid) tx.set(intentPath!, { ...intent!, redeemedAt: nowIso, orderId });
+    if (claimDoc) tx.set(claimPath(claim!.hash), claimDoc);
+    for (const w of entitlementWrites) tx.set(w.path, w.doc);
+    for (const w of trialWrites) tx.set(w.path, w.doc);
     tx.set(orderPath(orderId), doc);
 
     return { doc, claim };
@@ -220,11 +235,18 @@ export async function handleShopifyRefundWebhook(request: Request, env: Env): Pr
   const now = new Date().toISOString();
   const before = order;
   const after = await env.db.runTransaction(async (tx) => {
+    // Reads first — a multi-module order (more than one `moduleId` here) would otherwise read
+    // module 2's entitlement AFTER module 1's write, the same class of bug the orders/paid
+    // transaction above had.
+    const existingEntitlements = new Map<string, EntitlementDoc | null>();
     for (const moduleId of moduleIds) {
-      const entPath = entitlementPath(order.familyId!, moduleId);
-      const ent = await tx.get<EntitlementDoc>(entPath);
+      existingEntitlements.set(moduleId, await tx.get<EntitlementDoc>(entitlementPath(order.familyId!, moduleId)));
+    }
+
+    for (const moduleId of moduleIds) {
+      const ent = existingEntitlements.get(moduleId) ?? null;
       if (ent && ent.status === 'active') {
-        tx.set(entPath, { ...ent, status: 'revoked', revokedAt: now, revokedReason: 'refund' });
+        tx.set(entitlementPath(order.familyId!, moduleId), { ...ent, status: 'revoked', revokedAt: now, revokedReason: 'refund' });
       }
     }
     const updated: OrderDoc = {
