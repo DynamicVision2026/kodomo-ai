@@ -16,7 +16,10 @@ export function maskEmail(email: string): string {
 export interface MeResponse {
   familyId: string;
   email: string;
-  entitlements: { moduleId: string; status: string }[];
+  /** `grantedAt` (AD-16 §4's own `EntitlementDoc.grantedAt`) — the account page's own "ご購入
+   *  済み：…（購入日：◯月◯日）" status reads it directly; never recomputed or re-derived from an
+   *  order doc the client has no business seeing. */
+  entitlements: { moduleId: string; status: string; grantedAt: string }[];
   profiles: { id: string; avatarId: string; nicknameId: string; stage: number }[];
   /** AD-16 §5: per-module now (a family's trial history is per-module, not a single family-wide
    *  clock) — `state` is `not_started`/`active`/`expired`, `endsAt` is null until the module's
@@ -37,7 +40,7 @@ export async function buildMeResponse(env: Env, familyId: string): Promise<MeRes
   return {
     familyId,
     email: maskEmail(family.email),
-    entitlements: entitlements.map((e) => ({ moduleId: e.id, status: e.data.status })),
+    entitlements: entitlements.map((e) => ({ moduleId: e.id, status: e.data.status, grantedAt: e.data.grantedAt })),
     profiles: profiles
       .filter((p) => !p.data.deletedAt)
       .map((p) => ({ id: p.id, avatarId: p.data.avatarId, nicknameId: p.data.nicknameId, stage: p.data.stage })),

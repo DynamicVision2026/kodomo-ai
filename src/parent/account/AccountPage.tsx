@@ -31,6 +31,13 @@ const PURCHASE_ERROR_MESSAGE: Record<'not_configured' | 'other', string> = {
   other: '購入手続きを開始できませんでした。しばらくしてから、もう一度お試しください。',
 };
 
+/** Post-launch-check (Founder, iPhone test): 「購入日：◯月◯日」 — the parent's own local calendar
+ *  date (never UTC), month/day only, no year (a household licence never expires). */
+function formatPurchaseDate(grantedAtIso: string): string {
+  const d = new Date(grantedAtIso);
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
 /**
  * /account — AD-13 §3/§5 step 6: device list + sign-out, email change (two-step, OTP to the new
  * address), account deletion (requires a fresh code). Parent-only (src/parent).
@@ -72,7 +79,13 @@ export function AccountPage() {
     if (!newEmail) return;
     const result = await requestEmailChange(newEmail);
     if ('reason' in result) {
-      setEmailStep({ kind: 'error', message: '送信できませんでした。しばらくしてから、もう一度お試しください。' });
+      // Post-launch-check (Founder, iPhone test): a same-address "change" used to send a code
+      // and, on confirm, two identical "your login email changed" notifications to that one
+      // address — refused here, before any code is ever sent.
+      const message = result.reason === 'same_email'
+        ? '現在のメールアドレスと同じです'
+        : '送信できませんでした。しばらくしてから、もう一度お試しください。';
+      setEmailStep({ kind: 'error', message });
       return;
     }
     setEmailStep({ kind: 'awaiting-code', newEmail });
@@ -130,42 +143,46 @@ export function AccountPage() {
       <h1>アカウント</h1>
       <p className="account__lead">ログイン中のメールアドレス：{me.email}</p>
 
-      {(!alreadyEntitled || purchaseState.kind === 'awaiting-payment' || purchaseState.kind === 'paid') && (
-        <section className="account__section">
-          <h2>購入</h2>
-          {!alreadyEntitled &&
-            (purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
-              <>
-                <p>「{PURCHASE_MODULE_TITLE}」を購入すると、すべてのミッションが使えるようになります。</p>
-                <button
-                  type="button"
-                  className="account__button"
-                  onClick={startPurchase}
-                  disabled={purchaseState.kind === 'loading'}
-                >
-                  購入手続きへ進む
-                </button>
-                {purchaseState.kind === 'error' && (
-                  <p className="account__message account__message--error">{PURCHASE_ERROR_MESSAGE[purchaseState.reason]}</p>
-                )}
-              </>
-            )}
-          {/* AD-14 decision 7: checkout opened in a new tab (usePurchaseFlow's own startPurchase)
-              — this tab waits here, polling /me for the entitlement Shopify's orders/paid webhook
-              grants server-side, then hands the parent straight into the app. */}
-          {purchaseState.kind === 'awaiting-payment' && (
-            <p className="account__message">
-              お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。
+      <section className="account__section">
+        <h2>購入</h2>
+        {alreadyEntitled && purchasedModule &&
+          (purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
+            <p className="account__purchase-status">
+              ご購入済み：ナゼホリ Module 1（購入日：{formatPurchaseDate(purchasedModule.grantedAt)}）
             </p>
           )}
-          {purchaseState.kind === 'paid' && (
-            <div className="account__message account__message--success">
-              <p>ご購入ありがとうございます！</p>
-              <a className="account__button" href="/play/">つづきから あそぶ</a>
-            </div>
+        {!alreadyEntitled &&
+          (purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
+            <>
+              <p>「{PURCHASE_MODULE_TITLE}」を購入すると、すべてのミッションが使えるようになります。</p>
+              <button
+                type="button"
+                className="account__button"
+                onClick={startPurchase}
+                disabled={purchaseState.kind === 'loading'}
+              >
+                購入手続きへ進む
+              </button>
+              {purchaseState.kind === 'error' && (
+                <p className="account__message account__message--error">{PURCHASE_ERROR_MESSAGE[purchaseState.reason]}</p>
+              )}
+            </>
           )}
-        </section>
-      )}
+        {/* AD-14 decision 7: checkout opened in a new tab (usePurchaseFlow's own startPurchase)
+            — this tab waits here, polling /me for the entitlement Shopify's orders/paid webhook
+            grants server-side, then hands the parent straight into the app. */}
+        {purchaseState.kind === 'awaiting-payment' && (
+          <p className="account__message">
+            お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。
+          </p>
+        )}
+        {purchaseState.kind === 'paid' && (
+          <div className="account__message account__message--success">
+            <p>ご購入ありがとうございます！</p>
+            <a className="account__button" href="/play/">つづきから あそぶ</a>
+          </div>
+        )}
+      </section>
 
       <section className="account__section">
         <h2>使用中の端末</h2>

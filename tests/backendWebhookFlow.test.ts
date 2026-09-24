@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { handleShopifyOrderWebhook, handleShopifyRefundWebhook } from '../backend/src/handlers/webhook';
 import type { Env } from '../backend/src/types';
 import type { EntitlementDoc, FamilyDoc, OrderDoc } from '../backend/src/schema';
@@ -7,6 +7,7 @@ import { entitlementPath, familyPath, orderPath } from '../backend/src/schema';
 import { MemoryDb } from '../backend/server/memoryDb';
 import { FakeEmailSender } from '../backend/src/email';
 import { getOrCreateFamilyIdInTx } from '../backend/src/family';
+import { sha256Hex } from '../backend/src/util';
 
 const SECRET = 'test-webhook-secret';
 
@@ -187,5 +188,82 @@ describe('AD-16 §7 — refunds/create revokes the entitlement, keeps progress',
     });
     const ent = await env.db.get<EntitlementDoc>(entitlementPath(orderDoc!.familyId!, 'm1'));
     expect(ent?.status).toBe('active'); // untouched
+  });
+});
+
+describe('Post-launch-check (Founder) — one Cloud-Logging line per processed order, no personal data', () => {
+  function orderLogLines(logSpy: ReturnType<typeof vi.spyOn>): string[] {
+    return logSpy.mock.calls.map((c) => c.join(' ')).filter((l) => l.startsWith('[order]'));
+  }
+
+  it('a fresh bound+granted order logs binding=email_match, a hashed (never raw) family id, entitlement=granted, email_sent=yes', async () => {
+    const env = fakeEnv();
+    const familyId = await loginFirst(env, order.email);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await postOrder(env, order, 'wh-log-1');
+
+    const [line] = orderLogLines(logSpy);
+    expect(line).toBeDefined();
+    expect(line).toContain(`order=${order.id}`);
+    expect(line).toContain('binding=email_match');
+    expect(line).toContain(`family=${(await sha256Hex(familyId)).slice(0, 16)}`);
+    expect(line).toContain('entitlement=granted');
+    expect(line).toContain('email_sent=yes');
+    expect(line).not.toContain(order.email); // no personal data in the log
+    expect(line).not.toContain(familyId); // hashed, never the raw id
+
+    logSpy.mockRestore();
+  });
+
+  it('an unmatched order logs binding=none, family=none, entitlement=awaiting_claim, email_sent=yes (the claim email still goes out)', async () => {
+    const env = fakeEnv();
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await postOrder(env, order);
+
+    const [line] = orderLogLines(logSpy);
+    expect(line).toContain('binding=none');
+    expect(line).toContain('family=none');
+    expect(line).toContain('entitlement=awaiting_claim');
+    expect(line).toContain('email_sent=yes');
+    expect(line).not.toContain(order.email);
+
+    logSpy.mockRestore();
+  });
+
+  it('a duplicate order (same module, same family, second order) logs entitlement=duplicate, email_sent=no', async () => {
+    const env = fakeEnv();
+    await loginFirst(env, order.email);
+    await postOrder(env, order);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const secondOrder = { ...order, id: 5003, name: '#5003' };
+    await postOrder(env, secondOrder);
+
+    const [line] = orderLogLines(logSpy);
+    expect(line).toContain(`order=${secondOrder.id}`);
+    expect(line).toContain('entitlement=duplicate');
+    expect(line).toContain('email_sent=no'); // no second module-activated email for a duplicate
+
+    logSpy.mockRestore();
+  });
+
+  it('a replayed webhook (the idempotent early-return path) logs too, never silently skipping observability — and never re-sends the email', async () => {
+    const env = fakeEnv();
+    await loginFirst(env, order.email);
+    await postOrder(env, order, 'wh-a');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await postOrder(env, order, 'wh-b'); // same order id, new webhook id -> the idempotent branch
+
+    const [line] = orderLogLines(logSpy);
+    expect(line).toBeDefined();
+    expect(line).toContain(`order=${order.id}`);
+    expect(line).toContain('binding=email_match');
+    expect(line).toContain('entitlement=granted');
+    expect(line).toContain('email_sent=no');
+
+    logSpy.mockRestore();
   });
 });

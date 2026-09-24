@@ -174,7 +174,7 @@ describe('AD-16 §0 — login/session are NEVER gated by trial or entitlement st
     const res = await handleAuthVerify(jsonRequest('/api/v1/auth/verify', { email: 'refunded@example.com', code }), env);
     expect(res.status).toBe(200);
     const me = await res.json();
-    expect(me.entitlements).toEqual([{ moduleId: 'm1', status: 'revoked' }]);
+    expect(me.entitlements).toEqual([{ moduleId: 'm1', status: 'revoked', grantedAt: expect.any(String) }]);
   });
 });
 

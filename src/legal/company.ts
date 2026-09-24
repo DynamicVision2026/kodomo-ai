@@ -13,7 +13,10 @@ export const COMPANY = {
   representativeName: '傅豊国',
   address: '〒143-0023 東京都大田区山王2丁目5番13号 大森北口ビル5F5-72',
   corporateNumber: '6011701025709',
-  email: 'info@soul-id.jp',
+  // Post-launch-check (Founder, iPhone test): every ナゼホリ contact/support address is
+  // info@domo-ai.com — soul-id.jp is the operating company's own separate site/brand, never
+  // shown to a ナゼホリ parent as where to write for help.
+  email: 'info@domo-ai.com',
   legalSiteUrl: 'https://soul-id.jp/',
 };
 

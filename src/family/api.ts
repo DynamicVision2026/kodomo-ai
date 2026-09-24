@@ -51,7 +51,7 @@ export function isFamilyApiConfigured(): boolean {
 export interface MeResponse {
   familyId: string;
   email: string;
-  entitlements: { moduleId: string; status: string }[];
+  entitlements: { moduleId: string; status: string; grantedAt: string }[];
   profiles: { id: string; avatarId: string; nicknameId: string; stage: number }[];
   /** AD-16 §5: per-module trial state — absent/empty for a family with no trial history for a
    *  given module yet. */
@@ -144,7 +144,10 @@ export async function deleteSession(id: string): Promise<void> {
 export async function requestEmailChange(newEmail: string): Promise<{ ok: true } | ApiFailure> {
   const res = await apiFetch('/account/email', { method: 'POST', body: JSON.stringify({ newEmail }) });
   if (isFailure(res)) return res;
-  if (!res.ok) return { ok: false, reason: 'server' };
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: 'server' }));
+    return { ok: false, reason: body.error ?? 'server' };
+  }
   return { ok: true };
 }
 

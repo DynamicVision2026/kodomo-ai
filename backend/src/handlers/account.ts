@@ -35,6 +35,18 @@ export async function handleAccountEmail(request: Request, env: Env): Promise<Re
   const newEmail = normalizeEmail(body.newEmail);
   const familyId = resolved.session.familyId;
 
+  // Post-launch-check (Founder, iPhone test): changing info@ to info@ sent TWO "your login email
+  // changed" notifications to the same address (both `emailChangedEmail` calls below fire with
+  // oldEmail === newEmail once the no-op change completes). Caught here, before any code is even
+  // sent — never as a special case of "email already in use" below, since `findFamilyIdByEmail`
+  // for THIS family's own current address always resolves to `familyId` itself, never taking
+  // that branch.
+  const currentFamily = await getFamily(env, familyId);
+  if (!currentFamily) return new Response('not found', { status: 404 });
+  if (newEmail === normalizeEmail(currentFamily.email)) {
+    return new Response(JSON.stringify({ error: 'same_email' }), { status: 409, headers: { 'content-type': 'application/json' } });
+  }
+
   const newEmailFamilyId = await findFamilyIdByEmail(env, await emailHashOf(newEmail));
   if (newEmailFamilyId && newEmailFamilyId !== familyId) {
     return new Response(JSON.stringify({ error: 'email_in_use' }), { status: 409, headers: { 'content-type': 'application/json' } });
@@ -50,8 +62,7 @@ export async function handleAccountEmail(request: Request, env: Env): Promise<Re
     return jsonResponse({ error: outcome }, 401);
   }
 
-  const family = await getFamily(env, familyId);
-  if (!family) return new Response('not found', { status: 404 });
+  const family = currentFamily;
   const oldEmail = family.email;
   const now = new Date().toISOString();
 

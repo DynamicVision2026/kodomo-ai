@@ -369,7 +369,36 @@ Flow/metafield steps no longer apply — do not follow them.
    `kodomo-ai-admin`'s Queues page, Part 2B) and the "ご購入の受け取り" claim email arrives with a
    working `/claim?token=...` link. Issue a real refund on one of the two test orders afterward →
    confirm the entitlement is revoked (account/progress must remain untouched — AD-16 §7).
-7. **Confirm isolation held.** Check products A-D's own confirmation/shipping emails are
+**Verifying a purchase from Cloud Shell, without opening Firestore.** Post-launch-check
+(Founder): every `orders/paid`/`refunds/create` call that reaches a decision now ends with one
+`[order] order=<id> binding=<token|email_match|claim|admin|none> family=<sha256, first 16 hex
+chars, never the raw id> entitlement=<granted|duplicate|revoked|awaiting_claim|needs_review>
+email_sent=<yes|no>` line in Cloud Logging (`backend/src/handlers/webhook.ts`'s own
+`logOrderProcessed` — fires on a fresh order AND on every later idempotent replay, so a stale
+Shopify retry after staff have since bound the order some other way still shows the CURRENT
+state). No personal data in it — no email, no raw family id — so it's safe to paste into a
+support thread. Install a one-line Cloud Shell alias once, in whichever shell config Cloud Shell
+persists for you (e.g. `~/.customize_environment` or `~/.bashrc`):
+```sh
+cat >> ~/.bashrc <<'EOF'
+nz() {
+  if [ "$1" = "order" ] && [ -n "$2" ]; then
+    gcloud logging read \
+      'resource.type="cloud_run_revision" resource.labels.service_name="kodomo-ai-backend" textPayload:"[order] order='"$2"' "' \
+      --project=kodomo-ai --limit=20 --format='value(textPayload)' --freshness=7d
+  else
+    echo "usage: nz order <shopify-order-id>" >&2
+    return 1
+  fi
+}
+EOF
+source ~/.bashrc
+```
+Then `nz order 7215074017528` prints every `[order]` line Cloud Logging has for that order, newest
+first — no `gcloud firestore` / Firestore console needed for a routine "did this purchase bind"
+check.
+
+8. **Confirm isolation held.** Check products A-D's own confirmation/shipping emails are
    byte-for-byte unchanged, and that nothing about their orders looks different — nothing in
    this integration ever calls the Admin API for a non-`kodomo-ai-m1` order, but this is the
    step that actually proves it against your real store, not just the tests that prove it

@@ -72,6 +72,37 @@ describe('AD-13 acceptance 13 — email change requires a code to the NEW addres
     const family = await env.db.get<{ email: string }>(familyPath(familyId));
     expect(family?.email).toBe('old@example.com');
   });
+
+  it('post-launch-check (Founder, iPhone test): a "change" to the SAME address is refused, sends no code and no notification', async () => {
+    const env = fakeEnv();
+    const { token } = await seedFamily(env, 'info@domo-ai.com');
+
+    const res = await handleAccountEmail(
+      authedRequest('/api/v1/account/email', token, { newEmail: 'info@domo-ai.com' }),
+      env,
+    );
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: 'same_email' });
+    // No verification code sent (there would be a login-code email to the address), and
+    // critically — the bug this reproduces — no "email changed" notification either.
+    const emailSender = env.email as FakeEmailSender;
+    expect(emailSender.sent).toHaveLength(0);
+  });
+
+  it('a same-address change is refused case/whitespace-insensitively too', async () => {
+    const env = fakeEnv();
+    const { token } = await seedFamily(env, 'info@domo-ai.com');
+
+    const res = await handleAccountEmail(
+      authedRequest('/api/v1/account/email', token, { newEmail: '  INFO@DOMO-AI.COM  ' }),
+      env,
+    );
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: 'same_email' });
+    expect((env.email as FakeEmailSender).sent).toHaveLength(0);
+  });
 });
 
 describe('AD-13 acceptance 14 — account deletion requires a fresh OTP', () => {

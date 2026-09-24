@@ -16,7 +16,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 const ME_ENTITLED: unknown = {
   familyId: 'f1', email: 'p***@example.com',
-  entitlements: [{ moduleId: 'm1', status: 'active' }],
+  entitlements: [{ moduleId: 'm1', status: 'active', grantedAt: '2026-09-20T03:00:00.000Z' }],
   profiles: [], trials: [],
 };
 const ME_UNENTITLED: unknown = {
@@ -141,7 +141,7 @@ describe('AD-16 §1 — the account page purchase CTA', () => {
     expect(playLink).toHaveAttribute('href', '/play/');
   });
 
-  it('an already-entitled family never sees the purchase CTA at all', async () => {
+  it('an already-entitled family never sees the purchase CTA — sees the purchase-date status instead', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) return jsonResponse(ME_ENTITLED);
@@ -151,6 +151,8 @@ describe('AD-16 §1 — the account page purchase CTA', () => {
     await renderConfiguredAccountPage();
     await waitFor(() => expect(screen.getByText('使用中の端末')).toBeInTheDocument());
     expect(screen.queryByText('購入手続きへ進む')).not.toBeInTheDocument();
+    // ME_ENTITLED's grantedAt is 2026-09-20T03:00:00.000Z.
+    expect(screen.getByText('ご購入済み：ナゼホリ Module 1（購入日：9月20日）')).toBeInTheDocument();
   });
 
   it('a 503 not_configured response is handled safely, with an honest message and no crash', async () => {

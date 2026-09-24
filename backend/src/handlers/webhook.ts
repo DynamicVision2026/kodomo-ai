@@ -17,10 +17,38 @@ import {
 import { emailHashOf, getFamily, normalizeEmail } from '../family.js';
 import { claimYourPurchaseEmail, moduleActivatedEmail } from '../email.js';
 import { writeAuditLog } from '../audit.js';
-import { hmacHex, randomToken } from '../util.js';
+import { hmacHex, randomToken, sha256Hex } from '../util.js';
 import { loginUrl, claimUrl } from '../links.js';
 
 const CLAIM_TTL_MS = 30 * 24 * 60 * 60 * 1000; // AD-16 §2: "valid 30 days"
+
+type OrderOutcome = 'granted' | 'duplicate' | 'revoked' | 'awaiting_claim' | 'needs_review' | 'none';
+
+function orderOutcome(doc: OrderDoc): OrderOutcome {
+  // `revoked` (refunds/create) isn't one of this webhook's own outcomes, but an orders/paid
+  // replay for an order that's SINCE been refunded still reads an existing doc in that state —
+  // reporting it accurately here beats a silent `none` that would look like nothing happened.
+  if (doc.bindingState === 'bound') return doc.entitlementState === 'none' ? 'none' : doc.entitlementState;
+  if (doc.bindingState === 'awaiting_claim' || doc.bindingState === 'needs_review') return doc.bindingState;
+  return 'none';
+}
+
+/**
+ * Post-launch-check (Founder): one Cloud-Logging line per webhook call that reaches a decision
+ * on an order, greppable by order id (`~/nz order <id>` from Cloud Shell — no Firestore console
+ * needed). Fires from BOTH the fresh-order path below and the idempotent-replay early return, so
+ * `binding` can legitimately show any of the schema's four `BindingMethod` values — a replay can
+ * land after staff have since bound the same order by claim or admin action, not only by this
+ * webhook's own token/email_match logic. No personal data: never the email, never the raw family
+ * id (only its SHA-256, truncated — enough to correlate repeated log lines for the same family
+ * without being a usable identifier on its own).
+ */
+async function logOrderProcessed(orderId: string, doc: OrderDoc, emailSent: boolean): Promise<void> {
+  const familyHash = doc.familyId ? (await sha256Hex(doc.familyId)).slice(0, 16) : 'none';
+  console.log(
+    `[order] order=${orderId} binding=${doc.bindingMethod ?? 'none'} family=${familyHash} entitlement=${orderOutcome(doc)} email_sent=${emailSent ? 'yes' : 'no'}`,
+  );
+}
 
 /**
  * POST /webhooks/shopify/orders-paid — AD-16 §1-§4. AD-14 boundary: an order with no allowlisted
@@ -67,6 +95,8 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
     if (webhookId && !existingOrder.webhookIds.includes(webhookId)) {
       await env.db.set(orderPath(orderId), { ...existingOrder, webhookIds: [...existingOrder.webhookIds, webhookId] });
     }
+    // A replay never re-sends an email (whatever went out, went out on the original call).
+    await logOrderProcessed(orderId, existingOrder, false);
     return new Response(JSON.stringify({ ok: true, bindingState: existingOrder.bindingState }), {
       status: 200, headers: { 'content-type': 'application/json' },
     });
@@ -193,12 +223,18 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
     before: null, after: result.doc, reason: null,
   });
 
+  let emailSent = false;
   if (result.doc.bindingState === 'bound' && result.doc.entitlementState === 'granted' && result.doc.familyId) {
     const family = await getFamily(env, result.doc.familyId);
-    if (family) await env.email.send(moduleActivatedEmail(family.email, loginUrl(env)));
+    if (family) {
+      await env.email.send(moduleActivatedEmail(family.email, loginUrl(env)));
+      emailSent = true;
+    }
   } else if (result.claim && email) {
     await env.email.send(claimYourPurchaseEmail(email, result.doc.orderName, claimUrl(env, result.claim.token)));
+    emailSent = true;
   }
+  await logOrderProcessed(orderId, result.doc, emailSent);
 
   return new Response(JSON.stringify({ ok: true, bindingState: result.doc.bindingState }), {
     status: 200,
