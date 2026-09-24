@@ -68,12 +68,151 @@ jobs:
       - name: Build (admin dashboard, tsc + its own vite build)
         run: npm run build:admin
 
+  # Founder incident follow-up (run #126/#127 diagnostic): the live kodomo-ai-backend service was
+  # found to be an old prototype revision (kodomo-ai-backend-00004-cxk, deployed manually via
+  # `gcloud run deploy --source`, predating this repo's /api/v1 router entirely) — every real
+  # backend call has likely 404'd in production since long before the same-origin-proxy migration.
+  # This job closes that gap the same way deploy-frontend already closes it for the frontend:
+  # build the backend's own Dockerfile, deploy with --no-traffic, smoke test, then promote — and
+  # runs BEFORE deploy-frontend so the frontend's own BACKEND_URL always resolves to a fully
+  # promoted, working backend revision by the time its own smoke test hits /api/v1/me.
+  deploy-backend:
+    needs: [which-branch, gates]
+    if: needs.which-branch.outputs.is_production == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # Workload Identity Federation — no long-lived key ever touches this repo
+    env:
+      PROJECT_ID: kodomo-ai
+      REGION: asia-northeast1
+      SERVICE: kodomo-ai-backend
+      AR_REPO: kodomo-ai-images
+      # Architect decision (same-origin API via reverse proxy): the canonical frontend origin —
+      # both the CSRF allowlist (APP_ORIGINS) and the base every emailed/redirect link is built
+      # from (APP_BASE_URL). Update the day domo-ai.com goes live — see the matching comment on
+      # deploy-frontend's own CANONICAL_HOST.
+      CANONICAL_ORIGIN: https://kodomo-ai-421702481956.asia-northeast1.run.app
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      # Verify only — never create. See deploy-frontend's own identical step for why.
+      - name: Verify the Artifact Registry repo exists
+        run: |
+          gcloud artifacts repositories describe "${{ env.AR_REPO }}" \
+            --location="${{ env.REGION }}" >/dev/null || {
+            echo "::error::Artifact Registry repo '${{ env.AR_REPO }}' not found in ${{ env.REGION }}."
+            echo "::error::Known existing repos: kodomo-ai-images, cloud-run-source-deploy — reconcile AR_REPO above, do not auto-create a new one."
+            exit 1
+          }
+
+      - name: Build and push the backend image
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE }}
+        run: |
+          docker build -f Dockerfile \
+            -t "$IMAGE:${{ github.sha }}" \
+            -t "$IMAGE:latest" \
+            .
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:latest"
+
+      # Deploy with --no-traffic first, same reasoning as deploy-frontend's own step. Plain config
+      # via --set-env-vars, real secrets via --set-secrets (Secret Manager, `<name>:latest`) — the
+      # Founder has already granted roles/secretmanager.secretAccessor on all three secrets to
+      # this service's runtime SA and removed the four placeholder plain env vars the old
+      # prototype revision carried, so there's no plain-env/secret name collision here.
+      # SHOPIFY_SHOP_DOMAIN/SHOPIFY_VARIANT_IDS are deliberately left unset — real values pending
+      # Founder confirmation; both are optional (purchase-intent cart permalinks only).
+      - name: Deploy the candidate revision (no traffic yet)
+        id: deploy
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE }}
+          TAG: candidate-${{ github.run_number }}
+        run: |
+          gcloud run deploy "${{ env.SERVICE }}" \
+            --image="$IMAGE:${{ github.sha }}" \
+            --region="${{ env.REGION }}" \
+            --platform=managed \
+            --allow-unauthenticated \
+            --no-traffic \
+            --tag="$TAG" \
+            --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }}" \
+            --set-secrets="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest"
+          BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
+            --region="${{ env.REGION }}" --format='value(status.url)')
+          CANDIDATE_URL="https://${TAG}---$(echo "$BASE_URL" | sed 's#https://##')"
+          echo "candidate_url=$CANDIDATE_URL" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      # Two checks, both against the CANDIDATE revision directly (its own revision-tag URL, never
+      # the canonical/production one): (1) GET /api/v1/me with no session cookie must be a real
+      # app-level 401 (handleMe reached, router alive) — never 404 (route missing, the exact
+      # failure runs #126/#127 found on the old prototype) or 502/503 (container didn't start);
+      # (2) a Shopify webhook with a deliberately bad HMAC signature must be rejected 401 — proves
+      # signature verification is wired to the real (non-placeholder) SHOPIFY_WEBHOOK_SECRET, not
+      # silently accepting everything.
+      - name: Smoke test the candidate revision
+        run: |
+          CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
+          FAIL=0
+
+          ME_STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${CANDIDATE_URL}/api/v1/me")
+          if [ "$ME_STATUS" != "401" ]; then
+            echo "::error::/api/v1/me returned ${ME_STATUS} on the candidate revision (expected 401)"
+            FAIL=1
+          else
+            echo "OK /api/v1/me -> 401"
+          fi
+
+          WEBHOOK_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+            -H 'X-Shopify-Hmac-Sha256: not-a-real-signature' \
+            -H 'Content-Type: application/json' \
+            --data '{"id":1,"line_items":[]}' \
+            "${CANDIDATE_URL}/webhooks/shopify/orders-paid")
+          if [ "$WEBHOOK_STATUS" != "401" ]; then
+            echo "::error::webhook with a bad HMAC returned ${WEBHOOK_STATUS} on the candidate revision (expected 401)"
+            FAIL=1
+          else
+            echo "OK bad-HMAC webhook -> 401"
+          fi
+
+          if [ "$FAIL" != "0" ]; then
+            echo "::error::Smoke tests failed — traffic NOT promoted, production still on the previous revision."
+            exit 1
+          fi
+
+      # Only reached once the candidate revision has passed every smoke test.
+      - name: Promote the candidate revision to 100% traffic
+        run: |
+          gcloud run services update-traffic "${{ env.SERVICE }}" \
+            --region="${{ env.REGION }}" \
+            --to-tags="${{ steps.deploy.outputs.tag }}=100"
+
   # AD-16 §5 / Builder work order — "close the production deployment loop": build the frontend
   # container and deploy it to the EXISTING `kodomo-ai` Cloud Run service. Never runs on a PR
   # (forks/PRs never get deploy credentials) and never runs unless `gates` already passed —
   # a failed test/gate/build stops here, production is untouched (rule #7/#8 of the work order).
+  # Depends on deploy-backend so BACKEND_URL below always resolves to a backend that has already
+  # passed its own smoke test and been promoted to 100% traffic — never a still-`--no-traffic`
+  # candidate or (worse) an old, broken prototype revision.
   deploy-frontend:
-    needs: [which-branch, gates]
+    needs: [which-branch, gates, deploy-backend]
     if: needs.which-branch.outputs.is_production == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -150,23 +289,6 @@ jobs:
             exit 1
           fi
           echo "url=$URL" >> "$GITHUB_OUTPUT"
-
-      # Diagnostic only — never gates the deploy. Run #126's smoke test found the frontend's own
-      # same-origin proxy returning 404 for /api/v1/me instead of the expected 401, and there is no
-      # way to tell, from inside this sandbox (no network egress to Cloud Run), whether that's a
-      # bug in the proxy itself or in what's actually running on the live backend service — no CI
-      # job here ever deploys the backend, so its live code may predate this repo's own /api/v1
-      # router convention. This step asks the backend directly, bypassing the frontend/proxy
-      # entirely, so the next run's own log settles which side the bug is on.
-      - name: DIAGNOSTIC — query the live backend directly (bypasses the frontend proxy)
-        run: |
-          URL="${{ steps.backend-url.outputs.url }}"
-          echo "backend url: $URL"
-          for path in / /healthz /me /api/v1/me; do
-            STATUS=$(curl -s -o /tmp/diag_body -w '%{http_code}' "${URL}${path}")
-            echo "GET ${path} -> ${STATUS}"
-            head -c 300 /tmp/diag_body; echo
-          done
 
       - name: Build and push the frontend image
         env:

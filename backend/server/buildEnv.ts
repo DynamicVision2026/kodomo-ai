@@ -23,7 +23,15 @@ function assertNotPlaceholder(name: string, value: string): void {
 
 function buildEmailSender(): EmailSender {
   if (process.env.EMAIL_API_KEY && process.env.EMAIL_FROM) {
-    return new PostmarkEmailSender(process.env.EMAIL_API_KEY, process.env.EMAIL_FROM);
+    // EMAIL_FROM_NAME/EMAIL_REPLY_TO are both optional (e.g. display name 「ナゼホリ」, reply-to
+    // info@domo-ai.com) — PostmarkEmailSender falls back to a bare `From` address and no
+    // `ReplyTo` field when either is unset, unchanged from before these existed.
+    return new PostmarkEmailSender(
+      process.env.EMAIL_API_KEY,
+      process.env.EMAIL_FROM,
+      process.env.EMAIL_FROM_NAME,
+      process.env.EMAIL_REPLY_TO,
+    );
   }
   if (process.env.GOOGLE_CLOUD_PROJECT) {
     // Deployed but no email account configured yet — log instead of silently dropping OTPs, and
