@@ -340,6 +340,14 @@ gh variable set IAP_AUDIENCE --body "<value from step 3>" --repo DynamicVision20
 # the live service actually picks up the new env var — CI doesn't retroactively update a
 # service nothing changed for.
 ```
+Setting this variable also switches what `deploy-admin`'s own smoke test checks, starting with the
+very next run: before this step, it calls the candidate revision directly with a Cloud-Run-IAM
+token and expects an app response (`/healthz` → 200). Once `IAP_AUDIENCE` is set, IAP sits in
+front of every request — including that same authenticated call, which would now just get refused
+by IAP for reasons unrelated to whether the deploy is actually healthy — so the check instead
+becomes "an unauthenticated request to the candidate is refused" (a redirect or 401/403; see the
+`deploy-admin` job's own comments in `.github/workflows/ci.yml`). This is expected: it's not a
+sign anything broke, it's CI testing the *correct* thing for the state you just put the service in.
 **4b. Seed the `staff/` allowlist** — one Firestore doc per staff member, role `viewer` or
 `operator`. No UI for this yet (AD-16 §8 doesn't build one) and there is no `gcloud firestore
 documents create` command (it doesn't exist) — use the **Firestore console** directly:

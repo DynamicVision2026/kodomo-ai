@@ -380,9 +380,11 @@ jobs:
       # `token_format: id_token` is the documented fix for exactly this "invoke a private Cloud
       # Run service from GitHub Actions" case — it mints an ID token audienced to the candidate
       # revision's own URL directly, which is also the correct audience Cloud Run's own IAM
-      # auth (never IAP_AUDIENCE — that's a completely separate check, IAP's own) expects.
+      # auth expects. Only needed pre-IAP (see the smoke-test step's own comment on why) — once
+      # IAP_AUDIENCE is set this token would never actually reach the app anyway, so skipped.
       - id: id-token-auth
         name: Mint an identity token for the candidate revision
+        if: ${{ vars.IAP_AUDIENCE == '' }}
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -391,35 +393,65 @@ jobs:
           id_token_audience: ${{ steps.deploy.outputs.candidate_url }}
           id_token_include_email: true
 
-      # This service requires authentication (--no-allow-unauthenticated) even for the smoke
-      # test itself — an identity token for the SAME deploying service account, which already
-      # needs (and by deploying successfully above, already has) enough Cloud Run access on this
-      # project to also invoke what it just deployed. Two checks, both against the CANDIDATE
-      # revision directly: (1) /healthz -> 200 (container started, Cloud Run IAM let an
-      # authenticated caller through); (2) /admin-api/me -> 401 with no IAP header attached
-      # (proves the router is alive and resolveStaffIdentity correctly refuses a request that
-      # didn't come through IAP) — the same invariant holds whether IAP_AUDIENCE is set yet or
-      # not, so this check is meaningful both before and after the Founder finishes Part 2B.
+      # `IAP_AUDIENCE` set (docs/launch-runbook.md Part 2B complete) means IAP now sits in front
+      # of EVERY request this service receives — Cloud Run's direct/native IAP integration has no
+      # ingress path that bypasses it, not even one carrying a valid Cloud-Run-run.invoker ID
+      # token (the 'Deploy' step's own comment covers why: since GA, only IAP's own service agent
+      # is allowed straight through to the container). So the PRE-IAP smoke test's assumption —
+      # "an authenticated direct call reaches the app" — silently stops being true the moment the
+      # Founder finishes IAP setup, and would start failing for a reason that has nothing to do
+      # with whether this deploy is actually healthy. Testing the CORRECT post-IAP invariant
+      # instead: an unauthenticated caller must be refused before ever reaching the app (IAP's own
+      # redirect-to-Google-sign-in for a browser-shaped request, or 401/403 for a programmatic
+      # one — accept either, IAP's exact response shape isn't a contract this job should assert).
+      # Deliberately does NOT grant the CI identity IAP access to test all the way through to an
+      # app response — that would mean giving a machine identity the same
+      # roles/iap.httpsResourceAccessor grant the work order reserves for actual Google-signed-in
+      # staff (docs/launch-runbook.md Part 2B step 2), widening exactly the access surface AD-16
+      # §8 asked to keep narrow. A broken container is still caught here regardless: `gcloud run
+      # deploy` above only returns success once the candidate revision reports Ready, so it can't
+      # be silently skipped by this weaker post-IAP check.
       - name: Smoke test the candidate revision
+        env:
+          IAP_AUDIENCE: ${{ vars.IAP_AUDIENCE }}
         run: |
           CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
-          TOKEN="${{ steps.id-token-auth.outputs.id_token }}"
           FAIL=0
 
-          HEALTH_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/healthz")
-          if [ "$HEALTH_STATUS" != "200" ]; then
-            echo "::error::/healthz returned ${HEALTH_STATUS} on the candidate revision (expected 200) — if this is 403, the deploying service account likely needs roles/run.invoker granted explicitly on kodomo-ai-admin: gcloud run services add-iam-policy-binding kodomo-ai-admin --region=${{ env.REGION }} --member=serviceAccount:${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }} --role=roles/run.invoker"
-            FAIL=1
+          if [ -n "$IAP_AUDIENCE" ]; then
+            echo "IAP_AUDIENCE is set — testing the post-IAP invariant (unauthenticated caller refused) instead of an authenticated app response."
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${CANDIDATE_URL}/healthz")
+            case "$STATUS" in
+              200)
+                echo "::error::/healthz returned 200 on an UNAUTHENTICATED request even though IAP_AUDIENCE is set — IAP does not appear to be enforcing on this service. Check: gcloud run services describe ${{ env.SERVICE }} --region=${{ env.REGION }} --format='value(status.conditions)', and the Console's Security -> Identity-Aware Proxy page."
+                FAIL=1
+                ;;
+              301|302|303|307|308|401|403)
+                echo "OK /healthz -> ${STATUS} (unauthenticated request refused — IAP is gating this service)"
+                ;;
+              *)
+                echo "::error::/healthz returned an unexpected ${STATUS} on an unauthenticated request (expected a redirect or 401/403 refusal from IAP)"
+                FAIL=1
+                ;;
+            esac
           else
-            echo "OK /healthz -> 200"
-          fi
+            TOKEN="${{ steps.id-token-auth.outputs.id_token }}"
 
-          ME_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/admin-api/me")
-          if [ "$ME_STATUS" != "401" ]; then
-            echo "::error::/admin-api/me returned ${ME_STATUS} on the candidate revision (expected 401 — no IAP header on this direct call)"
-            FAIL=1
-          else
-            echo "OK /admin-api/me -> 401 (no IAP header -> correctly unauthenticated)"
+            HEALTH_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/healthz")
+            if [ "$HEALTH_STATUS" != "200" ]; then
+              echo "::error::/healthz returned ${HEALTH_STATUS} on the candidate revision (expected 200) — if this is 403, the deploying service account likely needs roles/run.invoker granted explicitly on kodomo-ai-admin: gcloud run services add-iam-policy-binding kodomo-ai-admin --region=${{ env.REGION }} --member=serviceAccount:${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }} --role=roles/run.invoker"
+              FAIL=1
+            else
+              echo "OK /healthz -> 200"
+            fi
+
+            ME_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/admin-api/me")
+            if [ "$ME_STATUS" != "401" ]; then
+              echo "::error::/admin-api/me returned ${ME_STATUS} on the candidate revision (expected 401 — no IAP header on this direct call)"
+              FAIL=1
+            else
+              echo "OK /admin-api/me -> 401 (no IAP header -> correctly unauthenticated)"
+            fi
           fi
 
           if [ "$FAIL" != "0" ]; then
