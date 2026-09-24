@@ -360,6 +360,37 @@ jobs:
           echo "candidate_url=$CANDIDATE_URL" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
+      # Deploying a Cloud Run service does not, on its own, grant the deploying principal
+      # run.invoker on it — invoking and deploying are deliberately separate IAM permissions.
+      # deploy-backend/deploy-frontend never needed this binding (both --allow-unauthenticated);
+      # kodomo-ai-admin's smoke test below is the first one here that actually calls its own
+      # service authenticated. Idempotent — a no-op once already granted, so safe on every run.
+      - name: Grant the deploying service account run.invoker on kodomo-ai-admin
+        run: |
+          gcloud run services add-iam-policy-binding "${{ env.SERVICE }}" \
+            --region="${{ env.REGION }}" \
+            --member="serviceAccount:${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}" \
+            --role="roles/run.invoker"
+
+      # `gcloud auth print-identity-token` (no flags) fails against the external_account
+      # (Workload Identity Federation) credential auth@v2 sets up here — "No identity token can
+      # be obtained from the current credentials" — because minting an OIDC ID token needs an
+      # explicit audience and impersonation target; plain access-token impersonation (which the
+      # deploy step above already relies on) doesn't imply that. Re-running auth@v2 with
+      # `token_format: id_token` is the documented fix for exactly this "invoke a private Cloud
+      # Run service from GitHub Actions" case — it mints an ID token audienced to the candidate
+      # revision's own URL directly, which is also the correct audience Cloud Run's own IAM
+      # auth (never IAP_AUDIENCE — that's a completely separate check, IAP's own) expects.
+      - id: id-token-auth
+        name: Mint an identity token for the candidate revision
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          token_format: 'id_token'
+          id_token_audience: ${{ steps.deploy.outputs.candidate_url }}
+          id_token_include_email: true
+
       # This service requires authentication (--no-allow-unauthenticated) even for the smoke
       # test itself — an identity token for the SAME deploying service account, which already
       # needs (and by deploying successfully above, already has) enough Cloud Run access on this
@@ -372,7 +403,7 @@ jobs:
       - name: Smoke test the candidate revision
         run: |
           CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
-          TOKEN=$(gcloud auth print-identity-token)
+          TOKEN="${{ steps.id-token-auth.outputs.id_token }}"
           FAIL=0
 
           HEALTH_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/healthz")
