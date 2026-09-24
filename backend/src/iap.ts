@@ -89,11 +89,18 @@ export async function verifyIapJwt(jwt: string, expectedAudience: string): Promi
 
     const payload = base64UrlDecodeJson<{ iss: string; aud: string; exp: number; email?: string }>(payloadPart);
     if (payload.iss !== IAP_ISSUER) return null;
-    if (payload.aud !== expectedAudience) return null;
+    if (payload.aud !== expectedAudience) {
+      // Deliberately logs ONLY the received aud, never the rest of the token (email, issuer,
+      // expiry) — this exists so a misconfigured IAP_AUDIENCE can be corrected from the real
+      // value Cloud Run received, without guessing the exact resource-audience format IAP uses
+      // for a direct Cloud Run integration (it differs from App Engine's/a backend service's).
+      console.log(`[iap] audience mismatch: received aud="${payload.aud}"`);
+      return null;
+    }
     if (payload.exp * 1000 <= Date.now()) return null;
     if (!payload.email) return null;
 
-    return { email: payload.email.toLowerCase() };
+    return { email: payload.email.trim().toLowerCase() };
   } catch {
     return null;
   }

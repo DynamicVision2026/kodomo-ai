@@ -272,42 +272,82 @@ is now automatic** — the `deploy-admin` CI job (`.github/workflows/ci.yml`) bu
 `Dockerfile.admin` and deploys `kodomo-ai-admin` on every push to the production branch, the same
 `--no-traffic` / tagged-revision / smoke-test / promote pattern `deploy-backend`/`deploy-frontend`
 already use, with `--no-allow-unauthenticated` (IAP is the only intended entry point — nothing
-here is ever reachable without it). The three steps below are the ones CI genuinely cannot do —
+here is ever reachable without it). The four steps below are the ones CI genuinely cannot do —
 they need a human with Owner/IAM-admin rights on the Google Cloud project and Shopify admin
 account access, and each is a one-time setup, not a per-deploy action:
 
-**1. Enable Identity-Aware Proxy for `kodomo-ai-admin`.**
-Console: **Security → Identity-Aware Proxy** → find `kodomo-ai-admin` → toggle it **on**. This is
-what actually protects the service; the app itself trusts the `x-goog-iap-jwt-assertion` header
-it only ever sees once IAP is in front of it (`backend/src/iap.ts`). The exact `IAP_AUDIENCE`
-value (`/projects/<PROJECT_NUMBER>/apps/kodomo-ai-admin` — note PROJECT NUMBER, not project id)
-is shown on that same settings page once enabled.
+A staff member's identity here is **their own Google account** (whatever Google sign-in IAP
+authenticates them as) — never `info@domo-ai.com` or any other non-Google mailbox; that address is
+ナゼホリ's public contact/support address (Part 1), a completely separate thing from "who is
+allowed into this dashboard." The Founder's own Google account is whichever one he actually signs
+into Google with (Gmail or Workspace) — substitute it for `<FOUNDER_GOOGLE_ACCOUNT>` below.
+
+**1. Enable IAP directly on `kodomo-ai-admin`** (GA since March 2026 — no load balancer needed).
+One command per step, run once, in order:
+```sh
+gcloud services enable iap.googleapis.com --project=<PROJECT_ID>
+
+gcloud beta services identity create --service=iap.googleapis.com --project=<PROJECT_ID>
+
+gcloud run services add-iam-policy-binding kodomo-ai-admin \
+  --region=asia-northeast1 \
+  --member="serviceAccount:service-<PROJECT_NUMBER>@gcp-sa-iap.iam.gserviceaccount.com" \
+  --role="roles/run.invoker"
+
+gcloud run services update kodomo-ai-admin --region=asia-northeast1 --iap
+```
+The 3rd command grants IAP's own service agent permission to reach `kodomo-ai-admin` — since GA,
+Cloud Run actually enforces this (Preview didn't), so skipping it leaves IAP unable to reach the
+service at all. Scoped to this one service only, deliberately: the Founder's Google account should
+never be able to reach `kodomo-ai` or `kodomo-ai-backend` through this same path. (Console
+equivalent for all four: **Security → Identity-Aware Proxy** → find `kodomo-ai-admin` → toggle it
+**on** — the console flow enables the API and grants the service agent for you.)
 
 **2. Add the Founder's own Google account.**
-Same **Identity-Aware Proxy** page → select `kodomo-ai-admin` → **Add principal** → the
-Founder's Google account → role **"IAP-secured Web App User"** (`roles/iap.httpsResourceAccessor`).
+Same **Identity-Aware Proxy** page → select `kodomo-ai-admin` → **Add principal** →
+`<FOUNDER_GOOGLE_ACCOUNT>` → role **"IAP-secured Web App User"** — or:
+```sh
+gcloud run services add-iam-policy-binding kodomo-ai-admin \
+  --region=asia-northeast1 \
+  --member="user:<FOUNDER_GOOGLE_ACCOUNT>" \
+  --role="roles/iap.httpsResourceAccessor"
+```
 IAP is WHO may even reach the app; the `staff/` allowlist below is "may this dashboard actually do
 anything" — both are required, neither alone is enough.
 
-**3. Tell CI the `IAP_AUDIENCE` value, and seed `staff/`.**
+**3. Find the real `IAP_AUDIENCE` value — don't guess it.**
+The exact `aud` format IAP uses differs by how it's fronting the service (App Engine, a load
+balancer's backend service, or this direct Cloud Run integration all differ) and isn't worth
+copying from memory. Instead, read it from what Cloud Run actually received: after step 1, visit
+the service's own URL once while signed into the granted account (step 2) with `IAP_AUDIENCE`
+still unset — the request will 401, and `backend/src/iap.ts` logs exactly one line to Cloud
+Logging: `[iap] audience mismatch: received aud="..."` (only the `aud` — never the email or any
+other token contents). Copy that value verbatim as `IAP_AUDIENCE`.
 ```sh
-# 3a. Set the IAP_AUDIENCE repo VARIABLE (not a secret — it's not sensitive, just specific to this
+gcloud logging read \
+  'resource.type=cloud_run_revision AND resource.labels.service_name=kodomo-ai-admin AND textPayload:"audience mismatch"' \
+  --limit=1 --format="value(textPayload)" --project=<PROJECT_ID>
+```
+
+**4. Set `IAP_AUDIENCE` for CI, and seed `staff/`.**
+```sh
+# 4a. Set the IAP_AUDIENCE repo VARIABLE (not a secret — it's not sensitive, just specific to this
 #     project) so every future deploy-admin run carries it forward automatically. Console:
 #     github.com/DynamicVision2026/kodomo-ai → Settings → Secrets and variables → Actions →
-#     Variables tab → New repository variable → name IAP_AUDIENCE, value from step 1 — or:
-gh variable set IAP_AUDIENCE --body "/projects/<PROJECT_NUMBER>/apps/kodomo-ai-admin" \
-  --repo DynamicVision2026/kodomo-ai
+#     Variables tab → New repository variable → name IAP_AUDIENCE, value from step 3 — or:
+gh variable set IAP_AUDIENCE --body "<value from step 3>" --repo DynamicVision2026/kodomo-ai
 # Then push anything to the production branch (or re-run the latest deploy-admin job) once, so
 # the live service actually picks up the new env var — CI doesn't retroactively update a
 # service nothing changed for.
-
-# 3b. Seed the staff/ allowlist — one Firestore doc per staff member, role 'viewer' or
-#     'operator'. No UI for this yet (AD-16 §8 doesn't build one) — gcloud/console directly.
-#     Document id is the exact lower-cased email IAP will report for the Founder's own account:
-gcloud firestore documents create staff/info@domo-ai.com --fields role=operator
-# (or add the doc via the Firestore console — collection "staff", document id the exact
-# lower-cased Google account email from step 2, field "role" the string "viewer" or "operator")
 ```
+**4b. Seed the `staff/` allowlist** — one Firestore doc per staff member, role `viewer` or
+`operator`. No UI for this yet (AD-16 §8 doesn't build one) and there is no `gcloud firestore
+documents create` command (it doesn't exist) — use the **Firestore console** directly:
+Console → Firestore Database → **Data** tab → **Start collection** → collection ID `staff` →
+document ID **exactly** `<FOUNDER_GOOGLE_ACCOUNT>`, all lower-case (the backend looks the doc up by
+the lower-cased email it verifies from the IAP JWT's own `email` claim — `backend/src/iap.ts`
+trims and lower-cases it before the lookup, so the *document ID* is the only place case has to be
+gotten right by hand) → add field `role` (type `string`) = `operator`.
 
 **Sanity check (Founder, on his own device — work order §5's own acceptance list):**
 - Visiting the service's own URL while NOT logged into the granted Google account redirects to
