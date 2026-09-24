@@ -418,9 +418,33 @@ jobs:
           CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
           FAIL=0
 
+          # A freshly created --tag revision's URL can briefly 404 right after `gcloud run
+          # deploy` returns, before Cloud Run's routing has fully propagated the new tag —
+          # observed directly (not theoretical): a run here got /healthz -> 404 on the candidate
+          # URL, then /admin-api/me -> 401 (correct) on the SAME URL ~200ms later once routing
+          # caught up. Retries up to 5 times / ~10s before treating a status as real, which is
+          # enough slack for that propagation without masking an actually-broken revision (a
+          # crashed container keeps failing across every retry, not just the first one).
+          wait_for_status() {
+            local expected="$1"; shift
+            local status=""
+            for attempt in 1 2 3 4 5; do
+              # `|| true`: this whole step runs under `set -e` (GitHub Actions' default bash
+              # invocation) — a connection-level curl failure (nonzero exit, e.g. DNS not
+              # resolved yet) would otherwise abort the script immediately and skip every
+              # remaining retry, rather than being treated as just another attempt to retry.
+              status=$(curl -s -o /dev/null -w '%{http_code}' "$@" || true)
+              for e in $expected; do
+                if [ "$status" = "$e" ]; then echo "$status"; return 0; fi
+              done
+              sleep 2
+            done
+            echo "$status"
+          }
+
           if [ -n "$IAP_AUDIENCE" ]; then
             echo "IAP_AUDIENCE is set — testing the post-IAP invariant (unauthenticated caller refused) instead of an authenticated app response."
-            STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${CANDIDATE_URL}/healthz")
+            STATUS=$(wait_for_status "301 302 303 307 308 401 403" "${CANDIDATE_URL}/healthz")
             case "$STATUS" in
               200)
                 echo "::error::/healthz returned 200 on an UNAUTHENTICATED request even though IAP_AUDIENCE is set — IAP does not appear to be enforcing on this service. Check: gcloud run services describe ${{ env.SERVICE }} --region=${{ env.REGION }} --format='value(status.conditions)', and the Console's Security -> Identity-Aware Proxy page."
@@ -437,7 +461,7 @@ jobs:
           else
             TOKEN="${{ steps.id-token-auth.outputs.id_token }}"
 
-            HEALTH_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/healthz")
+            HEALTH_STATUS=$(wait_for_status "200" -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/healthz")
             if [ "$HEALTH_STATUS" != "200" ]; then
               echo "::error::/healthz returned ${HEALTH_STATUS} on the candidate revision (expected 200) — if this is 403, the deploying service account likely needs roles/run.invoker granted explicitly on kodomo-ai-admin: gcloud run services add-iam-policy-binding kodomo-ai-admin --region=${{ env.REGION }} --member=serviceAccount:${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }} --role=roles/run.invoker"
               FAIL=1
@@ -445,7 +469,7 @@ jobs:
               echo "OK /healthz -> 200"
             fi
 
-            ME_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/admin-api/me")
+            ME_STATUS=$(wait_for_status "401" -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/admin-api/me")
             if [ "$ME_STATUS" != "401" ]; then
               echo "::error::/admin-api/me returned ${ME_STATUS} on the candidate revision (expected 401 — no IAP header on this direct call)"
               FAIL=1
