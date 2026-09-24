@@ -264,51 +264,67 @@ here.
 
 ---
 
-## Part 2B — Deploy `kodomo-ai-admin` to Cloud Run, behind Identity-Aware Proxy
+## Part 2B — `kodomo-ai-admin`: enable IAP, add the Founder, seed `staff/`
 
 AD-16 §8's staff dashboard — search / family / order+refund / queues / audit log. A THIRD,
-separate Cloud Run service; never merge this into Part 1 or Part 2's own deploy.
+separate Cloud Run service; never merged into Part 1 or Part 2's own deploy. **Deployment itself
+is now automatic** — the `deploy-admin` CI job (`.github/workflows/ci.yml`) builds
+`Dockerfile.admin` and deploys `kodomo-ai-admin` on every push to the production branch, the same
+`--no-traffic` / tagged-revision / smoke-test / promote pattern `deploy-backend`/`deploy-frontend`
+already use, with `--no-allow-unauthenticated` (IAP is the only intended entry point — nothing
+here is ever reachable without it). The three steps below are the ones CI genuinely cannot do —
+they need a human with Owner/IAM-admin rights on the Google Cloud project and Shopify admin
+account access, and each is a one-time setup, not a per-deploy action:
 
+**1. Enable Identity-Aware Proxy for `kodomo-ai-admin`.**
+Console: **Security → Identity-Aware Proxy** → find `kodomo-ai-admin` → toggle it **on**. This is
+what actually protects the service; the app itself trusts the `x-goog-iap-jwt-assertion` header
+it only ever sees once IAP is in front of it (`backend/src/iap.ts`). The exact `IAP_AUDIENCE`
+value (`/projects/<PROJECT_NUMBER>/apps/kodomo-ai-admin` — note PROJECT NUMBER, not project id)
+is shown on that same settings page once enabled.
+
+**2. Add the Founder's own Google account.**
+Same **Identity-Aware Proxy** page → select `kodomo-ai-admin` → **Add principal** → the
+Founder's Google account → role **"IAP-secured Web App User"** (`roles/iap.httpsResourceAccessor`).
+IAP is WHO may even reach the app; the `staff/` allowlist below is "may this dashboard actually do
+anything" — both are required, neither alone is enough.
+
+**3. Tell CI the `IAP_AUDIENCE` value, and seed `staff/`.**
 ```sh
-# 1. Deploy the service itself — never --allow-unauthenticated; IAP is what protects it.
-gcloud run deploy kodomo-ai-admin \
-  --source . \
-  --dockerfile Dockerfile.admin \
-  --region asia-northeast1 \
-  --no-allow-unauthenticated \
-  --set-env-vars=IAP_AUDIENCE=/projects/<PROJECT_NUMBER>/apps/kodomo-ai-admin \
-  --set-secrets=ADMIN_TOKEN=admin-token:latest,AUTH_PEPPER=auth-pepper:latest,SHOPIFY_WEBHOOK_SECRET=shopify-webhook-secret:latest,SHOPIFY_ADMIN_API_TOKEN=shopify-admin-api-token:latest,EMAIL_API_KEY=email-api-key:latest
-# (Same required secrets as Part 1 — backend/server/adminIndex.ts loads the same REQUIRED_SECRET_NAMES
-# via the same buildEnv(); ADMIN_TOKEN/SHOPIFY_WEBHOOK_SECRET are unused by this service's own
-# routes but still required to start, since buildEnv() doesn't distinguish which service calls it.)
+# 3a. Set the IAP_AUDIENCE repo VARIABLE (not a secret — it's not sensitive, just specific to this
+#     project) so every future deploy-admin run carries it forward automatically. Console:
+#     github.com/DynamicVision2026/kodomo-ai → Settings → Secrets and variables → Actions →
+#     Variables tab → New repository variable → name IAP_AUDIENCE, value from step 1 — or:
+gh variable set IAP_AUDIENCE --body "/projects/<PROJECT_NUMBER>/apps/kodomo-ai-admin" \
+  --repo DynamicVision2026/kodomo-ai
+# Then push anything to the production branch (or re-run the latest deploy-admin job) once, so
+# the live service actually picks up the new env var — CI doesn't retroactively update a
+# service nothing changed for.
 
-# 2. Enable Identity-Aware Proxy for this Cloud Run service (console: Security → Identity-Aware
-#    Proxy → find kodomo-ai-admin → toggle on) — this is what actually protects it; the service
-#    itself trusts the x-goog-iap-jwt-assertion header it only ever sees once IAP is in front of
-#    it (backend/src/iap.ts). Grant "IAP-secured Web App User" (roles/iap.httpsResourceAccessor)
-#    to each staff member's own Google account — IAP is WHO, this grant is "may reach the app at
-#    all"; the staff/ Firestore allowlist below is "may this dashboard actually do anything."
-#    The exact IAP_AUDIENCE value (/projects/<NUMBER>/apps/<SERVICE>, note PROJECT NUMBER not
-#    project id) is shown on that same IAP settings page once enabled — set it as an env var
-#    (redeploy step 1 with the real value once you have it).
-
-# 3. Seed the staff/ allowlist — one Firestore doc per staff member, role 'viewer' or 'operator'.
-#    No UI for this yet (AD-16 §8 doesn't build one) — gcloud/console directly:
-gcloud firestore documents create staff/you@yourdomain.com \
-  --fields role=operator
-# (or add the doc via the Firestore console — collection "staff", document id is the exact
-# lower-cased email IAP will report, field "role" is the string "viewer" or "operator")
+# 3b. Seed the staff/ allowlist — one Firestore doc per staff member, role 'viewer' or
+#     'operator'. No UI for this yet (AD-16 §8 doesn't build one) — gcloud/console directly.
+#     Document id is the exact lower-cased email IAP will report for the Founder's own account:
+gcloud firestore documents create staff/info@domo-ai.com --fields role=operator
+# (or add the doc via the Firestore console — collection "staff", document id the exact
+# lower-cased Google account email from step 2, field "role" the string "viewer" or "operator")
 ```
 
-**Sanity check:**
+**Sanity check (Founder, on his own device — work order §5's own acceptance list):**
 - Visiting the service's own URL while NOT logged into the granted Google account redirects to
-  Google sign-in (IAP's own behavior) — never shows any dashboard content.
+  Google sign-in (IAP's own behavior) — never shows any dashboard content. A different,
+  non-granted Google account is refused the same way.
 - Logging in as a granted-but-unseeded account (no `staff/` doc yet) reaches the dashboard shell
   but shows "アクセス権を確認できませんでした" — confirms the allowlist check is live, not just
   IAP alone.
-- Once seeded, `検索`/`キュー`/`監査ログ` all load; a `viewer` role sees masked family emails and
-  no mutating buttons anywhere; an `operator` role sees the real thing and every write requires
-  typing a reason first.
+- Once seeded, `検索`/`キュー`/`監査ログ` all load; searching `info@domo-ai.com` finds the family,
+  its profiles, trial, the Module 1 entitlement (with its granted date) and per-module
+  `firstPaidUseAt`; an `operator` role sees the real (unmasked) email and can act — every
+  mutating action (resend, bind, change email, grant/revoke, sign out devices) opens a required
+  reason field first and appears in the audit log; a `viewer` role sees masked data and no
+  mutating controls at all.
+- Order #1006 shows `binding = token` — recording a test refund request there freezes an
+  eligibility snapshot (days since payment, whether the paid lesson was opened first) that
+  never silently recomputes afterward, plus a direct link to open the order in Shopify admin.
 
 ---
 

@@ -20,7 +20,7 @@ function setUrl(path: string) {
 const FAMILY_DETAIL_MASKED = {
   familyId: 'fam-1', email: 'p***@example.com', createdAt: '2026-01-01T00:00:00.000Z', status: 'active',
   profiles: [], trials: [], entitlements: [{ moduleId: 'm1', status: 'active', shopifyOrderId: 'o1', grantedAt: '2026-01-01T00:00:00.000Z', revokedAt: null }],
-  orders: [], sessions: [],
+  usage: [], orders: [], sessions: [],
 };
 const FAMILY_DETAIL_UNMASKED = { ...FAMILY_DETAIL_MASKED, email: 'parent@example.com' };
 

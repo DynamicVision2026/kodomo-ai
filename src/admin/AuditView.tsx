@@ -2,27 +2,39 @@ import { useState } from 'react';
 import { fetchAuditLog } from './api';
 import type { AuditLogDoc } from '../../backend/src/schema';
 
-/** AD-16 §8: append-only audit log, looked up by target (a family id or an order id) — matches
- *  the backend's own `GET /admin-api/audit?targetId=...` exactly (no "list everything" endpoint
- *  exists, by design: nothing here decides to add one). Read-only for every staff role; there is
- *  no edit or delete control anywhere in this view because there is no such endpoint to call. */
+type FilterMode = 'target' | 'actor';
+
+/** AD-16 §8: append-only audit log, filterable by a target (family id or order id) or by the
+ *  staff member who acted — matches the backend's `GET /admin-api/audit?targetId=...` and
+ *  `?actor=...` exactly. Read-only for every staff role; there is no edit or delete control
+ *  anywhere in this view because there is no such endpoint to call. */
 export function AuditView() {
-  const [targetId, setTargetId] = useState('');
+  const [mode, setMode] = useState<FilterMode>('target');
+  const [value, setValue] = useState('');
   const [entries, setEntries] = useState<AuditLogDoc[] | null | 'loading' | 'error'>(null);
 
   async function submit() {
-    if (!targetId.trim()) return;
+    if (!value.trim()) return;
     setEntries('loading');
-    const result = await fetchAuditLog(targetId.trim());
+    const result = mode === 'target' ? await fetchAuditLog({ targetId: value.trim() }) : await fetchAuditLog({ actor: value.trim() });
     setEntries(result.ok ? result.data : 'error');
   }
 
   return (
     <section className="admin-section">
       <h2>監査ログ</h2>
-      <p>家族IDまたは注文IDを入力して、その対象に対するすべての操作記録を表示します。</p>
+      <p>家族ID・注文ID、またはスタッフのメールアドレスを入力して、対応する操作記録を表示します。</p>
       <form className="admin-form" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-        <input className="admin-input" value={targetId} onChange={(e) => setTargetId(e.target.value)} placeholder="家族ID または 注文ID" />
+        <select className="admin-input" value={mode} onChange={(e) => setMode(e.target.value as FilterMode)}>
+          <option value="target">家族ID / 注文ID</option>
+          <option value="actor">実行者（スタッフ）メール</option>
+        </select>
+        <input
+          className="admin-input"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={mode === 'target' ? '家族ID または 注文ID' : 'staff@example.com'}
+        />
         <button type="submit" className="admin-btn admin-btn--primary">表示</button>
       </form>
 

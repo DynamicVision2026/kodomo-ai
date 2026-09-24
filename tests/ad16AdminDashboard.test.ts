@@ -172,24 +172,218 @@ describe('AD-16 §8 — audit log: append-only, every staff write requires a rea
     await seedStaff(env, 'operator@example.com', 'operator');
     await seedFamily(env, 'fam-7', 'parent7@example.com');
 
-    await handleAdminApi(
-      new Request('https://admin.example/admin-api/families/fam-7/resend-welcome', {
-        method: 'POST', headers: { 'x-goog-iap-jwt-assertion': 'valid-jwt-for-operator@example.com' },
-      }),
-      env,
-      new URL('https://admin.example/admin-api/families/fam-7/resend-welcome'),
-    );
-    await handleAdminApi(
-      new Request('https://admin.example/admin-api/families/fam-7/resend-welcome', {
-        method: 'POST', headers: { 'x-goog-iap-jwt-assertion': 'valid-jwt-for-operator@example.com' },
-      }),
-      env,
-      new URL('https://admin.example/admin-api/families/fam-7/resend-welcome'),
-    );
+    for (let i = 0; i < 2; i++) {
+      const res = await handleAdminApi(
+        new Request('https://admin.example/admin-api/families/fam-7/resend-welcome', {
+          method: 'POST',
+          headers: { 'x-goog-iap-jwt-assertion': 'valid-jwt-for-operator@example.com', 'content-type': 'application/json' },
+          body: JSON.stringify({ reason: 'parent lost the original email' }),
+        }),
+        env,
+        new URL('https://admin.example/admin-api/families/fam-7/resend-welcome'),
+      );
+      expect(res.status).toBe(202);
+    }
 
     const entries = await env.db.list(auditLogCollection());
     const relevant = entries.filter((e) => (e.data as { targetId: string }).targetId === 'fam-7');
     expect(relevant).toHaveLength(2); // appended, never merged/overwritten
+  });
+});
+
+describe('Work order — every one of the five operator actions requires a written reason (resend included)', () => {
+  it('resend-welcome without a reason is refused, and sends no email', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'operator@example.com', 'operator');
+    await seedFamily(env, 'fam-8', 'parent8@example.com');
+
+    const { request, url } = adminRequest('/admin-api/families/fam-8/resend-welcome', 'valid-jwt-for-operator@example.com', {
+      method: 'POST', body: JSON.stringify({}),
+    });
+    const res = await handleAdminApi(request, env, url);
+    expect(res.status).toBe(400);
+    expect((env.email as FakeEmailSender).sent).toHaveLength(0);
+  });
+
+  it('resend-claim without a reason is refused, and sends no email', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'operator@example.com', 'operator');
+    const now = new Date().toISOString();
+    await env.db.set(orderPath('order-8'), {
+      shopifyOrderId: 'order-8', orderName: '#8', lines: [{ sku: 'kodomo-ai-m1', variantId: 1, moduleId: 'm1', quantity: 1, lineTotal: 4980 }],
+      currency: 'JPY', financialStatus: 'paid', shopifyCreatedAt: now, paidAt: now, purchaserEmail: 'purchaser8@example.com',
+      familyId: null, bindingMethod: null, bindingState: 'awaiting_claim', entitlementState: 'none', trialConverted: false,
+      refund: emptyRefundInfo(), webhookIds: [], createdAt: now, updatedAt: now,
+    } satisfies OrderDoc);
+
+    const { request, url } = adminRequest('/admin-api/orders/order-8/resend-claim', 'valid-jwt-for-operator@example.com', {
+      method: 'POST', body: JSON.stringify({}),
+    });
+    const res = await handleAdminApi(request, env, url);
+    expect(res.status).toBe(400);
+    expect((env.email as FakeEmailSender).sent).toHaveLength(0);
+  });
+
+  it('resend-claim WITH a reason succeeds and the audit entry carries it', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'operator@example.com', 'operator');
+    const now = new Date().toISOString();
+    await env.db.set(orderPath('order-9'), {
+      shopifyOrderId: 'order-9', orderName: '#9', lines: [{ sku: 'kodomo-ai-m1', variantId: 1, moduleId: 'm1', quantity: 1, lineTotal: 4980 }],
+      currency: 'JPY', financialStatus: 'paid', shopifyCreatedAt: now, paidAt: now, purchaserEmail: 'purchaser9@example.com',
+      familyId: null, bindingMethod: null, bindingState: 'awaiting_claim', entitlementState: 'none', trialConverted: false,
+      refund: emptyRefundInfo(), webhookIds: [], createdAt: now, updatedAt: now,
+    } satisfies OrderDoc);
+
+    const { request, url } = adminRequest('/admin-api/orders/order-9/resend-claim', 'valid-jwt-for-operator@example.com', {
+      method: 'POST', body: JSON.stringify({ reason: 'purchaser says the original claim email never arrived' }),
+    });
+    const res = await handleAdminApi(request, env, url);
+    expect(res.status).toBe(202);
+    expect((env.email as FakeEmailSender).sent).toHaveLength(1);
+
+    const entries = await env.db.list(auditLogCollection());
+    const relevant = entries.filter((e) => (e.data as { targetId: string }).targetId === 'order-9');
+    expect(relevant).toHaveLength(1);
+    expect((relevant[0]!.data as { reason: string }).reason).toBe('purchaser says the original claim email never arrived');
+  });
+});
+
+describe('Work order — family page: entitlement granted date, and per-module firstPaidUseAt (yes/no, time, lesson)', () => {
+  it('GET /families/{id} reports grantedAt on each entitlement and a family-level usage entry per module', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'viewer@example.com', 'viewer');
+    await seedFamily(env, 'fam-9', 'parent9@example.com');
+    const grantedAt = '2026-09-24T00:00:00.000Z';
+    await env.db.set(entitlementPath('fam-9', 'm1'), {
+      status: 'active', shopifyOrderId: 'order-9', grantedAt, revokedAt: null, revokedReason: null,
+    } satisfies EntitlementDoc);
+    await env.db.set('families/fam-9/usage/m1', { firstPaidUseAt: '2026-09-25T00:00:00.000Z', firstPaidUnitId: 'm1-s2-1-2', firstPaidProfileId: 'p1' });
+
+    const { request, url } = adminRequest('/admin-api/families/fam-9', 'valid-jwt-for-viewer@example.com', { method: 'GET' });
+    const res = await handleAdminApi(request, env, url);
+    const body = await res.json();
+
+    expect(body.entitlements).toEqual([{ moduleId: 'm1', status: 'active', shopifyOrderId: 'order-9', grantedAt, revokedAt: null, revokedReason: null }]);
+    expect(body.usage).toEqual([{ moduleId: 'm1', used: true, firstPaidUseAt: '2026-09-25T00:00:00.000Z', firstPaidUnitId: 'm1-s2-1-2' }]);
+  });
+
+  it('a module never opened for paid use reports used=false, not a missing entry', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'viewer@example.com', 'viewer');
+    await seedFamily(env, 'fam-10', 'parent10@example.com');
+    await env.db.set(entitlementPath('fam-10', 'm1'), {
+      status: 'active', shopifyOrderId: 'order-10', grantedAt: new Date().toISOString(), revokedAt: null, revokedReason: null,
+    } satisfies EntitlementDoc);
+
+    const { request, url } = adminRequest('/admin-api/families/fam-10', 'valid-jwt-for-viewer@example.com', { method: 'GET' });
+    const res = await handleAdminApi(request, env, url);
+    const body = await res.json();
+
+    expect(body.usage).toEqual([{ moduleId: 'm1', used: false, firstPaidUseAt: null, firstPaidUnitId: null }]);
+  });
+});
+
+describe('Work order — order page: amount total and a direct Shopify admin link', () => {
+  it('GET /orders/{id} sums line totals into amountTotal and builds the Shopify admin URL from SHOPIFY_SHOP_DOMAIN', async () => {
+    const env = fakeEnv();
+    env.SHOPIFY_SHOP_DOMAIN = 'soul-id-2.myshopify.com';
+    await seedStaff(env, 'viewer@example.com', 'viewer');
+    const now = new Date().toISOString();
+    await env.db.set(orderPath('7215074017528'), {
+      shopifyOrderId: '7215074017528', orderName: '#1006',
+      lines: [{ sku: 'kodomo-ai-m1', variantId: 1, moduleId: 'm1', quantity: 1, lineTotal: 4980 }],
+      currency: 'JPY', financialStatus: 'paid', shopifyCreatedAt: now, paidAt: now, purchaserEmail: 'p@example.com',
+      familyId: 'fam-1', bindingMethod: 'token', bindingState: 'bound', entitlementState: 'granted', trialConverted: false,
+      refund: emptyRefundInfo(), webhookIds: [], createdAt: now, updatedAt: now,
+    } satisfies OrderDoc);
+
+    const { request, url } = adminRequest('/admin-api/orders/7215074017528', 'valid-jwt-for-viewer@example.com', { method: 'GET' });
+    const res = await handleAdminApi(request, env, url);
+    const body = await res.json();
+
+    expect(body.amountTotal).toBe(4980);
+    expect(body.shopifyAdminUrl).toBe('https://soul-id-2.myshopify.com/admin/orders/7215074017528');
+  });
+
+  it('shopifyAdminUrl is null, not a broken link, when SHOPIFY_SHOP_DOMAIN is unset', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'viewer@example.com', 'viewer');
+    const now = new Date().toISOString();
+    await env.db.set(orderPath('order-11'), {
+      shopifyOrderId: 'order-11', orderName: '#11', lines: [{ sku: 'kodomo-ai-m1', variantId: 1, moduleId: 'm1', quantity: 1, lineTotal: 4980 }],
+      currency: 'JPY', financialStatus: 'paid', shopifyCreatedAt: now, paidAt: now, purchaserEmail: 'p@example.com',
+      familyId: null, bindingMethod: null, bindingState: 'needs_review', entitlementState: 'none', trialConverted: false,
+      refund: emptyRefundInfo(), webhookIds: [], createdAt: now, updatedAt: now,
+    } satisfies OrderDoc);
+
+    const { request, url } = adminRequest('/admin-api/orders/order-11', 'valid-jwt-for-viewer@example.com', { method: 'GET' });
+    const res = await handleAdminApi(request, env, url);
+    const body = await res.json();
+
+    expect(body.shopifyAdminUrl).toBeNull();
+  });
+});
+
+describe('Work order — audit log: filterable by order, family, or staff', () => {
+  it('GET /admin-api/audit?targetId= returns only entries for that family', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'operator@example.com', 'operator');
+    await seedFamily(env, 'fam-12', 'parent12@example.com');
+    await seedFamily(env, 'fam-13', 'parent13@example.com');
+
+    for (const familyId of ['fam-12', 'fam-13']) {
+      const { request, url } = adminRequest(`/admin-api/families/${familyId}/resend-welcome`, 'valid-jwt-for-operator@example.com', {
+        method: 'POST', body: JSON.stringify({ reason: 'test resend' }),
+      });
+      expect((await handleAdminApi(request, env, url)).status).toBe(202);
+    }
+
+    const { request, url } = adminRequest('/admin-api/audit?targetId=fam-12', 'valid-jwt-for-operator@example.com', { method: 'GET' });
+    const res = await handleAdminApi(request, env, url);
+    const body = await res.json();
+    expect(body).toHaveLength(1);
+    expect(body[0].targetId).toBe('fam-12');
+  });
+
+  it('GET /admin-api/audit?actor= returns every entry that staff member wrote, across different targets', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'operator@example.com', 'operator');
+    await seedStaff(env, 'other-operator@example.com', 'operator');
+    await seedFamily(env, 'fam-14', 'parent14@example.com');
+    await seedFamily(env, 'fam-15', 'parent15@example.com');
+
+    const acts = [
+      { jwt: 'valid-jwt-for-operator@example.com', familyId: 'fam-14' },
+      { jwt: 'valid-jwt-for-operator@example.com', familyId: 'fam-15' },
+    ];
+    for (const { jwt, familyId } of acts) {
+      const { request, url } = adminRequest(`/admin-api/families/${familyId}/resend-welcome`, jwt, {
+        method: 'POST', body: JSON.stringify({ reason: 'test resend' }),
+      });
+      expect((await handleAdminApi(request, env, url)).status).toBe(202);
+    }
+    // A different staff member's action must not show up in operator@example.com's list.
+    const other = adminRequest('/admin-api/families/fam-14/resend-welcome', 'valid-jwt-for-unlisted@example.com', {
+      method: 'POST', body: JSON.stringify({ reason: 'should not count' }),
+    });
+    await seedStaff(env, 'unlisted@example.com', 'operator');
+    expect((await handleAdminApi(other.request, env, other.url)).status).toBe(202);
+
+    const { request, url } = adminRequest('/admin-api/audit?actor=operator@example.com', 'valid-jwt-for-operator@example.com', { method: 'GET' });
+    const res = await handleAdminApi(request, env, url);
+    const body = await res.json();
+    expect(body).toHaveLength(2);
+    expect(body.every((e: { actor: string }) => e.actor === 'operator@example.com')).toBe(true);
+    expect(new Set(body.map((e: { targetId: string }) => e.targetId))).toEqual(new Set(['fam-14', 'fam-15']));
+  });
+
+  it('GET /admin-api/audit with neither targetId nor actor is refused', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'viewer@example.com', 'viewer');
+    const { request, url } = adminRequest('/admin-api/audit', 'valid-jwt-for-viewer@example.com', { method: 'GET' });
+    const res = await handleAdminApi(request, env, url);
+    expect(res.status).toBe(400);
   });
 });
 

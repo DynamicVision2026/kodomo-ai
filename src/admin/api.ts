@@ -51,7 +51,17 @@ export interface FamilyProfileSummary {
   nicknameId: string;
   stage: number;
   progressSummary: { moduleId: string; unitsCompleted: number }[];
+}
+
+/** Work order §1 "firstPaidUseAt (yes/no, time, which lesson)" — a per-family-per-MODULE fact
+ *  (`UsageDoc` lives at `families/{id}/usage/{moduleId}`, never per profile: whichever child in
+ *  the household opens a paid lesson first sets it for the whole module), never duplicated
+ *  identically across every profile row the way an earlier version of this API did. */
+export interface FamilyModuleUsage {
+  moduleId: string;
+  used: boolean;
   firstPaidUseAt: string | null;
+  firstPaidUnitId: string | null;
 }
 
 export interface FamilyDetail {
@@ -62,6 +72,7 @@ export interface FamilyDetail {
   profiles: FamilyProfileSummary[];
   trials: { moduleId: string; startedAt: string; endsAt: string; convertedAt: string | null; convertedOrderId: string | null }[];
   entitlements: { moduleId: string; status: EntitlementStatus; shopifyOrderId: string; grantedAt: string; revokedAt: string | null }[];
+  usage: FamilyModuleUsage[];
   orders: OrderDoc[];
   sessions: { id: string; label: string; lastSeenAt: string }[];
 }
@@ -70,8 +81,10 @@ export async function fetchFamily(familyId: string): Promise<ApiResult<FamilyDet
   return asResult<FamilyDetail>(await adminFetch(`/families/${encodeURIComponent(familyId)}`));
 }
 
-export async function resendWelcome(familyId: string): Promise<ApiResult<null>> {
-  return asResult<null>(await adminFetch(`/families/${encodeURIComponent(familyId)}/resend-welcome`, { method: 'POST' }));
+export async function resendWelcome(familyId: string, reason: string): Promise<ApiResult<null>> {
+  return asResult<null>(await adminFetch(`/families/${encodeURIComponent(familyId)}/resend-welcome`, {
+    method: 'POST', body: JSON.stringify({ reason }),
+  }));
 }
 
 export async function changeFamilyEmail(familyId: string, newEmail: string, reason: string): Promise<ApiResult<{ familyId: string; email: string }>> {
@@ -94,8 +107,16 @@ export async function revokeAllSessions(familyId: string, reason: string): Promi
   }));
 }
 
-export async function fetchOrder(orderId: string): Promise<ApiResult<OrderDoc>> {
-  return asResult<OrderDoc>(await adminFetch(`/orders/${encodeURIComponent(orderId)}`));
+/** GET /orders/{id} returns the raw `OrderDoc` plus two server-computed fields OrderView.tsx
+ *  itself never derives: the line-item total, and a direct link to the order in Shopify admin
+ *  (null when SHOPIFY_SHOP_DOMAIN isn't configured — see backend/src/links.ts). */
+export interface AdminOrderDetail extends OrderDoc {
+  amountTotal: number;
+  shopifyAdminUrl: string | null;
+}
+
+export async function fetchOrder(orderId: string): Promise<ApiResult<AdminOrderDetail>> {
+  return asResult<AdminOrderDetail>(await adminFetch(`/orders/${encodeURIComponent(orderId)}`));
 }
 
 export async function bindOrder(orderId: string, familyId: string, reason: string): Promise<ApiResult<OrderDoc>> {
@@ -104,8 +125,10 @@ export async function bindOrder(orderId: string, familyId: string, reason: strin
   }));
 }
 
-export async function resendClaim(orderId: string): Promise<ApiResult<null>> {
-  return asResult<null>(await adminFetch(`/orders/${encodeURIComponent(orderId)}/resend-claim`, { method: 'POST' }));
+export async function resendClaim(orderId: string, reason: string): Promise<ApiResult<null>> {
+  return asResult<null>(await adminFetch(`/orders/${encodeURIComponent(orderId)}/resend-claim`, {
+    method: 'POST', body: JSON.stringify({ reason }),
+  }));
 }
 
 export async function requestRefund(orderId: string, requestChannel: string, reason: string): Promise<ApiResult<OrderDoc>> {
@@ -126,8 +149,9 @@ export async function fetchQueue(name: QueueName): Promise<ApiResult<OrderDoc[]>
   return asResult<OrderDoc[]>(await adminFetch(`/queues/${name}`));
 }
 
-export async function fetchAuditLog(targetId: string): Promise<ApiResult<AuditLogDoc[]>> {
-  return asResult<AuditLogDoc[]>(await adminFetch(`/audit?targetId=${encodeURIComponent(targetId)}`));
+export async function fetchAuditLog(filter: { targetId: string } | { actor: string }): Promise<ApiResult<AuditLogDoc[]>> {
+  const param = 'targetId' in filter ? `targetId=${encodeURIComponent(filter.targetId)}` : `actor=${encodeURIComponent(filter.actor)}`;
+  return asResult<AuditLogDoc[]>(await adminFetch(`/audit?${param}`));
 }
 
 export type { BindingMethod, BindingState, EntitlementState, RefundState, StaffRole };

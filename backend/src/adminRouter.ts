@@ -9,11 +9,11 @@ import {
 import { emailHashOf, findFamilyIdByEmail, getFamily, normalizeEmail } from './family.js';
 import { resolveStaffIdentity, canWrite, type StaffIdentity } from './staff.js';
 import { listActiveSessions, revokeSession } from './session.js';
-import { writeAuditLog, listAuditLogForTarget } from './audit.js';
+import { writeAuditLog, listAuditLogForTarget, listAuditLogForActor } from './audit.js';
 import { computeEligibilitySnapshot } from './refund.js';
 import { moduleActivatedEmail, claimYourPurchaseEmail } from './email.js';
 import { randomToken, hmacHex } from './util.js';
-import { loginUrl, claimUrl } from './links.js';
+import { loginUrl, claimUrl, shopifyAdminOrderUrl } from './links.js';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -80,8 +80,9 @@ export async function handleAdminApi(request: Request, env: Env, url: URL): Prom
 
   if (method === 'GET' && segments[0] === 'audit') {
     const targetId = url.searchParams.get('targetId');
-    if (!targetId) return new Response('targetId is required', { status: 400 });
-    const entries = await listAuditLogForTarget(env, targetId);
+    const actor = url.searchParams.get('actor');
+    if (!targetId && !actor) return new Response('targetId or actor is required', { status: 400 });
+    const entries = targetId ? await listAuditLogForTarget(env, targetId) : await listAuditLogForActor(env, actor!);
     return jsonResponse(entries.map((e) => e.data));
   }
 
@@ -139,17 +140,26 @@ async function routeFamily(request: Request, env: Env, staff: StaffIdentity, seg
     const allOrders = await env.db.list<OrderDoc>(ordersCollection());
     const orders = allOrders.filter((o) => o.data.familyId === familyId).map((o) => o.data);
 
-    const profileSummaries = await Promise.all(profiles.map(async (p) => {
+    const profileSummaries = profiles.map((p) => ({
+      id: p.id, avatarId: p.data.avatarId, nicknameId: p.data.nicknameId, stage: p.data.stage,
+      progressSummary: [] as { moduleId: string; unitsCompleted: number }[],
+    }));
+    await Promise.all(profiles.map(async (p, i) => {
       const progress = await env.db.list<ProgressDoc>(progressCollection(familyId, p.id));
-      const usage = await Promise.all(entitlements.map((e) => env.db.get<UsageDoc>(usagePath(familyId, e.id))));
-      return {
-        id: p.id, avatarId: p.data.avatarId, nicknameId: p.data.nicknameId, stage: p.data.stage,
-        progressSummary: progress.map((pr) => ({
-          moduleId: pr.id,
-          unitsCompleted: Object.values(pr.data.missions).filter((m) => m.done).length,
-        })),
-        firstPaidUseAt: usage.find((u) => u)?.firstPaidUseAt ?? null,
-      };
+      profileSummaries[i]!.progressSummary = progress.map((pr) => ({
+        moduleId: pr.id,
+        unitsCompleted: Object.values(pr.data.missions).filter((m) => m.done).length,
+      }));
+    }));
+
+    // Work order §1 "firstPaidUseAt (yes/no, time, which lesson)" — genuinely a per-FAMILY-per-
+    // MODULE fact (UsageDoc lives at families/{id}/usage/{moduleId}, never per profile: whichever
+    // child in the household opens a paid lesson first sets it for the whole module, which is
+    // also exactly what refund eligibility reads — backend/src/refund.ts). Attaching the same
+    // value to every profile row (the old shape) would have been misleading, not just incomplete.
+    const usage = await Promise.all(entitlements.map(async (e) => {
+      const doc = await env.db.get<UsageDoc>(usagePath(familyId, e.id));
+      return { moduleId: e.id, used: !!doc, firstPaidUseAt: doc?.firstPaidUseAt ?? null, firstPaidUnitId: doc?.firstPaidUnitId ?? null };
     }));
 
     return jsonResponse({
@@ -160,6 +170,7 @@ async function routeFamily(request: Request, env: Env, staff: StaffIdentity, seg
       profiles: profileSummaries,
       trials: trials.map((t) => ({ moduleId: t.id, ...t.data })),
       entitlements: entitlements.map((e) => ({ moduleId: e.id, ...e.data })),
+      usage,
       orders,
       sessions: sessions.map((s) => ({ id: s.id, label: s.data.label, lastSeenAt: s.data.lastSeenAt })),
     });
@@ -168,10 +179,13 @@ async function routeFamily(request: Request, env: Env, staff: StaffIdentity, seg
   if (!canWrite(staff)) return new Response('forbidden', { status: 403 });
 
   if (method === 'POST' && segments[2] === 'resend-welcome') {
+    const body = await readJson<{ reason?: unknown }>(request);
+    const reason = body && requireReason(body);
+    if (!reason) return new Response('reason is required', { status: 400 });
     const family = await getFamily(env, familyId);
     if (!family) return new Response('not found', { status: 404 });
     await env.email.send(moduleActivatedEmail(family.email, loginUrl(env)));
-    await writeAuditLog(env, { actor: staff.email, action: 'resend_welcome', targetType: 'family', targetId: familyId, before: null, after: null, reason: 'staff resend' });
+    await writeAuditLog(env, { actor: staff.email, action: 'resend_welcome', targetType: 'family', targetId: familyId, before: null, after: null, reason });
     return new Response(null, { status: 202 });
   }
 
@@ -233,7 +247,12 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
   if (method === 'GET' && segments.length === 2) {
     const order = await env.db.get<OrderDoc>(orderPath(orderId));
     if (!order) return new Response('not found', { status: 404 });
-    return jsonResponse(order);
+    // Work order §1 "Order page": "amount" (the order's own total — never re-derived from
+    // Shopify, just the sum of what the webhook itself already recorded per line) and "a direct
+    // link to the order in Shopify admin" — both computed here so OrderView.tsx never needs to
+    // know the shop domain or re-sum lines itself.
+    const amountTotal = order.lines.reduce((sum, l) => sum + l.lineTotal, 0);
+    return jsonResponse({ ...order, amountTotal, shopifyAdminUrl: shopifyAdminOrderUrl(env, order.shopifyOrderId) });
   }
 
   if (!canWrite(staff)) return new Response('forbidden', { status: 403 });
@@ -280,6 +299,9 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
   }
 
   if (method === 'POST' && segments[2] === 'resend-claim') {
+    const body = await readJson<{ reason?: unknown }>(request);
+    const reason = body && requireReason(body);
+    if (!reason) return new Response('reason is required', { status: 400 });
     if (!order.purchaserEmail) return new Response('order has no purchaser email', { status: 400 });
     const claimToken = randomToken(32);
     const claimHash = await hmacHex(claimToken, env.AUTH_PEPPER);
@@ -290,7 +312,7 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
     };
     await env.db.set(claimPath(claimHash), claim);
     await env.email.send(claimYourPurchaseEmail(order.purchaserEmail, order.orderName, claimUrl(env, claimToken)));
-    await writeAuditLog(env, { actor: staff.email, action: 'resend_claim', targetType: 'order', targetId: orderId, before: null, after: null, reason: 'staff resend' });
+    await writeAuditLog(env, { actor: staff.email, action: 'resend_claim', targetType: 'order', targetId: orderId, before: null, after: null, reason });
     return new Response(null, { status: 202 });
   }
 

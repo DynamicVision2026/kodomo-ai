@@ -50,15 +50,30 @@ export function FamilyView({ familyId, me, onNavigate }: { familyId: string; me:
 
       <h3>プロフィール</h3>
       <table className="admin-table">
-        <thead><tr><th>ニックネーム</th><th>完了ユニット数</th><th>初回有料利用</th></tr></thead>
+        <thead><tr><th>ニックネーム</th><th>完了ユニット数</th></tr></thead>
         <tbody>
           {detail.profiles.map((p) => (
             <tr key={p.id}>
               <td>{p.nicknameId}</td>
               <td>{p.progressSummary.map((s) => `${s.moduleId}: ${s.unitsCompleted}`).join(', ') || '—'}</td>
-              <td>{p.firstPaidUseAt ?? '—'}</td>
             </tr>
           ))}
+        </tbody>
+      </table>
+
+      <h3>初回有料利用</h3>
+      <table className="admin-table">
+        <thead><tr><th>モジュール</th><th>利用</th><th>日時</th><th>レッスン</th></tr></thead>
+        <tbody>
+          {detail.usage.map((u) => (
+            <tr key={u.moduleId}>
+              <td>{u.moduleId}</td>
+              <td>{u.used ? 'あり' : 'なし'}</td>
+              <td>{u.firstPaidUseAt ?? '—'}</td>
+              <td>{u.firstPaidUnitId ?? '—'}</td>
+            </tr>
+          ))}
+          {detail.usage.length === 0 && <tr><td colSpan={4}>権利がまだありません。</td></tr>}
         </tbody>
       </table>
 
@@ -76,7 +91,7 @@ export function FamilyView({ familyId, me, onNavigate }: { familyId: string; me:
 
       <h3>権利（エンタイトルメント）</h3>
       <table className="admin-table">
-        <thead><tr><th>モジュール</th><th>状態</th><th>注文</th><th /></tr></thead>
+        <thead><tr><th>モジュール</th><th>状態</th><th>注文</th><th>付与日</th><th /></tr></thead>
         <tbody>
           {detail.entitlements.map((e) => (
             <tr key={e.moduleId}>
@@ -85,6 +100,7 @@ export function FamilyView({ familyId, me, onNavigate }: { familyId: string; me:
                 <span className={`admin-badge ${e.status === 'active' ? 'admin-badge--ok' : 'admin-badge--danger'}`}>{e.status}</span>
               </td>
               <td>{e.shopifyOrderId}</td>
+              <td>{e.grantedAt}</td>
               <td>
                 {canWrite && (
                   <ReasonButton
@@ -96,7 +112,7 @@ export function FamilyView({ familyId, me, onNavigate }: { familyId: string; me:
               </td>
             </tr>
           ))}
-          {detail.entitlements.length === 0 && <tr><td colSpan={4}>権利はまだありません。</td></tr>}
+          {detail.entitlements.length === 0 && <tr><td colSpan={5}>権利はまだありません。</td></tr>}
         </tbody>
       </table>
 
@@ -124,7 +140,7 @@ export function FamilyView({ familyId, me, onNavigate }: { familyId: string; me:
         <div className="admin-actions">
           <ReasonButton
             label="ウェルカムメールを再送"
-            onRun={async (reason) => { void reason; return resendWelcome(detail.familyId); }}
+            onRun={(reason) => resendWelcome(detail.familyId, reason)}
             onResult={setLastResult}
           />
         </div>

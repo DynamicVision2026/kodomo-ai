@@ -31,3 +31,10 @@ export async function listAuditLogForTarget(env: Env, targetId: string) {
   const all = await env.db.list<AuditLogDoc>(auditLogCollection());
   return all.filter((e) => e.data.targetId === targetId).sort((a, b) => b.data.at.localeCompare(a.data.at));
 }
+
+/** AD-16 §8: "audit log ... filterable by order, family or staff" — the staff (actor) half of
+ *  that requirement, alongside `listAuditLogForTarget`'s order/family half. */
+export async function listAuditLogForActor(env: Env, actor: string) {
+  const all = await env.db.list<AuditLogDoc>(auditLogCollection());
+  return all.filter((e) => e.data.actor === actor).sort((a, b) => b.data.at.localeCompare(a.data.at));
+}

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { OrderDoc } from '../../backend/src/schema';
 import {
-  bindOrder, decideRefund, fetchOrder, requestRefund, resendClaim, type ApiResult, type Me,
+  bindOrder, decideRefund, fetchOrder, requestRefund, resendClaim, type AdminOrderDetail, type ApiResult, type Me,
 } from './api';
 import { ReasonButton } from './ReasonButton';
 import type { View } from './nav';
@@ -20,7 +19,7 @@ function ResultBanner({ result }: { result: ApiResult<unknown> | null }) {
  * finishes the refund.
  */
 export function OrderView({ orderId, me, onNavigate }: { orderId: string; me: Me; onNavigate: (view: View) => void }) {
-  const [order, setOrder] = useState<OrderDoc | null | 'loading' | 'error'>('loading');
+  const [order, setOrder] = useState<AdminOrderDetail | null | 'loading' | 'error'>('loading');
   const [bindFamilyId, setBindFamilyId] = useState('');
   const [refundChannel, setRefundChannel] = useState('');
   const [lastResult, setLastResult] = useState<ApiResult<unknown> | null>(null);
@@ -59,6 +58,7 @@ export function OrderView({ orderId, me, onNavigate }: { orderId: string; me: Me
         <dt>権利状態</dt><dd><span className="admin-badge">{order.entitlementState}</span></dd>
         <dt>支払い状況</dt><dd>{order.financialStatus}</dd>
         <dt>支払日</dt><dd>{order.paidAt}</dd>
+        <dt>金額</dt><dd>¥{order.amountTotal.toLocaleString()}</dd>
       </dl>
 
       <h3>商品明細</h3>
@@ -76,6 +76,12 @@ export function OrderView({ orderId, me, onNavigate }: { orderId: string; me: Me
         <dt>状態</dt><dd><span className="admin-badge">{order.refund.state}</span></dd>
         <dt>申請日</dt><dd>{order.refund.requestedAt ?? '—'}</dd>
         <dt>判定</dt><dd>{order.refund.decision ?? '未判定'}</dd>
+        <dt>Shopify管理画面</dt>
+        <dd>
+          {order.shopifyAdminUrl
+            ? <a className="admin-btn" href={order.shopifyAdminUrl} target="_blank" rel="noopener noreferrer">Shopifyで注文を開く</a>
+            : '—'}
+        </dd>
       </dl>
       {order.refund.eligibilitySnapshot && (
         <dl className="admin-kv">
@@ -102,7 +108,7 @@ export function OrderView({ orderId, me, onNavigate }: { orderId: string; me: Me
           {order.purchaserEmail && order.bindingState === 'awaiting_claim' && (
             <ReasonButton
               label="受け取りメールを再送"
-              onRun={async (reason) => { void reason; return resendClaim(order.shopifyOrderId); }}
+              onRun={(reason) => resendClaim(order.shopifyOrderId, reason)}
               onResult={setLastResult}
             />
           )}

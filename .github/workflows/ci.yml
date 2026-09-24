@@ -227,6 +227,156 @@ jobs:
             --region="${{ env.REGION }}" \
             --to-tags="${{ steps.deploy.outputs.tag }}=100"
 
+  # Admin dashboard work order §3 — "add a deploy-admin CI job (same commit as backend and
+  # frontend) deploying kodomo-ai-admin ... with the secrets and env it needs and a smoke test."
+  # A THIRD, separate Cloud Run service from deploy-backend/deploy-frontend (Dockerfile.admin's
+  # own doc comment: "never merge this into Part 1 or Part 2's own deploy") — runs in parallel
+  # with them (only needs gates), not after, since nothing here depends on the public backend or
+  # frontend being live. Never --allow-unauthenticated: Identity-Aware Proxy is the only intended
+  # entry point (work order §4) — see docs/launch-runbook.md's Part 2B for the one-time Founder
+  # steps (enable IAP, grant staff access, seed staff/) this job's own deploy alone can't do.
+  deploy-admin:
+    needs: [which-branch, gates]
+    if: needs.which-branch.outputs.is_production == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # Workload Identity Federation — no long-lived key ever touches this repo
+    env:
+      PROJECT_ID: kodomo-ai
+      REGION: asia-northeast1
+      SERVICE: kodomo-ai-admin
+      AR_REPO: kodomo-ai-images
+      # Same canonical origin deploy-backend uses — the admin dashboard's own resend-welcome/
+      # resend-claim actions build login/claim links from it (backend/src/links.ts).
+      CANONICAL_ORIGIN: https://kodomo-ai-421702481956.asia-northeast1.run.app
+      EMAIL_FROM: no-reply@domo-ai.com
+      EMAIL_FROM_NAME: ナゼホリ
+      EMAIL_REPLY_TO: info@domo-ai.com
+      SHOPIFY_SHOP_DOMAIN: soul-id-2.myshopify.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      # Verify only — never create. See deploy-frontend's own identical step for why.
+      - name: Verify the Artifact Registry repo exists
+        run: |
+          gcloud artifacts repositories describe "${{ env.AR_REPO }}" \
+            --location="${{ env.REGION }}" >/dev/null || {
+            echo "::error::Artifact Registry repo '${{ env.AR_REPO }}' not found in ${{ env.REGION }}."
+            echo "::error::Known existing repos: kodomo-ai-images, cloud-run-source-deploy — reconcile AR_REPO above, do not auto-create a new one."
+            exit 1
+          }
+
+      - name: Build and push the admin image
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE }}
+        run: |
+          docker build -f Dockerfile.admin \
+            -t "$IMAGE:${{ github.sha }}" \
+            -t "$IMAGE:latest" \
+            .
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:latest"
+
+      # Same required secrets as deploy-backend (backend/server/adminIndex.ts loads the same
+      # buildEnv() — ADMIN_TOKEN/SHOPIFY_WEBHOOK_SECRET are unused by this service's own routes
+      # but still required to start, since buildEnv() doesn't distinguish which service calls
+      # it). IAP_AUDIENCE is deliberately NOT hardcoded here: it's only known once IAP is enabled
+      # on this exact service (docs/launch-runbook.md Part 2B step 2), so it comes from the
+      # `IAP_AUDIENCE` repository VARIABLE (Settings -> Secrets and variables -> Actions ->
+      # Variables) the Founder sets once that value exists — read via plain bash `$VAR`
+      # expansion, never `${{ }}`, for the same reason SHOPIFY_VARIANT_IDS_JSON is in
+      # deploy-backend (a value that could contain characters `${{ }}` substitution would turn
+      # into real shell syntax before bash ever sees this script). Built this way (append-if-set)
+      # rather than always passing `IAP_AUDIENCE=${{ vars.IAP_AUDIENCE }}` specifically so a
+      # normal push BEFORE the Founder has set that repo variable never overwrites a value someone
+      # set by hand via `gcloud run services update-env-vars` in the meantime — `--set-env-vars`
+      # replaces the WHOLE plain-env-var set on every deploy, never merges.
+      - name: Deploy the candidate revision (no traffic yet)
+        id: deploy
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ env.SERVICE }}
+          TAG: candidate-${{ github.run_number }}
+          IAP_AUDIENCE: ${{ vars.IAP_AUDIENCE }}
+        run: |
+          ENV_VARS="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }},SHOPIFY_SHOP_DOMAIN=${{ env.SHOPIFY_SHOP_DOMAIN }}"
+          if [ -n "$IAP_AUDIENCE" ]; then
+            ENV_VARS="$ENV_VARS,IAP_AUDIENCE=$IAP_AUDIENCE"
+          fi
+
+          gcloud run deploy "${{ env.SERVICE }}" \
+            --image="$IMAGE:${{ github.sha }}" \
+            --region="${{ env.REGION }}" \
+            --platform=managed \
+            --no-allow-unauthenticated \
+            --no-traffic \
+            --tag="$TAG" \
+            --set-env-vars="$ENV_VARS" \
+            --set-secrets="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest,EMAIL_API_KEY=EMAIL_API_KEY:latest"
+          BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
+            --region="${{ env.REGION }}" --format='value(status.url)')
+          CANDIDATE_URL="https://${TAG}---$(echo "$BASE_URL" | sed 's#https://##')"
+          echo "candidate_url=$CANDIDATE_URL" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      # This service requires authentication (--no-allow-unauthenticated) even for the smoke
+      # test itself — an identity token for the SAME deploying service account, which already
+      # needs (and by deploying successfully above, already has) enough Cloud Run access on this
+      # project to also invoke what it just deployed. Two checks, both against the CANDIDATE
+      # revision directly: (1) /healthz -> 200 (container started, Cloud Run IAM let an
+      # authenticated caller through); (2) /admin-api/me -> 401 with no IAP header attached
+      # (proves the router is alive and resolveStaffIdentity correctly refuses a request that
+      # didn't come through IAP) — the same invariant holds whether IAP_AUDIENCE is set yet or
+      # not, so this check is meaningful both before and after the Founder finishes Part 2B.
+      - name: Smoke test the candidate revision
+        run: |
+          CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
+          TOKEN=$(gcloud auth print-identity-token)
+          FAIL=0
+
+          HEALTH_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/healthz")
+          if [ "$HEALTH_STATUS" != "200" ]; then
+            echo "::error::/healthz returned ${HEALTH_STATUS} on the candidate revision (expected 200) — if this is 403, the deploying service account likely needs roles/run.invoker granted explicitly on kodomo-ai-admin: gcloud run services add-iam-policy-binding kodomo-ai-admin --region=${{ env.REGION }} --member=serviceAccount:${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }} --role=roles/run.invoker"
+            FAIL=1
+          else
+            echo "OK /healthz -> 200"
+          fi
+
+          ME_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/admin-api/me")
+          if [ "$ME_STATUS" != "401" ]; then
+            echo "::error::/admin-api/me returned ${ME_STATUS} on the candidate revision (expected 401 — no IAP header on this direct call)"
+            FAIL=1
+          else
+            echo "OK /admin-api/me -> 401 (no IAP header -> correctly unauthenticated)"
+          fi
+
+          if [ "$FAIL" != "0" ]; then
+            echo "::error::Smoke tests failed — traffic NOT promoted, production still on the previous revision."
+            exit 1
+          fi
+
+      # Only reached once the candidate revision has passed every smoke test.
+      - name: Promote the candidate revision to 100% traffic
+        run: |
+          gcloud run services update-traffic "${{ env.SERVICE }}" \
+            --region="${{ env.REGION }}" \
+            --to-tags="${{ steps.deploy.outputs.tag }}=100"
+
   # AD-16 §5 / Builder work order — "close the production deployment loop": build the frontend
   # container and deploy it to the EXISTING `kodomo-ai` Cloud Run service. Never runs on a PR
   # (forks/PRs never get deploy credentials) and never runs unless `gates` already passed —
