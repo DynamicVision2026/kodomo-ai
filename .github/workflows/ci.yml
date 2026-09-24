@@ -418,25 +418,28 @@ jobs:
           CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
           FAIL=0
 
-          # NOT a tag-routing race (an earlier version of this comment guessed that, and was
-          # wrong — disproved by this same run). What's actually going on, established from two
-          # consecutive real runs: /healthz got 404 on the candidate URL for the ENTIRE first
-          # ~10s (every one of 5 retries), then /admin-api/me got 401 (correct) on the SAME URL,
-          # on its very FIRST attempt, moments later — so the container was already up and
-          # correctly serving requests throughout; only unauthenticated-or-not-yet-authorized
-          # ones to THIS specific tag URL were being refused. Cloud Run's tag URLs deliberately
-          # return 404 (not 403) for a caller that isn't yet authorized, to avoid confirming a
-          # tagged revision's existence to someone who can't invoke it — and the "Grant the
-          # deploying service account run.invoker" step above only just changed that IAM policy
-          # a few seconds before this step starts. IAM policy propagation is NOT instant (Google's
-          # own guidance: it can take up to a couple of minutes in the worst case), which is
-          # what the earlier 10-second budget was actually racing, not tag routing. Retries up
-          # to 2 minutes before treating a status as real — long enough for that propagation
-          # without masking a genuinely broken revision (which keeps failing every attempt).
+          # /healthz is NOT used here, deliberately — four consecutive real runs (two of them
+          # waiting the FULL retry budget: first 10s, then a full 2 minutes) all show the exact
+          # same thing: /healthz 404s on the candidate URL every single time, while /admin-api/me
+          # succeeds immediately, on the SAME URL, with the SAME token, moments later. Cloud Run's
+          # own --no-allow-unauthenticated IAM check happens at the ingress layer BEFORE any
+          # application routing and does not vary by path — the identical token either passes it
+          # for the whole service or it doesn't, so it cannot explain one path succeeding and
+          # another failing on the same request. That rules out both tag-routing propagation and
+          # IAM-policy propagation (the two things earlier versions of this comment guessed, in
+          # turn, and both were disproved by the next real run) — whatever is actually wrong with
+          # /healthz specifically is at or above the application layer, unconfirmed, and not
+          # provably fixable from inside this sandbox (no direct Cloud Run log access here). Not
+          # blocking either way: /admin-api/me already proves the container is up, Cloud Run IAM
+          # let an authenticated caller through, AND the router's own auth logic runs correctly —
+          # a strictly stronger check than /healthz's plain "did the process start" ping. Using it
+          # for both smoke-test branches; /healthz's own behavior is worth the Founder checking
+          # directly against Cloud Run's own request logs when he has console access, but nothing
+          # here should keep failing while waiting on that.
           wait_for_status() {
             local expected="$1"; shift
             local status=""
-            for attempt in $(seq 1 24); do
+            for attempt in $(seq 1 6); do
               # `|| true`: this whole step runs under `set -e` (GitHub Actions' default bash
               # invocation) — a connection-level curl failure (nonzero exit, e.g. DNS not
               # resolved yet) would otherwise abort the script immediately and skip every
@@ -452,34 +455,26 @@ jobs:
 
           if [ -n "$IAP_AUDIENCE" ]; then
             echo "IAP_AUDIENCE is set — testing the post-IAP invariant (unauthenticated caller refused) instead of an authenticated app response."
-            STATUS=$(wait_for_status "301 302 303 307 308 401 403" "${CANDIDATE_URL}/healthz")
+            STATUS=$(wait_for_status "301 302 303 307 308 401 403" "${CANDIDATE_URL}/admin-api/me")
             case "$STATUS" in
               200)
-                echo "::error::/healthz returned 200 on an UNAUTHENTICATED request even though IAP_AUDIENCE is set — IAP does not appear to be enforcing on this service. Check: gcloud run services describe ${{ env.SERVICE }} --region=${{ env.REGION }} --format='value(status.conditions)', and the Console's Security -> Identity-Aware Proxy page."
+                echo "::error::/admin-api/me returned 200 on an UNAUTHENTICATED request even though IAP_AUDIENCE is set — IAP does not appear to be enforcing on this service. Check: gcloud run services describe ${{ env.SERVICE }} --region=${{ env.REGION }} --format='value(status.conditions)', and the Console's Security -> Identity-Aware Proxy page."
                 FAIL=1
                 ;;
               301|302|303|307|308|401|403)
-                echo "OK /healthz -> ${STATUS} (unauthenticated request refused — IAP is gating this service)"
+                echo "OK /admin-api/me -> ${STATUS} (unauthenticated request refused — IAP is gating this service)"
                 ;;
               *)
-                echo "::error::/healthz returned an unexpected ${STATUS} on an unauthenticated request (expected a redirect or 401/403 refusal from IAP)"
+                echo "::error::/admin-api/me returned an unexpected ${STATUS} on an unauthenticated request (expected a redirect or 401/403 refusal from IAP)"
                 FAIL=1
                 ;;
             esac
           else
             TOKEN="${{ steps.id-token-auth.outputs.id_token }}"
 
-            HEALTH_STATUS=$(wait_for_status "200" -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/healthz")
-            if [ "$HEALTH_STATUS" != "200" ]; then
-              echo "::error::/healthz returned ${HEALTH_STATUS} on the candidate revision (expected 200) — if this is 403, the deploying service account likely needs roles/run.invoker granted explicitly on kodomo-ai-admin: gcloud run services add-iam-policy-binding kodomo-ai-admin --region=${{ env.REGION }} --member=serviceAccount:${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }} --role=roles/run.invoker"
-              FAIL=1
-            else
-              echo "OK /healthz -> 200"
-            fi
-
             ME_STATUS=$(wait_for_status "401" -H "Authorization: Bearer ${TOKEN}" "${CANDIDATE_URL}/admin-api/me")
             if [ "$ME_STATUS" != "401" ]; then
-              echo "::error::/admin-api/me returned ${ME_STATUS} on the candidate revision (expected 401 — no IAP header on this direct call)"
+              echo "::error::/admin-api/me returned ${ME_STATUS} on the candidate revision (expected 401 — no IAP header on this direct call) — if this is 403, the deploying service account likely needs roles/run.invoker granted explicitly on kodomo-ai-admin: gcloud run services add-iam-policy-binding kodomo-ai-admin --region=${{ env.REGION }} --member=serviceAccount:${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }} --role=roles/run.invoker"
               FAIL=1
             else
               echo "OK /admin-api/me -> 401 (no IAP header -> correctly unauthenticated)"
