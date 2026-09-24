@@ -81,7 +81,7 @@ describe('LandingPage', () => {
     await waitFor(() => expect(window.location.href).toBe('/login/?next=/account/'));
   });
 
-  it('a logged-in parent clicking a buy button goes straight to the real purchase-intent checkout URL', async () => {
+  it('a logged-in parent clicking a buy button opens checkout in a new tab and shows the waiting message', async () => {
     vi.resetModules();
     vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
@@ -94,6 +94,83 @@ describe('LandingPage', () => {
       }
       return new Response('not found', { status: 404 });
     }));
+    // AD-14 decision 7: a real window.open() call that jsdom can actually honor (a bare `{}`
+    // return, since nothing here reads its properties) — this is the "popup allowed" path.
+    const openSpy = vi.fn(() => ({}) as Window);
+    vi.stubGlobal('open', openSpy);
+    const { LandingPage: LoggedInLandingPage } = await import('../src/lp/LandingPage');
+    const user = userEvent.setup();
+    render(<LoggedInLandingPage />);
+
+    await user.click(screen.getByText('購入する', { selector: 'button' }));
+    await waitFor(() =>
+      expect(openSpy).toHaveBeenCalledWith('https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc', '_blank', 'noopener'),
+    );
+    // The original tab itself never navigates away — the checkout lives in the new tab only.
+    expect(window.location.href).toBe('');
+    expect(
+      screen.getByText('お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('購入する', { selector: 'button' })).not.toBeInTheDocument();
+  });
+
+  it('AD-14 decision 7: once the entitlement lands, the original tab switches to the thank-you state and links into /play/', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    let entitled = false;
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/me')) {
+        return jsonResponse({
+          familyId: 'f1', email: 'p***@example.com',
+          entitlements: entitled ? [{ moduleId: 'm1', status: 'active' }] : [],
+          profiles: [], trials: [],
+        });
+      }
+      if (url.endsWith('/purchase-intents')) {
+        return jsonResponse({ url: 'https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc', expiresAt: '2026-02-01T00:00:00.000Z' }, 201);
+      }
+      return new Response('not found', { status: 404 });
+    }));
+    vi.stubGlobal('open', vi.fn(() => ({}) as Window));
+    const { LandingPage: LoggedInLandingPage } = await import('../src/lp/LandingPage');
+    const user = userEvent.setup();
+    render(<LoggedInLandingPage />);
+
+    await user.click(screen.getByText('購入する', { selector: 'button' }));
+    await waitFor(() =>
+      expect(
+        screen.getByText('お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。'),
+      ).toBeInTheDocument(),
+    );
+
+    // Shopify's own orders/paid webhook grants the entitlement server-side while the parent is
+    // still on the checkout tab; returning to this one (a window focus event) is what the work
+    // order calls "resuming on tab focus" — the hook re-checks /me right away rather than
+    // waiting out the rest of the 5s poll interval.
+    entitled = true;
+    window.dispatchEvent(new Event('focus'));
+
+    await waitFor(() => expect(screen.getByText('ご購入ありがとうございます！')).toBeInTheDocument());
+    const playLink = screen.getByText('つづきから あそぶ').closest('a');
+    expect(playLink).toHaveAttribute('href', '/play/');
+  });
+
+  it('AD-14 decision 7: a blocked popup falls back to a same-tab redirect', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/me')) {
+        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [] });
+      }
+      if (url.endsWith('/purchase-intents')) {
+        return jsonResponse({ url: 'https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc', expiresAt: '2026-02-01T00:00:00.000Z' }, 201);
+      }
+      return new Response('not found', { status: 404 });
+    }));
+    // jsdom's own real window.open (unmocked) always returns undefined — the same signal a
+    // real popup blocker gives — so leaving it unstubbed here exercises the fallback honestly.
     const { LandingPage: LoggedInLandingPage } = await import('../src/lp/LandingPage');
     const user = userEvent.setup();
     render(<LoggedInLandingPage />);

@@ -37,7 +37,7 @@ afterEach(() => {
 });
 
 describe('AD-16 §1 — the account page purchase CTA', () => {
-  it('an unentitled family sees the purchase CTA, tapping it redirects to the returned Shopify URL, never sending a family id or email', async () => {
+  it('AD-14 decision 7: an unentitled family tapping the CTA opens the returned Shopify URL in a new tab, never sending a family id or email', async () => {
     let capturedBody: unknown = null;
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input instanceof Request ? input.url : input);
@@ -52,8 +52,46 @@ describe('AD-16 §1 — the account page purchase CTA', () => {
 
     const originalLocation = window.location;
     // jsdom's window.location.href setter throws "Not implemented: navigation" — stub the whole
-    // object so the assertion can observe the assignment without a real navigation attempt.
+    // object so the assertion can observe (a lack of) assignment without a real navigation
+    // attempt.
     Object.defineProperty(window, 'location', { value: { ...originalLocation, href: '' }, writable: true });
+    const openSpy = vi.fn(() => ({}) as Window);
+    vi.stubGlobal('open', openSpy);
+
+    const user = userEvent.setup();
+    await renderConfiguredAccountPage();
+    await waitFor(() => expect(screen.getByText('購入手続きへ進む')).toBeInTheDocument());
+    await user.click(screen.getByText('購入手続きへ進む'));
+
+    await waitFor(() =>
+      expect(openSpy).toHaveBeenCalledWith('https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc123', '_blank', 'noopener'),
+    );
+    expect(window.location.href).toBe(''); // this tab never navigates away
+    expect(
+      screen.getByText('お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。'),
+    ).toBeInTheDocument();
+    expect(capturedBody).toEqual({ moduleId: 'm1' });
+    expect(JSON.stringify(capturedBody)).not.toContain('family');
+    expect(JSON.stringify(capturedBody)).not.toContain('@'); // no email anywhere in the request body
+
+    Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
+  });
+
+  it('AD-14 decision 7: a blocked popup falls back to a same-tab redirect', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/me')) return jsonResponse(ME_UNENTITLED);
+      if (url.endsWith('/sessions')) return jsonResponse([]);
+      if (url.endsWith('/purchase-intents')) {
+        return jsonResponse({ url: 'https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc123', expiresAt: '2026-02-01T00:00:00.000Z' }, 201);
+      }
+      return new Response('not found', { status: 404 });
+    }));
+
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', { value: { ...originalLocation, href: '' }, writable: true });
+    // jsdom's own real window.open (unmocked) always returns undefined — the same signal a real
+    // popup blocker gives — so leaving it unstubbed here exercises the fallback honestly.
 
     const user = userEvent.setup();
     await renderConfiguredAccountPage();
@@ -61,11 +99,39 @@ describe('AD-16 §1 — the account page purchase CTA', () => {
     await user.click(screen.getByText('購入手続きへ進む'));
 
     await waitFor(() => expect(window.location.href).toBe('https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc123'));
-    expect(capturedBody).toEqual({ moduleId: 'm1' });
-    expect(JSON.stringify(capturedBody)).not.toContain('family');
-    expect(JSON.stringify(capturedBody)).not.toContain('@'); // no email anywhere in the request body
 
     Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
+  });
+
+  it('AD-14 decision 7: once the entitlement lands (checked on tab focus), the purchase section switches to the thank-you state and links into /play/', async () => {
+    let entitled = false;
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/me')) return jsonResponse(entitled ? ME_ENTITLED : ME_UNENTITLED);
+      if (url.endsWith('/sessions')) return jsonResponse([]);
+      if (url.endsWith('/purchase-intents')) {
+        return jsonResponse({ url: 'https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc123', expiresAt: '2026-02-01T00:00:00.000Z' }, 201);
+      }
+      return new Response('not found', { status: 404 });
+    }));
+    vi.stubGlobal('open', vi.fn(() => ({}) as Window));
+
+    const user = userEvent.setup();
+    await renderConfiguredAccountPage();
+    await waitFor(() => expect(screen.getByText('購入手続きへ進む')).toBeInTheDocument());
+    await user.click(screen.getByText('購入手続きへ進む'));
+    await waitFor(() =>
+      expect(
+        screen.getByText('お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。'),
+      ).toBeInTheDocument(),
+    );
+
+    entitled = true;
+    window.dispatchEvent(new Event('focus'));
+
+    await waitFor(() => expect(screen.getByText('ご購入ありがとうございます！')).toBeInTheDocument());
+    const playLink = screen.getByText('つづきから あそぶ').closest('a');
+    expect(playLink).toHaveAttribute('href', '/play/');
   });
 
   it('an already-entitled family never sees the purchase CTA at all', async () => {

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
   confirmEmailChange,
-  createPurchaseIntent,
   deleteAccount,
   deleteSession,
   fetchMe,
@@ -12,18 +11,25 @@ import {
   type MeResponse,
   type SessionInfo,
 } from '../../family/api';
+import { usePurchaseFlow } from '../../family/usePurchaseFlow';
 import { COMPANY } from '../../legal/company';
 import moduleJson from '../../modules/m1/module.json';
 import './account.css';
 
 type EmailChangeStep = { kind: 'idle' } | { kind: 'awaiting-code'; newEmail: string } | { kind: 'error'; message: string };
 type DeleteStep = { kind: 'idle' } | { kind: 'code-sent' } | { kind: 'confirming' } | { kind: 'error'; message: string };
-type PurchaseStep = { kind: 'idle' } | { kind: 'loading' } | { kind: 'error'; message: string };
 
 /** AD-16 §1: the one module this storefront sells today — same source module.json already
  *  supplies the play surface's own moduleId/title, never a second hand-typed copy of either. */
 const PURCHASE_MODULE_ID = moduleJson.id;
 const PURCHASE_MODULE_TITLE = moduleJson.title;
+
+/** usePurchaseFlow (src/family, not exempt from gate:no-hardcoded-copy) stays copy-free — this
+ *  mirrors src/lp/LandingPage.tsx's own identical map for the same reason. */
+const PURCHASE_ERROR_MESSAGE: Record<'not_configured' | 'other', string> = {
+  not_configured: 'ただいま購入手続きの準備中です。しばらくしてから、もう一度お試しください。',
+  other: '購入手続きを開始できませんでした。しばらくしてから、もう一度お試しください。',
+};
 
 /**
  * /account — AD-13 §3/§5 step 6: device list + sign-out, email change (two-step, OTP to the new
@@ -37,29 +43,19 @@ export function AccountPage() {
   const [emailStep, setEmailStep] = useState<EmailChangeStep>({ kind: 'idle' });
   const [deleteCodeInput, setDeleteCodeInput] = useState('');
   const [deleteStep, setDeleteStep] = useState<DeleteStep>({ kind: 'idle' });
-  const [purchaseStep, setPurchaseStep] = useState<PurchaseStep>({ kind: 'idle' });
+  const { state: purchaseState, startPurchase } = usePurchaseFlow(PURCHASE_MODULE_ID);
 
   useEffect(() => {
     fetchMe().then(setMe);
     listSessions().then(setSessions);
   }, []);
 
-  /** AD-16 §1: the purchase-intent is bound server-side to THIS session's own family — never a
-   *  `family_id` this code supplies — and the returned Shopify cart URL never carries a prefilled
-   *  purchaser email either (AD-16: "whoever pays types their own email"). This function's own
-   *  job ends at handing the browser off to that URL. */
-  async function startPurchase() {
-    setPurchaseStep({ kind: 'loading' });
-    const result = await createPurchaseIntent(PURCHASE_MODULE_ID);
-    if (!('url' in result)) {
-      const message = result.reason === 'not_configured'
-        ? 'ただいま購入手続きの準備中です。しばらくしてから、もう一度お試しください。'
-        : '購入手続きを開始できませんでした。しばらくしてから、もう一度お試しください。';
-      setPurchaseStep({ kind: 'error', message });
-      return;
-    }
-    window.location.href = result.url;
-  }
+  // AD-14 decision 7: once the entitlement lands (usePurchaseFlow's own /me polling), refresh
+  // this page's own `me` so the purchase section itself updates (alreadyEntitled below) rather
+  // than staying stale under the thank-you message forever.
+  useEffect(() => {
+    if (purchaseState.kind === 'paid') fetchMe().then(setMe);
+  }, [purchaseState.kind]);
 
   async function handleSignOutDevice(id: string) {
     await deleteSession(id);
@@ -134,20 +130,39 @@ export function AccountPage() {
       <h1>アカウント</h1>
       <p className="account__lead">ログイン中のメールアドレス：{me.email}</p>
 
-      {!alreadyEntitled && (
+      {(!alreadyEntitled || purchaseState.kind === 'awaiting-payment' || purchaseState.kind === 'paid') && (
         <section className="account__section">
           <h2>購入</h2>
-          <p>「{PURCHASE_MODULE_TITLE}」を購入すると、すべてのミッションが使えるようになります。</p>
-          <button
-            type="button"
-            className="account__button"
-            onClick={startPurchase}
-            disabled={purchaseStep.kind === 'loading'}
-          >
-            購入手続きへ進む
-          </button>
-          {purchaseStep.kind === 'error' && (
-            <p className="account__message account__message--error">{purchaseStep.message}</p>
+          {!alreadyEntitled &&
+            (purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
+              <>
+                <p>「{PURCHASE_MODULE_TITLE}」を購入すると、すべてのミッションが使えるようになります。</p>
+                <button
+                  type="button"
+                  className="account__button"
+                  onClick={startPurchase}
+                  disabled={purchaseState.kind === 'loading'}
+                >
+                  購入手続きへ進む
+                </button>
+                {purchaseState.kind === 'error' && (
+                  <p className="account__message account__message--error">{PURCHASE_ERROR_MESSAGE[purchaseState.reason]}</p>
+                )}
+              </>
+            )}
+          {/* AD-14 decision 7: checkout opened in a new tab (usePurchaseFlow's own startPurchase)
+              — this tab waits here, polling /me for the entitlement Shopify's orders/paid webhook
+              grants server-side, then hands the parent straight into the app. */}
+          {purchaseState.kind === 'awaiting-payment' && (
+            <p className="account__message">
+              お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。
+            </p>
+          )}
+          {purchaseState.kind === 'paid' && (
+            <div className="account__message account__message--success">
+              <p>ご購入ありがとうございます！</p>
+              <a className="account__button" href="/play/">つづきから あそぶ</a>
+            </div>
           )}
         </section>
       )}

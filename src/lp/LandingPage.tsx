@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { load, save } from '../engine/storage';
 import { track, setVariant } from '../engine/analytics';
-import { createPurchaseIntent, fetchMe } from '../family/api';
+import { fetchMe } from '../family/api';
+import { usePurchaseFlow } from '../family/usePurchaseFlow';
 import moduleJson from '../modules/m1/module.json';
 import './landing-page.css';
 
@@ -99,12 +100,17 @@ const KIT_ITEMS = [
   'おとなの見守り付き・本物のAIを使う特別セッションのガイド（1回）',
 ];
 
-type PurchaseStep = { kind: 'idle' } | { kind: 'loading' } | { kind: 'error' };
+/** usePurchaseFlow (src/family, not exempt from gate:no-hardcoded-copy) stays copy-free — this
+ *  mirrors src/parent/account/AccountPage.tsx's own identical map for the same reason. */
+const PURCHASE_ERROR_MESSAGE: Record<'not_configured' | 'other', string> = {
+  not_configured: 'ただいま購入手続きの準備中です。しばらくしてから、もう一度お試しください。',
+  other: '購入手続きを開始できませんでした。しばらくしてから、もう一度お試しください。',
+};
 
 export function LandingPage() {
   const [variant, setLocalVariant] = useState<'A' | 'B'>('A');
   const [gradePick, setGradePick] = useState<GradeBand | null>(null);
-  const [purchaseStep, setPurchaseStep] = useState<PurchaseStep>({ kind: 'idle' });
+  const { state: purchaseState, startPurchase: startPurchaseFlow } = usePurchaseFlow(PURCHASE_MODULE_ID);
 
   useEffect(() => {
     const state = load();
@@ -122,21 +128,16 @@ export function LandingPage() {
   /** A logged-out visitor is sent to /login/ first — no purchase-intent is ever created for an
    *  anonymous session — and lands back on /account/, where the exact same purchase flow this
    *  function runs is already wired up (AccountPage.tsx's own startPurchase). A logged-in parent
-   *  skips straight to the real purchase-intent call, same as that screen. */
+   *  skips straight to usePurchaseFlow's own real purchase-intent call (AD-14 decision 7: opens
+   *  in a new tab, then this tab waits for the entitlement), same as that screen. */
   async function startPurchase() {
     track('cta_buy_click');
-    setPurchaseStep({ kind: 'loading' });
     const me = await fetchMe();
     if (!me) {
       window.location.href = '/login/?next=/account/';
       return;
     }
-    const result = await createPurchaseIntent(PURCHASE_MODULE_ID);
-    if (!('url' in result)) {
-      setPurchaseStep({ kind: 'error' });
-      return;
-    }
-    window.location.href = result.url;
+    await startPurchaseFlow();
   }
 
   return (
@@ -283,15 +284,32 @@ export function LandingPage() {
           <li>創設ファミリー特典（冬休みスペシャルシート 全9枚 を含む）</li>
         </ul>
         {/* Same startPurchase() as the hero CTA above — a real, always-clickable button (never a
-            dead href="#"), routing through /login/ when logged out and straight to the real
-            purchase-intent flow when logged in. Its own not_configured fallback (SHOPIFY_VARIANT_IDS
-            unset for kodomo-ai-m1 — src/family/api.ts's createPurchaseIntent) surfaces as the same
-            honest error message the hero CTA's own purchaseStep state shows. */}
-        <button type="button" className="lp__cta lp__cta--primary" onClick={startPurchase} disabled={purchaseStep.kind === 'loading'}>
-          購入する
-        </button>
-        {purchaseStep.kind === 'error' && (
-          <p className="lp__cta-error">購入手続きを開始できませんでした。しばらくしてから、もう一度お試しください。</p>
+            dead href="#"), routing through /login/ when logged out and straight to
+            usePurchaseFlow's real purchase-intent flow when logged in. Its own not_configured
+            fallback (SHOPIFY_VARIANT_IDS unset for kodomo-ai-m1 — src/family/api.ts's
+            createPurchaseIntent) surfaces as the same honest error message this button's own
+            purchaseState shows. */}
+        {(purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
+          <button type="button" className="lp__cta lp__cta--primary" onClick={startPurchase} disabled={purchaseState.kind === 'loading'}>
+            購入する
+          </button>
+        )}
+        {purchaseState.kind === 'error' && (
+          <p className="lp__cta-error">{PURCHASE_ERROR_MESSAGE[purchaseState.reason]}</p>
+        )}
+        {/* AD-14 decision 7: checkout opened in a new tab (usePurchaseFlow's own startPurchase) —
+            this tab waits here, polling /me for the entitlement Shopify's orders/paid webhook
+            grants server-side, then hands the parent straight into the app. */}
+        {purchaseState.kind === 'awaiting-payment' && (
+          <p className="lp__purchase-status">
+            お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。
+          </p>
+        )}
+        {purchaseState.kind === 'paid' && (
+          <div className="lp__purchase-status lp__purchase-status--paid">
+            <p>ご購入ありがとうございます！</p>
+            <a className="lp__cta lp__cta--primary" href="/play/">つづきから あそぶ</a>
+          </div>
         )}
       </section>
 

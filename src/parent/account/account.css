@@ -55,12 +55,21 @@
   color: #fff;
   border: none;
   font-weight: 700;
+  text-decoration: none;
+  display: inline-block;
 }
 .account__button:disabled { background: #a9c3dc; cursor: not-allowed; }
 .account__button--danger { background: #b0322f; }
 
 .account__message { margin-top: 0.75rem; font-size: 0.85rem; }
 .account__message--error { color: #b0632f; }
+.account__message--success {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.account__message--success p { margin: 0; font-weight: 700; }
 
 .account__logout {
   display: block;
