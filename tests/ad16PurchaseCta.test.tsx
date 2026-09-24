@@ -55,7 +55,13 @@ describe('AD-16 §1 — the account page purchase CTA', () => {
     // object so the assertion can observe (a lack of) assignment without a real navigation
     // attempt.
     Object.defineProperty(window, 'location', { value: { ...originalLocation, href: '' }, writable: true });
-    const openSpy = vi.fn(() => ({}) as Window);
+    // AD-14 decision 7 (fixing 4e660e8's own iOS Safari bug): window.open must be called with a
+    // BLANK url, never 'noopener' (which always returns null by spec — indistinguishable from a
+    // real popup block on iOS).
+    const fakeCheckoutWindow = { location: { href: '' } } as unknown as Window;
+    const openSpy = vi.fn((_url?: string, _target?: string, features?: string) =>
+      typeof features === 'string' && features.includes('noopener') ? null : fakeCheckoutWindow,
+    );
     vi.stubGlobal('open', openSpy);
 
     const user = userEvent.setup();
@@ -63,8 +69,9 @@ describe('AD-16 §1 — the account page purchase CTA', () => {
     await waitFor(() => expect(screen.getByText('購入手続きへ進む')).toBeInTheDocument());
     await user.click(screen.getByText('購入手続きへ進む'));
 
+    await waitFor(() => expect(openSpy).toHaveBeenCalledWith('', '_blank'));
     await waitFor(() =>
-      expect(openSpy).toHaveBeenCalledWith('https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc123', '_blank', 'noopener'),
+      expect(fakeCheckoutWindow.location.href).toBe('https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc123'),
     );
     expect(window.location.href).toBe(''); // this tab never navigates away
     expect(
@@ -114,7 +121,7 @@ describe('AD-16 §1 — the account page purchase CTA', () => {
       }
       return new Response('not found', { status: 404 });
     }));
-    vi.stubGlobal('open', vi.fn(() => ({}) as Window));
+    vi.stubGlobal('open', vi.fn(() => ({ location: { href: '' } }) as unknown as Window));
 
     const user = userEvent.setup();
     await renderConfiguredAccountPage();

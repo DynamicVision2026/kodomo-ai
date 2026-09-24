@@ -94,17 +94,23 @@ describe('LandingPage', () => {
       }
       return new Response('not found', { status: 404 });
     }));
-    // AD-14 decision 7: a real window.open() call that jsdom can actually honor (a bare `{}`
-    // return, since nothing here reads its properties) — this is the "popup allowed" path.
-    const openSpy = vi.fn(() => ({}) as Window);
+    // AD-14 decision 7 (fixing 4e660e8's own iOS Safari bug): window.open must be called with
+    // a BLANK url, never 'noopener' (which always returns null by spec — indistinguishable from
+    // a real popup block on iOS) — this fake window stands in for the tab it opens, so the
+    // assertions below can see it get navigated to the real checkout URL afterward.
+    const fakeCheckoutWindow = { location: { href: '' } } as unknown as Window;
+    const openSpy = vi.fn((_url?: string, _target?: string, features?: string) =>
+      typeof features === 'string' && features.includes('noopener') ? null : fakeCheckoutWindow,
+    );
     vi.stubGlobal('open', openSpy);
     const { LandingPage: LoggedInLandingPage } = await import('../src/lp/LandingPage');
     const user = userEvent.setup();
     render(<LoggedInLandingPage />);
 
     await user.click(screen.getByText('購入する', { selector: 'button' }));
+    await waitFor(() => expect(openSpy).toHaveBeenCalledWith('', '_blank'));
     await waitFor(() =>
-      expect(openSpy).toHaveBeenCalledWith('https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc', '_blank', 'noopener'),
+      expect(fakeCheckoutWindow.location.href).toBe('https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc'),
     );
     // The original tab itself never navigates away — the checkout lives in the new tab only.
     expect(window.location.href).toBe('');
@@ -132,7 +138,7 @@ describe('LandingPage', () => {
       }
       return new Response('not found', { status: 404 });
     }));
-    vi.stubGlobal('open', vi.fn(() => ({}) as Window));
+    vi.stubGlobal('open', vi.fn(() => ({ location: { href: '' } }) as unknown as Window));
     const { LandingPage: LoggedInLandingPage } = await import('../src/lp/LandingPage');
     const user = userEvent.setup();
     render(<LoggedInLandingPage />);
