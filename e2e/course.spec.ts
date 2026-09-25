@@ -15,17 +15,19 @@ import { test, expect, type Page } from '@playwright/test';
  * spec is run against its own rebuild, not the repo's default `dist/`.
  */
 
-const ME_RESPONSE = {
-  familyId: 'fam_test',
-  email: 'test@example.com',
-  entitlements: [],
-  profiles: [{ id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2 }],
-  trials: [],
-  courseAllowed: true,
-};
+function meResponse(courseAllowed: boolean) {
+  return {
+    familyId: 'fam_test',
+    email: 'test@example.com',
+    entitlements: [],
+    profiles: [{ id: 'p1', avatarId: 'a1', nicknameId: 'n1', stage: 2 }],
+    trials: [],
+    courseAllowed,
+  };
+}
 
-async function mockCourseBackend(page: Page) {
-  await page.route('**/api/v1/me', (route) => route.fulfill({ json: ME_RESPONSE }));
+async function mockCourseBackend(page: Page, courseAllowed = true) {
+  await page.route('**/api/v1/me', (route) => route.fulfill({ json: meResponse(courseAllowed) }));
   await page.route('**/api/v1/profiles/p1/progress/m1', (route) =>
     route.fulfill({
       json: {
@@ -127,5 +129,30 @@ test.describe('WO-C1 — course shell, demo lesson end to end', () => {
     await page.getByRole('button', { name: /プロフィール 1/ }).click();
     await page.getByRole('button', { name: 'おうちの 人 へ' }).click();
     await expect(page.getByRole('heading', { name: 'おうちの 人 へ' })).toBeVisible();
+  });
+});
+
+/**
+ * WO-C1 §1 / Coordinator (before-deploy checklist): with the build-time flag off (this build was
+ * NOT built with VITE_COURSE_ENABLED=1 — see the file-level comment on how it WAS built), an
+ * allowlisted family reaches the real garden and a non-allowlisted family sees nothing course-
+ * shaped at all, only the "coming soon" message — never a login wall, never a partial/broken
+ * render, and critically never the garden itself. `me.courseAllowed` is the only thing that
+ * differs between the two tests below.
+ */
+test.describe('WO-C1 — production gate: build flag off, per-family allowlist', () => {
+  test('courseAllowed: true -> the real garden renders (flag-off does not hide it)', async ({ page }) => {
+    await mockCourseBackend(page, true);
+    await page.goto('/course/');
+    await page.getByRole('button', { name: /プロフィール 1/ }).click();
+    await expect(page.getByRole('heading', { name: 'ナゼホリの にわ' })).toBeVisible();
+  });
+
+  test('courseAllowed: false -> "coming soon" only, never the garden or a profile picker', async ({ page }) => {
+    await mockCourseBackend(page, false);
+    await page.goto('/course/');
+    await expect(page.getByText('この コースは、いま じゅんび中です。')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'ナゼホリの にわ' })).not.toBeVisible();
+    await expect(page.getByText('だれが つかいますか？')).not.toBeVisible();
   });
 });
