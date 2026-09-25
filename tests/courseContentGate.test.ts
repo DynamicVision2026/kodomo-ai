@@ -112,3 +112,58 @@ describe('checkCourseLesson — content lint gating (approved lessons only fail 
     expect(result.contentLintIssues).toEqual([]);
   });
 });
+
+describe('checkCourseLesson — sentence-length is per-sentence, not per-string (Coordinator correction)', () => {
+  it('two short sentences that together exceed 35 chars produce no length warning', () => {
+    // 20 chars + 20 chars = 40 (over 35 as one string), but neither sentence alone is.
+    const sentenceA = 'あ'.repeat(20) + '。';
+    const sentenceB = 'い'.repeat(20) + '。';
+    const lesson = baseLesson({ teachBack: { prompt: sentenceA + sentenceB } });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintWarnings.some((w) => w.includes('[length]'))).toBe(false);
+  });
+
+  it('one sentence over 35 chars is still caught, quoting the offending sentence', () => {
+    const longSentence = 'あ'.repeat(40) + '。';
+    const lesson = baseLesson({ teachBack: { prompt: longSentence } });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    const hit = result.contentLintWarnings.find((w) => w.includes('[length]'));
+    expect(hit).toBeDefined();
+    expect(hit).toContain(longSentence);
+  });
+
+  it('a text with no terminal punctuation is treated as one sentence (unchanged from before)', () => {
+    const lesson = baseLesson({ title: 'x'.repeat(50) });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintWarnings.some((w) => w.includes('[length]'))).toBe(true);
+  });
+
+  it('parentCard/family.aiExample are never length-checked (parent-facing, per Coordinator)', () => {
+    const lesson = baseLesson({
+      family: { whoKnows: '', aiExample: 'あ'.repeat(60), applyTool: '', notes: [] },
+      parentCard: { tool: 'あ'.repeat(60), method: '', sources: [], dinnerQuestion: '' },
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintWarnings.some((w) => w.includes('[length]'))).toBe(false);
+  });
+});
+
+describe('checkCourseLesson — PII allowlist (Coordinator: exact-match only, no loosened lint)', () => {
+  it('the approved family.notes safety sentence is never flagged as pii-word', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      family: { whoKnows: '', aiExample: '', applyTool: '', notes: ['AI には、名前や 学校名、じゅうしょを 入れない'] },
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintIssues.some((i) => i.includes('pii-word'))).toBe(false);
+  });
+
+  it('a DIFFERENT sentence merely containing the same PII words is still flagged (exact-match only)', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      family: { whoKnows: '', aiExample: '', applyTool: '', notes: ['学校名を きいて みよう'] },
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintIssues.some((i) => i.includes('pii-word'))).toBe(true);
+  });
+});
