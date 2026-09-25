@@ -7,6 +7,7 @@ import { handleAuthLogout } from './handlers/authLogout.js';
 import { handleMe } from './handlers/me.js';
 import { handleCreateProfile, handleDeleteProfile, handleUpdateProfile } from './handlers/profiles.js';
 import { handleGetProgress, handlePutProgress } from './handlers/progress.js';
+import { handleGetCourseProgress, handlePutCourseProgress } from './handlers/courseProgress.js';
 import { handleImport } from './handlers/importHandler.js';
 import { handleDeleteSession, handleListSessions } from './handlers/sessions.js';
 import { handleAccountEmail, handleDeleteAccount } from './handlers/account.js';
@@ -64,6 +65,15 @@ async function routeApi(request: Request, env: Env, path: string): Promise<Respo
     const [, profileId, , moduleId] = segments;
     if (method === 'GET') return handleGetProgress(request, env, profileId!, moduleId!);
     if (method === 'PUT') return handlePutProgress(request, env, profileId!, moduleId!);
+  }
+
+  // WO-C1: the formal course's own progress endpoint, deliberately a separate path
+  // (course-progress, not progress) from the Playground's above — see courseProgress.ts's header
+  // comment on why the two shapes are never merged into one handler.
+  if (segments[0] === 'profiles' && segments[2] === 'course-progress' && segments.length === 4) {
+    const [, profileId, , courseId] = segments;
+    if (method === 'GET') return handleGetCourseProgress(request, env, profileId!, courseId!);
+    if (method === 'PUT') return handlePutCourseProgress(request, env, profileId!, courseId!);
   }
 
   if (method === 'POST' && path === '/api/v1/import') return handleImport(request, env);

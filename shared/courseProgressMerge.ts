@@ -41,6 +41,10 @@ export interface CourseProgressState {
   sixtyPercentNoticeShown: string[];
 }
 
+export function emptyLessonProgressState(): CourseLessonProgressState {
+  return { listenDone: false, exercisesDone: [], makeDone: false, teachBackDone: false, stars: 0, lastStepAt: '' };
+}
+
 export function emptyCourseProgressState(): CourseProgressState {
   return { lessons: {}, earlyUnlockedParts: [], sixtyPercentNoticeShown: [] };
 }

@@ -31,7 +31,14 @@ export type EventName =
   // co-play only) — whether the family actually took it into the real world or skipped it this
   // time. Engagement signal only, never a correctness/completion judgment — the screen has no way
   // to know what happened outside the app. Also not in spec v0.5 §11.
-  | 'real_ai_lab_tried' | 'real_ai_lab_skipped';
+  | 'real_ai_lab_tried' | 'real_ai_lab_skipped'
+  // WO-C1 §5: the formal course's own event set — same `track()`/plausible wiring, additive only
+  // (the Playground's own events above are untouched). `course_item_done` fires once per exercise
+  // id the first time its best-option feedback is shown (matches `exercisesDone`'s own semantics
+  // in shared/courseProgressMerge.ts); `course_lesson_complete`/`course_stage_complete` fire on
+  // the 100%-crossing exactly once, mirroring `shouldShowSixtyPercentNotice`'s own once-only shape.
+  | 'course_lesson_start' | 'course_listen_done' | 'course_item_done' | 'course_make_done'
+  | 'course_teachback_done' | 'course_family_star' | 'course_lesson_complete' | 'course_stage_complete';
 
 type Props = Record<string, string | number | boolean>;
 

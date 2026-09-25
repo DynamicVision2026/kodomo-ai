@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="ふみ台（ふみ台を 見る）"><g stroke="#1B1F3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+ <line x1="31" y1="5" x2="45" y2="5"/>
+ <path d="M25 18 L33 8" fill="none"/>
+ <line x1="18" y1="26" x2="18" y2="32"/><line x1="23.5" y1="26" x2="23.5" y2="32"/>
+ <rect x="15.5" y="15.5" width="10.5" height="12" rx="4.5" fill="#fff"/>
+ <circle cx="20.5" cy="9" r="4.5" fill="#fff"/>
+ <path d="M8 32 H34 L37 44 H31.5 L30 38.5 H12 L10.5 44 H5 Z" fill="#FFD23F"/>
+</g></svg>

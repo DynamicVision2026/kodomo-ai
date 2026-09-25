@@ -4,6 +4,7 @@
  * per handler.
  */
 import type { ModuleProgressState } from '../../shared/progressMerge.js';
+import type { CourseLessonProgressState, CourseProgressState } from '../../shared/courseProgressMerge.js';
 
 export type FamilyStatus = 'active' | 'deleted';
 
@@ -230,42 +231,21 @@ export interface ProgressDoc extends ModuleProgressState {
  * function every Playground sync call touches would be exactly the kind of non-additive risk
  * WO-C1 rules out ("only additive changes to shared code; all existing tests stay green").
  * Percent-complete is deliberately NOT stored — it's derived from these raw signals every read
- * (`shared/courseProgress.ts`'s `computeLessonPercent`), the same "don't persist a derived number
+ * (`src/course/progress.ts`'s `computeLessonPercent`), the same "don't persist a derived number
  * that can drift from the authoritative flags" principle `ProgressDoc` itself already follows
  * (compare: `unitsCompleted` is computed from `missions[].done` on read, never stored).
+ *
+ * The field shapes themselves live in `shared/courseProgressMerge.ts` (`CourseLessonProgressState`/
+ * `CourseProgressState`) — the one place both this file and `src/course/progress.ts` import them
+ * from, exactly mirroring how `ProgressDoc` above extends `ModuleProgressState` from
+ * `shared/progressMerge.ts` rather than re-declaring its fields.
  */
-export interface CourseLessonProgress {
-  listenDone: boolean;
-  /** Exercise ids whose best-option feedback has been shown (WO-C1 §4: "item is done once the
-   *  child has seen the best option's feedback") — a set, represented as a sorted-unique array
-   *  for Firestore (no native Set type), unioned on merge. */
-  exercisesDone: string[];
-  /** Set only once, on the make step's 「いって みた！」 button (WO-C1 §3/§4). */
-  makeDone: boolean;
-  /** Set only once, on teach-back's 「いえた！」 button. */
-  teachBackDone: boolean;
-  /** WO-C1 §4: "★ is separate and never needed for 100%. It can be set only after the make
-   *  step." — a count, not a boolean, since the family-inquiry screen's optional 「おうちで
-   *  しらべた ★」 button can be pressed more than once across visits. */
-  stars: number;
-  /** ISO timestamp of the most recent recorded step in this lesson — the parent screen's own
-   *  "date of the last step" per lesson (WO-C1 §3 screen 8). */
-  lastStepAt: string;
-}
+export type CourseLessonProgress = CourseLessonProgressState;
 
-export interface CourseProgressDoc {
+export interface CourseProgressDoc extends CourseProgressState {
   schemaVersion: number;
   rev: number;
   updatedAt: string;
-  lessons: Record<string, CourseLessonProgress>;
-  /** Part ids (lesson or "playground") a parent has opened early from the parent screen (WO-C1
-   *  §4: "A parent can open the next part early... Replaying never lowers progress" — an early
-   *  unlock is itself monotonic: once granted it is never revoked by a later merge). */
-  earlyUnlockedParts: string[];
-  /** Lesson ids where the "きょうは ここまで で OK" 60%-checkpoint notice has already been shown
-   *  once (WO-C1 §4: "show... once") — tracked per lesson so it can correctly re-arm for the
-   *  next lesson. */
-  sixtyPercentNoticeShown: string[];
 }
 
 export interface SessionDoc {

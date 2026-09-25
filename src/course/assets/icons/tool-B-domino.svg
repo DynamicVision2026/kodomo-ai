@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="ドミノ（まえの りゆうを 見る）"><g stroke="#1B1F3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+ <line x1="3" y1="43" x2="45" y2="43"/>
+ <g transform="rotate(40 14 42)"><rect x="5" y="19" width="9" height="23" rx="1.5" fill="#fff"/><line x1="6.5" y1="30.5" x2="12.5" y2="30.5" stroke-width="2"/><circle cx="9.5" cy="24.8" r="1.8" fill="#1B1F3A" stroke="none"/><circle cx="9.5" cy="36.2" r="1.8" fill="#1B1F3A" stroke="none"/></g>
+ <g transform="rotate(20 28 42)"><rect x="19" y="19" width="9" height="23" rx="1.5" fill="#FFD23F"/><line x1="20.5" y1="30.5" x2="26.5" y2="30.5" stroke-width="2"/><circle cx="23.5" cy="24.8" r="1.8" fill="#1B1F3A" stroke="none"/><circle cx="23.5" cy="36.2" r="1.8" fill="#1B1F3A" stroke="none"/></g>
+ <g><rect x="34" y="19" width="9" height="23" rx="1.5" fill="#fff"/><line x1="35.5" y1="30.5" x2="41.5" y2="30.5" stroke-width="2"/><circle cx="38.5" cy="24.8" r="1.8" fill="#1B1F3A" stroke="none"/><circle cx="38.5" cy="36.2" r="1.8" fill="#1B1F3A" stroke="none"/></g>
+</g></svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="おべんとうばこ（ふたを あける）"><g stroke="#1B1F3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+ <rect x="6" y="4" width="36" height="9" rx="4" fill="#fff" transform="rotate(-12 24 8.5)"/>
+ <rect x="5" y="21" width="38" height="21" rx="5" fill="#fff"/>
+ <line x1="22" y1="21" x2="22" y2="42"/>
+ <path d="M13.5 25.5 L19 36.5 H8 Z" fill="#fff"/>
+ <rect x="10" y="33.5" width="7" height="3.5" fill="#1B1F3A" stroke="none"/>
+ <rect x="26.5" y="25.5" width="12" height="5.5" rx="2" fill="#FFD23F"/>
+ <rect x="26.5" y="32.5" width="12" height="5.5" rx="2" fill="#FFD23F"/>
+</g></svg>

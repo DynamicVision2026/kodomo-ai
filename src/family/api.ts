@@ -14,7 +14,11 @@ const API_BASE_URL: string | undefined = import.meta.env.VITE_FAMILY_API_URL;
 
 export type ApiFailure = { ok: false; reason: 'not_configured' | 'network' | 'server' | string };
 
-async function apiFetch(path: string, init?: RequestInit): Promise<Response | ApiFailure> {
+/** Exported for `src/course/api.ts` to reuse verbatim (WO-C1: "reuse... the shared infrastructure
+ *  [including] family account" rather than a second copy of this same-origin-proxy/failure-shape
+ *  logic) — the course's own API calls go through the identical `/api/v1` reverse-proxied base and
+ *  the identical `ApiFailure` sentinel, just against course-specific paths. */
+export async function apiFetch(path: string, init?: RequestInit): Promise<Response | ApiFailure> {
   if (!API_BASE_URL) return { ok: false, reason: 'not_configured' };
   try {
     return await fetch(`${API_BASE_URL}${path}`, {
@@ -36,7 +40,7 @@ async function apiFetch(path: string, init?: RequestInit): Promise<Response | Ap
  *  test-mocked) Response never has it — so it's the unambiguous discriminator, and (unlike
  *  `instanceof Response`) still works against a plain `{ ok, json }` fetch mock, not just a real
  *  `Response` instance. */
-function isFailure(res: Response | ApiFailure): res is ApiFailure {
+export function isFailure(res: Response | ApiFailure): res is ApiFailure {
   return 'reason' in res;
 }
 

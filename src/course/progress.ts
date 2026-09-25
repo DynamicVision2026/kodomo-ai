@@ -2,31 +2,26 @@
  * WO-C1 §4: pure progress/unlock math for the formal course. No storage/network access — callers
  * (src/course/CourseApp.tsx, the backend's course-progress handler) feed in already-loaded state
  * and act on what these functions return. Unit-tested directly (tests/courseProgress.test.ts).
+ *
+ * The progress shape itself (`CourseLessonProgress`/`CourseProgressState`) is imported from
+ * `shared/courseProgressMerge.ts`, not re-declared here — that file is the one canonical
+ * definition both this side and `backend/src/schema.ts`'s `CourseProgressDoc` build on, mirroring
+ * how `src/engine/storage.ts` and `backend/src/schema.ts`'s `ProgressDoc` both already build on
+ * `shared/progressMerge.ts`'s `ModuleProgressState` rather than keeping their own copies.
  */
 import type { CourseLesson, CoursePart } from './content/types';
+import {
+  emptyLessonProgressState,
+  emptyCourseProgressState,
+  type CourseLessonProgressState,
+  type CourseProgressState,
+} from '../../shared/courseProgressMerge';
 
-export interface CourseLessonProgress {
-  listenDone: boolean;
-  exercisesDone: string[];
-  makeDone: boolean;
-  teachBackDone: boolean;
-  stars: number;
-  lastStepAt: string;
-}
+export type CourseLessonProgress = CourseLessonProgressState;
+export type { CourseProgressState };
 
-export function emptyLessonProgress(): CourseLessonProgress {
-  return { listenDone: false, exercisesDone: [], makeDone: false, teachBackDone: false, stars: 0, lastStepAt: '' };
-}
-
-export interface CourseProgressState {
-  lessons: Record<string, CourseLessonProgress>;
-  earlyUnlockedParts: string[];
-  sixtyPercentNoticeShown: string[];
-}
-
-export function emptyCourseProgress(): CourseProgressState {
-  return { lessons: {}, earlyUnlockedParts: [], sixtyPercentNoticeShown: [] };
-}
+export const emptyLessonProgress = emptyLessonProgressState;
+export const emptyCourseProgress = emptyCourseProgressState;
 
 /**
  * WO-C1 §4: "Lesson %: listen 20; exercises 40, split evenly across that lesson's exercises;
