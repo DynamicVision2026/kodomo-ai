@@ -1,0 +1,18 @@
+{
+  "courseStage": 2,
+  "parts": [
+    { "id": "playground", "kind": "playground", "missions": 8 },
+    { "id": "c01", "kind": "lesson" },
+    { "id": "c02", "kind": "lesson" },
+    { "id": "c03", "kind": "lesson" },
+    { "id": "c04", "kind": "lesson" },
+    { "id": "c05", "kind": "lesson" },
+    { "id": "c06", "kind": "lesson" },
+    { "id": "c07", "kind": "lesson" },
+    { "id": "c08", "kind": "lesson" },
+    { "id": "c09", "kind": "lesson" },
+    { "id": "c10", "kind": "lesson" },
+    { "id": "c11", "kind": "lesson" },
+    { "id": "c12", "kind": "lesson" }
+  ]
+}

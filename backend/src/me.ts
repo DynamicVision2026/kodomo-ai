@@ -3,6 +3,7 @@ import type { ProfileDoc, TrialDoc } from './schema.js';
 import { profilesCollection, trialsCollection } from './schema.js';
 import { getFamily, listEntitlements } from './family.js';
 import { trialState } from './trial.js';
+import { isCourseAllowedForFamily } from './course.js';
 
 /** Never the full address over the wire to the client that's already authenticated as this
  *  family — `/me` is read by ordinary page JS, and there's no reason it needs the whole string.
@@ -27,6 +28,12 @@ export interface MeResponse {
    *  it; login/`/me` never do). Only ever lists a module once it has a trial doc — an
    *  entitled-only family with no trial history for that module has nothing to report here. */
   trials: { moduleId: string; state: 'not_started' | 'active' | 'expired'; endsAt: string | null }[];
+  /** WO-C1 §1: true only when this family's id is in `config/course.allowFamilies` — the
+   *  per-family half of course visibility. The OTHER half (the build-time `VITE_COURSE_ENABLED`
+   *  flag, for general availability once pricing/entitlement are decided) is a frontend-only
+   *  concern and never appears here; the course tile's own visibility rule is
+   *  `VITE_COURSE_ENABLED || courseAllowed`. */
+  courseAllowed: boolean;
 }
 
 export async function buildMeResponse(env: Env, familyId: string): Promise<MeResponse | null> {
@@ -36,6 +43,7 @@ export async function buildMeResponse(env: Env, familyId: string): Promise<MeRes
   const entitlements = await listEntitlements(env, familyId);
   const profiles = await env.db.list<ProfileDoc>(profilesCollection(familyId));
   const trialDocs = await env.db.list<TrialDoc>(trialsCollection(familyId));
+  const courseAllowed = await isCourseAllowedForFamily(env, familyId);
 
   return {
     familyId,
@@ -45,6 +53,7 @@ export async function buildMeResponse(env: Env, familyId: string): Promise<MeRes
       .filter((p) => !p.data.deletedAt)
       .map((p) => ({ id: p.id, avatarId: p.data.avatarId, nicknameId: p.data.nicknameId, stage: p.data.stage })),
     trials: trialDocs.map((t) => ({ moduleId: t.id, state: trialState(t.data), endsAt: t.data.endsAt })),
+    courseAllowed,
   };
 }
 

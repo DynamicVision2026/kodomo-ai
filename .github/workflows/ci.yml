@@ -57,6 +57,8 @@ jobs:
         run: npm run gate:no-purchase-copy
       - name: Gate — no pre-AD-12 cream/gold theme in any /play stylesheet (post-launch-check)
         run: npm run gate:no-old-theme
+      - name: Gate — course content review approval (WO-C1 §5, production builds only)
+        run: npm run gate:course-review
       - name: Content lint (kanji grade, ruby, length, tags, banned words, PII)
         run: npm run lint:content
       - name: Unit tests

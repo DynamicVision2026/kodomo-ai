@@ -1,0 +1,180 @@
+{
+ "id": "c00-demo",
+ "title": "デモ・れんしゅう",
+ "tools": ["A", "B"],
+ "practice": "chain2",
+ "review": {
+  "model": "pass",
+  "philosophy": null,
+  "japanese": null
+ },
+ "listen": {
+  "audio": "audio/course/c00-demo_listen.mp3",
+  "methodCards": ["A", "B"],
+  "transcript": [
+   {
+    "part": "デモ",
+    "speaker": "ポン太",
+    "text": "（プレースホルダー）これは デモの きろくです。ほんとうの おんせいは まだ ありません。"
+   },
+   {
+    "part": "デモ",
+    "speaker": "ハテナ",
+    "text": "（プレースホルダー）画面の うごきを たしかめる ための だけの ないようです。"
+   }
+  ]
+ },
+ "exercises": [
+  {
+   "id": "c00-demo-e01",
+   "tool": "A",
+   "scene": { "text": "（プレースホルダー）デモの ばめん・単一の れんしゅう" },
+   "q0": { "speaker": "ポン太", "text": "（デモ）これは どういう こと？" },
+   "steps": [
+    {
+     "answer": { "speaker": "おかあさん", "text": "（デモ）それは あとで わかる よ。" },
+     "hint": { "h1": "（デモ）ゆびで させる ことばは？", "h2Highlight": "あとで わかる" },
+     "options": [
+      {
+       "id": "a",
+       "role": "best",
+       "kind": "question",
+       "tool": "A",
+       "text": "（デモ）あとでって、いつ？",
+       "reply": { "speaker": "おかあさん", "text": "（デモ）ごご 3時 ごろ だよ。" },
+       "feedback": "（デモ）ふたを あけたね。これで OK。"
+      },
+      {
+       "id": "b",
+       "role": "otherTool",
+       "kind": "question",
+       "tool": "B",
+       "text": "（デモ）なんで、あとで わかるの？",
+       "reply": { "speaker": "おかあさん", "text": "（デモ）じゅんびが いる からね。" },
+       "feedback": "（デモ）りゆうを きいたね。でも いまは べつの どうぐを つかって みよう。"
+      },
+      {
+       "id": "c",
+       "role": "nearMiss",
+       "kind": "okButton",
+       "tool": null,
+       "text": "これでOK",
+       "reply": { "speaker": "ポン太", "text": "（デモ）……あれ、まだ わからない。" },
+       "feedback": "（デモ）もう いちど、ことばの なかみを たしかめて みよう。"
+      }
+     ]
+    }
+   ],
+   "review": { "model": "pass", "philosophy": null, "japanese": null }
+  },
+  {
+   "id": "c00-demo-e02",
+   "tool": "B",
+   "scene": { "text": "（プレースホルダー）デモの ばめん・2だんの チェーン れんしゅう" },
+   "q0": { "speaker": "ポン太", "text": "（デモ）なんで、そう なるの？" },
+   "steps": [
+    {
+     "answer": { "speaker": "おとうさん", "text": "（デモ）雨が ふる から だよ。" },
+     "hint": { "h1": "（デモ）「〜から」の まえの ドミノは？", "h2Highlight": "雨が ふる から" },
+     "options": [
+      {
+       "id": "a",
+       "role": "best",
+       "kind": "question",
+       "tool": "B",
+       "text": "（デモ）なんで、雨が ふると そう なるの？",
+       "reply": { "speaker": "おとうさん", "text": "（デモ）みちが すべりやすく なる からね。" },
+       "feedback": "（デモ）まえの ドミノが 見えたね。つぎの だんへ すすもう。"
+      },
+      {
+       "id": "b",
+       "role": "nearMiss",
+       "kind": "question",
+       "tool": "B",
+       "text": "（デモ）なんで、雨は ふるの？",
+       "reply": { "speaker": "おとうさん", "text": "（デモ）くもが おおきく なる からね。" },
+       "feedback": "（デモ）はじめの しつもんから はなれて しまったね。こたえの 中の ことばに もどろう。"
+      },
+      {
+       "id": "c",
+       "role": "otherTool",
+       "kind": "question",
+       "tool": "A",
+       "text": "（デモ）すべりやすいって、どれくらい？",
+       "reply": { "speaker": "おとうさん", "text": "（デモ）ふつうより ずっと すべる よ。" },
+       "feedback": "（デモ）いい しつもん だけど、いまは まえの ドミノを さがす どうぐを つかって みよう。"
+      }
+     ]
+    },
+    {
+     "answer": { "speaker": "おとうさん", "text": "（デモ）すべりやすいと、ころびやすい から だよ。" },
+     "hint": { "h1": "（デモ）その まえの ドミノは？", "h2Highlight": "ころびやすい" },
+     "options": [
+      {
+       "id": "a",
+       "role": "best",
+       "kind": "question",
+       "tool": "B",
+       "text": "（デモ）なんで、ころぶと こまるの？",
+       "reply": { "speaker": "おとうさん", "text": "（デモ）けがを するかも しれない からね。" },
+       "feedback": "（デモ）ドミノを 2つ たどれたね。デモは これで おわりです。"
+      },
+      {
+       "id": "b",
+       "role": "nearMiss",
+       "kind": "question",
+       "tool": "B",
+       "text": "（デモ）なんで、雨が ふるの？",
+       "reply": { "speaker": "おとうさん", "text": "（デモ）その はなしは もう したよ。" },
+       "feedback": "（デモ）ひとつ まえの こたえに もどって しまったね。もう いちど、いま の こたえから つくろう。"
+      },
+      {
+       "id": "c",
+       "role": "otherTool",
+       "kind": "question",
+       "tool": "A",
+       "text": "（デモ）けがって、どんな けが？",
+       "reply": { "speaker": "おとうさん", "text": "（デモ）ひざを すりむいたり する かな。" },
+       "feedback": "（デモ）いい しつもん だけど、いまは まえの ドミノを さがす どうぐを つかって みよう。"
+      }
+     ]
+    }
+   ],
+   "review": { "model": "pass", "philosophy": null, "japanese": null }
+  }
+ ],
+ "make": [
+  {
+   "tool": "A",
+   "dialogue": [
+    { "speaker": "ポン太", "text": "（プレースホルダー）デモの かいわです。" },
+    { "speaker": "ハテナ", "text": "（デモ）どうぐを つかって、しつもんを つくって みよう。" }
+   ],
+   "methodCard": "A",
+   "starterCards": ["どういう こと？", "たとえば？"],
+   "parentPrompts": [
+    { "step": "notice", "text": "（デモ）まだ よく わからない ところは ある？" },
+    { "step": "point", "text": "（デモ）ゆびで させる ことば、どれ？" },
+    { "step": "card", "text": "（デモ）カードを 見て みよう。" },
+    { "step": "check", "text": "（デモ）その しつもんで なにが わかりそう？" }
+   ],
+   "selfCheck": ["こたえの ことばから つくった", "ふたを あけた", "きいたら なにが わかるか いえる"],
+   "parentPeek": ["（デモ）ぺあれんとぴーくの れい"]
+  }
+ ],
+ "teachBack": {
+  "prompt": "（デモ）おうちの 人に ひとこと せつめい しよう。"
+ },
+ "family": {
+  "whoKnows": "（デモ）だれに きくと いいか の せつめい プレースホルダー。",
+  "aiExample": "（デモ）AI れい プレースホルダー。",
+  "applyTool": "（デモ）どうぐを AI の こたえにも つかって みよう。",
+  "notes": ["（デモ）ちゅうい1", "（デモ）ちゅうい2"]
+ },
+ "parentCard": {
+  "tool": "A / B （デモ）",
+  "method": "（デモ）このカードは プレースホルダーです。",
+  "sources": [],
+  "dinnerQuestion": "（デモ）きょうの ゆうしょくの しつもん プレースホルダー。"
+ }
+}

@@ -15,6 +15,10 @@ export default defineConfig({
       input: {
         lp: resolve(__dirname, 'index.html'),
         play: resolve(__dirname, 'play/index.html'),
+        // WO-C1: the formal course's own shell — a separate entry, deliberately not routed
+        // through src/main.tsx/MissionShell (Coordinator: "build a separate course shell with
+        // its own entry and route... do not generalise MissionShell or main.tsx").
+        course: resolve(__dirname, 'course/index.html'),
         login: resolve(__dirname, 'login/index.html'),
         account: resolve(__dirname, 'account/index.html'),
         claim: resolve(__dirname, 'claim/index.html'),

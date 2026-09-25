@@ -56,6 +56,9 @@ export interface MeResponse {
   /** AD-16 §5: per-module trial state — absent/empty for a family with no trial history for a
    *  given module yet. */
   trials: { moduleId: string; state: 'not_started' | 'active' | 'expired'; endsAt: string | null }[];
+  /** WO-C1 §1: true when this family is in `config/course.allowFamilies`. The course tile's own
+   *  visibility rule is `import.meta.env.VITE_COURSE_ENABLED === '1' || me.courseAllowed`. */
+  courseAllowed: boolean;
 }
 
 export async function requestLoginCode(email: string): Promise<{ ok: true } | ApiFailure> {

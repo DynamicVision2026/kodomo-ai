@@ -177,6 +177,19 @@ export interface RefundPolicyDoc {
   version: string;
 }
 
+/**
+ * WO-C1: the formal course's own family allowlist, edited by hand in the Firestore console
+ * exactly like `config/refundPolicy` above (no admin-dashboard UI for either — WO-C1 §4
+ * explicitly asks for none). Membership alone decides visibility; there is no separate role —
+ * a listed family sees the course, including any not-yet-fully-reviewed lesson content (behind
+ * its own 「レビュー中」 badge — see `isCourseContentApprovedForProduction` in
+ * shared/courseContent.ts), and staff/the Founder preview by adding their own test family's id
+ * here, the same way any allowlisted family would be added.
+ */
+export interface CourseAllowFamiliesDoc {
+  familyIds: string[];
+}
+
 /** Append-only; no endpoint ever updates or deletes an entry (AD-16 §8). */
 export interface AuditLogDoc {
   at: string;
@@ -206,6 +219,53 @@ export interface ProgressDoc extends ModuleProgressState {
   schemaVersion: number;
   rev: number;
   updatedAt: string;
+}
+
+/**
+ * WO-C1: per-lesson progress signals for the formal course, one doc per (profile, courseId) —
+ * deliberately its own subcollection (`courseProgress/`, not `progress/`) rather than an
+ * extension of `ModuleProgressState`/`ProgressDoc` above. The Playground's progress shape
+ * (missions/moveProgress/milestones/memories/…) has no field that means anything for a
+ * listen→exercises→make→teach-back lesson, and bolting course-only fields onto the shared merge
+ * function every Playground sync call touches would be exactly the kind of non-additive risk
+ * WO-C1 rules out ("only additive changes to shared code; all existing tests stay green").
+ * Percent-complete is deliberately NOT stored — it's derived from these raw signals every read
+ * (`shared/courseProgress.ts`'s `computeLessonPercent`), the same "don't persist a derived number
+ * that can drift from the authoritative flags" principle `ProgressDoc` itself already follows
+ * (compare: `unitsCompleted` is computed from `missions[].done` on read, never stored).
+ */
+export interface CourseLessonProgress {
+  listenDone: boolean;
+  /** Exercise ids whose best-option feedback has been shown (WO-C1 §4: "item is done once the
+   *  child has seen the best option's feedback") — a set, represented as a sorted-unique array
+   *  for Firestore (no native Set type), unioned on merge. */
+  exercisesDone: string[];
+  /** Set only once, on the make step's 「いって みた！」 button (WO-C1 §3/§4). */
+  makeDone: boolean;
+  /** Set only once, on teach-back's 「いえた！」 button. */
+  teachBackDone: boolean;
+  /** WO-C1 §4: "★ is separate and never needed for 100%. It can be set only after the make
+   *  step." — a count, not a boolean, since the family-inquiry screen's optional 「おうちで
+   *  しらべた ★」 button can be pressed more than once across visits. */
+  stars: number;
+  /** ISO timestamp of the most recent recorded step in this lesson — the parent screen's own
+   *  "date of the last step" per lesson (WO-C1 §3 screen 8). */
+  lastStepAt: string;
+}
+
+export interface CourseProgressDoc {
+  schemaVersion: number;
+  rev: number;
+  updatedAt: string;
+  lessons: Record<string, CourseLessonProgress>;
+  /** Part ids (lesson or "playground") a parent has opened early from the parent screen (WO-C1
+   *  §4: "A parent can open the next part early... Replaying never lowers progress" — an early
+   *  unlock is itself monotonic: once granted it is never revoked by a later merge). */
+  earlyUnlockedParts: string[];
+  /** Lesson ids where the "きょうは ここまで で OK" 60%-checkpoint notice has already been shown
+   *  once (WO-C1 §4: "show... once") — tracked per lesson so it can correctly re-arm for the
+   *  next lesson. */
+  sixtyPercentNoticeShown: string[];
 }
 
 export interface SessionDoc {
@@ -252,6 +312,7 @@ export const purchaseIntentPath = (tokenHash: string) => `purchaseIntents/${toke
 export const claimPath = (tokenHash: string) => `claims/${tokenHash}`;
 export const staffPath = (email: string) => `staff/${email}`;
 export const refundPolicyPath = () => 'config/refundPolicy';
+export const courseAllowFamiliesPath = () => 'config/course.allowFamilies';
 export const auditLogCollection = () => 'auditLog';
 export const auditLogPath = (id: string) => `auditLog/${id}`;
 export const profilesCollection = (familyId: string) => `families/${familyId}/profiles`;
@@ -260,6 +321,10 @@ export const progressCollection = (familyId: string, profileId: string) =>
   `families/${familyId}/profiles/${profileId}/progress`;
 export const progressPath = (familyId: string, profileId: string, moduleId: string) =>
   `families/${familyId}/profiles/${profileId}/progress/${moduleId}`;
+export const courseProgressCollection = (familyId: string, profileId: string) =>
+  `families/${familyId}/profiles/${profileId}/courseProgress`;
+export const courseProgressPath = (familyId: string, profileId: string, courseId: string) =>
+  `families/${familyId}/profiles/${profileId}/courseProgress/${courseId}`;
 export const sessionPath = (tokenHash: string) => `sessions/${tokenHash}`;
 export const sessionsCollection = () => 'sessions';
 export const loginCodePath = (emailHash: string) => `loginCodes/${emailHash}`;
