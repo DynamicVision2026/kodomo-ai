@@ -1,0 +1,128 @@
+/**
+ * WO-C1: layout-only styling for the course shell's own screens. Colour/spacing/type come from
+ * AD-12's tokens.css (same discipline primitives.css itself follows) — this file adds no raw hex
+ * or px value that already has a token, and reuses `.ad12-plane`/`.ad12-ink-button`/
+ * `.ad12-tappable`/`.ad12-reading-text`/`.ad12-ui-text` for every surface's own visual treatment.
+ */
+@import '../ad12/tokens.css';
+
+.course-loading,
+.course-screen,
+.course-home {
+  min-height: 100vh;
+  padding: 1.5rem 1.25rem 3rem;
+  background: var(--ad12-field-0);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 640px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.course-profile-picker {
+  align-items: flex-start;
+}
+
+.course-review-badge {
+  align-self: flex-start;
+  background: var(--ad12-accent);
+  color: var(--ad12-ink);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--ad12-radius-chip);
+  margin: 0.75rem 1.25rem 0;
+}
+
+.course-screen__back {
+  align-self: flex-start;
+}
+
+.course-screen__primary {
+  align-self: stretch;
+}
+
+.course-home__garden {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.course-home__footer {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.course-listen__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.course-listen__section-title {
+  opacity: 0.7;
+}
+
+.course-dialogue__speaker {
+  opacity: 0.7;
+  margin-bottom: 0.35rem;
+}
+
+.course-exercise__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.course-exercise__hint-highlight {
+  font-weight: 700;
+}
+
+.course-make__starter-list,
+.course-make__parent-list,
+.course-make__self-check,
+.course-make__peek,
+.course-family__notes ul,
+.course-parent__sources {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.course-lesson__tools {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.course-lesson__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.course-lesson__step--done {
+  opacity: 0.75;
+}
+
+.course-lesson__step-button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.course-parent__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.course-parent__table td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--ad12-field-1);
+}

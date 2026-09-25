@@ -110,12 +110,12 @@ describe('playgroundFlowerPercent', () => {
 });
 
 describe('flowerStageForPercent', () => {
-  it('0% -> たね', () => expect(flowerStageForPercent(0)).toBe('たね'));
-  it('1% -> め (lower boundary)', () => expect(flowerStageForPercent(1)).toBe('め'));
-  it('59% -> め (upper boundary)', () => expect(flowerStageForPercent(59)).toBe('め'));
-  it('60% -> つぼみ (lower boundary)', () => expect(flowerStageForPercent(60)).toBe('つぼみ'));
-  it('99% -> つぼみ (upper boundary)', () => expect(flowerStageForPercent(99)).toBe('つぼみ'));
-  it('100% -> はな', () => expect(flowerStageForPercent(100)).toBe('はな'));
+  it('0% -> seed', () => expect(flowerStageForPercent(0)).toBe('seed'));
+  it('1% -> sprout (lower boundary)', () => expect(flowerStageForPercent(1)).toBe('sprout'));
+  it('59% -> sprout (upper boundary)', () => expect(flowerStageForPercent(59)).toBe('sprout'));
+  it('60% -> bud (lower boundary)', () => expect(flowerStageForPercent(60)).toBe('bud'));
+  it('99% -> bud (upper boundary)', () => expect(flowerStageForPercent(99)).toBe('bud'));
+  it('100% -> flower', () => expect(flowerStageForPercent(100)).toBe('flower'));
 });
 
 describe('computeStagePercent', () => {

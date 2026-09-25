@@ -4,24 +4,13 @@
  * mounted once (`<CourseIconSprite/>`, in the course shell's root) and every `<Icon/>` just
  * references it by id, the standard SVG-sprite technique for many small reused icons.
  */
+import { courseUi } from './content/courseManifest';
 import type { CourseToolId } from './content/types';
 
-/** README.md's own table, verbatim — the one place object/label pairs are named, so every caller
- *  (card alt text, aria-label, the parent-facing method legend) reads from the same source instead
- *  of re-typing them. */
-export const TOOL_LABELS: Record<CourseToolId, { object: string; label: string }> = {
-  A: { object: 'おべんとうばこ', label: 'ふたを あける' },
-  B: { object: 'ドミノ', label: 'まえの りゆうを 見る' },
-  C: { object: 'ふみ台', label: 'ふみ台を 見る' },
-  D: { object: 'かさ', label: 'はみだしを さがす' },
-  E: { object: 'けしゴム', label: 'ひとつ けして かく' },
-  F: { object: 'シーソー', label: 'むこうに すわる' },
-};
-
-/** README.md: "Accessible names: use the Japanese object name and label, e.g. 「おべんとうばこ
- *  （ふたを あける）」." */
+/** README.md's own accessible-name convention — object name + label. Reads from `courseUi.json`
+ *  (spec v0.5 §7 / gate:no-hardcoded-copy), never a literal here. */
 export function toolAccessibleName(tool: CourseToolId): string {
-  const { object, label } = TOOL_LABELS[tool];
+  const { object, label } = courseUi.toolLabels[tool];
   return `${object}（${label}）`;
 }
 
@@ -32,9 +21,9 @@ export { default as courseIconSpriteRaw } from './assets/icons/tool-icons.sprite
 
 export interface IconProps {
   tool: CourseToolId;
-  /** README.md: "Sizes used in the designs: 96 px on cards, 32 px on buttons, 22–24 px inline.
-   *  Don't go below 24 px." Not enforced here (a caller may legitimately need e.g. a 20px dense
-   *  list some day) — documented so a regression doesn't silently drift under the floor. */
+  /** README.md's own size floor: 96px on cards, 32px on buttons, 22-24px inline, never below
+   *  24px. Not enforced here (a caller may legitimately need a denser list some day) — documented
+   *  so a regression doesn't silently drift under the floor. */
   size?: number;
   className?: string;
 }

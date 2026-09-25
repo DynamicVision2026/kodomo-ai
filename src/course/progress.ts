@@ -52,14 +52,19 @@ export function playgroundFlowerPercent(storyIds: string[], missionDone: Record<
   return Math.min(100, Math.round(done * 12.5));
 }
 
-export type FlowerStage = 'たね' | 'め' | 'つぼみ' | 'はな';
+/**
+ * WO-C1 §3's own four flower stages — an internal id, never displayed directly (spec v0.5 §7 /
+ * gate:no-hardcoded-copy: display copy lives only in `courseUi.json`'s own `flowerStageLabel`
+ * map, keyed by these same ids — see that file and CourseHome.tsx's own usage).
+ */
+export type FlowerStage = 'seed' | 'sprout' | 'bud' | 'flower';
 
-/** WO-C1 §3: "たね 0%, め 1–59%, つぼみ 60–99%, はな 100%." */
+/** WO-C1 §3: 0% is the seed stage, 1-59% is sprout, 60-99% is bud, 100% is flower. */
 export function flowerStageForPercent(percent: number): FlowerStage {
-  if (percent >= 100) return 'はな';
-  if (percent >= 60) return 'つぼみ';
-  if (percent >= 1) return 'め';
-  return 'たね';
+  if (percent >= 100) return 'flower';
+  if (percent >= 60) return 'bud';
+  if (percent >= 1) return 'sprout';
+  return 'seed';
 }
 
 /** WO-C1 §4: "Stage %: the sum of the 13 parts' percentages ÷ 13." `partPercents` must already
@@ -90,10 +95,10 @@ export function isPartUnlocked(
   return (partPercents[index - 1] ?? 0) >= 100;
 }
 
-/** WO-C1 §4: "At 60% of a lesson, show 「きょうは ここまで で OK」 once." Called with the percent
- *  BEFORE and AFTER a progress-changing action — fires only on the crossing, and only if this
- *  lesson hasn't shown it before, so a lesson replayed after already reaching 100% never shows it
- *  again. */
+/** WO-C1 §4: at 60% of a lesson, show the one-time checkpoint notice (courseUi.json's own
+ *  sixtyPercentNotice string) once. Called with the percent BEFORE and AFTER a progress-changing
+ *  action — fires only on the crossing, and only if this lesson hasn't shown it before, so a
+ *  lesson replayed after already reaching 100% never shows it again. */
 export function shouldShowSixtyPercentNotice(
   lessonId: string,
   percentBefore: number,

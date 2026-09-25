@@ -29,15 +29,19 @@ export interface CourseReviewStamp {
   japanese: 'approved' | null;
 }
 
-export type CourseSpeaker = 'ポン太' | 'ハテナ' | string;
+/** Free-form — the real content's cast is bigger than the two recurring leads (おかあさん,
+ *  先生, and other one-off family voices all appear as `q0`/`answer`/`reply` speakers too), so
+ *  this is never narrowed to a closed union. */
+export type CourseSpeaker = string;
 
 export interface CourseTranscriptLine {
   speaker: CourseSpeaker;
   text: string;
   /** DEVIATION from WO-C1 §2's sketch (which has no such field): the real c01.lesson.json groups
-   *  transcript lines into named mini-sections (e.g. "A-1 こまった", "A-2 おべんとうばこ") via a
-   *  `part` label on every line. Kept as an optional field and used for section breaks in the
-   *  Listen screen's transcript view when present, rather than dropped. */
+   *  transcript lines into named mini-sections via a `part` label on every line (each section's
+   *  own short Japanese heading, e.g. lesson c01's own A-1/A-2/etc. — see that file directly for
+   *  the exact text). Kept as an optional field and used for section breaks in the Listen
+   *  screen's transcript view when present, rather than dropped. */
   part?: string;
 }
 
@@ -193,4 +197,58 @@ export interface CoursePart {
 export interface CourseManifest {
   courseStage: number;
   parts: CoursePart[];
+}
+
+/**
+ * Fixed, course-wide UI chrome (never lesson-specific) — matches `courseUi.json`, mirroring
+ * `ModuleUiStrings`/`module.json`'s own `ui` block (src/engine/types.ts) exactly: spec v0.5 §7's
+ * "child-facing strings only in module JSON" rule applies here too (gate:no-hardcoded-copy scans
+ * all of `src/course`, same as it scans `src/engine`/`src/shell` — course screens take these
+ * strings from here instead of a literal, so a wording change never means editing a component).
+ */
+export interface CourseUiStrings {
+  loading: string;
+  loginRequired: string;
+  loginCta: string;
+  comingSoon: string;
+  profilePickTitle: string;
+  profileLabel: string;
+  reviewBadge: string;
+  sixtyPercentNotice: string;
+  back: string;
+  gardenTitle: string;
+  playgroundFlowerTitle: string;
+  nextStoryFlowerTitle: string;
+  lessonNotYetNote: string;
+  lessonLockedNote: string;
+  parentLinkLabel: string;
+  demoLinkLabel: string;
+  flowerStageLabel: { seed: string; sprout: string; bud: string; flower: string };
+  lessonStepListen: string;
+  lessonStepExercise: string;
+  lessonStepMake: string;
+  lessonStepTeachBack: string;
+  familyLinkLabel: string;
+  exerciseProgressLabel: string;
+  exerciseHintLabel: string;
+  exerciseRetryLabel: string;
+  exerciseNextLabel: string;
+  backToLessonLabel: string;
+  listenDoneLabel: string;
+  makeTriedLabel: string;
+  makeNextLabel: string;
+  makeStartersTitle: string;
+  makeParentToggleLabel: string;
+  makeSelfCheckTitle: string;
+  makePeekTitle: string;
+  teachBackDoneLabel: string;
+  familyWhoKnowsLabel: string;
+  familyAiExampleLabel: string;
+  familyApplyToolLabel: string;
+  familyStarLabel: string;
+  parentHeading: string;
+  parentEarlyUnlockLabel: string;
+  parentMonthLabel: string;
+  parentDayLabel: string;
+  toolLabels: Record<CourseToolId, { object: string; label: string }>;
 }
