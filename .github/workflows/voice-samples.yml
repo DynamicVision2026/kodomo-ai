@@ -1,0 +1,121 @@
+name: WO-C2b voice samples (manual, never touches production)
+
+# Founder decision (26 Sep 2026): a manual, separate workflow — never wired to `push`/`pull_request`
+# — for exactly one purpose: proving Lesson 1's Text-to-Speech setup works and producing REVIEW
+# samples. It never writes to c01.lesson.json, never uploads to public/audio/course (samples land
+# only in this run's own artifact), and never touches ci.yml's own deploy jobs or production
+# traffic. Reuses ci.yml's existing Workload Identity Federation auth (same secrets, same
+# `google-github-actions/auth@v2` step) — no new GCP credential is created for this.
+#
+# Modes (dispatch input `mode`), always run in this order regardless of which one you pick — each
+# later mode implies every earlier check already passed:
+#   check        - confirms the WIF identity can reach Text-to-Speech and the API is enabled.
+#                  Makes exactly one free call (voices.list) — no synthesis, no cost. If the API
+#                  isn't enabled, this step fails with the exact console step to fix it.
+#   list-voices  - also lists every real ja-JP voice this project's Text-to-Speech can use today,
+#                  uploaded as an artifact — the real catalog scripts/audio/generate-c01-lesson.ts's
+#                  own VOICES table should be checked against before any sample is generated.
+#   samples      - also generates WO-C2b §3's review set (one line per of the 9 roles + the first
+#                  ~minute of audio A joined with its sound-effect placeholders) and uploads it as
+#                  a workflow artifact. Never runs without Founder-visible approval of this exact
+#                  dispatch (this workflow doesn't auto-trigger — a human always starts it by hand).
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'What to run'
+        required: true
+        type: choice
+        options:
+          - check
+          - list-voices
+          - samples
+        default: check
+
+permissions:
+  contents: read
+  id-token: write   # Workload Identity Federation — no long-lived key ever touches this repo
+
+jobs:
+  voice-samples:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: kodomo-ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+
+      - id: auth
+        name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      # Founder decision: REST transport only, never the gRPC client library (the sandbox this
+      # workflow was authored in has a proxy that can't reach gRPC — REST via a masked bearer token
+      # is also simpler to audit in a CI log than a channel-credentialed gRPC client). This one
+      # access token authenticates every REST call scripts/audio/generate-c01-lesson.ts makes below.
+      - name: Mint a REST access token
+        id: token
+        run: |
+          TOKEN=$(gcloud auth print-access-token)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      # Instruction 1: "confirm it can call Text-to-Speech and the API is enabled in the project;
+      # if it isn't, stop and report the exact console step." Runs for every mode — list-voices and
+      # samples both imply this check already passed. voices.list is free (no synthesis charge).
+      - name: Check Text-to-Speech access + API enablement
+        env:
+          GCP_ACCESS_TOKEN: ${{ steps.token.outputs.token }}
+        run: npx tsx scripts/audio/generate-c01-lesson.ts --check
+
+      - name: List the real ja-JP voice catalog
+        if: ${{ inputs.mode == 'list-voices' || inputs.mode == 'samples' }}
+        env:
+          GCP_ACCESS_TOKEN: ${{ steps.token.outputs.token }}
+        run: npx tsx scripts/audio/generate-c01-lesson.ts --list-voices | tee voices-ja-JP.txt
+
+      - name: Upload the voice catalog
+        if: ${{ inputs.mode == 'list-voices' || inputs.mode == 'samples' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: voices-ja-JP
+          path: voices-ja-JP.txt
+          retention-days: 14
+
+      # ubuntu-latest images normally already carry ffmpeg, but the join step is a hard
+      # requirement (WO-C2b §3's audio-A sample is a real concat, not just 9 separate lines) —
+      # installed explicitly rather than assumed, per instruction 1.
+      - name: Install ffmpeg
+        if: ${{ inputs.mode == 'samples' }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg
+
+      # WO-C2b §3: one sample line per of the 9 roles + the first ~minute of audio A, joined with
+      # its sound-effect placeholders (no real SFX assets exist yet — see runSamples()'s own
+      # synthesizeSilence doc comment). Writes only under public/audio/course/_samples/ — never a
+      # real production path, never c01.lesson.json.
+      - name: Generate voice + audio-A samples
+        if: ${{ inputs.mode == 'samples' }}
+        env:
+          GCP_ACCESS_TOKEN: ${{ steps.token.outputs.token }}
+        run: npx tsx scripts/audio/generate-c01-lesson.ts --samples
+
+      - name: Upload samples artifact
+        if: ${{ inputs.mode == 'samples' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-samples
+          path: public/audio/course/_samples/artifact/
+          retention-days: 14
