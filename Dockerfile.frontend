@@ -4,8 +4,9 @@
 # here, per AD-16: "nothing admin-related ships in the public frontend"). Serves the Vite
 # production build (dist/): the LP at /, the app at /play/, the AD-13/16 Family Account screens at
 # /login/, /account/, /claim/, the printable deck/kit at /print/deck/ and /print/kit/, legal pages
-# at /legal/tokushoho/ and /legal/privacy/ — every real route from vite.config.ts's own multi-page
-# `input` map, each with its own real index.html.
+# at /legal/tokushoho/ and /legal/privacy/, and (WO-C1) the formal course shell at /course/ —
+# every real route from vite.config.ts's own multi-page `input` map, each with its own real
+# index.html.
 #
 # This is a MULTI-PAGE static site, not a client-side-routed single-page app — there is no
 # client-side router anywhere in this codebase. The one thing that would break it is a SPA
@@ -41,6 +42,7 @@ COPY src ./src
 COPY shared ./shared
 COPY backend ./backend
 COPY play ./play
+COPY course ./course
 COPY login ./login
 COPY account ./account
 COPY claim ./claim
