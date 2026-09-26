@@ -1,6 +1,6 @@
 /** WO-C1 §5: unit coverage for the course content gate's pure logic (scripts/lib/courseContentGate.ts). */
 import { describe, it, expect } from 'vitest';
-import { checkCourseLesson, isFullyApproved } from '../scripts/lib/courseContentGate';
+import { checkCourseLesson, isFullyApproved, redactToolNamesForKanjiFloor } from '../scripts/lib/courseContentGate';
 import type { GradeMap } from '../pipeline/lib/kanji';
 import type { CourseLesson } from '../src/course/content/types';
 
@@ -152,7 +152,7 @@ describe('checkCourseLesson — PII allowlist (Coordinator: exact-match only, no
   it('the approved family.notes safety sentence is never flagged as pii-word', () => {
     const lesson = baseLesson({
       review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
-      family: { whoKnows: '', aiExample: '', applyTool: '', notes: ['AI には、名前や 学校名、じゅうしょを 入れない'] },
+      family: { whoKnows: '', aiExample: '', applyTool: '', notes: ['AIには、名前や学校名、じゅうしょを入れない'] },
     });
     const result = checkCourseLesson(lesson, gradeOf, { strict: false });
     expect(result.contentLintIssues.some((i) => i.includes('pii-word'))).toBe(false);
@@ -165,5 +165,41 @@ describe('checkCourseLesson — PII allowlist (Coordinator: exact-match only, no
     });
     const result = checkCourseLesson(lesson, gradeOf, { strict: false });
     expect(result.contentLintIssues.some((i) => i.includes('pii-word'))).toBe(true);
+  });
+});
+
+describe('redactToolNamesForKanjiFloor — the six AD-18 tool names are exempt as exact strings', () => {
+  it('strips every one of the six locked tool-name labels out of a larger string', () => {
+    const withNames =
+      'A「ふたを あける」・B「まえの りゆうを 見る」・C「ふみ台を 見る」・' +
+      'D「はみだしを さがす」・E「ひとつ けして かく」・F「むこうに すわる」';
+    const redacted = redactToolNamesForKanjiFloor(withNames);
+    expect(redacted).not.toContain('ふたを あける');
+    expect(redacted).not.toContain('まえの りゆうを 見る');
+    expect(redacted).not.toContain('ふみ台を 見る');
+    expect(redacted).not.toContain('はみだしを さがす');
+    expect(redacted).not.toContain('ひとつ けして かく');
+    expect(redacted).not.toContain('むこうに すわる');
+  });
+
+  it('leaves surrounding text untouched — only the exact locked strings are removed', () => {
+    const text = 'まえおき「ふたを あける」あとがき';
+    expect(redactToolNamesForKanjiFloor(text)).toBe('まえおき「」あとがき');
+  });
+
+  it('does not touch a near-miss that is not an exact match (e.g. a different conjugation)', () => {
+    const text = 'きょうは ふたを あけた';
+    expect(redactToolNamesForKanjiFloor(text)).toBe(text);
+  });
+
+  it('a lesson whose teachBack.prompt quotes the locked tool names verbatim lints clean of kanji-floor for them', () => {
+    const lesson = baseLesson({
+      teachBack: { prompt: 'どうぐを ふたつ。「ふたを あける」と「まえの りゆうを 見る」。' },
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    // "見る" inside the locked B-tool name is never flagged — nothing here should read it as
+    // a kanji-floor violation (there is no floor entry for 見る in the first place, but this
+    // guards the redaction path stays wired in rather than accidentally bypassed).
+    expect(result.contentLintWarnings.some((w) => w.includes('[kanji-floor]'))).toBe(false);
   });
 });

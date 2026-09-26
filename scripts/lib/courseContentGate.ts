@@ -33,7 +33,9 @@
  */
 import { STAGE_LIMITS, type GradeMap } from '../../pipeline/lib/kanji.js';
 import { stripRuby } from '../../pipeline/lib/ruby.js';
+import { checkKanjiFloor } from '../../pipeline/lib/kanjiFloor.js';
 import { lintText, type LintIssue } from '../../pipeline/lib/lintText.js';
+import { courseUi } from '../../src/course/content/courseManifest.js';
 import type { CourseLesson, CourseReviewStamp } from '../../src/course/content/types.js';
 
 const COURSE_STAGE = 2; // WO-C1's own "Stage 2" — see CourseManifest.courseStage's own doc comment
@@ -68,6 +70,25 @@ function checkSentenceLengths(text: string, stage: number): LintIssue[] {
     }
   }
   return issues;
+}
+
+/**
+ * Architect correction (post-report): the six AD-18 tool names are locked exact strings — they
+ * stay written exactly as they appear on the icons (`courseUi.json`'s own `toolLabels[x].label`,
+ * the single source of truth reused here rather than a second copy), never rewritten to match
+ * AD-05's own kanji-floor style even where they appear embedded inside otherwise-compliant prose
+ * (e.g. teachBack.prompt quotes 「まえの りゆうを 見る」 verbatim). Kanji-floor scanning runs
+ * against the text with every exact occurrence of these six strings removed first — every OTHER
+ * check (kanji-grade, ruby, sentence-length, banned/PII-word) still sees the full, unredacted
+ * text, since only kanji-floor's "should be kanji" judgment is what these locked strings are
+ * exempt from.
+ */
+const TOOL_NAME_EXEMPT: readonly string[] = Object.values(courseUi.toolLabels).map((t) => t.label);
+
+export function redactToolNamesForKanjiFloor(text: string): string {
+  let out = text;
+  for (const name of TOOL_NAME_EXEMPT) out = out.split(name).join('');
+  return out;
 }
 
 export function isFullyApproved(review: CourseReviewStamp | undefined | null): boolean {
@@ -130,7 +151,7 @@ function parentFacingTexts(lesson: CourseLesson): string[] {
  * needs the same sign-off — never add to this list unilaterally.
  */
 const PII_SAFE_SENTENCES: readonly string[] = [
-  'AI には、名前や 学校名、じゅうしょを 入れない',
+  'AIには、名前や学校名、じゅうしょを入れない',
 ];
 
 function dropAllowlistedPii(issues: LintIssue[], text: string): LintIssue[] {
@@ -138,9 +159,23 @@ function dropAllowlistedPii(issues: LintIssue[], text: string): LintIssue[] {
   return issues.filter((i) => i.rule !== 'pii-word');
 }
 
+function checkKanjiFloorExempt(text: string): LintIssue[] {
+  return checkKanjiFloor(redactToolNamesForKanjiFloor(text)).map((v) => ({
+    rule: 'kanji-floor',
+    message: `「${v.kana}」should be written 「${v.kanji}」 (AD-05 kanji floor)`,
+    text,
+  }));
+}
+
 function lintChildFacing(text: string, gradeOf: GradeMap): LintIssue[] {
-  const issues = lintText(text, COURSE_STAGE, gradeOf, { kanjiFloor: true }).filter((i) => i.rule !== 'length');
-  return dropAllowlistedPii([...issues, ...checkSentenceLengths(text, COURSE_STAGE)], text);
+  // kanjiFloor left off here — computed separately (checkKanjiFloorExempt) against the
+  // tool-name-redacted text instead, so a locked tool name embedded in otherwise-compliant
+  // prose is never flagged.
+  const issues = lintText(text, COURSE_STAGE, gradeOf).filter((i) => i.rule !== 'length');
+  return dropAllowlistedPii(
+    [...issues, ...checkKanjiFloorExempt(text), ...checkSentenceLengths(text, COURSE_STAGE)],
+    text,
+  );
 }
 
 /** Parent-facing text: banned/PII checks only (`lintText`'s kanji-grade/ruby/length rules are
