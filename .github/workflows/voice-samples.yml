@@ -143,22 +143,35 @@ jobs:
           GCP_ACCESS_TOKEN: ${{ steps.token.outputs.token }}
         run: npx tsx scripts/audio/generate-c01-lesson.ts --full
 
-      # Self-check before trusting the run: c01.lesson.json's only diff from HEAD must be
+      # Self-check before trusting the run: c01.lesson.json's only CONTENT change from HEAD must be
       # `transcript[].start` additions (the script already refuses to write anything else, but this
-      # confirms it from the outside too — any other change here means something is wrong upstream,
-      # not something to silently commit).
+      # confirms it from the outside too). Deliberately a structural comparison (parse both
+      # versions, strip every transcript[].start, compare) rather than a line-based `git diff` — a
+      # line diff false-positives on this file: adding `"start": N` after an existing sibling key
+      # also adds a trailing comma to that key's own line, which a naive line-by-line check
+      # (an earlier version of this step) misread as an unrelated change.
       - name: Confirm c01.lesson.json's only change is transcript[].start
         if: ${{ inputs.mode == 'full' }}
         run: |
-          if git diff --name-only -- src/course/content/lessons/c01.lesson.json | grep -q .; then
-            CHANGED_KEYS=$(git diff -U0 -- src/course/content/lessons/c01.lesson.json | grep -E '^[+-]' | grep -vE '^(\+\+\+|---)' | grep -vE '"start":' || true)
-            if [ -n "$CHANGED_KEYS" ]; then
-              echo "::error::c01.lesson.json changed a field other than transcript[].start:"
-              echo "$CHANGED_KEYS"
-              exit 1
-            fi
-          fi
-          echo "OK: c01.lesson.json's only diff is transcript[].start."
+          node --input-type=module -e "
+          import { execSync } from 'node:child_process';
+          import { readFileSync } from 'node:fs';
+          const path = 'src/course/content/lessons/c01.lesson.json';
+          const original = JSON.parse(execSync('git show HEAD:' + path).toString());
+          const updated = JSON.parse(readFileSync(path, 'utf8'));
+          const strip = (obj) => {
+            const clone = JSON.parse(JSON.stringify(obj));
+            for (const block of clone.listen ?? []) {
+              for (const line of block.transcript ?? []) delete line.start;
+            }
+            return clone;
+          };
+          if (JSON.stringify(strip(original)) !== JSON.stringify(strip(updated))) {
+            console.error('c01.lesson.json changed a field other than transcript[].start');
+            process.exit(1);
+          }
+          console.log(\"OK: c01.lesson.json's only diff is transcript[].start.\");
+          "
 
       - name: Gate — release audio-file check (RELEASE=1)
         if: ${{ inputs.mode == 'full' }}
