@@ -198,7 +198,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/audio/course/c01 public/audio/course/shared src/course/content/lessons/c01.lesson.json
+          git add public/audio/course/c01 public/audio/course/shared public/audio/course/c01_listen_A.mp3 public/audio/course/c01_listen_B.mp3 src/course/content/lessons/c01.lesson.json
           git commit -m "WO-C2b: generate all 250 Lesson 1 voice clips + join きく A/B (Founder-approved voices)" \
             -m "Real TTS generation, Founder-approved voice table. Writes only listen[].transcript[].start in c01.lesson.json (self-enforced by the generation script) — no other field touched, lesson-level review fields stay null, c01 stays blocked in production."
           git push origin "HEAD:${{ github.ref_name }}"
