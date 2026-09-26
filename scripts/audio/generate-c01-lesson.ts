@@ -28,12 +28,20 @@
  * The other 7 speakers (お母さん/お父さん/おばあちゃん/先生/ユウ/お姉ちゃん/友だち) have NO prior
  * voice anywhere in this repo — every existing scripts/audio/generate-*.ts only ever has
  * GUIDE/PONTA/ROBOT. Founder decision (26 Sep 2026): every role gets its OWN distinct voice model
- * — no two speakers may share a `name`, enforced by `assertDistinctVoices()` below. The 7 entries
- * in VOICES are a temporary PLACEHOLDER only (this sandbox has no live --list-voices access), each
- * a distinct model purely so the assertion and `--dry-run` pass here; they are not the real
- * assignment. .github/workflows/voice-samples.yml's `list-voices` mode is the real source of truth
- * — run it, read the actual ja-JP catalog it returns, and replace every one of these 7 `name`
- * values with a confirmed real voice before `--samples` is ever run for real.
+ * — no two speakers may share a `name`, enforced by `assertDistinctVoices()` below.
+ *
+ * CONFIRMED against the real ja-JP catalog (.github/workflows/voice-samples.yml's `list-voices`
+ * mode, run 26 Sep 2026 — 41 real ja-JP voices returned, full list in that run's own artifact).
+ * Chirp3-HD voices are deliberately NOT used here even though the catalog has 28 of them: Google's
+ * documented Chirp3-HD limitation is that `audioConfig.pitch`/`speakingRate` are not adjustable on
+ * them, and this lesson's per-role pitch/rate tuning (below) needs both — every entry stays in the
+ * Neural2/Wavenet/Standard tiers, which do support both. Assigned by real line count (see the
+ * sheet: お母さん 21, お父さん 12, おばあちゃん 6, お姉ちゃん 5, ユウ/先生 4 each, 友だち 1) against
+ * remaining distinct voices in quality order (Neural2 > Wavenet > Standard) after ハテナ/ポン太
+ * reserve Neural2-B/C — only 2 Wavenet-tier female voices exist besides the reserved Neural2-B, so
+ * お姉ちゃん (5 lines) falls to Standard-A rather than Wavenet; 先生/ユウ's gender is not
+ * disambiguated anywhere in the dialogue, assigned male here only to keep every voice distinct —
+ * swap freely if the Founder pictures either differently after hearing the samples.
  *
  * ---- One-time setup required before this script can do anything that touches the network ------
  * 1. GCP access — Founder decision (26 Sep 2026): REST transport only, never the
@@ -153,19 +161,15 @@ const VOICES: Record<Speaker, VoiceConfig> = {
   // VOICES.GUIDE / VOICES.PONTA, verbatim.
   'ハテナ': { languageCode: 'ja-JP', name: 'ja-JP-Neural2-B', pitch: 0, speakingRate: 0.97, verified: true },
   'ポン太': { languageCode: 'ja-JP', name: 'ja-JP-Neural2-C', pitch: 2.0, speakingRate: 1.05, verified: true },
-  // PLACEHOLDER, UNVERIFIED (see file header) — every entry below is a distinct model only so
-  // `assertDistinctVoices()` and `--dry-run` pass in this sandbox (no live --list-voices access
-  // here). .github/workflows/voice-samples.yml's own `list-voices` mode is the real source of
-  // truth — replace every one of these 7 with a confirmed real ja-JP voice name from that job's
-  // output before `--samples` is run for real (Founder decision, 26 Sep 2026: no shared voices —
-  // every role gets its own distinct model, not just pitch/rate variation on a shared one).
-  'お母さん': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-A', pitch: 0, speakingRate: 0.98, verified: false },
-  'お父さん': { languageCode: 'ja-JP', name: 'ja-JP-Neural2-D', pitch: -1.5, speakingRate: 0.96, verified: false },
-  'おばあちゃん': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-B', pitch: -2.0, speakingRate: 0.88, verified: false },
-  '先生': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-C', pitch: 0, speakingRate: 0.97, verified: false },
-  'お姉ちゃん': { languageCode: 'ja-JP', name: 'ja-JP-Standard-A', pitch: 1.5, speakingRate: 1.02, verified: false },
-  'ユウ': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-D', pitch: 2.5, speakingRate: 1.06, verified: false },
-  '友だち': { languageCode: 'ja-JP', name: 'ja-JP-Standard-D', pitch: 4.0, speakingRate: 1.1, verified: false },
+  // CONFIRMED against the real catalog (see file header) — every name below is a real ja-JP voice
+  // this project's Text-to-Speech can use today, each distinct.
+  'お母さん': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-A', pitch: 0, speakingRate: 0.98, verified: true },
+  'お父さん': { languageCode: 'ja-JP', name: 'ja-JP-Neural2-D', pitch: -1.5, speakingRate: 0.96, verified: true },
+  'おばあちゃん': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-B', pitch: -2.0, speakingRate: 0.88, verified: true },
+  'お姉ちゃん': { languageCode: 'ja-JP', name: 'ja-JP-Standard-A', pitch: 1.5, speakingRate: 1.02, verified: true },
+  '先生': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-C', pitch: 0, speakingRate: 0.97, verified: true },
+  'ユウ': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-D', pitch: 2.5, speakingRate: 1.06, verified: true },
+  '友だち': { languageCode: 'ja-JP', name: 'ja-JP-Standard-D', pitch: 3.0, speakingRate: 1.08, verified: true },
 };
 
 function voiceFor(speaker: string): VoiceConfig {
