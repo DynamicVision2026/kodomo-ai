@@ -12,11 +12,14 @@ import { useState } from 'react';
 import { Plane } from '../../ad12/Plane';
 import { Icon } from '../Icon';
 import { DialoguePlane } from '../DialoguePlane';
+import { VoiceCue } from '../VoiceCue';
 import { Ruby } from '../../engine/ruby';
 import { courseUi } from '../content/courseManifest';
+import { makeDialogueAudioPath, SHARED_AUDIO } from '../audioPaths';
 import type { CourseMakeBlock } from '../content/types';
 
 export interface MakeScreenProps {
+  lessonId: string;
   blocks: CourseMakeBlock[];
   blockIndex: number;
   onMakeDone: () => void;
@@ -39,7 +42,7 @@ function highlightSubstring(text: string, needle: string) {
   );
 }
 
-export function MakeScreen({ blocks, blockIndex, onMakeDone, onNextBlock, onBack }: MakeScreenProps) {
+export function MakeScreen({ lessonId, blocks, blockIndex, onMakeDone, onNextBlock, onBack }: MakeScreenProps) {
   const [tried, setTried] = useState(false);
   const [parentMode, setParentMode] = useState(false);
   const [parentPromptIndex, setParentPromptIndex] = useState(0);
@@ -64,14 +67,17 @@ export function MakeScreen({ blocks, blockIndex, onMakeDone, onNextBlock, onBack
       <Icon tool={block.methodCard} size={40} />
 
       {block.dialogue.map((line, i) => (
-        i === highlightLineIndex
-          ? (
-            <Plane key={i}>
+        <div key={i}>
+          {i === highlightLineIndex ? (
+            <Plane>
               <p className="ad12-ui-text course-dialogue__speaker">{line.speaker}</p>
               <p className="ad12-reading-text">{highlightSubstring(line.text, block.hint!.h2Highlight)}</p>
             </Plane>
-          )
-          : <DialoguePlane key={i} speaker={line.speaker} text={line.text} />
+          ) : (
+            <DialoguePlane speaker={line.speaker} text={line.text} />
+          )}
+          <VoiceCue src={makeDialogueAudioPath(lessonId, block.tool, i)} />
+        </div>
       ))}
 
       <Plane className="course-make__starters">
@@ -116,6 +122,7 @@ export function MakeScreen({ blocks, blockIndex, onMakeDone, onNextBlock, onBack
       )}
 
       <p className="ad12-ui-text course-make__say-prompt">{courseUi.makeSayItPrompt}</p>
+      <VoiceCue src={SHARED_AUDIO.makeSayItPrompt} />
 
       {!tried ? (
         <button type="button" className="ad12-ink-button ad12-tappable course-screen__primary" onClick={handleTried}>

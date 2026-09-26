@@ -1,0 +1,260 @@
+clip,file,speaker,text_ja,reading_notes,type,part_or_role,sound_cue,english
+LA-SE00,c01_listen_A.mp3,SE,ドアがしまる音。ポン太のため息,,SE,,,Sound of a door closing. Ponta sighs.
+LA-01,c01_listen_A.mp3,ハテナ,ポン太、どうしたの？　しょんぼりしてるね。,,voice,A-1 こまった,,"Ponta, what’s wrong? You look down."
+LA-02,c01_listen_A.mp3,ポン太,ねえハテナ、聞いてよ。お母さんに「へや、ちゃんとかたづけて」って言われたの。,,voice,A-1 こまった,,"Hey Hatena, listen. Mom told me, “Tidy your room properly (ちゃんと).”"
+LA-03,c01_listen_A.mp3,ポン太,だから、おもちゃをぜんぶ、大きなはこに入れたんだ。ゆかに、なんにもなくなったよ。,入れ→いれ,voice,A-1 こまった,,So I put all my toys into a big box. Now there’s nothing on the floor.
+LA-04,c01_listen_A.mp3,ハテナ,ゆかが、すっきりしたね。,,voice,A-1 こまった,,The floor looks nice and clear.
+LA-05,c01_listen_A.mp3,ポン太,でしょ？　なのに、お母さんが見に来て、「ちゃんとやってないでしょ」って。,,voice,A-1 こまった,,"Right? But Mom came to look and said, “You didn’t do it properly (ちゃんと), did you?”"
+LA-06,c01_listen_A.mp3,ハテナ,あれれ。はこに入れたのに？,入れ→いれ,voice,A-1 こまった,,Huh? Even though you put them in the box?
+LA-07,c01_listen_A.mp3,ポン太,そうだよ。ぼくは、ちゃんとやったのに。,,voice,A-1 こまった,,That’s right. Even though I did it properly (ちゃんと).
+LA-08,c01_listen_A.mp3,ハテナ,ポン太の「ちゃんと」と、お母さんの「ちゃんと」。同じことばなのに、ちがうみたいだね。,,voice,A-1 こまった,,"Ponta’s “properly (ちゃんと)” and Mom’s “properly.” It’s the same word, but they seem to be different."
+LA-09,c01_listen_A.mp3,ポン太,えっ。同じことばなのに、ちがうの？,,voice,A-1 こまった,,"Huh? It’s the same word, but it’s different?"
+LA-10,c01_listen_A.mp3,ハテナ,ポン太、おべんとうばこって知ってる？,,voice,A-2 おべんとうばこ,,"Ponta, do you know what a lunch box (bento box) is?"
+LA-11,c01_listen_A.mp3,ポン太,知ってるよ。遠足の日に、お母さんが作ってくれるやつ。,,voice,A-2 おべんとうばこ,,I know. It’s the thing Mom makes for me on field trip days.
+LA-12,c01_listen_A.mp3,ハテナ,ふたがしまっていたら、中に何が入ってるか見える？,何が→なにが,voice,A-2 おべんとうばこ,,"If the lid is closed, can you see what’s inside?"
+LA-13,c01_listen_A.mp3,ポン太,見えないよ。……からあげかな？　たまごやきかな？,,voice,A-2 おべんとうばこ,,"No, I can’t. ...Maybe fried chicken? Maybe rolled omelet?"
+LA-14,c01_listen_A.mp3,ハテナ,当ててみても、あけるまで分からないね。,,voice,A-2 おべんとうばこ,,"Even if you try to guess, you won’t know until you open it."
+LA-15,c01_listen_A.mp3,ハテナ,じゃあ、なかみを知ってるのは、だれ？,,voice,A-2 おべんとうばこ,,Then who knows what’s inside?
+LA-16,c01_listen_A.mp3,ポン太,作った人。お母さん！,,voice,A-2 おべんとうばこ,,The person who made it. Mom!
+LA-17,c01_listen_A.mp3,ハテナ,そのとおり。ことばも、おべんとうばこに、にているよ。,,voice,A-2 おべんとうばこ,,That’s right. Words are like a lunch box too.
+LA-18,c01_listen_A.mp3,ハテナ,「ちゃんと」は、みんながつかうことば。でも、この時、お母さんが何をしてほしかったのかは、見えないね。,この時→このとき / 何を→なにを,voice,A-2 おべんとうばこ,,“Properly (ちゃんと)” is a word everyone uses. But you can’t see what Mom wanted you to do this time.
+LA-19,c01_listen_A.mp3,ポン太,お母さんが、何をしてほしかったのか……。お母さんに聞けば、分かるかな？,何を→なにを,voice,A-2 おべんとうばこ,,"What Mom wanted me to do... If I ask Mom, will I find out?"
+LA-20,c01_listen_A.mp3,ハテナ,そう。ポン太が思っていた「ちゃんと」とは、ちがったのかもしれないね。,,voice,A-2 おべんとうばこ,,Yes. Maybe it was different from the “properly (ちゃんと)” Ponta had in mind.
+LA-21,c01_listen_A.mp3,ハテナ,ふたをあけたいことばは、あいことばで見つかるよ。「答えの中で、ゆびでさせる？」,,voice,A-3 いつつかう？,,"You can find the words whose lid you want to open with a password: “In the answer, can you point to it with your finger?”"
+LA-22,c01_listen_A.mp3,ハテナ,お母さんのことばの中で、「ちゃんと」は、ゆびでさせる？,,voice,A-3 いつつかう？,,"In Mom’s words, can you point to “properly (ちゃんと)” with your finger?"
+LA-23,c01_listen_A.mp3,ポン太,うん。ここ！って、させるよ。,,voice,A-3 いつつかう？,,Yes. I can point to it: here!
+LA-24,c01_listen_A.mp3,ハテナ,じゃあ、その「ちゃんと」のなかみは見える？,,voice,A-3 いつつかう？,,Then can you see what’s inside that “properly (ちゃんと)”?
+LA-25,c01_listen_A.mp3,ポン太,……見えない。何をすればいいのか、分からない。,何を→なにを,voice,A-3 いつつかう？,,...I can’t see it. I don’t know what I should do.
+LA-26,c01_listen_A.mp3,ハテナ,ゆびでさせるのに、なかみが見えないことば。それが、ふたをあけるしるしだよ。,,voice,A-3 いつつかう？,,"A word you can point to with your finger, but you can’t see what’s inside. That’s the sign to open the lid."
+LA-27,c01_listen_A.mp3,ポン太,じゃあ、お母さんに聞いてみる。えっと……「ちゃんとって、きちんとってこと？」,,voice,A-4 ためしてみる,,Then I’ll ask Mom. Um... “Does properly (ちゃんと) mean neatly (きちんと)?”
+LA-28,c01_listen_A.mp3,ハテナ,ちょっとまって。「きちんと」のなかみは見える？,,voice,A-4 ためしてみる,,Wait a moment. Can you see what’s inside “neatly (きちんと)”?
+LA-29,c01_listen_A.mp3,ポン太,……あっ。見えない。,,voice,A-4 ためしてみる,,...Oh. I can’t see it.
+LA-30,c01_listen_A.mp3,ハテナ,「ちゃんと」を「きちんと」に入れかえただけだね。べつのおべんとうばこになっただけで、ふたは、しまったままだよ。,入れ→いれ,voice,A-4 ためしてみる,,"You just swapped “properly (ちゃんと)” for “neatly (きちんと).” It just became a different lunch box, and the lid is still closed."
+LA-31,c01_listen_A.mp3,ポン太,じゃあ、どう聞けばいいの？,,voice,A-4 ためしてみる,,Then how should I ask?
+LA-32,c01_listen_A.mp3,ハテナ,「何をすること？」とか、「たとえば？」って聞くと、ふたがあくよ。,何を→なにを / 何をすること→なにをすること,voice,A-4 ためしてみる,,"If you ask “What does it mean to do?” or “For example?”, the lid opens."
+LA-33,c01_listen_A.mp3,ポン太,分かった！　聞いてくる！,,voice,A-4 ためしてみる,,Got it! I’ll go ask!
+LA-SE34,c01_listen_A.mp3,SE,足音,,SE,,,Footsteps
+LA-34,c01_listen_A.mp3,ポン太,お母さん。ちゃんとかたづけるって、何をすること？,何を→なにを / 何をすること→なにをすること,voice,A-4 ためしてみる,,Mom. Tidying up properly (ちゃんと) — what does it mean to do?
+LA-35,c01_listen_A.mp3,お母さん,そうねえ。本は本だなに。ブロックは青いはこに。,,voice,A-4 ためしてみる,,Let me see. Books go on the bookshelf. Blocks go in the blue box.
+LA-36,c01_listen_A.mp3,お母さん,ぜんぶ、きまったばしょにもどすことよ。,,voice,A-4 ためしてみる,,It means putting everything back in its set place.
+LA-37,c01_listen_A.mp3,ポン太,……そういうことか！　ぜんぶ一つのはこに入れたら、だめなんだ。,一つ→ひとつ / 入れ→いれ,voice,A-4 ためしてみる,,...So that’s what it means! Putting everything in one box is no good.
+LA-SE39,c01_listen_A.mp3,SE,足音,,SE,,,Footsteps
+LA-38,c01_listen_A.mp3,ポン太,ハテナ！　ふたがあいたよ。きまったばしょにもどすことだって。,,voice,A-5 なかみが見えた,,Hatena! The lid opened. She said it means putting things back in their set places.
+LA-39,c01_listen_A.mp3,ハテナ,なかみが見えたね。どうすればいいか、分かった？,,voice,A-5 なかみが見えた,,You can see what’s inside now. Do you know what to do?
+LA-40,c01_listen_A.mp3,ポン太,うん。やってくる！,,voice,A-5 なかみが見えた,,Yes. I’ll go do it!
+LA-SE43,c01_listen_A.mp3,SE,かたづける音,,SE,,,Sound of tidying up
+LA-41,c01_listen_A.mp3,お母さん,あら、ちゃんとできたね。,,voice,A-5 なかみが見えた,,"Oh, you did it properly (ちゃんと)."
+LA-42,c01_listen_A.mp3,ポン太,やった！,,voice,A-5 なかみが見えた,,Yay!
+LA-43,c01_listen_A.mp3,ハテナ,言った人は、自分が何をしてほしいか、分かっているよね。,何を→なにを,voice,A-5 なかみが見えた,,"The person who said it knows what they want you to do, right?"
+LA-44,c01_listen_A.mp3,ハテナ,だから、聞いている人にも見えてると、思っちゃうことがあるんだ。,,voice,A-5 なかみが見えた,,So sometimes they end up thinking the person listening can see it too.
+LA-45,c01_listen_A.mp3,ポン太,お母さんも、ぼくに見えてると思ってたんだね。,,voice,A-5 なかみが見えた,,"So Mom thought I could see it too, huh."
+LA-SE49,c01_listen_A.mp3,SE,チャイム,,SE,,,Chime
+LA-46,c01_listen_A.mp3,ハテナ,きょうの一つめのどうぐは、「ふたを あける」。おべんとうばこのカードだよ。,一つめ→ひとつめ,voice,まとめ,,Today’s first tool is “Open the lid.” It’s the lunch box card.
+LA-47,c01_listen_A.mp3,ハテナ,つかうのは、答えの中に、こんなことばがあるとき。,,voice,まとめ,,You use it when there’s a word like this in the answer.
+LA-48,c01_listen_A.mp3,ハテナ,ゆびでさせるのに、なかみが見えないことば。,,voice,まとめ,,"A word you can point to with your finger, but you can’t see what’s inside."
+LA-49,c01_listen_A.mp3,ハテナ,たとえば、「ちゃんと」「ちょっと」「後で」「きれいに」。,後で→あとで,voice,まとめ,,"For example, “properly (ちゃんと),” “a little (ちょっと),” “later (後で),” “nicely (きれいに).”"
+LA-50,c01_listen_A.mp3,ハテナ,よく聞くけど、言う人やその時によって、なかみがかわることばだね。,その時→そのとき,voice,まとめ,,"They’re words you hear a lot, but what’s inside changes depending on who says them and when."
+LA-51,c01_listen_A.mp3,ハテナ,あけかたは、かんたん。そのことばをつかって、こう聞くんだ。,,voice,まとめ,,Opening it is easy. You use that word and ask like this.
+LA-52,c01_listen_A.mp3,ハテナ,「なになにって、何？」「何をすること？」,何を→なにを / 何？→なに？ / 何をすること→なにをすること,voice,まとめ,,“What is X?” “What does it mean to do?”
+LA-53,c01_listen_A.mp3,ハテナ,「たとえば？」「どのくらい？」,,voice,まとめ,,“For example?” “How much?”
+LA-54,c01_listen_A.mp3,ハテナ,気をつけることが一つ。にたことばに入れかえても、ふたはあかないよ。,一つ→ひとつ / 入れ→いれ,voice,まとめ,,"One thing to be careful about: even if you swap it for a similar word, the lid won’t open."
+LA-55,c01_listen_A.mp3,ハテナ,じゃあ、やってみるね。ポン太が、「おやつ、まだ？」って聞いたよ。,,voice,まとめ,,"Now, let’s try it. Ponta asked, “Is it snack time yet?”"
+LA-56,c01_listen_A.mp3,おばあちゃん,ちょっとまっててね。,,voice,まとめ,,"Wait a little (ちょっと), okay?"
+LA-57,c01_listen_A.mp3,ハテナ,答えの中で、ゆびでさせることばは？　……「ちょっと」だね。,,voice,まとめ,,"In the answer, which word can you point to with your finger? ...It’s “a little (ちょっと).”"
+LA-58,c01_listen_A.mp3,ハテナ,なかみは見える？　……見えないね。だから、こう聞くよ。,,voice,まとめ,,Can you see what’s inside? ...You can’t. So you ask like this.
+LA-59,c01_listen_A.mp3,ハテナ,「ちょっとって、何分くらい？」,何分→なんぷん,voice,まとめ,,“A little (ちょっと) — about how many minutes?”
+LA-60,c01_listen_A.mp3,おばあちゃん,5分くらいよ。,5分→ごふん,voice,まとめ,,About 5 minutes.
+LA-61,c01_listen_A.mp3,ハテナ,ほら、ふたがあいた。5分なら、まっていられるね。,5分→ごふん,voice,まとめ,,"See, the lid opened. If it’s 5 minutes, you can wait."
+LA-62,c01_listen_A.mp3,ハテナ,じゃあ、つぎは、きみの番。五つのしつもんで、ふたをあけてみよう！,五つ→いつつ,voice,まとめ,,Now it’s your turn. Let’s open lids with five questions!
+LB-SE00,c01_listen_B.mp3,SE,夜。時計のカチコチという音,,SE,,,Night. The tick-tock sound of a clock.
+LB-01,c01_listen_B.mp3,ポン太,ふわあ……。ハテナ、ぼく、もうねるね。,,voice,B-1 なっとくできない,,"Yawn... Hatena, I’m going to bed now."
+LB-02,c01_listen_B.mp3,ハテナ,あれ？　はみがきは、した？,,voice,B-1 なっとくできない,,Huh? Did you brush your teeth?
+LB-03,c01_listen_B.mp3,ポン太,えー。朝もみがいたよ。夜も、やらなきゃだめ？,,voice,B-1 なっとくできない,,Aww. I brushed in the morning too. Do I have to do it at night too?
+LB-04,c01_listen_B.mp3,ハテナ,お母さんに、聞いてみよう。,,voice,B-1 なっとくできない,,Let’s ask Mom.
+LB-05,c01_listen_B.mp3,ポン太,お母さん。なんで、ねる前に、はみがきするの？,,voice,B-1 なっとくできない,,"Mom, why do we brush our teeth before bed?"
+LB-06,c01_listen_B.mp3,お母さん,みがかないと、むしばになっちゃうからよ。,,voice,B-1 なっとくできない,,"Because (から) if you don’t brush, you’ll get cavities."
+LB-07,c01_listen_B.mp3,ポン太,……ふーん。,,voice,B-1 なっとくできない,,...Hmm.
+LB-08,c01_listen_B.mp3,ハテナ,なっとくしてない顔だね。,,voice,B-1 なっとくできない,,You look like you’re not convinced.
+LB-09,c01_listen_B.mp3,ポン太,だって、朝もみがいたもん。なんで、ねる前なのかが、分からないんだ。,,voice,B-1 なっとくできない,,Because I brushed in the morning too. I don’t understand why it has to be before bed.
+LB-10,c01_listen_B.mp3,ハテナ,お母さんの答えに、「から」ってことば、あった？,,voice,B-1 なっとくできない,,"In Mom’s answer, was there the word “because (から)”?"
+LB-11,c01_listen_B.mp3,ポン太,あった！　「むしばになっちゃうから」。これが、りゆうだね。,,voice,B-1 なっとくできない,,"There was! “Because (から) you’ll get cavities.” That’s the reason, right?"
+LB-12,c01_listen_B.mp3,ハテナ,ポン太、ドミノたおし、したことある？,,voice,B-2 ドミノ,,"Ponta, have you ever played knocking down dominoes?"
+LB-13,c01_listen_B.mp3,ポン太,あるよ！　ならべておすと、じゅんばんにパタパタたおれるやつ。,,voice,B-2 ドミノ,,"I have! You line them up and push, and they fall down one after another, clack clack."
+LB-SE14,c01_listen_B.mp3,SE,ドミノがパタパタたおれる音,,SE,,,"Sound of dominoes falling, clack clack"
+LB-14,c01_listen_B.mp3,ハテナ,そう。さいごのドミノがたおれたのは、なんで？,,voice,B-2 ドミノ,,Right. Why did the last domino fall?
+LB-15,c01_listen_B.mp3,ポン太,一つ前のドミノが、おしたから。,一つ→ひとつ,voice,B-2 ドミノ,,Because the domino just before it pushed it.
+LB-16,c01_listen_B.mp3,ハテナ,そうだね。ドミノは、一本のれつに、ずらっとならんでる。,一本→いっぽん,voice,B-2 ドミノ,,That’s right. The dominoes are lined up in one long row.
+LB-17,c01_listen_B.mp3,ハテナ,となりに、べつのれつがあるとするね。そっちをおしても、こっちのドミノはたおれない。,,voice,B-2 ドミノ,,"Let’s say there’s another row next to it. Even if you push that one, the dominoes over here won’t fall."
+LB-18,c01_listen_B.mp3,ポン太,うん。れつがちがうもん。,,voice,B-2 ドミノ,,Yeah. Because it’s a different row.
+LB-19,c01_listen_B.mp3,ハテナ,お母さんの答えも、ドミノみたいなんだ。,,voice,B-2 ドミノ,,Mom’s answer is like dominoes too.
+LB-20,c01_listen_B.mp3,ハテナ,さいごのドミノは、ポン太のはじめのしつもん。「なんで、ねる前に、はみがきするの？」,,voice,B-2 ドミノ,,The last domino is Ponta’s first question: “Why do we brush our teeth before bed?”
+LB-21,c01_listen_B.mp3,ハテナ,その前のドミノは、お母さんがくれたりゆう。「むしばになっちゃうから」。,,voice,B-2 ドミノ,,The domino before that is the reason Mom gave: “Because (から) you’ll get cavities.”
+LB-22,c01_listen_B.mp3,ポン太,でも、それだけだと、なっとくできないよ。,,voice,B-2 ドミノ,,"But with only that, I’m not convinced."
+LB-23,c01_listen_B.mp3,ハテナ,そう。「ねる前」と「むしば」の間が、あいているんだ。,間→あいだ,voice,B-2 ドミノ,,Right. There’s a gap between “before bed” and “cavities.”
+LB-24,c01_listen_B.mp3,ハテナ,そこに、見えないドミノがかくれているよ。,,voice,B-2 ドミノ,,A domino you can’t see is hiding there.
+LB-25,c01_listen_B.mp3,ポン太,よし、聞いてみる。えっと……「なんで、むしばになると、いたいの？」,,voice,B-3 ちがうれつ,,"Okay, I’ll ask. Um... “Why does it hurt when you get cavities?”"
+LB-26,c01_listen_B.mp3,ハテナ,ちょっとまって。聞く前に、たしかめよう。はじめのしつもんは？,,voice,B-3 ちがうれつ,,"Wait a moment. Before you ask, let’s check. What was your first question?"
+LB-27,c01_listen_B.mp3,ポン太,「なんで、ねる前に、はみがきするの？」,,voice,B-3 ちがうれつ,,“Why do we brush our teeth before bed?”
+LB-28,c01_listen_B.mp3,ハテナ,むしばがいたいりゆうが分かったら、「なんで、ねる前なの？」も分かる？,,voice,B-3 ちがうれつ,,"If you find out why cavities hurt, will you also understand “Why before bed?”"
+LB-29,c01_listen_B.mp3,ポン太,……分からない。いたいのは、朝でも夜でも同じだもん。,,voice,B-3 ちがうれつ,,...No. It hurts the same whether it’s morning or night.
+LB-30,c01_listen_B.mp3,ハテナ,それは、ちがうれつのドミノなんだ。おもしろいけど、ねる前のはみがきとは、べつのれつ。,,voice,B-3 ちがうれつ,,"That’s a domino in a different row. It’s interesting, but it’s a separate row from brushing before bed."
+LB-31,c01_listen_B.mp3,ポン太,同じれつの中で、前のドミノをさがすんだね。,,voice,B-3 ちがうれつ,,"So we look for the domino before, in the same row."
+LB-32,c01_listen_B.mp3,ハテナ,じゃあ、いっしょに作ろう。まず、答えの中のりゆうは？,,voice,B-4 しつもんを作る,,"Then let’s make one together. First, what’s the reason in the answer?"
+LB-33,c01_listen_B.mp3,ポン太,「むしばになっちゃうから」。,,voice,B-4 しつもんを作る,,“Because (から) you’ll get cavities.”
+LB-34,c01_listen_B.mp3,ハテナ,つぎ。はじめのしつもんで、ポン太が知りたいのは？,,voice,B-4 しつもんを作る,,"Next. In your first question, what does Ponta want to know?"
+LB-35,c01_listen_B.mp3,ポン太,「ねる前」のこと。,,voice,B-4 しつもんを作る,,About “before bed.”
+LB-36,c01_listen_B.mp3,ハテナ,その二つを、「なんで」でつないでみて。,二つ→ふたつ,voice,B-4 しつもんを作る,,Try connecting those two with “why.”
+LB-37,c01_listen_B.mp3,ポン太,えっと……「ねる前にみがかないと、なんでむしばになるの？」,,voice,B-4 しつもんを作る,,Um... “Why do you get cavities if you don’t brush before bed?”
+LB-38,c01_listen_B.mp3,ハテナ,いいね。聞く前に、たしかめよう。その答えで、はじめの「なんで？」も分かりそう？,,voice,B-4 しつもんを作る,,"Nice. Before you ask, let’s check. With that answer, does it seem like you’ll also understand your first “why?”?"
+LB-39,c01_listen_B.mp3,ポン太,うん！　ねる前のことを聞いてるから。聞いてみる！,,voice,B-4 しつもんを作る,,Yes! Because I’m asking about before bed. I’ll go ask!
+LB-40,c01_listen_B.mp3,ポン太,お母さん。ねる前にみがかないと、なんでむしばになるの？,,voice,B-4 しつもんを作る,,"Mom, why do you get cavities if you don’t brush before bed?"
+LB-41,c01_listen_B.mp3,お母さん,いいしつもんね。,,voice,B-4 しつもんを作る,,That’s a good question.
+LB-42,c01_listen_B.mp3,お母さん,ねている間はね、口の中のつばが、少なくなるの。,間→あいだ,voice,B-4 しつもんを作る,,"While you’re sleeping, the spit in your mouth gets less."
+LB-43,c01_listen_B.mp3,お母さん,つばは、ばいきんを、あらいながしてくれるのよ。,,voice,B-4 しつもんを作る,,Spit washes germs away.
+LB-44,c01_listen_B.mp3,お母さん,だから、ねている間は、ばいきんがふえやすいの。,間→あいだ,voice,B-4 しつもんを作る,,"So while you’re sleeping, germs multiply easily."
+LB-45,c01_listen_B.mp3,ポン太,そうか！　だから、ねる前に、ばいきんをへらしておくんだ。,,voice,B-4 しつもんを作る,,I see! So that’s why you reduce the germs before bed.
+LB-46,c01_listen_B.mp3,ハテナ,見えなかったドミノが見えたね。はじめの「なんで？」も、分かった？,,voice,B-5 前のドミノが見えた,,You can see the domino you couldn’t see before. Do you also understand your first “why?” now?
+LB-47,c01_listen_B.mp3,ポン太,うん。朝だけじゃなくて、ねる前にもみがくりゆうが、分かった。,,voice,B-5 前のドミノが見えた,,"Yes. I understand the reason for brushing not just in the morning, but before bed too."
+LB-48,c01_listen_B.mp3,ハテナ,ドミノが見えると、「やらなきゃ」が、「なるほど」にかわるんだ。,,voice,B-5 前のドミノが見えた,,"When you can see the domino, “I have to” turns into “I get it.”"
+LB-49,c01_listen_B.mp3,ポン太,……じゃあ、みがいてくる。,,voice,B-5 前のドミノが見えた,,...Then I’ll go brush.
+LB-SE51,c01_listen_B.mp3,SE,はみがきの音,,SE,,,Sound of brushing teeth
+LB-SE52,c01_listen_B.mp3,SE,チャイム,,SE,,,Chime
+LB-50,c01_listen_B.mp3,ハテナ,きょうの二つめのどうぐは、「まえの りゆうを 見る」。ドミノのカードだよ。,二つめ→ふたつめ,voice,まとめ,,Today’s second tool is “Look at the reason before.” It’s the domino card.
+LB-51,c01_listen_B.mp3,ハテナ,つかうのは、答えに「〜から」があっても、「えー、なんで？」と思うとき。,〜から→「から」（〜は読まない）,voice,まとめ,,"You use it when, even though the answer has “because (〜から),” you think, “Huh? Why?”"
+LB-52,c01_listen_B.mp3,ハテナ,見るところは、はじめのしつもんと、答えのりゆう。その間に、見えないドミノがかくれているよ。,間→あいだ,voice,まとめ,,Where to look: your first question and the reason in the answer. A domino you can’t see is hiding between them.
+LB-53,c01_listen_B.mp3,ハテナ,やりかたは、三つ。,三つ→みっつ,voice,まとめ,,There are three steps.
+LB-54,c01_listen_B.mp3,ハテナ,一つめ。答えの中の、「〜から」ってりゆうを見つける。,一つめ→ひとつめ / 〜から→「から」（〜は読まない）,voice,まとめ,,First: find the reason with “because (〜から)” in the answer.
+LB-55,c01_listen_B.mp3,ハテナ,二つめ。そのりゆうと、はじめのしつもんを、「なんで」でつなぐ。,二つめ→ふたつめ,voice,まとめ,,Second: connect that reason and your first question with “why.”
+LB-56,c01_listen_B.mp3,ハテナ,三つめ。聞く前に、たしかめる。「その答えで、はじめの「なんで？」も分かる？」,三つめ→みっつめ,voice,まとめ,,"Third: check before you ask. “With that answer, will you also understand your first ‘why?’?”"
+LB-57,c01_listen_B.mp3,ハテナ,分からないなら、それは、ちがうれつのドミノだよ。,,voice,まとめ,,"If you won’t understand it, that’s a domino in a different row."
+LB-58,c01_listen_B.mp3,ハテナ,じゃあ、やってみるね。ポン太が、「なんで、冬は手ぶくろをするの？」って聞いたよ。,,voice,まとめ,,"Now, let’s try it. Ponta asked, “Why do we wear gloves in winter?”"
+LB-59,c01_listen_B.mp3,お母さん,手が、つめたくならないからよ。,,voice,まとめ,,Because (から) your hands won’t get cold.
+LB-60,c01_listen_B.mp3,ハテナ,でも、手ぶくろは、ストーブみたいにあつくないよね。,,voice,まとめ,,"But gloves aren’t hot like a heater, right?"
+LB-61,c01_listen_B.mp3,ハテナ,りゆうは「手がつめたくならない」。手ぶくろとつなぐと、こう。,,voice,まとめ,,"The reason is “your hands won’t get cold.” Connecting it with gloves, it’s like this."
+LB-62,c01_listen_B.mp3,ハテナ,「手ぶくろをすると、なんで手がつめたくならないの？」,,voice,まとめ,,“Why don’t your hands get cold when you wear gloves?”
+LB-63,c01_listen_B.mp3,ハテナ,その答えで、はじめの「なんで？」も分かりそうだね。,,voice,まとめ,,"With that answer, it seems like you’ll also understand your first “why?”."
+LB-64,c01_listen_B.mp3,お母さん,手ぶくろは、手のあたたかさを、にがさないのよ。,,voice,まとめ,,Gloves don’t let the warmth of your hands escape.
+LB-65,c01_listen_B.mp3,ハテナ,もし「なんで、冬はさむいの？」と聞いたら……。,,voice,まとめ,,"If you asked, “Why is winter cold?”..."
+LB-66,c01_listen_B.mp3,ハテナ,手ぶくろの「なんで？」は、分からないね。ちがうれつだよ。,,voice,まとめ,,...you wouldn’t understand the gloves “why?”. It’s a different row.
+LB-67,c01_listen_B.mp3,ハテナ,じゃあ、つぎは、きみの番。五つのしつもんで、見えないドミノをさがしてみよう！,五つ→いつつ,voice,まとめ,,Now it’s your turn. Let’s look for the domino you can’t see with five questions!
+S-01,course_prompt_next.mp3,ハテナ,ポン太は、つぎに何を聞けばいい？,何を→なにを,voice,,,What should Ponta ask next?
+S-02,course_try_again.mp3,ハテナ,もう一回、えらんでみよう。,,voice,,,Let’s choose again.
+e01-Q0,c01_e01_q0.mp3,ポン太,何時に帰ってくればいい？,何時→なんじ,voice,,,What time should I come home?
+e01-ANS,c01_e01_answer.mp3,お母さん,くらくなる前だよ。,,voice,,,Before it gets dark (くらくなる前).
+e01-b-ASK,c01_e01_b_ask.mp3,ポン太,なんで、くらくなる前に帰るの？,,voice,べつの道具,,Why do I come home before it gets dark (くらくなる前)?
+e01-b-REP,c01_e01_b_reply.mp3,お母さん,くらいと、あぶないからね。,,voice,べつの道具,,Because it’s dangerous when it’s dark.
+e01-b-FB,c01_e01_b_feedback.mp3,ハテナ,りゆうを聞く、いいしつもん。くらいとあぶないことが分かったね。でも、ポン太が知りたいのは「何時に帰るか」。それは、まだ分からないよ。,何時→なんじ,voice,べつの道具,,A good question that asks for a reason. You found out that it’s dangerous when it’s dark. But what Ponta wants to know is “what time to come home.” You still don’t know that.
+e01-a-ASK,c01_e01_a_ask.mp3,ポン太,くらくなる前って、何時ごろ？,何時→なんじ,voice,いちばん,,Before it gets dark (くらくなる前) — about what time is that?
+e01-a-REP,c01_e01_a_reply.mp3,お母さん,今のきせつなら、5時半ごろかな。,5時半→ごじはん / 今→いま,voice,いちばん,,"This time of year, around 5:30, I think."
+e01-a-FB,c01_e01_a_feedback.mp3,ハテナ,「くらくなる前」は、ゆびでさせるね。でも、何時か見えない、おべんとうばこだったね。ふたをあけたから、帰る時間が分かったよ。,何時→なんじ,voice,いちばん,,"You can point to “before it gets dark (くらくなる前)” with your finger. But it was a lunch box where you can’t see what time. You opened the lid, so now you know what time to come home."
+e01-c-REP,c01_e01_c_reply.mp3,ポン太,……あれ？　何時に帰るんだっけ？,何時→なんじ,voice,おしい,公園のざわざわ（約1秒）のあとにセリフ,……Huh? What time was I supposed to come home?
+e01-c-FB,c01_e01_c_feedback.mp3,ハテナ,それだと、何時に帰るか分からないまま出かけちゃう。答えに、なかみの見えないことばがのこっていない？　見てみよう。,何時→なんじ,voice,おしい,,"That way, you’ll head out without knowing what time to come home. Isn’t there a word left in the answer where you can’t see what’s inside? Let’s look."
+e02-Q0,c01_e02_q0.mp3,ポン太,遠足、どんなふくで行けばいい？,行→い,voice,,,What kind of clothes should I wear on the field trip?
+e02-ANS,c01_e02_answer.mp3,お父さん,うごきやすいふくだよ。,,voice,,,Clothes that are easy to move in (うごきやすい).
+e02-c-ASK,c01_e02_c_ask.mp3,ポン太,なんで、遠足はうごきやすいふくなの？,,voice,べつの道具,,Why should I wear clothes that are easy to move in (うごきやすい) for the field trip?
+e02-c-REP,c01_e02_c_reply.mp3,お父さん,たくさん歩いたり、あそんだりするからね。,,voice,べつの道具,,Because you’ll walk and play a lot.
+e02-c-FB,c01_e02_c_feedback.mp3,ハテナ,りゆうを聞く、いいしつもん。たくさん歩くことが分かったね。でも、ポン太が知りたいのは「何をきていくか」。それは、まだ分からないよ。,何を→なにを,voice,べつの道具,,A good question that asks for a reason. You found out that you’ll walk a lot. But what Ponta wants to know is “what to wear.” You still don’t know that.
+e02-a-ASK,c01_e02_a_ask.mp3,ポン太,うごきやすいって、たとえばどんなふく？,,voice,いちばん,,"Easy to move in (うごきやすい) — what kind of clothes, for example?"
+e02-a-REP,c01_e02_a_reply.mp3,お父さん,たとえば、ジャージとか、のびるズボンかな。,,voice,いちばん,,"For example, a tracksuit, or stretchy pants."
+e02-a-FB,c01_e02_a_feedback.mp3,ハテナ,「うごきやすい」のふたを「たとえば？」であけたね。なかみが見えたから、きていくふくがえらべるよ。,,voice,いちばん,,"You opened the lid of “easy to move in (うごきやすい)” with “For example?” You can see what’s inside, so you can choose the clothes to wear."
+e02-b-ASK,c01_e02_b_ask.mp3,ポン太,うごきやすいって、楽なふくってこと？,楽→らく,voice,おしい,,Easy to move in (うごきやすい) — do you mean comfortable (楽) clothes?
+e02-b-REP,c01_e02_b_reply.mp3,お父さん,まあ、そうだね。,,voice,おしい,,"Well, yes."
+e02-b-FB,c01_e02_b_feedback.mp3,ハテナ,言いかえてみたんだね。でも「楽」も、人によってなかみがちがう、おべんとうばこ。入れかえても、ふたはしまったままだよ。,楽→らく / 入れ→いれ,voice,おしい,,"You tried saying it another way. But “comfortable (楽)” is also a lunch box whose inside is different depending on the person. Even if you swap it, the lid stays closed."
+e03-Q0,c01_e03_q0.mp3,ポン太,ユウくんの家、どこ？,,voice,,,"Yu, where’s your house?"
+e03-ANS,c01_e03_answer.mp3,ユウ,公園の近くの、青いやねの家だよ。,,voice,,,"It’s the house with the blue roof, near (近く) the park."
+e03-b-ASK,c01_e03_b_ask.mp3,ポン太,青いって、どんな青？,,voice,おしい,,Blue (青い) — what kind of blue?
+e03-b-REP,c01_e03_b_reply.mp3,ユウ,空みたいな青だよ。,,voice,おしい,,Blue like the sky.
+e03-b-FB,c01_e03_b_feedback.mp3,ハテナ,「青い」のふたをあける、いいしつもん。青いやねの家がいくつもあったら、やくに立つね。でも、ここでは、まず、どっちへ行けばいいかが、分からないね。,行→い,voice,おしい,,"A good question that opens the lid of “blue (青い).” It would help if there were lots of houses with blue roofs. But here, first of all, you don’t know which way to go."
+e03-c-ASK,c01_e03_c_ask.mp3,ポン太,ユウくんの家、広い？,,voice,おしい,,"Yu, is your house big?"
+e03-c-REP,c01_e03_c_reply.mp3,ユウ,ふつうかな。,,voice,おしい,,"Just normal, I guess."
+e03-c-FB,c01_e03_c_feedback.mp3,ハテナ,気になるね。でも、今知りたいのは「どこ？」だったね。答えの中のことばから、つぎのしつもんを作ろう。,,voice,おしい,,"You’re curious, right? But what you want to know now was “Where?” Let’s make the next question from a word in the answer."
+e03-a-ASK,c01_e03_a_ask.mp3,ポン太,近くって、公園のどっちがわ？,,voice,いちばん,,Near (近く) — which side of the park?
+e03-a-REP,c01_e03_a_reply.mp3,ユウ,すべりだいのほうの出口を出て、すぐ右だよ。,,voice,いちばん,,"Go out the exit on the slide side, and it’s right there on the right."
+e03-a-FB,c01_e03_a_feedback.mp3,ハテナ,家をさがすときにこまるのは、「近く」のほうだね。そこをあけたから、どっちに行けばいいか分かったよ。,行→い,voice,いちばん,,"What causes trouble when looking for the house is “near (近く).” You opened that one, so you know which way to go."
+e04-Q0,c01_e04_q0.mp3,ポン太,クッキー、食べていい？,,voice,,,Can I eat a cookie?
+e04-ANS,c01_e04_answer.mp3,おばあちゃん,少しならいいよ。,,voice,,,A little (少し) is fine.
+e04-a-ASK,c01_e04_a_ask.mp3,ポン太,少しって、何まいまで？,何まい→なんまい,voice,いちばん,,A little (少し) — up to how many?
+e04-a-REP,c01_e04_a_reply.mp3,おばあちゃん,2まいまでね。,2まい→にまい,voice,いちばん,,Up to 2.
+e04-a-FB,c01_e04_a_feedback.mp3,ハテナ,「少し」は、人によって数がちがう、おべんとうばこ。「何まい？」って聞いたから、なかみが見えたね。,何まい→なんまい / 数→かず,voice,いちばん,,"“A little (少し)” is a lunch box where the number is different depending on the person. You asked “How many?”, so you could see what’s inside."
+e04-c-ASK,c01_e04_c_ask.mp3,ポン太,たくさんはだめ？,,voice,おしい,,Can’t I have a lot?
+e04-c-REP,c01_e04_c_reply.mp3,おばあちゃん,たくさんはだめ。,,voice,おしい,,"No, not a lot."
+e04-c-FB,c01_e04_c_feedback.mp3,ハテナ,「たくさんはだめ」と分かっても、何まいならいいかは見えないね。「どのくらい？」で、ふたをあけよう。,何まい→なんまい,voice,おしい,,"Even if you know “not a lot,” you can’t see how many is okay. Let’s open the lid with “How much?”"
+e04-b-ASK,c01_e04_b_ask.mp3,ポン太,なんで、少しだけなの？,,voice,べつの道具,,Why only a little (少し)?
+e04-b-REP,c01_e04_b_reply.mp3,おばあちゃん,もうすぐばんごはんだからね。,,voice,べつの道具,,Because it’s almost dinner time.
+e04-b-FB,c01_e04_b_feedback.mp3,ハテナ,りゆうを聞く、いいしつもん。もうすぐばんごはんだと分かったね。でも、ポン太が知りたいのは「どれだけ食べていいか」。答えの中に、なかみの見えないことばが、まだあるよ。,,voice,べつの道具,,A good question that asks for a reason. You found out that it’s almost dinner time. But what Ponta wants to know is “how much he can eat.” There’s still a word in the answer where you can’t see what’s inside.
+e05-Q0,c01_e05_q0.mp3,ポン太,なんで、帰ったら手をあらうの？,,voice,,,Why do we wash our hands when we get home?
+e05-ANS,c01_e05_answer.mp3,お母さん,手に、ばいきんがついているかもね。,,voice,,,There might be germs (ばいきん) on your hands.
+e05-c-ASK,c01_e05_c_ask.mp3,ポン太,もし手がきれいに見えたら、あらわなくていい？,,voice,べつの道具,,"If my hands look clean, do I not have to wash them?"
+e05-c-REP,c01_e05_c_reply.mp3,お母さん,見えなくてもついていることがあるから、あらおうね。,,voice,べつの道具,,"They can be on your hands even if you can’t see them, so let’s wash."
+e05-c-FB,c01_e05_c_feedback.mp3,ハテナ,一つかえてみる、いいしつもん。きれいに見えても、ばいきんはついているかもしれない。気をつけたいものは、目に見えないこともあるんだね。手をあらうりゆうに、ちかづいたよ。でも、ここは、ふたをあけるれんしゅうだよ。「ばいきん」のふたを、あけてみよう。,一つ→ひとつ,voice,べつの道具,,"A good question that tries changing one thing. Even if your hands look clean, there might be germs (ばいきん) on them. Things you want to be careful about are sometimes invisible to the eye. You got closer to the reason for washing your hands. But this is practice for opening the lid. Let’s open the lid of “germs.”"
+e05-b-ASK,c01_e05_b_ask.mp3,ポン太,ばいきんって、きたないものってこと？,,voice,おしい,,Germs (ばいきん) — do you mean dirty (きたない) things?
+e05-b-REP,c01_e05_b_reply.mp3,お母さん,まあ、そうとも言えるけど……。,,voice,おしい,,"Well, you could say that, but..."
+e05-b-FB,c01_e05_b_feedback.mp3,ハテナ,にたことばに言いかえてみたね。でも「きたない」も、人によってなかみがちがう、おべんとうばこ。「何？」「たとえば？」で、ふたをあけてみよう。,何？→なに？,voice,おしい,,You tried saying it with a similar word. But “dirty (きたない)” is also a lunch box whose inside is different depending on the person. Let’s open the lid with “What is it?” or “For example?”
+e05-a-ASK,c01_e05_a_ask.mp3,ポン太,ばいきんって、何？,何？→なに？,voice,いちばん,,What are germs (ばいきん)?
+e05-a-REP,c01_e05_a_reply.mp3,お母さん,目に見えないくらい小さなもの。中には、びょうきのもとになるものもあるの。,,voice,いちばん,,Things so small you can’t see them with your eyes. Some of them can cause sickness.
+e05-a-FB,c01_e05_a_feedback.mp3,ハテナ,「ばいきん」はよく聞くけど、なかみが見えないことばだったね。ふたをあけたら、どんなものか分かったよ。,,voice,いちばん,,"You hear “germs (ばいきん)” a lot, but it was a word where you couldn’t see what’s inside. When you opened the lid, you found out what they are."
+e06-Q0,c01_e06_q0.mp3,ポン太,なんで、まどがくもってるの？,,voice,,,Why is the window foggy?
+e06-ANS,c01_e06_answer.mp3,お父さん,外がさむいからだよ。,外→そと,voice,,,Because (から) it’s cold outside.
+e06-b-ASK,c01_e06_b_ask.mp3,ポン太,なんで、外はさむいの？,外→そと,voice,おしい,,Why is it cold outside?
+e06-b-REP,c01_e06_b_reply.mp3,お父さん,冬だからね。,,voice,おしい,,Because it’s winter.
+e06-b-FB,c01_e06_b_feedback.mp3,ハテナ,「なんで」は、つかえているね。でも、答えが「冬だから」だと、まどがくもるりゆうは分からない。ちがうれつのドミノだよ。,,voice,おしい,,"You’re using “why.” But if the answer is “because it’s winter,” you don’t find out why the window fogs up. It’s a domino in a different row."
+e06-c-ASK,c01_e06_c_ask.mp3,ポン太,さむいって、何どくらい？,何ど→なんど,voice,べつの道具,,Cold — about how many degrees?
+e06-c-REP,c01_e06_c_reply.mp3,お父さん,けさは3どくらいかな。,3ど→さんど,voice,べつの道具,,"About 3 degrees this morning, I think."
+e06-c-FB,c01_e06_c_feedback.mp3,ハテナ,「さむい」のふたをあける、いいしつもん。なかみは分かったね。でも、ポン太が知りたいのは「なんで、まどがくもるか」。見えないドミノは、まだ見つかっていないよ。,,voice,べつの道具,,A good question that opens the lid of “cold (さむい).” You found out what’s inside. But what Ponta wants to know is “why the window fogs up.” You haven’t found the domino you can’t see yet.
+e06-a-ASK,c01_e06_a_ask.mp3,ポン太,なんで、外がさむいとまどがくもるの？,外→そと,voice,いちばん,,Why does the window fog up when it’s cold outside?
+e06-a-REP,c01_e06_a_reply.mp3,お父さん,へやのあたたかい空気には、目に見えない水が、まじっているんだ。それがつめたいまどで、小さな水のつぶになるんだよ。,,voice,いちばん,,"The warm air in the room has water mixed into it that you can’t see. On the cold window, it turns into tiny drops of water."
+e06-a-FB,c01_e06_a_feedback.mp3,ハテナ,「さむいから」と、まどを「なんで」でつないだね。まどがくもるりゆうが、よく分かったよ。,,voice,いちばん,,You connected “because (から) it’s cold” and the window with “why.” Now you understand well why the window fogs up.
+e07-Q0,c01_e07_q0.mp3,ポン太,なんで、せんたくものを外にほすの？,外→そと,voice,,,Why do we hang the laundry outside to dry?
+e07-ANS,c01_e07_answer.mp3,お母さん,お日さまが当たると、よくかわくからね。,お日さま→おひさま,voice,,,"Because (から) when the sun shines on it, it dries well."
+e07-a-ASK,c01_e07_a_ask.mp3,ポン太,なんで、お日さまが当たるとかわくの？,お日さま→おひさま,voice,いちばん,,Why does it dry when the sun shines on it?
+e07-a-REP,c01_e07_a_reply.mp3,お母さん,あたたまると、ふくについた水が、空気の中へ出ていくのよ。,,voice,いちばん,,"When it warms up, the water on the clothes goes out into the air."
+e07-a-FB,c01_e07_a_feedback.mp3,ハテナ,「お日さまが当たると」のりゆうを聞いたね。外にほすりゆうも、よく分かったよ。,お日さま→おひさま / 外→そと,voice,いちばん,,You asked the reason for “when the sun shines on it.” Now you understand well the reason for hanging it outside too.
+e07-c-ASK,c01_e07_c_ask.mp3,ポン太,くもりの日でも、外にほすとかわく？,外→そと,voice,べつの道具,,Does it dry if you hang it outside on a cloudy day too?
+e07-c-REP,c01_e07_c_reply.mp3,お母さん,かわくけど、晴れの日よりゆっくりかな。,,voice,べつの道具,,"It dries, but more slowly than on a sunny day, I think."
+e07-c-FB,c01_e07_c_feedback.mp3,ハテナ,べつの日とくらべる、いいしつもん。くもりの日でもかわくなら、お日さまだけが、りゆうじゃないのかも。いいところに気がついたね。でも、ここは、ドミノのれんしゅうだよ。お母さんのりゆうの、見えないドミノをさがそう。,お日さま→おひさま,voice,べつの道具,,"A good question that compares with a different day. If it dries even on cloudy days, maybe the sun isn’t the only reason. You noticed something good. But this is domino practice. Let’s look for the domino you can’t see behind Mom’s reason."
+e07-b-ASK,c01_e07_b_ask.mp3,ポン太,なんで、せんたくするの？,,voice,おしい,,Why do we do laundry?
+e07-b-REP,c01_e07_b_reply.mp3,お母さん,ふくをきれいにするためだよ。,,voice,おしい,,To make clothes clean.
+e07-b-FB,c01_e07_b_feedback.mp3,ハテナ,「なんで」をつかえたね。でも、その答えでは、外にほすりゆうは分からない。ちがうれつのドミノだよ。,外→そと,voice,おしい,,"You were able to use “why.” But with that answer, you don’t find out the reason for hanging it outside. It’s a domino in a different row."
+e08-Q0,c01_e08_q0.mp3,ポン太,なんで、話す前に手をあげるの？,,voice,,,Why do we raise our hands before speaking?
+e08-ANS,c01_e08_answer.mp3,先生,みんながいっぺんに話すと、聞こえないからです。,,voice,,,"It’s because (から) if everyone talks at once, we can’t hear."
+e08-c-ASK,c01_e08_c_ask.mp3,ポン太,もし、だれも手をあげなかったら、どうなる？,,voice,べつの道具,,"If nobody raised their hand, what would happen?"
+e08-c-REP,c01_e08_c_reply.mp3,先生,たぶん、みんながいっぺんに話してしまいますね。,,voice,べつの道具,,Probably everyone would end up talking at once.
+e08-c-FB,c01_e08_c_feedback.mp3,ハテナ,そのあとどうなるかを考える、いいしつもん。でも、答えは、先生がもう言ったことと同じだったね。ポン太が知りたいのは「なんで、手をあげるか」。見えないドミノは、まだ見つかっていないよ。,,voice,べつの道具,,A good question that thinks about what happens next. But the answer was the same as what the teacher already said. What Ponta wants to know is “why we raise our hands.” You haven’t found the domino you can’t see yet.
+e08-a-ASK,c01_e08_a_ask.mp3,ポン太,手をあげると、なんで一人ずつ話せるの？,一人ずつ→ひとりずつ,voice,いちばん,,Why does raising your hand let people talk one at a time?
+e08-a-REP,c01_e08_a_reply.mp3,先生,先生が、手をあげた人を、一人ずつあてるからです。あてられた人だけが話すので、みんなに聞こえますね。,一人ずつ→ひとりずつ,voice,いちばん,,"Because the teacher calls on the people who raised their hands one at a time. Only the person who is called on talks, so everyone can hear."
+e08-a-FB,c01_e08_a_feedback.mp3,ハテナ,見えなかったドミノが見えたね。先生が一人ずつあてるから、一人ずつ話せて、みんなに聞こえるんだね。,一人ずつ→ひとりずつ,voice,いちばん,,"You can see the domino you couldn’t see before. The teacher calls on people one at a time, so people talk one at a time, and everyone can hear."
+e08-b-ASK,c01_e08_b_ask.mp3,ポン太,なんで、先生は前に立っているの？,,voice,おしい,,Why does the teacher stand at the front?
+e08-b-REP,c01_e08_b_reply.mp3,先生,みんなから見えやすいからですよ。,,voice,おしい,,Because it’s easy for everyone to see me there.
+e08-b-FB,c01_e08_b_feedback.mp3,ハテナ,それもふしぎだね。でも、先生の答えの「〜から」とは、べつの話。答えの中のことばから作ろう。,〜から→「から」（〜は読まない）,voice,おしい,,That’s a curious thing too. But it’s a different topic from the “because (〜から)” in the teacher’s answer. Let’s make it from a word in the answer.
+e09-Q0,c01_e09_q0.mp3,ポン太,なんで、こおりが水になったの？,,voice,,,Why did the ice turn into water?
+e09-ANS,c01_e09_answer.mp3,お姉ちゃん,へやがあたたかいから、とけたんだよ。,,voice,,,"Because (から) the room is warm, it melted."
+e09-b-ASK,c01_e09_b_ask.mp3,ポン太,なんで、へやはあたたかいの？,,voice,おしい,,Why is the room warm?
+e09-b-REP,c01_e09_b_reply.mp3,お姉ちゃん,だんぼうがついているからね。,,voice,おしい,,Because the heater is on.
+e09-b-FB,c01_e09_b_feedback.mp3,ハテナ,「なんで」は、つかえているね。でも、答えが「だんぼう」だと、こおりが水になったりゆうは分からない。ちがうれつのドミノだよ。,,voice,おしい,,"You’re using “why.” But if the answer is “the heater,” you don’t find out why the ice turned into water. It’s a domino in a different row."
+e09-a-ASK,c01_e09_a_ask.mp3,ポン太,なんで、あたたかいとこおりはとけるの？,,voice,いちばん,,Why does ice melt when it’s warm?
+e09-a-REP,c01_e09_a_reply.mp3,お姉ちゃん,こおりは、目に見えないほど小さな、水のつぶでできているの。つぶは、手をつないで、ぴったりならんでいるのよ。あたたかい空気にふれると、つぶがうごき出して、ならびがくずれるの。だから、ながれる水にもどるんだよ。,,voice,いちばん,,"Ice is made of drops of water so tiny you can’t see them. The drops hold hands and are lined up tightly. When they touch warm air, the drops start to move and the lines fall apart. So it turns back into flowing water."
+e09-a-FB,c01_e09_a_feedback.mp3,ハテナ,見えなかったドミノが見えたね。あたたかさで、つぶのならびがくずれるから、とけるんだね。,,voice,いちばん,,"You can see the domino you couldn’t see before. The warmth makes the lines of drops fall apart, so it melts."
+e09-c-ASK,c01_e09_c_ask.mp3,ポン太,もし、れいとうこに入れておいたら？,入れ→いれ,voice,べつの道具,,What if I had put it in the freezer?
+e09-c-REP,c01_e09_c_reply.mp3,お姉ちゃん,それなら、とけなかったかもね。,,voice,べつの道具,,Then it might not have melted.
+e09-c-FB,c01_e09_c_feedback.mp3,ハテナ,一つかえてみる、いいしつもん。れいとうこなら、とけなかったかもしれないね。でも、ポン太が知りたいのは「なんで、こおりが水になったか」。見えないドミノは、まだ見つかっていないよ。,一つ→ひとつ,voice,べつの道具,,"A good question that tries changing one thing. In the freezer, it might not have melted. But what Ponta wants to know is “why the ice turned into water.” You haven’t found the domino you can’t see yet."
+e10-Q0,c01_e10_q0.mp3,ポン太,なんで、夜のうちにじゅんびするの？,,voice,,,Why do we get ready the night before?
+e10-ANS,c01_e10_answer.mp3,お父さん,朝はいそがしいからね。,,voice,,,Because (から) mornings are busy.
+e10-c-ASK,c01_e10_c_ask.mp3,ポン太,もし朝早くおきたら、夜にじゅんびしなくていい？,,voice,べつの道具,,"If I get up early in the morning, do I not have to get ready at night?"
+e10-c-REP,c01_e10_c_reply.mp3,お父さん,早くおきられるなら、それでもいいね。,,voice,べつの道具,,"If you can get up early, that’s fine too."
+e10-c-FB,c01_e10_c_feedback.mp3,ハテナ,一つかえてみる、いいしつもん。朝に時間があれば、夜でなくてもいいと分かったね。お父さんのりゆうを、ためしてみたんだね。でも、ここは、ドミノのれんしゅうだよ。お父さんのりゆうの、見えないドミノをさがそう。,一つ→ひとつ,voice,べつの道具,,"A good question that tries changing one thing. You found out that if you have time in the morning, it doesn’t have to be at night. You tested Dad’s reason. But this is domino practice. Let’s look for the domino you can’t see behind Dad’s reason."
+e10-b-ASK,c01_e10_b_ask.mp3,ポン太,なんで、ランドセルは黒いの？,,voice,おしい,,Why are school backpacks (randoseru) black?
+e10-b-REP,c01_e10_b_reply.mp3,お父さん,いろいろあるよ。ポン太のは黒だけどね。,,voice,おしい,,"There are all kinds. Yours is black, though, Ponta."
+e10-b-FB,c01_e10_b_feedback.mp3,ハテナ,気になるけど、お父さんの答えの「〜から」とは、べつの話だね。答えの中の「いそがしい」から作ろう。,〜から→「から」（〜は読まない）,voice,おしい,,"You’re curious, but it’s a different topic from the “because (〜から)” in Dad’s answer. Let’s make it from “busy” in the answer."
+e10-a-ASK,c01_e10_a_ask.mp3,ポン太,朝いそがしいと、なんで夜にじゅんびするの？,,voice,いちばん,,"If mornings are busy, why do we get ready at night?"
+e10-a-REP,c01_e10_a_reply.mp3,お父さん,あわてて、わすれものをしやすくなるからね。,,voice,いちばん,,"Because when you rush, you’re more likely to forget things."
+e10-a-FB,c01_e10_a_feedback.mp3,ハテナ,見えなかったドミノが見えたね。夜にじゅんびするりゆうが、よく分かったよ。,,voice,いちばん,,You can see the domino you couldn’t see before. Now you understand well why we get ready at night.
+MA-01,c01_makeA_01.mp3,ポン太,きょう、クラスで、手をあげてあそびをきめたんだ。ドッジボールになった。ぼくは、おにごっこがよかったのに。ずるくない？,,voice,,,"Today in class, we decided what game to play by raising hands. It ended up being dodgeball. I wanted tag. Isn’t that unfair?"
+MA-02,c01_makeA_02.mp3,友だち,一番多いほうにきまったんだよ。それが、こうへいでしょ。,一番→いちばん,voice,,,"It was decided by whatever had the most votes. That’s fair (こうへい), right?"
+MA-03,c01_makeA_03.mp3,ハテナ,「ふたを あける」で、つぎのしつもんを作ってみよう。おうちの人といっしょでもいいよ。,,voice,,,"Let’s make the next question with “Open the lid.” You can do it together with someone in your family, too."
+MB-01,c01_makeB_01.mp3,ポン太,お姉ちゃんのランドセル、6年つかって、色がかわったね。角もすりきれてる。,6年→ろくねん / 角→かど,voice,,,"My big sister’s randoseru has been used for 6 years, and its color has changed. The corners are worn out too."
+MB-02,c01_makeB_02.mp3,ポン太,それでも、なんで同じランドセルなの？,,voice,,,"Even so, why is it the same randoseru?"
+MB-03,c01_makeB_03.mp3,お姉ちゃん,ずっとつかってきたからだよ。,,voice,,,Because (から) I’ve been using it all along.
+MB-04,c01_makeB_04.mp3,ハテナ,こんどは「まえの りゆうを 見る」で、しつもんを作ろう。,,voice,,,"This time, let’s make a question with “Look at the reason before.”"
+X-01,course_say_it.mp3,ハテナ,しつもんを、声に出して言ってみよう。,,voice,,,Say your question out loud.
+X-02,c01_teach_prompt.mp3,ハテナ,おうちの人に、きょうのどうぐを二つ、せつめいしよう。,二つ→ふたつ,voice,,,Explain today’s two tools to someone in your family.
+X-03,c01_family_intro.mp3,ハテナ,きょう作ったしつもんを一つえらんで、かぞくでしらべてみよう。,一つ→ひとつ,voice,,,"Choose one question you made today, and look into it with your family."

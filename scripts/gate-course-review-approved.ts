@@ -13,6 +13,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { loadGradeMap } from '../pipeline/lib/kanji.js';
 import { checkCourseLesson } from './lib/courseContentGate.js';
+import { loadAudioSheet, distinctAudioFiles } from './lib/audioSheet.js';
 import type { CourseManifest, CourseLesson } from '../src/course/content/types.js';
 
 const ROOT = process.cwd();
@@ -20,6 +21,14 @@ const COURSE_DIR = resolve(ROOT, 'src/course/content');
 const MANIFEST_PATH = resolve(COURSE_DIR, 'course.json');
 const PUBLIC_DIR = resolve(ROOT, 'public');
 const STRICT = process.env.RELEASE === '1';
+
+/** WO-C2b §4: c01's own frozen recording sheet — 250 voiced lines across the two joined きく
+ *  blocks (already covered by `checkAudioFilesExist`'s first loop, via `lesson.listen[].audio`)
+ *  plus every standalone practice/make/teach-back/family clip and the 3 shared UI prompts. No
+ *  other lesson has a sheet like this yet (Lessons 2-12 are out of this work order's scope), so
+ *  this stays keyed to `c01` specifically rather than a generic per-lesson path convention. */
+const C01_AUDIO_SHEET_PATH = resolve(COURSE_DIR, 'audio/nazehori-lesson1-audio-sheet.csv');
+const JOIN_TARGET_FILES = new Set(['c01_listen_A.mp3', 'c01_listen_B.mp3']); // already checked via lesson.listen[].audio
 
 /**
  * WO-C2 §5/instruction 5: "Audio isn't recorded yet. Use placeholder audio in preview only;
@@ -37,6 +46,16 @@ function checkAudioFilesExist(lesson: CourseLesson): string[] {
     const audioPath = resolve(PUBLIC_DIR, block.audio);
     if (!existsSync(audioPath)) {
       issues.push(`lesson ${lesson.id} listen (tool ${block.tool}): audio file missing — public/${block.audio}`);
+    }
+  }
+  if (lesson.id === 'c01' && existsSync(C01_AUDIO_SHEET_PATH)) {
+    const rows = loadAudioSheet(C01_AUDIO_SHEET_PATH);
+    for (const { file, dir } of distinctAudioFiles(rows)) {
+      if (JOIN_TARGET_FILES.has(file)) continue; // covered by the loop above
+      const relPath = `audio/course/${dir === 'lesson' ? lesson.id : 'shared'}/${file}`;
+      if (!existsSync(resolve(PUBLIC_DIR, relPath))) {
+        issues.push(`lesson ${lesson.id}: audio clip missing — public/${relPath}`);
+      }
     }
   }
   return issues;

@@ -273,6 +273,7 @@ export function CourseApp() {
     content = (
       <MakeScreen
         key={screen.blockIndex}
+        lessonId={lesson.id}
         blocks={lesson.make}
         blockIndex={screen.blockIndex}
         onMakeDone={() => markMakeDone(lesson.id, screen.blockIndex)}
@@ -287,6 +288,7 @@ export function CourseApp() {
   } else if (screen.kind === 'teachback') {
     content = (
       <TeachBackScreen
+        lessonId={lesson.id}
         teachBack={lesson.teachBack}
         onTeachBackDone={() => { markTeachBackDone(lesson.id); setScreen({ kind: 'lesson', lessonId: lesson.id }); }}
         onBack={() => setScreen({ kind: 'lesson', lessonId: lesson.id })}
@@ -295,6 +297,7 @@ export function CourseApp() {
   } else if (screen.kind === 'family') {
     content = (
       <FamilyScreen
+        lessonId={lesson.id}
         family={lesson.family}
         stars={lessonProgress?.stars ?? 0}
         starsEnabled={!!lessonProgress?.teachBackDone}

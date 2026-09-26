@@ -85,6 +85,13 @@ export interface CourseListenBlock {
 export interface CourseSpeechLine {
   speaker: CourseSpeaker;
   text: string;
+  /** WO-C2b: a production-only sound/performance note for this line (e.g. park ambience for
+   *  about a second, then the line), never spoken or rendered — it used to be folded into `text`
+   *  itself as a stage direction (WO-C2's original e01-c reply had 公園で prefixed to the line,
+   *  in its own parentheses); the Coordinator's audio sheet moved it out into its own field so
+   *  the on-screen/spoken text stays exactly what's said. Read only by the audio-generation
+   *  pipeline, never by any screen. */
+  audioCue?: string;
 }
 
 export type CourseOptionRole = 'best' | 'otherTool' | 'nearMiss';

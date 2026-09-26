@@ -8,10 +8,13 @@
 import { useState } from 'react';
 import { Plane } from '../../ad12/Plane';
 import { Ruby } from '../../engine/ruby';
+import { VoiceCue } from '../VoiceCue';
 import { courseUi } from '../content/courseManifest';
+import { familyIntroAudioPath } from '../audioPaths';
 import type { CourseFamily } from '../content/types';
 
 export interface FamilyScreenProps {
+  lessonId: string;
   family: CourseFamily;
   stars: number;
   starsEnabled: boolean;
@@ -19,7 +22,7 @@ export interface FamilyScreenProps {
   onBack: () => void;
 }
 
-export function FamilyScreen({ family, stars, starsEnabled, onStar, onBack }: FamilyScreenProps) {
+export function FamilyScreen({ lessonId, family, stars, starsEnabled, onStar, onBack }: FamilyScreenProps) {
   const [chosenIndex, setChosenIndex] = useState<number | null>(null);
 
   return (
@@ -29,6 +32,7 @@ export function FamilyScreen({ family, stars, starsEnabled, onStar, onBack }: Fa
       {family.intro && (
         <Plane>
           <p className="ad12-reading-text"><Ruby text={family.intro} /></p>
+          <VoiceCue src={familyIntroAudioPath(lessonId)} />
         </Plane>
       )}
 

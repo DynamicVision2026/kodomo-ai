@@ -15,9 +15,16 @@ import { useState } from 'react';
 import { MoveCard } from '../../ad12/MoveCard';
 import { Plane } from '../../ad12/Plane';
 import { DialoguePlane } from '../DialoguePlane';
+import { VoiceCue } from '../VoiceCue';
 import { Ruby } from '../../engine/ruby';
 import { courseUi } from '../content/courseManifest';
+import { exerciseQ0AudioPath, exerciseAnswerAudioPath, exerciseOptionAudioPath, SHARED_AUDIO } from '../audioPaths';
 import type { CourseExercise, CourseExerciseOption } from '../content/types';
+
+/** 'c01-e01' -> 'c01' */
+function lessonIdOf(exerciseId: string): string {
+  return exerciseId.split('-e')[0]!;
+}
 
 export interface ExerciseScreenProps {
   exercise: CourseExercise;
@@ -102,6 +109,7 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
   const chosen = phase.kind === 'miss' || phase.kind === 'solved'
     ? orderedOptions.find((o) => o.id === phase.optionId)
     : undefined;
+  const lessonId = lessonIdOf(exercise.id);
 
   return (
     <main className="ad12 course-screen course-exercise">
@@ -119,18 +127,21 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
         <p className="ad12-ui-text"><Ruby text={exercise.scene.text} /></p>
       </Plane>
       <DialoguePlane speaker={exercise.q0.speaker} text={exercise.q0.text} />
+      <VoiceCue src={exerciseQ0AudioPath(lessonId, exercise.id)} />
       {exerciseStep && (
         <Plane className="course-exercise__answer">
           <p className="ad12-ui-text course-dialogue__speaker">{exerciseStep.answer.speaker}</p>
           <p className="ad12-reading-text">
             {showH2 ? highlightSubstring(exerciseStep.answer.text, exerciseStep.hint.h2Highlight) : <Ruby text={exerciseStep.answer.text} />}
           </p>
+          <VoiceCue src={exerciseAnswerAudioPath(lessonId, exercise.id)} />
         </Plane>
       )}
 
       {phase.kind === 'picking' && exerciseStep && (
         <>
           <p className="ad12-ui-text">{courseUi.practice.nextPrompt}</p>
+          <VoiceCue src={SHARED_AUDIO.practiceNextPrompt} />
           <div className="course-exercise__options">
             {orderedOptions.map((option) => {
               const tried = triedIds.includes(option.id);
@@ -162,9 +173,15 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
 
       {phase.kind === 'miss' && chosen && (
         <>
+          {chosen.kind === 'question' && (
+            <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'ask')} />
+          )}
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
+          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'reply')} />
           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
+          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'feedback')} />
           <p className="ad12-ui-text">{courseUi.practice.retryPrompt}</p>
+          <VoiceCue src={SHARED_AUDIO.practiceRetryPrompt} />
           <button type="button" className="ad12-ink-button ad12-tappable course-screen__primary" onClick={() => setPhase({ kind: 'picking' })}>
             {courseUi.practice.retryLabel}
           </button>
@@ -173,8 +190,13 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
 
       {phase.kind === 'solved' && chosen && (
         <>
+          {chosen.kind === 'question' && (
+            <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'ask')} />
+          )}
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
+          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'reply')} />
           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
+          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'feedback')} />
           {chosen.tool && (
             <Plane className="course-exercise__badge">
               <p className="ad12-ui-text">
@@ -191,8 +213,13 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
                   if (!other) return null;
                   return (
                     <>
+                      {other.kind === 'question' && (
+                        <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'ask')} />
+                      )}
                       <DialoguePlane speaker={other.reply.speaker} text={other.reply.text} />
+                      <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'reply')} />
                       <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={other.feedback} />
+                      <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'feedback')} />
                       <button
                         type="button"
                         className="ad12-ink-button ad12-tappable"
