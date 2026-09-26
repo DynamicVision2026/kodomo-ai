@@ -24,373 +24,435 @@
      "part": "A-1 こまった",
      "speaker": "ハテナ",
      "text": "ポン太、どうしたの？　しょんぼりしてるね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 1.045
     },
     {
      "part": "A-1 こまった",
      "speaker": "ポン太",
      "text": "ねえハテナ、聞いてよ。お母さんに「へや、ちゃんとかたづけて」って言われたの。",
-     "section": "talk"
+     "section": "talk",
+     "start": 4.405
     },
     {
      "part": "A-1 こまった",
      "speaker": "ポン太",
      "text": "だから、おもちゃをぜんぶ、大きなはこに入れたんだ。ゆかに、なんにもなくなったよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 10.189
     },
     {
      "part": "A-1 こまった",
      "speaker": "ハテナ",
      "text": "ゆかが、すっきりしたね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 16.477
     },
     {
      "part": "A-1 こまった",
      "speaker": "ポン太",
      "text": "でしょ？　なのに、お母さんが見に来て、「ちゃんとやってないでしょ」って。",
-     "section": "talk"
+     "section": "talk",
+     "start": 18.685
     },
     {
      "part": "A-1 こまった",
      "speaker": "ハテナ",
      "text": "あれれ。はこに入れたのに？",
-     "section": "talk"
+     "section": "talk",
+     "start": 23.893
     },
     {
      "part": "A-1 こまった",
      "speaker": "ポン太",
      "text": "そうだよ。ぼくは、ちゃんとやったのに。",
-     "section": "talk"
+     "section": "talk",
+     "start": 26.437
     },
     {
      "part": "A-1 こまった",
      "speaker": "ハテナ",
      "text": "ポン太の「ちゃんと」と、お母さんの「ちゃんと」。同じことばなのに、ちがうみたいだね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 29.509
     },
     {
      "part": "A-1 こまった",
      "speaker": "ポン太",
      "text": "えっ。同じことばなのに、ちがうの？",
-     "section": "talk"
+     "section": "talk",
+     "start": 36.613
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ハテナ",
      "text": "ポン太、おべんとうばこって知ってる？",
-     "section": "talk"
+     "section": "talk",
+     "start": 39.565
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ポン太",
      "text": "知ってるよ。遠足の日に、お母さんが作ってくれるやつ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 42.517
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ハテナ",
      "text": "ふたがしまっていたら、中に何が入ってるか見える？",
-     "section": "talk"
+     "section": "talk",
+     "start": 47.125
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ポン太",
      "text": "見えないよ。……からあげかな？　たまごやきかな？",
-     "section": "talk"
+     "section": "talk",
+     "start": 51.757
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ハテナ",
      "text": "当ててみても、あけるまで分からないね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 55.045
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ハテナ",
      "text": "じゃあ、なかみを知ってるのは、だれ？",
-     "section": "talk"
+     "section": "talk",
+     "start": 58.021
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ポン太",
      "text": "作った人。お母さん！",
-     "section": "talk"
+     "section": "talk",
+     "start": 61.189
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ハテナ",
      "text": "そのとおり。ことばも、おべんとうばこに、にているよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 63.013
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ハテナ",
      "text": "「ちゃんと」は、みんながつかうことば。でも、この時、お母さんが何をしてほしかったのかは、見えないね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 67.453
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ポン太",
      "text": "お母さんが、何をしてほしかったのか……。お母さんに聞けば、分かるかな？",
-     "section": "talk"
+     "section": "talk",
+     "start": 76.381
     },
     {
      "part": "A-2 おべんとうばこ",
      "speaker": "ハテナ",
      "text": "そう。ポン太が思っていた「ちゃんと」とは、ちがったのかもしれないね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 82.117
     },
     {
      "part": "A-3 いつつかう？",
      "speaker": "ハテナ",
      "text": "ふたをあけたいことばは、あいことばで見つかるよ。「答えの中で、ゆびでさせる？」",
-     "section": "talk"
+     "section": "talk",
+     "start": 87.973
     },
     {
      "part": "A-3 いつつかう？",
      "speaker": "ハテナ",
      "text": "お母さんのことばの中で、「ちゃんと」は、ゆびでさせる？",
-     "section": "talk"
+     "section": "talk",
+     "start": 94.621
     },
     {
      "part": "A-3 いつつかう？",
      "speaker": "ポン太",
      "text": "うん。ここ！って、させるよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 99.589
     },
     {
      "part": "A-3 いつつかう？",
      "speaker": "ハテナ",
      "text": "じゃあ、その「ちゃんと」のなかみは見える？",
-     "section": "talk"
+     "section": "talk",
+     "start": 101.821
     },
     {
      "part": "A-3 いつつかう？",
      "speaker": "ポン太",
      "text": "……見えない。何をすればいいのか、分からない。",
-     "section": "talk"
+     "section": "talk",
+     "start": 105.733
     },
     {
      "part": "A-3 いつつかう？",
      "speaker": "ハテナ",
      "text": "ゆびでさせるのに、なかみが見えないことば。それが、ふたをあけるしるしだよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 108.997
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "ポン太",
      "text": "じゃあ、お母さんに聞いてみる。えっと……「ちゃんとって、きちんとってこと？」",
-     "section": "talk"
+     "section": "talk",
+     "start": 115.645
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "ハテナ",
      "text": "ちょっとまって。「きちんと」のなかみは見える？",
-     "section": "talk"
+     "section": "talk",
+     "start": 121.021
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "ポン太",
      "text": "……あっ。見えない。",
-     "section": "talk"
+     "section": "talk",
+     "start": 124.765
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "ハテナ",
      "text": "「ちゃんと」を「きちんと」に入れかえただけだね。べつのおべんとうばこになっただけで、ふたは、しまったままだよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 125.941
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "ポン太",
      "text": "じゃあ、どう聞けばいいの？",
-     "section": "talk"
+     "section": "talk",
+     "start": 135.301
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "ハテナ",
      "text": "「何をすること？」とか、「たとえば？」って聞くと、ふたがあくよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 137.629
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "ポン太",
      "text": "分かった！　聞いてくる！",
-     "section": "talk"
+     "section": "talk",
+     "start": 143.509
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "ポン太",
      "text": "お母さん。ちゃんとかたづけるって、何をすること？",
-     "section": "talk"
+     "section": "talk",
+     "start": 146.258
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "お母さん",
      "text": "そうねえ。本は本だなに。ブロックは青いはこに。",
-     "section": "talk"
+     "section": "talk",
+     "start": 150.026
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "お母さん",
      "text": "ぜんぶ、きまったばしょにもどすことよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 154.586
     },
     {
      "part": "A-4 ためしてみる",
      "speaker": "ポン太",
      "text": "……そういうことか！　ぜんぶ一つのはこに入れたら、だめなんだ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 157.562
     },
     {
      "part": "A-5 なかみが見えた",
      "speaker": "ポン太",
      "text": "ハテナ！　ふたがあいたよ。きまったばしょにもどすことだって。",
-     "section": "talk"
+     "section": "talk",
+     "start": 163.167
     },
     {
      "part": "A-5 なかみが見えた",
      "speaker": "ハテナ",
      "text": "なかみが見えたね。どうすればいいか、分かった？",
-     "section": "talk"
+     "section": "talk",
+     "start": 167.343
     },
     {
      "part": "A-5 なかみが見えた",
      "speaker": "ポン太",
      "text": "うん。やってくる！",
-     "section": "talk"
+     "section": "talk",
+     "start": 171.591
     },
     {
      "part": "A-5 なかみが見えた",
      "speaker": "お母さん",
      "text": "あら、ちゃんとできたね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 174.052
     },
     {
      "part": "A-5 なかみが見えた",
      "speaker": "ポン太",
      "text": "やった！",
-     "section": "talk"
+     "section": "talk",
+     "start": 176.02
     },
     {
      "part": "A-5 なかみが見えた",
      "speaker": "ハテナ",
      "text": "言った人は、自分が何をしてほしいか、分かっているよね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 176.764
     },
     {
      "part": "A-5 なかみが見えた",
      "speaker": "ハテナ",
      "text": "だから、聞いている人にも見えてると、思っちゃうことがあるんだ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 181.948
     },
     {
      "part": "A-5 なかみが見えた",
      "speaker": "ポン太",
      "text": "お母さんも、ぼくに見えてると思ってたんだね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 187.204
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "きょうの一つめのどうぐは、「ふたを あける」。おべんとうばこのカードだよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 191.992
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "つかうのは、答えの中に、こんなことばがあるとき。",
-     "section": "teach"
+     "section": "teach",
+     "start": 197.944
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "ゆびでさせるのに、なかみが見えないことば。",
-     "section": "teach"
+     "section": "teach",
+     "start": 202.696
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "たとえば、「ちゃんと」「ちょっと」「後で」「きれいに」。",
-     "section": "teach"
+     "section": "teach",
+     "start": 206.608
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "よく聞くけど、言う人やその時によって、なかみがかわることばだね。",
-     "section": "teach"
+     "section": "teach",
+     "start": 210.712
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "あけかたは、かんたん。そのことばをつかって、こう聞くんだ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 216.592
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "「なになにって、何？」「何をすること？」",
-     "section": "teach"
+     "section": "teach",
+     "start": 221.536
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "「たとえば？」「どのくらい？」",
-     "section": "teach"
+     "section": "teach",
+     "start": 225.112
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "気をつけることが一つ。にたことばに入れかえても、ふたはあかないよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 227.392
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "じゃあ、やってみるね。ポン太が、「おやつ、まだ？」って聞いたよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 233.32
     },
     {
      "part": "まとめ",
      "speaker": "おばあちゃん",
      "text": "ちょっとまっててね。",
-     "section": "teach"
+     "section": "teach",
+     "start": 238.888
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "答えの中で、ゆびでさせることばは？　……「ちょっと」だね。",
-     "section": "teach"
+     "section": "teach",
+     "start": 240.664
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "なかみは見える？　……見えないね。だから、こう聞くよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 245.272
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "「ちょっとって、何分くらい？」",
-     "section": "teach"
+     "section": "teach",
+     "start": 249.76
     },
     {
      "part": "まとめ",
      "speaker": "おばあちゃん",
      "text": "5分くらいよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 252.184
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "ほら、ふたがあいた。5分なら、まっていられるね。",
-     "section": "teach"
+     "section": "teach",
+     "start": 253.768
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "じゃあ、つぎは、きみの番。五つのしつもんで、ふたをあけてみよう！",
-     "section": "teach"
+     "section": "teach",
+     "start": 258.136
     }
    ],
    "thenExercises": [
@@ -416,403 +478,470 @@
      "part": "B-1 なっとくできない",
      "speaker": "ポン太",
      "text": "ふわあ……。ハテナ、ぼく、もうねるね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 1.045
     },
     {
      "part": "B-1 なっとくできない",
      "speaker": "ハテナ",
      "text": "あれ？　はみがきは、した？",
-     "section": "talk"
+     "section": "talk",
+     "start": 4.165
     },
     {
      "part": "B-1 なっとくできない",
      "speaker": "ポン太",
      "text": "えー。朝もみがいたよ。夜も、やらなきゃだめ？",
-     "section": "talk"
+     "section": "talk",
+     "start": 6.805
     },
     {
      "part": "B-1 なっとくできない",
      "speaker": "ハテナ",
      "text": "お母さんに、聞いてみよう。",
-     "section": "talk"
+     "section": "talk",
+     "start": 10.717
     },
     {
      "part": "B-1 なっとくできない",
      "speaker": "ポン太",
      "text": "お母さん。なんで、ねる前に、はみがきするの？",
-     "section": "talk"
+     "section": "talk",
+     "start": 13.141
     },
     {
      "part": "B-1 なっとくできない",
      "speaker": "お母さん",
      "text": "みがかないと、むしばになっちゃうからよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 17.029
     },
     {
      "part": "B-1 なっとくできない",
      "speaker": "ポン太",
      "text": "……ふーん。",
-     "section": "talk"
+     "section": "talk",
+     "start": 20.101
     },
     {
      "part": "B-1 なっとくできない",
      "speaker": "ハテナ",
      "text": "なっとくしてない顔だね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 20.869
     },
     {
      "part": "B-1 なっとくできない",
      "speaker": "ポン太",
      "text": "だって、朝もみがいたもん。なんで、ねる前なのかが、分からないんだ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 22.957
     },
     {
      "part": "B-1 なっとくできない",
      "speaker": "ハテナ",
      "text": "お母さんの答えに、「から」ってことば、あった？",
-     "section": "talk"
+     "section": "talk",
+     "start": 28.933
     },
     {
      "part": "B-1 なっとくできない",
      "speaker": "ポン太",
      "text": "あった！　「むしばになっちゃうから」。これが、りゆうだね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 33.589
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ハテナ",
      "text": "ポン太、ドミノたおし、したことある？",
-     "section": "talk"
+     "section": "talk",
+     "start": 37.549
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ポン太",
      "text": "あるよ！　ならべておすと、じゅんばんにパタパタたおれるやつ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 40.765
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ハテナ",
      "text": "そう。さいごのドミノがたおれたのは、なんで？",
-     "section": "talk"
+     "section": "talk",
+     "start": 45.89
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ポン太",
      "text": "一つ前のドミノが、おしたから。",
-     "section": "talk"
+     "section": "talk",
+     "start": 49.634
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ハテナ",
      "text": "そうだね。ドミノは、一本のれつに、ずらっとならんでる。",
-     "section": "talk"
+     "section": "talk",
+     "start": 52.058
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ハテナ",
      "text": "となりに、べつのれつがあるとするね。そっちをおしても、こっちのドミノはたおれない。",
-     "section": "talk"
+     "section": "talk",
+     "start": 57.29
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ポン太",
      "text": "うん。れつがちがうもん。",
-     "section": "talk"
+     "section": "talk",
+     "start": 64.346
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ハテナ",
      "text": "お母さんの答えも、ドミノみたいなんだ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 66.29
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ハテナ",
      "text": "さいごのドミノは、ポン太のはじめのしつもん。「なんで、ねる前に、はみがきするの？」",
-     "section": "talk"
+     "section": "talk",
+     "start": 69.914
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ハテナ",
      "text": "その前のドミノは、お母さんがくれたりゆう。「むしばになっちゃうから」。",
-     "section": "talk"
+     "section": "talk",
+     "start": 77.114
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ポン太",
      "text": "でも、それだけだと、なっとくできないよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 82.682
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ハテナ",
      "text": "そう。「ねる前」と「むしば」の間が、あいているんだ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 86.114
     },
     {
      "part": "B-2 ドミノ",
      "speaker": "ハテナ",
      "text": "そこに、見えないドミノがかくれているよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 91.154
     },
     {
      "part": "B-3 ちがうれつ",
      "speaker": "ポン太",
      "text": "よし、聞いてみる。えっと……「なんで、むしばになると、いたいの？」",
-     "section": "talk"
+     "section": "talk",
+     "start": 94.394
     },
     {
      "part": "B-3 ちがうれつ",
      "speaker": "ハテナ",
      "text": "ちょっとまって。聞く前に、たしかめよう。はじめのしつもんは？",
-     "section": "talk"
+     "section": "talk",
+     "start": 99.794
     },
     {
      "part": "B-3 ちがうれつ",
      "speaker": "ポン太",
      "text": "「なんで、ねる前に、はみがきするの？」",
-     "section": "talk"
+     "section": "talk",
+     "start": 104.978
     },
     {
      "part": "B-3 ちがうれつ",
      "speaker": "ハテナ",
      "text": "むしばがいたいりゆうが分かったら、「なんで、ねる前なの？」も分かる？",
-     "section": "talk"
+     "section": "talk",
+     "start": 108.05
     },
     {
      "part": "B-3 ちがうれつ",
      "speaker": "ポン太",
      "text": "……分からない。いたいのは、朝でも夜でも同じだもん。",
-     "section": "talk"
+     "section": "talk",
+     "start": 114.002
     },
     {
      "part": "B-3 ちがうれつ",
      "speaker": "ハテナ",
      "text": "それは、ちがうれつのドミノなんだ。おもしろいけど、ねる前のはみがきとは、べつのれつ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 118.178
     },
     {
      "part": "B-3 ちがうれつ",
      "speaker": "ポン太",
      "text": "同じれつの中で、前のドミノをさがすんだね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 125.858
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "ハテナ",
      "text": "じゃあ、いっしょに作ろう。まず、答えの中のりゆうは？",
-     "section": "talk"
+     "section": "talk",
+     "start": 129.698
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "ポン太",
      "text": "「むしばになっちゃうから」。",
-     "section": "talk"
+     "section": "talk",
+     "start": 134.546
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "ハテナ",
      "text": "つぎ。はじめのしつもんで、ポン太が知りたいのは？",
-     "section": "talk"
+     "section": "talk",
+     "start": 136.154
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "ポン太",
      "text": "「ねる前」のこと。",
-     "section": "talk"
+     "section": "talk",
+     "start": 140.282
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "ハテナ",
      "text": "その二つを、「なんで」でつないでみて。",
-     "section": "talk"
+     "section": "talk",
+     "start": 141.914
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "ポン太",
      "text": "えっと……「ねる前にみがかないと、なんでむしばになるの？」",
-     "section": "talk"
+     "section": "talk",
+     "start": 145.634
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "ハテナ",
      "text": "いいね。聞く前に、たしかめよう。その答えで、はじめの「なんで？」も分かりそう？",
-     "section": "talk"
+     "section": "talk",
+     "start": 149.882
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "ポン太",
      "text": "うん！　ねる前のことを聞いてるから。聞いてみる！",
-     "section": "talk"
+     "section": "talk",
+     "start": 157.61
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "ポン太",
      "text": "お母さん。ねる前にみがかないと、なんでむしばになるの？",
-     "section": "talk"
+     "section": "talk",
+     "start": 161.21
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "お母さん",
      "text": "いいしつもんね。",
-     "section": "talk"
+     "section": "talk",
+     "start": 165.722
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "お母さん",
      "text": "ねている間はね、口の中のつばが、少なくなるの。",
-     "section": "talk"
+     "section": "talk",
+     "start": 167.066
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "お母さん",
      "text": "つばは、ばいきんを、あらいながしてくれるのよ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 171.794
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "お母さん",
      "text": "だから、ねている間は、ばいきんがふえやすいの。",
-     "section": "talk"
+     "section": "talk",
+     "start": 175.562
     },
     {
      "part": "B-4 しつもんを作る",
      "speaker": "ポン太",
      "text": "そうか！　だから、ねる前に、ばいきんをへらしておくんだ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 180.074
     },
     {
      "part": "B-5 前のドミノが見えた",
      "speaker": "ハテナ",
      "text": "見えなかったドミノが見えたね。はじめの「なんで？」も、分かった？",
-     "section": "talk"
+     "section": "talk",
+     "start": 184.778
     },
     {
      "part": "B-5 前のドミノが見えた",
      "speaker": "ポン太",
      "text": "うん。朝だけじゃなくて、ねる前にもみがくりゆうが、分かった。",
-     "section": "talk"
+     "section": "talk",
+     "start": 190.442
     },
     {
      "part": "B-5 前のドミノが見えた",
      "speaker": "ハテナ",
      "text": "ドミノが見えると、「やらなきゃ」が、「なるほど」にかわるんだ。",
-     "section": "talk"
+     "section": "talk",
+     "start": 195.194
     },
     {
      "part": "B-5 前のドミノが見えた",
      "speaker": "ポン太",
      "text": "……じゃあ、みがいてくる。",
-     "section": "talk"
+     "section": "talk",
+     "start": 200.642
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "きょうの二つめのどうぐは、「まえの りゆうを 見る」。ドミノのカードだよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 204.532
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "つかうのは、答えに「〜から」があっても、「えー、なんで？」と思うとき。",
-     "section": "teach"
+     "section": "teach",
+     "start": 210.412
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "見るところは、はじめのしつもんと、答えのりゆう。その間に、見えないドミノがかくれているよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 216.628
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "やりかたは、三つ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 225.028
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "一つめ。答えの中の、「〜から」ってりゆうを見つける。",
-     "section": "teach"
+     "section": "teach",
+     "start": 227.212
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "二つめ。そのりゆうと、はじめのしつもんを、「なんで」でつなぐ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 231.892
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "三つめ。聞く前に、たしかめる。「その答えで、はじめの「なんで？」も分かる？」",
-     "section": "teach"
+     "section": "teach",
+     "start": 237.652
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "分からないなら、それは、ちがうれつのドミノだよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 244.996
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "じゃあ、やってみるね。ポン太が、「なんで、冬は手ぶくろをするの？」って聞いたよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 249.316
     },
     {
      "part": "まとめ",
      "speaker": "お母さん",
      "text": "手が、つめたくならないからよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 256.324
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "でも、手ぶくろは、ストーブみたいにあつくないよね。",
-     "section": "teach"
+     "section": "teach",
+     "start": 258.916
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "りゆうは「手がつめたくならない」。手ぶくろとつなぐと、こう。",
-     "section": "teach"
+     "section": "teach",
+     "start": 263.452
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "「手ぶくろをすると、なんで手がつめたくならないの？」",
-     "section": "teach"
+     "section": "teach",
+     "start": 268.492
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "その答えで、はじめの「なんで？」も分かりそうだね。",
-     "section": "teach"
+     "section": "teach",
+     "start": 272.812
     },
     {
      "part": "まとめ",
      "speaker": "お母さん",
      "text": "手ぶくろは、手のあたたかさを、にがさないのよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 277.636
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "もし「なんで、冬はさむいの？」と聞いたら……。",
-     "section": "teach"
+     "section": "teach",
+     "start": 281.932
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "手ぶくろの「なんで？」は、分からないね。ちがうれつだよ。",
-     "section": "teach"
+     "section": "teach",
+     "start": 285.964
     },
     {
      "part": "まとめ",
      "speaker": "ハテナ",
      "text": "じゃあ、つぎは、きみの番。五つのしつもんで、見えないドミノをさがしてみよう！",
-     "section": "teach"
+     "section": "teach",
+     "start": 291.148
     }
    ],
    "thenExercises": [
