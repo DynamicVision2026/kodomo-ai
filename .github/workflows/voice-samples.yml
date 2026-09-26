@@ -203,12 +203,14 @@ jobs:
             -m "Real TTS generation, Founder-approved voice table. Writes only listen[].transcript[].start in c01.lesson.json (self-enforced by the generation script) — no other field touched, lesson-level review fields stay null, c01 stays blocked in production."
           git push origin "HEAD:${{ github.ref_name }}"
 
+      # Paths match c01.lesson.json's own listen[].audio field (no per-lesson subdirectory for
+      # these two special joined files — see the generation script's own comment on why).
       - name: Upload the two きく master files
         if: ${{ inputs.mode == 'full' }}
         uses: actions/upload-artifact@v4
         with:
           name: listen-masters
           path: |
-            public/audio/course/c01/c01_listen_A.mp3
-            public/audio/course/c01/c01_listen_B.mp3
+            public/audio/course/c01_listen_A.mp3
+            public/audio/course/c01_listen_B.mp3
           retention-days: 14
