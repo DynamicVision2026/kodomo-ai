@@ -76,7 +76,7 @@
  *   npx tsx scripts/audio/generate-c01-lesson.ts --full                 # WO-C2b §4: everything (Founder-approved 26 Sep 2026) — needs GCP_ACCESS_TOKEN + ffmpeg
  */
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { loadAudioSheet, type AudioSheetRow } from '../lib/audioSheet.js';
 
@@ -98,8 +98,9 @@ function requireAccessToken(): string {
 const ROOT = process.cwd();
 const SHEET_PATH = resolve(ROOT, 'src/course/content/audio/nazehori-lesson1-audio-sheet.csv');
 const LESSON_PATH = resolve(ROOT, 'src/course/content/lessons/c01.lesson.json');
-const LESSON_DIR = resolve(ROOT, 'public/audio/course/c01');
-const SHARED_DIR = resolve(ROOT, 'public/audio/course/shared');
+const COURSE_AUDIO_DIR = resolve(ROOT, 'public/audio/course');
+const LESSON_DIR = resolve(COURSE_AUDIO_DIR, 'c01');
+const SHARED_DIR = resolve(COURSE_AUDIO_DIR, 'shared');
 const STAGING_DIR = resolve(ROOT, 'public/audio/course/_staging'); // per-line clips before the join step — never a real production path
 const SAMPLES_DIR = resolve(ROOT, 'public/audio/course/_samples'); // WO-C2b §3 review clips — never a real production path
 
@@ -525,7 +526,16 @@ async function runFull() {
       clockSec += durationSec;
       segmentPaths.push(segPath);
     }
-    const outPath = resolve(LESSON_DIR, file);
+    // The two joined masters' real path is dictated by c01.lesson.json's OWN pre-existing
+    // `listen[].audio` field (e.g. "audio/course/c01_listen_A.mp3", directly under
+    // public/audio/course — no per-lesson subdirectory, unlike every standalone clip) — read from
+    // there rather than assumed, since that field is exactly what ListenScreen.tsx's own `<audio
+    // src={`/${block.audio}`}>` and the release gate both already trust, and the Coordinator's own
+    // instruction forbids changing it. An earlier version of this script wrote here into LESSON_DIR
+    // instead (public/audio/course/c01/<file>) — the same directory convention as the ~121
+    // standalone clips — which the app and the gate would never actually look for anything at.
+    const outPath = resolve(ROOT, 'public', lesson.listen[blockIndex].audio);
+    mkdirSync(dirname(outPath), { recursive: true });
     concatFiles(segmentPaths, outPath);
     console.log(`  ${segmentPaths.length} segments, ${clockSec.toFixed(1)}s -> ${outPath}`);
   }
