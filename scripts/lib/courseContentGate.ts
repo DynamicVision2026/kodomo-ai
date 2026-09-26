@@ -169,22 +169,46 @@ function parentFacingTexts(lesson: CourseLesson): string[] {
 }
 
 /**
- * Architect correction (post-report): `pii-word` legitimately false-positives on a sentence
- * whose whole point IS telling a family not to share personal data — e.g. family.notes's own
- * 「AI には、名前や 学校名、じゅうしょを 入れない」 mentions 学校名/じゅうしょ to warn against
- * them, not to request them. Loosening the lint itself was rejected — instead, an EXACT-match
- * allowlist of full sentences already vetted as safety instructions, never a substring/prefix
- * match, so a genuinely PII-requesting sentence that happens to share a few characters can never
- * slip through. Every entry here was explicitly approved by the Coordinator; adding a new one
- * needs the same sign-off — never add to this list unilaterally.
+ * Architect correction (post-report): `pii-word`/`banned-word` legitimately false-positive on a
+ * sentence whose whole point IS telling a family not to share personal data, or not to treat a
+ * practice item as scored — e.g. family.notes's own 「AI には、名前や 学校名、じゅうしょを 入れ
+ * ない」 mentions 学校名/じゅうしょ to warn against them, not to request them; make[].parentNote's
+ * own 「正解を言わせる場面ではありません。」 says this ISN'T a right-answer scenario. Loosening the
+ * lint itself was rejected — instead, an EXACT-match allowlist of full SENTENCES already vetted as
+ * safety instructions, never a substring/prefix match, so a genuinely PII-requesting or scored-
+ * answer sentence that happens to share a few characters can never slip through. Checked at
+ * SENTENCE granularity (`splitIntoSentences`, below), not whole-field: a multi-sentence field like
+ * `family.parentNote` can freely mix one allowlisted safety sentence with other, independently-
+ * checked sentences. Every entry here was explicitly approved by the Coordinator; adding a new one
+ * needs the same sign-off — never add to either list unilaterally.
  */
 const PII_SAFE_SENTENCES: readonly string[] = [
   'AIには、名前や学校名、じゅうしょを入れない',
+  'お子さんの名前・学校名・住所などは入力しないでください。',
 ];
 
-function dropAllowlistedPii(issues: LintIssue[], text: string): LintIssue[] {
-  if (!PII_SAFE_SENTENCES.includes(text)) return issues;
-  return issues.filter((i) => i.rule !== 'pii-word');
+const BANNED_WORD_SAFE_SENTENCES: readonly string[] = [
+  '正解を言わせる場面ではありません。',
+];
+
+function dropAllowlistedIssues(issues: LintIssue[], sentence: string): LintIssue[] {
+  return issues.filter((i) => {
+    if (i.rule === 'pii-word' && PII_SAFE_SENTENCES.includes(sentence)) return false;
+    if (i.rule === 'banned-word' && BANNED_WORD_SAFE_SENTENCES.includes(sentence)) return false;
+    return true;
+  });
+}
+
+/** Runs `lintText`, keeping only banned-word/pii-word findings, sentence by sentence — the
+ *  granularity the allowlists above are checked at. Used for both child- and parent-facing text;
+ *  callers add whichever other rules apply to their own audience on top. */
+function bannedAndPiiIssues(text: string, gradeOf: GradeMap): LintIssue[] {
+  const issues: LintIssue[] = [];
+  for (const sentence of splitIntoSentences(text)) {
+    const found = lintText(sentence, COURSE_STAGE, gradeOf).filter((i) => i.rule === 'banned-word' || i.rule === 'pii-word');
+    issues.push(...dropAllowlistedIssues(found, sentence));
+  }
+  return issues;
 }
 
 function checkKanjiFloorExempt(text: string): LintIssue[] {
@@ -199,19 +223,21 @@ function lintChildFacing(text: string, gradeOf: GradeMap): LintIssue[] {
   // kanjiFloor left off here — computed separately (checkKanjiFloorExempt) against the
   // tool-name-redacted text instead, so a locked tool name embedded in otherwise-compliant
   // prose is never flagged.
-  const issues = lintText(text, COURSE_STAGE, gradeOf).filter((i) => i.rule !== 'length');
-  return dropAllowlistedPii(
-    [...issues, ...checkKanjiFloorExempt(text), ...checkSentenceLengths(text, COURSE_STAGE)],
-    text,
+  const issues = lintText(text, COURSE_STAGE, gradeOf).filter(
+    (i) => i.rule !== 'length' && i.rule !== 'banned-word' && i.rule !== 'pii-word',
   );
+  return [
+    ...issues,
+    ...bannedAndPiiIssues(text, gradeOf),
+    ...checkKanjiFloorExempt(text),
+    ...checkSentenceLengths(text, COURSE_STAGE),
+  ];
 }
 
 /** Parent-facing text: banned/PII checks only (`lintText`'s kanji-grade/ruby/length rules are
- *  child-audience rules — see file header) — reuse `lintText` but discard anything that isn't a
- *  banned/PII-word finding. */
+ *  child-audience rules — see file header). */
 function lintParentFacing(text: string, gradeOf: GradeMap): LintIssue[] {
-  const issues = lintText(text, COURSE_STAGE, gradeOf).filter((i) => i.rule === 'banned-word' || i.rule === 'pii-word');
-  return dropAllowlistedPii(issues, text);
+  return bannedAndPiiIssues(text, gradeOf);
 }
 
 function approvalLabel(review: CourseReviewStamp | undefined | null): string {

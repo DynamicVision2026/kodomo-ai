@@ -192,6 +192,56 @@ describe('checkCourseLesson — PII allowlist (Coordinator: exact-match only, no
     const result = checkCourseLesson(lesson, gradeOf, { strict: false });
     expect(result.contentLintIssues.some((i) => i.includes('pii-word'))).toBe(true);
   });
+
+  it('the WO-C2 family.parentNote safety sentence is never flagged, even mixed with other sentences', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      family: {
+        whoKnows: '', aiExample: '', applyTool: '', notes: [],
+        parentNote: 'AIはおうちの方が操作してください。お子さんの名前・学校名・住所などは入力しないでください。AIの答えは参考の一つとして、家族で話し合ってください。',
+      },
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintIssues.some((i) => i.includes('pii-word'))).toBe(false);
+  });
+
+  it('a DIFFERENT sentence in the same multi-sentence field is still independently flagged', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      family: {
+        whoKnows: '', aiExample: '', applyTool: '', notes: [],
+        parentNote: 'お子さんの名前・学校名・住所などは入力しないでください。住所を教えてください。',
+      },
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintIssues.filter((i) => i.includes('pii-word')).length).toBe(1);
+  });
+});
+
+describe('checkCourseLesson — banned-word allowlist (Coordinator: exact-match only, same discipline as PII)', () => {
+  it('the approved make.parentNote "not a scored answer" sentence is never flagged as banned-word', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      make: [{
+        tool: 'A', methodCard: 'A', dialogue: [], starterCards: [], parentPrompts: [], selfCheck: [],
+        parentPeek: [], parentNote: '正解を言わせる場面ではありません。お子さんが声に出した問いを、そのまま受け止めてください。',
+      }],
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintIssues.some((i) => i.includes('banned-word'))).toBe(false);
+  });
+
+  it('a DIFFERENT sentence merely containing the same banned word is still flagged (exact-match only)', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      make: [{
+        tool: 'A', methodCard: 'A', dialogue: [], starterCards: [], parentPrompts: [], selfCheck: [],
+        parentPeek: [], parentNote: '正解を教えてあげてください。',
+      }],
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintIssues.some((i) => i.includes('banned-word'))).toBe(true);
+  });
 });
 
 describe('redactToolNamesForKanjiFloor — the six AD-18 tool names are exempt as exact strings', () => {

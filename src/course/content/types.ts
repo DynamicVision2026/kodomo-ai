@@ -50,6 +50,12 @@ export interface CourseTranscriptLine {
    *  lesson's tool card once playback reaches it. Optional (the WO-C1 demo lesson predates this
    *  field) — a line with no `section` is treated as 'talk'. */
   section?: 'talk' | 'teach';
+  /** Coordinator correction (post-WO-C2-report): the real per-line timestamp (seconds into this
+   *  block's `audio`), filled in once the audio is recorded. Optional and absent on every lesson
+   *  today — ListenScreen.tsx falls back to an even proportional estimate across the transcript
+   *  when it's missing, but uses this exact value (for the recap marker, the current-line
+   *  highlight, and tap-to-jump) whenever it's present. */
+  start?: number;
 }
 
 export interface CourseListenToolCard {

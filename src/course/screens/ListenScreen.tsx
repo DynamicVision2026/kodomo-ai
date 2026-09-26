@@ -7,12 +7,11 @@
  * least once (seeking is allowed — WO-C2 §2: "done when audio played to end once, seeking
  * allowed" — reaching the end by scrubbing counts the same as reaching it by playing through).
  *
- * DEVIATION / flagged assumption: `CourseTranscriptLine` carries no per-line timestamp (the real
- * audio scripts aren't recorded yet — WO-C2 instruction 5) so the recap marker's position, the
- * current-line highlight, and tap-to-jump all use an EVEN, proportional estimate
- * (`lineTimeSec` below) across the block's own duration, not real per-line timing. This is a
- * placeholder until real audio + per-line timestamps exist; flagged in the WO-C2 completion report
- * rather than resolved silently, per "if a field doesn't fit, tell me."
+ * Coordinator correction (post-WO-C2-report): `CourseTranscriptLine.start` (seconds) is filled in
+ * once the audio is recorded — `lineTimeSec` below uses it when present. Until then (every lesson
+ * today), it falls back to an EVEN, proportional estimate across the block's own duration, so the
+ * recap marker/current-line highlight/tap-to-jump all still work in preview against placeholder
+ * audio.
  */
 import { useRef, useState } from 'react';
 import { Plane } from '../../ad12/Plane';
@@ -44,6 +43,8 @@ export function ListenScreen({ lessonTitle, block, onDone, onBack }: ListenScree
   const transcript = block.transcript;
 
   function lineTimeSec(index: number): number {
+    const real = transcript[index]?.start;
+    if (real !== undefined) return real;
     return transcript.length > 0 ? (index / transcript.length) * duration : 0;
   }
 
