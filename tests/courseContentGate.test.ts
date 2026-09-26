@@ -13,7 +13,14 @@ function baseLesson(overrides: Partial<CourseLesson> = {}): CourseLesson {
     tools: ['A'],
     practice: 'single',
     review: { model: 'pass', philosophy: null, japanese: null },
-    listen: { audio: 'a.mp3', transcript: [{ speaker: 'ポン太', text: 'こんにちは' }], methodCards: ['A'] },
+    listen: [{
+      tool: 'A',
+      audio: 'a.mp3',
+      transcript: [{ speaker: 'ポン太', text: 'こんにちは' }],
+      methodCards: ['A'],
+      thenExercises: ['c01-e01'],
+      toolCard: { when: '', how: '' },
+    }],
     exercises: [
       {
         id: 'c01-e01',
@@ -73,6 +80,25 @@ describe('checkCourseLesson — approvalIssues (WO-C1 §5: "fails the build ... 
     // exercise review left at null/null
     const result = checkCourseLesson(lesson, gradeOf, { strict: true });
     expect(result.approvalIssues.some((i) => i.includes('c01-e01'))).toBe(true);
+  });
+
+  it('strict: listenReview is checked the same way when present, naming "listen"', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      listenReview: { model: 'pass', philosophy: 'approved', japanese: null },
+    });
+    lesson.exercises[0]!.review = { model: 'pass', philosophy: 'approved', japanese: 'approved' };
+    const result = checkCourseLesson(lesson, gradeOf, { strict: true });
+    expect(result.approvalIssues.some((i) => i.includes('listen'))).toBe(true);
+  });
+
+  it('strict: a lesson with no listenReview at all (predates WO-C2) is never penalised for it', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+    });
+    lesson.exercises[0]!.review = { model: 'pass', philosophy: 'approved', japanese: 'approved' };
+    const result = checkCourseLesson(lesson, gradeOf, { strict: true });
+    expect(result.approvalIssues).toEqual([]);
   });
 });
 
@@ -201,5 +227,53 @@ describe('redactToolNamesForKanjiFloor — the six AD-18 tool names are exempt a
     // a kanji-floor violation (there is no floor entry for 見る in the first place, but this
     // guards the redaction path stays wired in rather than accidentally bypassed).
     expect(result.contentLintWarnings.some((w) => w.includes('[kanji-floor]'))).toBe(false);
+  });
+});
+
+describe('checkCourseLesson — WO-C2 §5 new surfaces are scanned by the right lint (or exempt)', () => {
+  it('a banned/PII word inside teachBack.cards[].help is caught (child-facing)', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      teachBack: {
+        prompt: 'げんきに はなそう',
+        cards: [{ tool: 'A', frame: 'わく', help: '住所を きいて みよう' }],
+      },
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintIssues.some((i) => i.includes('pii-word'))).toBe(true);
+  });
+
+  it('a banned/PII word inside family.choices[] is caught (child-facing)', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      family: { whoKnows: '', aiExample: '', applyTool: '', notes: [], choices: ['住所を きいて みよう'] },
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintIssues.some((i) => i.includes('pii-word'))).toBe(true);
+  });
+
+  it('make[].parentNote/peekNote are lint-checked as parent-facing (banned/PII only, never length)', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      make: [{
+        tool: 'A', methodCard: 'A', dialogue: [], starterCards: [], parentPrompts: [], selfCheck: [],
+        parentPeek: [], parentNote: '住所を きいて みよう', peekNote: 'あ'.repeat(60),
+      }],
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintIssues.some((i) => i.includes('pii-word') && i.includes('parent-facing'))).toBe(true);
+    expect(result.contentLintIssues.some((i) => i.includes('[length]'))).toBe(false);
+  });
+
+  it('factChecks/bDefinitionNote/version/listenReview.note are never scanned by any lint', () => {
+    const lesson = baseLesson({
+      review: { model: 'pass', philosophy: 'approved', japanese: 'approved' },
+      factChecks: [{ where: 'x', claim: '住所を きいて みよう', status: 'confirmed' }],
+      bDefinitionNote: '住所を きいて みよう',
+      version: '住所を きいて みよう',
+      listenReview: { model: 'pass', philosophy: 'approved', japanese: 'approved', note: '住所を きいて みよう' },
+    });
+    const result = checkCourseLesson(lesson, gradeOf, { strict: false });
+    expect(result.contentLintIssues).toEqual([]);
   });
 });

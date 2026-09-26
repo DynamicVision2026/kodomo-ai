@@ -8,22 +8,62 @@
   "philosophy": null,
   "japanese": null
  },
- "listen": {
-  "audio": "audio/course/c00-demo_listen.mp3",
-  "methodCards": ["A", "B"],
-  "transcript": [
-   {
-    "part": "デモ",
-    "speaker": "ポン太",
-    "text": "（プレースホルダー）これは デモの きろくです。ほんとうの おんせいは まだ ありません。"
-   },
-   {
-    "part": "デモ",
-    "speaker": "ハテナ",
-    "text": "（プレースホルダー）画面の うごきを たしかめる ための だけの ないようです。"
+ "listen": [
+  {
+   "tool": "A",
+   "audio": "audio/course/c00-demo_listen.mp3",
+   "methodCards": ["A"],
+   "transcript": [
+    {
+     "part": "デモ",
+     "speaker": "ポン太",
+     "text": "（プレースホルダー）これは デモの きろくです。ほんとうの おんせいは まだ ありません。",
+     "section": "talk"
+    },
+    {
+     "part": "デモ",
+     "speaker": "ハテナ",
+     "text": "（プレースホルダー）画面の うごきを たしかめる ための だけの ないようです。",
+     "section": "talk"
+    },
+    {
+     "part": "まとめ",
+     "speaker": "ハテナ",
+     "text": "（デモ）ここからは まとめの ぶぶんです。どうぐカードが 出るよ。",
+     "section": "teach"
+    }
+   ],
+   "thenExercises": ["c00-demo-e01"],
+   "toolCard": {
+    "when": "（デモ）つかうとき：プレースホルダー。",
+    "how": "（デモ）聞きかた：プレースホルダー。"
    }
-  ]
- },
+  },
+  {
+   "tool": "B",
+   "audio": "audio/course/c00-demo_listen_b.mp3",
+   "methodCards": ["B"],
+   "transcript": [
+    {
+     "part": "デモ",
+     "speaker": "ポン太",
+     "text": "（プレースホルダー）ここから 2つめの どうぐの デモです。",
+     "section": "talk"
+    },
+    {
+     "part": "まとめ",
+     "speaker": "ハテナ",
+     "text": "（デモ）2つめの どうぐカードだよ。",
+     "section": "teach"
+    }
+   ],
+   "thenExercises": ["c00-demo-e02"],
+   "toolCard": {
+    "when": "（デモ）つかうとき：プレースホルダー（B）。",
+    "how": "（デモ）聞きかた：プレースホルダー（B）。"
+   }
+  }
+ ],
  "exercises": [
   {
    "id": "c00-demo-e01",
@@ -62,7 +102,8 @@
        "reply": { "speaker": "ポン太", "text": "（デモ）……あれ、まだ わからない。" },
        "feedback": "（デモ）もう いちど、ことばの なかみを たしかめて みよう。"
       }
-     ]
+     ],
+     "displayOrder": ["b", "a", "c"]
     }
    ],
    "review": { "model": "pass", "philosophy": null, "japanese": null }
@@ -104,7 +145,8 @@
        "reply": { "speaker": "おとうさん", "text": "（デモ）ふつうより ずっと すべる よ。" },
        "feedback": "（デモ）いい しつもん だけど、いまは まえの ドミノを さがす どうぐを つかって みよう。"
       }
-     ]
+     ],
+     "displayOrder": ["b", "c", "a"]
     },
     {
      "answer": { "speaker": "おとうさん", "text": "（デモ）すべりやすいと、ころびやすい から だよ。" },
@@ -137,7 +179,8 @@
        "reply": { "speaker": "おとうさん", "text": "（デモ）ひざを すりむいたり する かな。" },
        "feedback": "（デモ）いい しつもん だけど、いまは まえの ドミノを さがす どうぐを つかって みよう。"
       }
-     ]
+     ],
+     "displayOrder": ["c", "a", "b"]
     }
    ],
    "review": { "model": "pass", "philosophy": null, "japanese": null }
@@ -152,6 +195,7 @@
    ],
    "methodCard": "A",
    "starterCards": ["どういう こと？", "たとえば？"],
+   "hint": { "h1": "（デモ）ゆびで させる ことばは？", "h2Highlight": "あとで わかる" },
    "parentPrompts": [
     { "step": "notice", "text": "（デモ）まだ よく わからない ところは ある？" },
     { "step": "point", "text": "（デモ）ゆびで させる ことば、どれ？" },
@@ -159,17 +203,48 @@
     { "step": "check", "text": "（デモ）その しつもんで なにが わかりそう？" }
    ],
    "selfCheck": ["こたえの ことばから つくった", "ふたを あけた", "きいたら なにが わかるか いえる"],
-   "parentPeek": ["（デモ）ぺあれんとぴーくの れい"]
+   "parentPeek": ["（デモ）ぺあれんとぴーくの れい"],
+   "peekNote": "（デモ）しつもんのれいだよ。",
+   "parentNote": "（デモ）プレースホルダーの おうちの方へノートです。"
+  },
+  {
+   "tool": "B",
+   "dialogue": [
+    { "speaker": "ポン太", "text": "（プレースホルダー）デモの かいわ・2つめ。" },
+    { "speaker": "ハテナ", "text": "（デモ）こんどは べつの どうぐで つくって みよう。" }
+   ],
+   "methodCard": "B",
+   "starterCards": ["〇〇すると、なんで△△なの？"],
+   "hint": { "h1": "（デモ）「〜から」の まえの ドミノは？", "h2Highlight": "雨が ふる から" },
+   "parentPrompts": [
+    { "step": "notice", "text": "（デモ）はじめの しつもんは？" },
+    { "step": "point", "text": "（デモ）「〜から」は どれ？" },
+    { "step": "card", "text": "（デモ）ドミノのカードを 見て みよう。" },
+    { "step": "check", "text": "（デモ）はじめの「なんで？」も わかりそう？" }
+   ],
+   "selfCheck": ["はじめの しつもんが いえる", "「〜から」と つないだ"],
+   "parentPeek": ["（デモ）ぺあれんとぴーくの れい（B）"],
+   "peekNote": "（デモ）しつもんのれいだよ（B）。",
+   "parentNote": "（デモ）プレースホルダーの おうちの方へノートです（B）。"
   }
  ],
  "teachBack": {
-  "prompt": "（デモ）おうちの 人に ひとこと せつめい しよう。"
+  "prompt": "（デモ）おうちの 人に ひとこと せつめい しよう。",
+  "cards": [
+   { "tool": "A", "frame": "（デモ）〇〇は、〇〇ときに つかう。", "help": "（デモ）ヘルプの プレースホルダー（A）。" },
+   { "tool": "B", "frame": "（デモ）〇〇は、〇〇ときに つかう。", "help": "（デモ）ヘルプの プレースホルダー（B）。" }
+  ],
+  "parentNote": "（デモ）プレースホルダーの おうちの方へノートです。"
  },
  "family": {
+  "intro": "（デモ）きょう つくった しつもんを 一つ えらんで、かぞくで しらべて みよう。",
+  "choices": ["（デモ）しつもんの れい 1", "（デモ）しつもんの れい 2"],
   "whoKnows": "（デモ）だれに きくと いいか の せつめい プレースホルダー。",
   "aiExample": "（デモ）AI れい プレースホルダー。",
   "applyTool": "（デモ）どうぐを AI の こたえにも つかって みよう。",
-  "notes": ["（デモ）ちゅうい1", "（デモ）ちゅうい2"]
+  "notes": ["（デモ）ちゅうい1", "（デモ）ちゅうい2"],
+  "star": "おうちでしらべた",
+  "parentNote": "（デモ）プレースホルダーの おうちの方へノートです。"
  },
  "parentCard": {
   "tool": "A / B （デモ）",

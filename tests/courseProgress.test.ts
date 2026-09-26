@@ -17,7 +17,7 @@ function fakeLesson(exerciseCount: number): CourseLesson {
     tools: ['A'],
     practice: 'single',
     review: { model: 'pass', philosophy: null, japanese: null },
-    listen: { audio: 'a.mp3', transcript: [], methodCards: ['A'] },
+    listen: [{ tool: 'A', audio: 'a.mp3', transcript: [], methodCards: ['A'], thenExercises: [], toolCard: { when: '', how: '' } }],
     exercises: Array.from({ length: exerciseCount }, (_, i) => ({
       id: `c01-e${i + 1}`,
       tool: 'A',
@@ -39,9 +39,11 @@ describe('computeLessonPercent', () => {
     expect(computeLessonPercent(fakeLesson(10), emptyLessonProgress())).toBe(0);
   });
 
-  it('listen is worth 20', () => {
-    const p: CourseLessonProgress = { ...emptyLessonProgress(), listenDone: true };
-    expect(computeLessonPercent(fakeLesson(10), p)).toBe(20);
+  it('listen A and listen B are worth 10 each', () => {
+    const p: CourseLessonProgress = { ...emptyLessonProgress(), listenADone: true };
+    expect(computeLessonPercent(fakeLesson(10), p)).toBe(10);
+    const both: CourseLessonProgress = { ...emptyLessonProgress(), listenADone: true, listenBDone: true };
+    expect(computeLessonPercent(fakeLesson(10), both)).toBe(20);
   });
 
   it('exercises are worth 40 total, split evenly across this lesson\'s exercises (10 -> 4 each)', () => {
@@ -56,9 +58,9 @@ describe('computeLessonPercent', () => {
     expect(computeLessonPercent(lesson, p)).toBe(4);
   });
 
-  it('make is worth 20, teach-back is worth 20', () => {
+  it('make A/B are worth 10 each, teach-back is worth 20', () => {
     const lesson = fakeLesson(10);
-    const p: CourseLessonProgress = { ...emptyLessonProgress(), makeDone: true, teachBackDone: true };
+    const p: CourseLessonProgress = { ...emptyLessonProgress(), makeADone: true, makeBDone: true, teachBackDone: true };
     expect(computeLessonPercent(lesson, p)).toBe(40);
   });
 
@@ -66,9 +68,11 @@ describe('computeLessonPercent', () => {
     const lesson = fakeLesson(10);
     const p: CourseLessonProgress = {
       ...emptyLessonProgress(),
-      listenDone: true,
+      listenADone: true,
+      listenBDone: true,
       exercisesDone: lesson.exercises.map((e) => e.id),
-      makeDone: true,
+      makeADone: true,
+      makeBDone: true,
       teachBackDone: true,
     };
     expect(computeLessonPercent(lesson, p)).toBe(100);
@@ -78,9 +82,11 @@ describe('computeLessonPercent', () => {
     const lesson = fakeLesson(2);
     const p: CourseLessonProgress = {
       ...emptyLessonProgress(),
-      listenDone: true,
+      listenADone: true,
+      listenBDone: true,
       exercisesDone: [lesson.exercises[0]!.id, lesson.exercises[1]!.id],
-      makeDone: true,
+      makeADone: true,
+      makeBDone: true,
       teachBackDone: true,
     };
     expect(computeLessonPercent(lesson, p)).toBeLessThanOrEqual(100);

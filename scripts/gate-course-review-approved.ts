@@ -18,7 +18,29 @@ import type { CourseManifest, CourseLesson } from '../src/course/content/types.j
 const ROOT = process.cwd();
 const COURSE_DIR = resolve(ROOT, 'src/course/content');
 const MANIFEST_PATH = resolve(COURSE_DIR, 'course.json');
+const PUBLIC_DIR = resolve(ROOT, 'public');
 const STRICT = process.env.RELEASE === '1';
+
+/**
+ * WO-C2 §5/instruction 5: "Audio isn't recorded yet. Use placeholder audio in preview only;
+ * production must fail if any audio file is missing." Independent of the philosophy/japanese
+ * approval check above (which already blocks c01 from a strict build today via its own null
+ * lesson-level review) — this is a belt-and-suspenders check so a lesson that later DOES get its
+ * review fields set to `approved` can never reach a real production build with missing audio,
+ * even if that particular oversight slips past a human reviewer. Only enforced when `STRICT`,
+ * same signal as every other release-only check here — a routine/preview build never has real
+ * audio recorded yet, so this would otherwise fail every PR.
+ */
+function checkAudioFilesExist(lesson: CourseLesson): string[] {
+  const issues: string[] = [];
+  for (const block of lesson.listen) {
+    const audioPath = resolve(PUBLIC_DIR, block.audio);
+    if (!existsSync(audioPath)) {
+      issues.push(`lesson ${lesson.id} listen (tool ${block.tool}): audio file missing — public/${block.audio}`);
+    }
+  }
+  return issues;
+}
 
 if (!existsSync(MANIFEST_PATH)) {
   console.log('gate:course-review: OK (0 course lesson file(s) — no course.json yet)');
@@ -44,6 +66,12 @@ for (const part of manifest.parts) {
   for (const issue of result.approvalIssues) {
     failures++;
     console.error(`FAIL gate:course-review — ${issue}`);
+  }
+  if (STRICT) {
+    for (const issue of checkAudioFilesExist(lesson)) {
+      failures++;
+      console.error(`FAIL gate:course-review — ${issue}`);
+    }
   }
   for (const issue of result.contentLintIssues) {
     failures++;

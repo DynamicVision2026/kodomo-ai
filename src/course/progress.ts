@@ -24,11 +24,12 @@ export const emptyLessonProgress = emptyLessonProgressState;
 export const emptyCourseProgress = emptyCourseProgressState;
 
 /**
- * WO-C1 §4: "Lesson %: listen 20; exercises 40, split evenly across that lesson's exercises;
- * make 20 (on 「いって みた！」); teach-back 20 (on 「いえた！」)." `exercisesDone` is trusted to
- * only ever contain ids that belong to this lesson (the write path only ever adds an id it just
- * saw a best-option feedback for — see src/course/CourseApp.tsx) — filtered defensively anyway
- * so a corrupted/stale client value can never push a lesson over 100%.
+ * WO-C2 §2 (replaces WO-C1 §4's "listen 20 / exercises 40 / make 20 / teach-back 20"): "きくA/B =
+ * 10+10; れんしゅう e01-e10 = 4 each (40 total); つくるA/B = 10+10; つたえる = 20." Stage %/flower
+ * stages/unlock rules are unchanged. `exercisesDone` is trusted to only ever contain ids that
+ * belong to this lesson (the write path only ever adds an id it just saw the best option's
+ * feedback for — see src/course/CourseApp.tsx) — filtered defensively anyway so a corrupted/stale
+ * client value can never push a lesson over 100%.
  */
 export function computeLessonPercent(lesson: CourseLesson, progress: CourseLessonProgress | undefined): number {
   if (!progress) return 0;
@@ -37,9 +38,11 @@ export function computeLessonPercent(lesson: CourseLesson, progress: CourseLesso
   const exerciseTotal = lesson.exercises.length;
   const exercisePercent = exerciseTotal > 0 ? (doneCount / exerciseTotal) * 40 : 0;
   let percent = 0;
-  if (progress.listenDone) percent += 20;
+  if (progress.listenADone) percent += 10;
+  if (progress.listenBDone) percent += 10;
   percent += exercisePercent;
-  if (progress.makeDone) percent += 20;
+  if (progress.makeADone) percent += 10;
+  if (progress.makeBDone) percent += 10;
   if (progress.teachBackDone) percent += 20;
   return Math.min(100, Math.round(percent));
 }
@@ -93,6 +96,48 @@ export function isPartUnlocked(
   const part = parts[index];
   if (part && earlyUnlockedParts.includes(part.id)) return true;
   return (partPercents[index - 1] ?? 0) >= 100;
+}
+
+/**
+ * WO-C2 §1: "8 ordered steps: きくA → れんしゅうA → きくB → れんしゅうB → つくるA → つくるB →
+ * つたえる → かぞくで しらべる. Each step opens when the previous is done." The lesson hub (WO-C1
+ * §3.2, replaced by WO-C2 §1) shows きくA・えらぶA・きくB・えらぶB・つくる・つたえる・しらべる —
+ * one entry per named step, 「つくる」 covering both make blocks in sequence (unchanged from WO-C1).
+ * Every step stays reachable once unlocked, even after a later step is also done ("replaying
+ * always allowed, never lowers progress").
+ */
+export interface CourseStepUnlocks {
+  listenA: boolean;
+  exerciseA: boolean;
+  listenB: boolean;
+  exerciseB: boolean;
+  make: boolean;
+  teachBack: boolean;
+  family: boolean;
+}
+
+function blockExercisesDone(block: CourseLesson['listen'][number] | undefined, exercisesDone: string[]): boolean {
+  if (!block) return true;
+  return block.thenExercises.every((id) => exercisesDone.includes(id));
+}
+
+function allMakeBlocksDone(lesson: CourseLesson, progress: CourseLessonProgress): boolean {
+  return lesson.make.every((_, i) => (i === 0 ? progress.makeADone : progress.makeBDone));
+}
+
+export function computeStepUnlocks(lesson: CourseLesson, progress: CourseLessonProgress | undefined): CourseStepUnlocks {
+  const p = progress ?? emptyLessonProgress();
+  const exerciseADone = blockExercisesDone(lesson.listen[0], p.exercisesDone);
+  const exerciseBDone = blockExercisesDone(lesson.listen[1], p.exercisesDone);
+  return {
+    listenA: true,
+    exerciseA: p.listenADone,
+    listenB: exerciseADone,
+    exerciseB: p.listenBDone,
+    make: exerciseBDone,
+    teachBack: allMakeBlocksDone(lesson, p),
+    family: p.teachBackDone,
+  };
 }
 
 /** WO-C1 §4: at 60% of a lesson, show the one-time checkpoint notice (courseUi.json's own

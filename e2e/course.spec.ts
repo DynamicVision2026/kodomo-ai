@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 /**
- * WO-C1 acceptance: "must show one demo lesson end to end, driven entirely by a JSON content
+ * WO-C1/WO-C2 acceptance: "must show one demo lesson end to end, driven entirely by a JSON content
  * file," browser-tested "with storage blocked." No real backend runs in this environment, so
  * every `/api/v1/*` call the course shell makes is intercepted with a fixture response — same
  * honest "Chromium at each device's own viewport, not a real backend" framing as e2e/ad12.spec.ts
@@ -13,6 +13,11 @@ import { test, expect, type Page } from '@playwright/test';
  * VITE_FAMILY_API_URL=/api/v1 (so `src/family/api.ts`'s `apiFetch` actually issues same-origin
  * requests for these routes to intercept) — a normal production build leaves it unset, so this
  * spec is run against its own rebuild, not the repo's default `dist/`.
+ *
+ * WO-C2 §7/instruction 5: real audio isn't recorded yet, so `<audio>` sources 404 in this
+ * environment. "Reaching the end" of a きく step is simulated by driving the scrub `<input
+ * type="range">` to its max value directly (seeking is explicitly allowed per WO-C2 §2 — this
+ * exercises the exact same `seekTo` path a real drag would).
  */
 
 function meResponse(courseAllowed: boolean) {
@@ -53,24 +58,52 @@ async function mockCourseBackend(page: Page, courseAllowed = true) {
   });
 }
 
-/** Picks options on the current exercise item until the `best` one resolves it (its role isn't
- *  exposed in the DOM, by design — F3/MoveCard's own "equal choices stay visually equal"), then
- *  advances past the resulting next/back-to-lesson button. Bounded so a real regression (no
- *  option ever resolving) fails the test instead of hanging. */
-async function solveExercise(page: Page) {
-  const advance = page.getByRole('button', { name: /つぎの もんだいへ|レッスンに もどる/ });
-  for (let attempt = 0; attempt < 5; attempt++) {
-    if (await advance.isVisible().catch(() => false)) break;
-    await page.locator('.course-exercise__options button').first().click();
-    const retry = page.getByRole('button', { name: 'もう いちど えらぶ' });
-    if (await retry.isVisible({ timeout: 2000 }).catch(() => false)) await retry.click();
-  }
-  await expect(advance).toBeVisible();
-  await advance.click();
+/** Drives the scrub `<input type="range">` on the current Listen screen to its max value (WO-C2
+ *  §2: "seeking allowed" — reaching the end this way is the same `seekTo` path a real drag takes)
+ *  then presses 「れんしゅうへ」. */
+async function finishListening(page: Page) {
+  const scrub = page.locator('.course-listen__scrub-input');
+  await expect(scrub).toBeVisible();
+  await scrub.evaluate((el: HTMLInputElement) => {
+    // React installs its own tracked `value` setter on a controlled input, so a plain
+    // `el.value = ...` gets swallowed by that tracker and never fires the synthetic `onChange` —
+    // the standard workaround is to call through the NATIVE setter first (bypassing React's
+    // override, leaving its tracked "last value" stale) and only then dispatch the real event.
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!;
+    nativeSetter.call(el, el.max);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  const toExercise = page.getByRole('button', { name: 'れんしゅうへ' });
+  await expect(toExercise).toBeEnabled();
+  await toExercise.click();
 }
 
-test.describe('WO-C1 — course shell, demo lesson end to end', () => {
-  test('garden -> lesson -> listen -> both exercises -> make -> teach-back -> back to garden', async ({ page }) => {
+/** Picks options on the current practice item until the `best` one resolves it (its role isn't
+ *  exposed in the DOM, by design — F3/MoveCard's own "equal choices stay visually equal"), then
+ *  presses 「つぎへ」 — twice, if this was the last item in the block (WO-C2 §3.2's own
+ *  「れんしゅう、おわり！」 interstitial also uses the label 「つぎへ」). Bounded so a real
+ *  regression (no option ever resolving) fails the test instead of hanging. */
+async function solvePracticeItem(page: Page) {
+  const nextButton = page.getByRole('button', { name: 'つぎへ', exact: true });
+  for (let attempt = 0; attempt < 6; attempt++) {
+    if (await nextButton.isVisible().catch(() => false)) break;
+    // Cycle through the currently-enabled options by position rather than always the first one —
+    // after 2 misses the tried cards become disabled (WO-C2 §3.2's own "のこりは一まい"), so
+    // always clicking .first() can get stuck retrying the same already-tried, now-disabled card.
+    const options = page.locator('.course-exercise__options button:not([disabled])');
+    const count = await options.count();
+    await options.nth(count > 0 ? attempt % count : 0).click();
+    const retry = page.getByRole('button', { name: 'もう一回えらぶ' });
+    if (await retry.isVisible({ timeout: 2000 }).catch(() => false)) await retry.click();
+  }
+  await expect(nextButton).toBeVisible();
+  await nextButton.click();
+  // Last item in the block: the 「れんしゅう、おわり！」 interstitial shows its OWN 「つぎへ」.
+  if (await nextButton.isVisible({ timeout: 1000 }).catch(() => false)) await nextButton.click();
+}
+
+test.describe('WO-C1/WO-C2 — course shell, demo lesson end to end (8-step flow)', () => {
+  test('garden -> lesson -> all 7 steps in order -> back to garden', async ({ page }) => {
     await mockCourseBackend(page);
     // "works with storage blocked" — localStorage/sessionStorage throw on any access, same as a
     // browser privacy mode that blocks site storage entirely. The course shell never reads or
@@ -91,36 +124,62 @@ test.describe('WO-C1 — course shell, demo lesson end to end', () => {
 
     // Lesson hub
     await expect(page.getByText('デモ・れんしゅう')).toBeVisible();
-    await page.getByRole('button', { name: 'きく' }).click();
 
-    // Listen screen — transcript renders, then mark done
-    await expect(page.getByRole('button', { name: 'きいたよ！' })).toBeVisible();
-    await page.getByRole('button', { name: 'きいたよ！' }).click();
-    await expect(page.getByText('デモ・れんしゅう')).toBeVisible(); // back on the lesson hub
-
-    // Both exercise items, in order
-    await page.getByRole('button', { name: /れんしゅう/ }).click();
-    await expect(page.getByText('もんだい 1/2')).toBeVisible();
-    await solveExercise(page); // item 1 -> advances to もんだい 2/2
-    await expect(page.getByText('もんだい 2/2')).toBeVisible();
-    await solveExercise(page); // item 2 (last) -> back on the lesson hub
+    // Step 1: きくA
+    await page.getByRole('button', { name: 'きく A' }).click();
+    await finishListening(page);
     await expect(page.getByText('デモ・れんしゅう')).toBeVisible();
 
-    // Make screen
-    await page.getByRole('button', { name: 'つくる' }).click();
-    await expect(page.getByRole('button', { name: 'いって みた！' })).toBeVisible();
-    await page.getByRole('button', { name: 'いって みた！' }).click();
-    await page.getByRole('button', { name: /レッスンに もどる|つぎへ/ }).click();
+    // Step 2: えらぶA (1 item)
+    await page.getByRole('button', { name: /えらぶ A/ }).click();
+    await solvePracticeItem(page);
+    await expect(page.getByText('デモ・れんしゅう')).toBeVisible();
 
-    // Teach-back
-    await page.getByRole('button', { name: 'はなす' }).click();
-    await expect(page.getByRole('button', { name: 'いえた！' })).toBeVisible();
+    // Step 3: きくB
+    await page.getByRole('button', { name: 'きく B' }).click();
+    await finishListening(page);
+    await expect(page.getByText('デモ・れんしゅう')).toBeVisible();
+
+    // Step 4: えらぶB (1 item)
+    await page.getByRole('button', { name: /えらぶ B/ }).click();
+    await solvePracticeItem(page);
+    await expect(page.getByText('デモ・れんしゅう')).toBeVisible();
+
+    // Step 5: つくる (both blocks in sequence)
+    await page.getByRole('button', { name: 'つくる', exact: true }).click();
+    await page.getByRole('button', { name: 'いってみた！' }).click();
+    await page.getByRole('button', { name: /つぎへ|レッスンに もどる/ }).click();
+    await page.getByRole('button', { name: 'いってみた！' }).click();
+    await page.getByRole('button', { name: /つぎへ|レッスンに もどる/ }).click();
+    await expect(page.getByText('デモ・れんしゅう')).toBeVisible();
+
+    // Step 6: つたえる
+    await page.getByRole('button', { name: 'つたえる' }).click();
     await page.getByRole('button', { name: 'いえた！' }).click();
+    await expect(page.getByText('できたね！')).toBeVisible();
+    await page.getByRole('button', { name: 'つぎへ' }).click();
+    await expect(page.getByText('デモ・れんしゅう')).toBeVisible();
+
+    // Step 7: かぞくで しらべる
+    await page.getByRole('button', { name: 'かぞくで しらべる' }).click();
+    await expect(page.getByRole('button', { name: /おうちでしらべた/ })).toBeEnabled();
+    await page.getByRole('button', { name: /おうちでしらべた/ }).click();
+    await page.getByRole('button', { name: 'もどる' }).click();
     await expect(page.getByText('デモ・れんしゅう')).toBeVisible();
 
     // Back to the garden
     await page.getByRole('button', { name: 'もどる' }).click();
     await expect(page.getByRole('heading', { name: 'ナゼホリの にわ' })).toBeVisible();
+  });
+
+  test('a locked step shows a note instead of opening', async ({ page }) => {
+    await mockCourseBackend(page);
+    await page.goto('/course/');
+    await page.getByRole('button', { name: /プロフィール 1/ }).click();
+    await page.getByRole('button', { name: 'デモレッスンを あそぶ' }).click();
+    await page.getByRole('button', { name: /えらぶ A/ }).click(); // listenA not done yet
+    await expect(page.getByText('まえの ステップを おわらせると、ひらくよ。')).toBeVisible();
+    await expect(page.getByText('デモ・れんしゅう')).toBeVisible(); // still on the hub, never entered
   });
 
   test('parent screen reachable from the garden, shows the progress table', async ({ page }) => {
@@ -156,3 +215,68 @@ test.describe('WO-C1 — production gate: build flag off, per-family allowlist',
     await expect(page.getByText('だれが つかいますか？')).not.toBeVisible();
   });
 });
+
+/**
+ * WO-C2 §10: "an e2e test walks c01 at 390x844 (phone), 820x1180 (iPad portrait), 1180x820 (iPad
+ * landscape); the Founder checks it on his iPad in Safari." c01 stays behind `review.philosophy`/
+ * `.japanese` still null, so this walkthrough only exercises the PREVIEW path (courseAllowed:
+ * true, レビュー中 badge showing) — matching how c01 is actually reachable today; real production
+ * visibility is gated separately (scripts/gate-course-review-approved.ts's own `RELEASE=1` check).
+ * One screenshot per screen the 8-step flow visits, per viewport — attached for the Founder's own
+ * review rather than asserted on pixel-for-pixel (no baseline exists yet for lesson 1's real art).
+ */
+const VIEWPORTS: { label: string; width: number; height: number }[] = [
+  { label: 'phone-390x844', width: 390, height: 844 },
+  { label: 'ipad-portrait-820x1180', width: 820, height: 1180 },
+  { label: 'ipad-landscape-1180x820', width: 1180, height: 820 },
+];
+
+for (const viewport of VIEWPORTS) {
+  test(`WO-C2 c01 walkthrough + screenshots — ${viewport.label}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await mockCourseBackend(page, true);
+    await page.goto('/course/');
+    await page.getByRole('button', { name: /プロフィール 1/ }).click();
+    await expect(page.getByRole('heading', { name: 'ナゼホリの にわ' })).toBeVisible();
+
+    // c01 is the first lesson flower (index 1, right after the Playground) — always unlocked
+    // regardless of Playground progress isn't guaranteed, so open it via the parent's early
+    // unlock instead of depending on Playground completion state in this fixture.
+    await page.getByRole('button', { name: 'おうちの 人 へ' }).click();
+    const earlyUnlock = page.getByRole('button', { name: 'はやく ひらく' }).first();
+    if (await earlyUnlock.isVisible().catch(() => false)) await earlyUnlock.click();
+    await page.getByRole('button', { name: 'もどる' }).click();
+    await page.getByRole('button', { name: /ふたを あける/ }).click();
+
+    await expect(page.getByText('レビュー中')).toBeVisible();
+    await page.screenshot({ path: `test-results/wo-c2-${viewport.label}-lesson-hub.png`, fullPage: true });
+
+    await page.getByRole('button', { name: 'きく A' }).click();
+    await page.screenshot({ path: `test-results/wo-c2-${viewport.label}-listen-a.png`, fullPage: true });
+    await finishListening(page);
+
+    await page.getByRole('button', { name: /えらぶ A/ }).click();
+    await page.screenshot({ path: `test-results/wo-c2-${viewport.label}-practice-a.png`, fullPage: true });
+    for (let i = 0; i < 5; i++) await solvePracticeItem(page);
+
+    await page.getByRole('button', { name: 'きく B' }).click();
+    await finishListening(page);
+    await page.getByRole('button', { name: /えらぶ B/ }).click();
+    for (let i = 0; i < 5; i++) await solvePracticeItem(page);
+
+    await page.getByRole('button', { name: 'つくる', exact: true }).click();
+    await page.screenshot({ path: `test-results/wo-c2-${viewport.label}-make.png`, fullPage: true });
+    await page.getByRole('button', { name: 'いってみた！' }).click();
+    await page.getByRole('button', { name: /つぎへ|レッスンに もどる/ }).click();
+    await page.getByRole('button', { name: 'いってみた！' }).click();
+    await page.getByRole('button', { name: /つぎへ|レッスンに もどる/ }).click();
+
+    await page.getByRole('button', { name: 'つたえる' }).click();
+    await page.screenshot({ path: `test-results/wo-c2-${viewport.label}-teachback.png`, fullPage: true });
+    await page.getByRole('button', { name: 'いえた！' }).click();
+    await page.getByRole('button', { name: 'つぎへ' }).click();
+
+    await page.getByRole('button', { name: 'かぞくで しらべる' }).click();
+    await page.screenshot({ path: `test-results/wo-c2-${viewport.label}-family.png`, fullPage: true });
+  });
+}

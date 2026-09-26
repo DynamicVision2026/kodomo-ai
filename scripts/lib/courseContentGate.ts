@@ -111,31 +111,59 @@ export interface CourseGateResult {
   contentLintWarnings: string[];
 }
 
+/**
+ * WO-C2 §5: `lesson.listen` is now an array of one block per tool (WO-C1 had a single object) —
+ * every block's transcript/toolCard text is child-facing, same as before. `hint.h2Highlight` was
+ * always child-facing too (it's quoted verbatim inside the answer on-screen) but was never scanned
+ * pre-WO-C2 — added here alongside the other new child-facing surfaces (teachBack.cards,
+ * family.intro/choices). `factChecks`, `bDefinitionNote`, `version`, and `listenReview`'s own
+ * `note` are deliberately never collected — none of them are ever rendered to a child or parent
+ * (content-authoring/fact-check bookkeeping only — see CourseLesson's own doc comment).
+ */
 function childFacingTexts(lesson: CourseLesson): string[] {
   const texts: string[] = [lesson.title];
-  for (const line of lesson.listen.transcript) texts.push(line.text);
+  for (const block of lesson.listen) {
+    for (const line of block.transcript) texts.push(line.text);
+    texts.push(block.toolCard.when, block.toolCard.how);
+  }
   for (const ex of lesson.exercises) {
     texts.push(ex.scene.text, ex.q0.text);
     for (const step of ex.steps) {
-      texts.push(step.answer.text, step.hint.h1);
+      texts.push(step.answer.text, step.hint.h1, step.hint.h2Highlight);
       for (const opt of step.options) texts.push(opt.text, opt.reply.text, opt.feedback);
     }
   }
   for (const block of lesson.make) {
     for (const line of block.dialogue) texts.push(line.text);
     texts.push(...block.starterCards, ...block.selfCheck);
+    if (block.hint) texts.push(block.hint.h1, block.hint.h2Highlight);
   }
   texts.push(lesson.teachBack.prompt);
+  for (const card of lesson.teachBack.cards ?? []) texts.push(card.frame, card.help);
+  if (lesson.family.intro) texts.push(lesson.family.intro);
+  texts.push(...(lesson.family.choices ?? []));
   return texts;
 }
 
+/**
+ * WO-C2 §5: `make[].peekNote`/`.parentNote`, `teachBack.parentNote`, and `family.parentNote` are
+ * all new parent-facing surfaces (same audience as `parentPrompts`/`parentPeek`/`family.*` already
+ * were) — banned/PII-word checked, never kanji-grade/ruby/length checked, same as every other
+ * parent-facing field (see file header §2 and `lintParentFacing`). `family.star` is a short button
+ * LABEL, not prose — deliberately not scanned (same reasoning `courseUi.json`'s own chrome strings
+ * are never lint targets: it's fixed UI copy, reused across every lesson, not lesson content).
+ */
 function parentFacingTexts(lesson: CourseLesson): string[] {
   const texts: string[] = [];
   for (const block of lesson.make) {
     for (const p of block.parentPrompts) texts.push(p.text);
     texts.push(...block.parentPeek);
+    if (block.peekNote) texts.push(block.peekNote);
+    if (block.parentNote) texts.push(block.parentNote);
   }
+  if (lesson.teachBack.parentNote) texts.push(lesson.teachBack.parentNote);
   texts.push(lesson.family.whoKnows, lesson.family.aiExample, lesson.family.applyTool, ...lesson.family.notes);
+  if (lesson.family.parentNote) texts.push(lesson.family.parentNote);
   texts.push(lesson.parentCard.tool, lesson.parentCard.method, lesson.parentCard.dinnerQuestion);
   return texts;
 }
@@ -200,6 +228,12 @@ export function checkCourseLesson(lesson: CourseLesson, gradeOf: GradeMap, opts:
       if (!isFullyApproved(ex.review)) {
         approvalIssues.push(`lesson ${lesson.id} exercise ${ex.id}: not fully approved (${approvalLabel(ex.review)})`);
       }
+    }
+    // WO-C2 §5: `listenReview` is a lesson-wide review stamp for the two audio scripts, shaped
+    // exactly like every other CourseReviewStamp here — checked the same way, only when present
+    // (the WO-C1 demo lesson and any lesson authored before WO-C2 predate this field).
+    if (lesson.listenReview && !isFullyApproved(lesson.listenReview)) {
+      approvalIssues.push(`lesson ${lesson.id} listen: not fully approved (${approvalLabel(lesson.listenReview)})`);
     }
   }
 

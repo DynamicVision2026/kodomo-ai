@@ -126,3 +126,182 @@
   padding: 0.4rem 0.5rem;
   border-bottom: 1px solid var(--ad12-field-1);
 }
+
+/* WO-C2 §4 — course-only floor: every course screen's UI-weight text stays >= 16px (AD-12's own
+   --ad12-ui-size token is 15px, shared with the Playground and every other AD-12 consumer — never
+   overridden globally; this is a course-scoped bump, same "additive, never a shared-token change"
+   discipline the rest of this codebase already follows for course-only needs). Reading-weight
+   text (--ad12-reading-size, 26px+) already clears the floor untouched. */
+.course-screen .ad12-ui-text,
+.course-home .ad12-ui-text {
+  font-size: 16px;
+}
+
+/* WO-C2 §4 — every tappable control on a course screen clears the 48px tap-target floor
+   (--ad12-tap-min), including controls that aren't already `.ad12-tappable` (the audio scrub
+   input, choice buttons). */
+.course-listen__scrub-input,
+.course-family__choice {
+  min-height: var(--ad12-tap-min);
+}
+
+.course-listen__player {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.course-listen__play {
+  align-self: flex-start;
+  min-width: var(--ad12-tap-min);
+}
+
+.course-listen__scrub {
+  position: relative;
+  padding-top: 0.5rem;
+}
+
+.course-listen__scrub-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.course-listen__scrub-marker {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--ad12-accent);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.course-listen__divider {
+  align-self: center;
+  opacity: 0.7;
+  margin: 0.5rem 0;
+}
+
+.course-listen__line {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 0.4rem 0;
+  min-height: var(--ad12-tap-min);
+}
+
+.course-listen__line--current {
+  background: var(--ad12-field-1);
+  border-radius: var(--ad12-radius-chip);
+}
+
+.course-exercise__dots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.course-exercise__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ad12-field-1);
+}
+
+.course-exercise__dot--done {
+  background: var(--ad12-accent);
+}
+
+.course-exercise__answer-highlight,
+.course-make__dialogue-highlight {
+  background: var(--ad12-accent);
+  border-radius: 0.2rem;
+  padding: 0 0.15rem;
+}
+
+.course-exercise__only-one {
+  font-weight: 700;
+}
+
+.course-exercise--complete {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.course-make__parent-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--ad12-tap-min);
+}
+
+.course-family__choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.course-family__choice {
+  text-align: left;
+}
+
+.course-family__choice--picked {
+  outline: 2px solid var(--ad12-accent);
+}
+
+.course-lesson__step--locked {
+  opacity: 0.55;
+}
+
+/*
+ * WO-C2 §4 — breakpoints: phone <700px (the default, single-column, above), iPad portrait
+ * 700-999px, iPad landscape >=1000px. No sideways scroll at any size — `.course-screen`'s own
+ * `max-width: 640px` (top of file) already prevents it below 700px; the two wider tiers below
+ * widen the container and go two-column on the screens where a side-by-side layout reads more
+ * naturally on a bigger, steadier surface (Practice's scene+conversation, Make's dialogue+
+ * controls) rather than stretching a single narrow column across the whole tablet width.
+ */
+@media (min-width: 700px) {
+  .course-screen,
+  .course-home {
+    max-width: 900px;
+  }
+
+  .course-exercise {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'back back'
+      'dots dots'
+      'progress progress'
+      'scene conversation'
+      'options conversation';
+    column-gap: 1.5rem;
+  }
+  .course-exercise__back { grid-area: back; }
+  .course-exercise__dots { grid-area: dots; }
+  .course-exercise > .ad12-ui-text:nth-of-type(1) { grid-area: progress; }
+  .course-exercise__scene { grid-area: scene; }
+  .course-exercise__options { grid-area: options; }
+
+  .course-make {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 1.5rem;
+  }
+  .course-make__starters,
+  .course-make__parent,
+  .course-make__hint,
+  .course-make__parent-toggle {
+    grid-column: 2;
+  }
+}
+
+@media (min-width: 1000px) {
+  .course-screen,
+  .course-home {
+    max-width: 1080px;
+  }
+}

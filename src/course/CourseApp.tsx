@@ -14,7 +14,7 @@ import { getProgress } from '../family/api';
 import { COURSE_ID } from './courseId';
 import { courseManifest, courseUi, demoLesson, getLesson } from './content/courseManifest';
 import type { CourseLesson } from './content/types';
-import { emptyCourseProgress, shouldShowSixtyPercentNotice, computeLessonPercent, type CourseProgressState } from './progress';
+import { emptyCourseProgress, emptyLessonProgress, shouldShowSixtyPercentNotice, computeLessonPercent, type CourseProgressState } from './progress';
 import { track } from '../engine/analytics';
 import moduleJson from '../modules/m1/module.json';
 import { CourseHome } from './screens/CourseHome';
@@ -37,12 +37,22 @@ function resolveLesson(lessonId: string): CourseLesson | undefined {
 type Screen =
   | { kind: 'home' }
   | { kind: 'lesson'; lessonId: string }
-  | { kind: 'listen'; lessonId: string }
-  | { kind: 'exercise'; lessonId: string; index: number }
+  | { kind: 'listen'; lessonId: string; blockIndex: number }
+  | { kind: 'exercise'; lessonId: string; blockIndex: number; index: number }
   | { kind: 'make'; lessonId: string; blockIndex: number }
   | { kind: 'teachback'; lessonId: string }
   | { kind: 'family'; lessonId: string }
   | { kind: 'parent'; focusLessonId: string | null };
+
+/** WO-C2 §2: きくA/きくB and つくるA/つくるB are now scored independently (10 each) — `blockIndex`
+ *  0 selects the `A` progress field, 1 selects `B` (the only two tools any lesson teaches so far;
+ *  see `CourseLessonProgressState`'s own doc comment). */
+function listenFlagKey(blockIndex: number): 'listenADone' | 'listenBDone' {
+  return blockIndex === 0 ? 'listenADone' : 'listenBDone';
+}
+function makeFlagKey(blockIndex: number): 'makeADone' | 'makeBDone' {
+  return blockIndex === 0 ? 'makeADone' : 'makeBDone';
+}
 
 export function CourseApp() {
   const [me, setMe] = useState<MeResponse | null | 'loading'>('loading');
@@ -109,18 +119,19 @@ export function CourseApp() {
 
   const reviewInProgress = !me.courseAllowed ? null : courseUi.reviewBadge;
 
-  function markListenDone(lessonId: string) {
+  function markListenDone(lessonId: string, blockIndex: number) {
     updateProgress((prev) => {
-      const lesson = prev.lessons[lessonId] ?? { listenDone: false, exercisesDone: [], makeDone: false, teachBackDone: false, stars: 0, lastStepAt: '' };
-      track('course_listen_done', { lessonId });
-      return { ...prev, lessons: { ...prev.lessons, [lessonId]: { ...lesson, listenDone: true, lastStepAt: new Date().toISOString() } } };
+      const lesson = prev.lessons[lessonId] ?? emptyLessonProgress();
+      track('course_listen_done', { lessonId, block: blockIndex });
+      const key = listenFlagKey(blockIndex);
+      return { ...prev, lessons: { ...prev.lessons, [lessonId]: { ...lesson, [key]: true, lastStepAt: new Date().toISOString() } } };
     });
   }
 
   function markItemDone(lessonId: string, exerciseId: string) {
     const lesson = resolveLesson(lessonId);
     updateProgress((prev) => {
-      const prevLesson = prev.lessons[lessonId] ?? { listenDone: false, exercisesDone: [], makeDone: false, teachBackDone: false, stars: 0, lastStepAt: '' };
+      const prevLesson = prev.lessons[lessonId] ?? emptyLessonProgress();
       const percentBefore = lesson ? computeLessonPercent(lesson, prevLesson) : 0;
       const nextLesson = {
         ...prevLesson,
@@ -144,17 +155,18 @@ export function CourseApp() {
     });
   }
 
-  function markMakeDone(lessonId: string) {
+  function markMakeDone(lessonId: string, blockIndex: number) {
     updateProgress((prev) => {
-      const lesson = prev.lessons[lessonId] ?? { listenDone: false, exercisesDone: [], makeDone: false, teachBackDone: false, stars: 0, lastStepAt: '' };
-      track('course_make_done', { lessonId });
-      return { ...prev, lessons: { ...prev.lessons, [lessonId]: { ...lesson, makeDone: true, lastStepAt: new Date().toISOString() } } };
+      const lesson = prev.lessons[lessonId] ?? emptyLessonProgress();
+      track('course_make_done', { lessonId, block: blockIndex });
+      const key = makeFlagKey(blockIndex);
+      return { ...prev, lessons: { ...prev.lessons, [lessonId]: { ...lesson, [key]: true, lastStepAt: new Date().toISOString() } } };
     });
   }
 
   function markTeachBackDone(lessonId: string) {
     updateProgress((prev) => {
-      const lesson = prev.lessons[lessonId] ?? { listenDone: false, exercisesDone: [], makeDone: false, teachBackDone: false, stars: 0, lastStepAt: '' };
+      const lesson = prev.lessons[lessonId] ?? emptyLessonProgress();
       track('course_teachback_done', { lessonId });
       return { ...prev, lessons: { ...prev.lessons, [lessonId]: { ...lesson, teachBackDone: true, lastStepAt: new Date().toISOString() } } };
     });
@@ -162,7 +174,7 @@ export function CourseApp() {
 
   function addStar(lessonId: string) {
     updateProgress((prev) => {
-      const lesson = prev.lessons[lessonId] ?? { listenDone: false, exercisesDone: [], makeDone: false, teachBackDone: false, stars: 0, lastStepAt: '' };
+      const lesson = prev.lessons[lessonId] ?? emptyLessonProgress();
       track('course_family_star', { lessonId });
       return { ...prev, lessons: { ...prev.lessons, [lessonId]: { ...lesson, stars: lesson.stars + 1 } } };
     });
@@ -218,8 +230,8 @@ export function CourseApp() {
       <LessonScreen
         lesson={lesson}
         progress={lessonProgress}
-        onOpenListen={() => setScreen({ kind: 'listen', lessonId: lesson.id })}
-        onOpenExercise={() => setScreen({ kind: 'exercise', lessonId: lesson.id, index: 0 })}
+        onOpenListen={(blockIndex) => setScreen({ kind: 'listen', lessonId: lesson.id, blockIndex })}
+        onOpenExercise={(blockIndex) => setScreen({ kind: 'exercise', lessonId: lesson.id, blockIndex, index: 0 })}
         onOpenMake={() => setScreen({ kind: 'make', lessonId: lesson.id, blockIndex: 0 })}
         onOpenTeachBack={() => setScreen({ kind: 'teachback', lessonId: lesson.id })}
         onOpenFamily={() => setScreen({ kind: 'family', lessonId: lesson.id })}
@@ -227,26 +239,32 @@ export function CourseApp() {
       />
     );
   } else if (screen.kind === 'listen') {
+    const block = lesson.listen[screen.blockIndex];
+    if (!block) { setScreen({ kind: 'lesson', lessonId: lesson.id }); return null; }
     content = (
       <ListenScreen
-        lesson={lesson}
-        onDone={() => { markListenDone(lesson.id); setScreen({ kind: 'lesson', lessonId: lesson.id }); }}
+        key={screen.blockIndex}
+        lessonTitle={lesson.title}
+        block={block}
+        onDone={() => { markListenDone(lesson.id, screen.blockIndex); setScreen({ kind: 'lesson', lessonId: lesson.id }); }}
         onBack={() => setScreen({ kind: 'lesson', lessonId: lesson.id })}
       />
     );
   } else if (screen.kind === 'exercise') {
-    const exercise = lesson.exercises[screen.index];
-    if (!exercise) { setScreen({ kind: 'lesson', lessonId: lesson.id }); return null; }
+    const block = lesson.listen[screen.blockIndex];
+    const exerciseId = block?.thenExercises[screen.index];
+    const exercise = lesson.exercises.find((e) => e.id === exerciseId);
+    if (!block || !exercise) { setScreen({ kind: 'lesson', lessonId: lesson.id }); return null; }
     content = (
       <ExerciseScreen
-        key={screen.index}
+        key={`${screen.blockIndex}-${screen.index}`}
         exercise={exercise}
-        position={{ index: screen.index, total: lesson.exercises.length }}
-        onItemDone={(exerciseId) => markItemDone(lesson.id, exerciseId)}
+        position={{ index: screen.index, total: block.thenExercises.length }}
+        onItemDone={(id) => markItemDone(lesson.id, id)}
         onNext={() => {
           const nextIndex = screen.index + 1;
-          if (nextIndex >= lesson.exercises.length) setScreen({ kind: 'lesson', lessonId: lesson.id });
-          else setScreen({ kind: 'exercise', lessonId: lesson.id, index: nextIndex });
+          if (nextIndex >= block.thenExercises.length) setScreen({ kind: 'lesson', lessonId: lesson.id });
+          else setScreen({ kind: 'exercise', lessonId: lesson.id, blockIndex: screen.blockIndex, index: nextIndex });
         }}
         onBack={() => setScreen({ kind: 'lesson', lessonId: lesson.id })}
       />
@@ -257,7 +275,7 @@ export function CourseApp() {
         key={screen.blockIndex}
         blocks={lesson.make}
         blockIndex={screen.blockIndex}
-        onMakeDone={() => markMakeDone(lesson.id)}
+        onMakeDone={() => markMakeDone(lesson.id, screen.blockIndex)}
         onNextBlock={() => {
           const nextIndex = screen.blockIndex + 1;
           if (nextIndex >= lesson.make.length) setScreen({ kind: 'lesson', lessonId: lesson.id });
@@ -269,7 +287,7 @@ export function CourseApp() {
   } else if (screen.kind === 'teachback') {
     content = (
       <TeachBackScreen
-        prompt={lesson.teachBack.prompt}
+        teachBack={lesson.teachBack}
         onTeachBackDone={() => { markTeachBackDone(lesson.id); setScreen({ kind: 'lesson', lessonId: lesson.id }); }}
         onBack={() => setScreen({ kind: 'lesson', lessonId: lesson.id })}
       />
@@ -279,7 +297,7 @@ export function CourseApp() {
       <FamilyScreen
         family={lesson.family}
         stars={lessonProgress?.stars ?? 0}
-        starsEnabled={!!lessonProgress?.makeDone}
+        starsEnabled={!!lessonProgress?.teachBackDone}
         onStar={() => addStar(lesson.id)}
         onBack={() => setScreen({ kind: 'lesson', lessonId: lesson.id })}
       />

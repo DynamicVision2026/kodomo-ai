@@ -115,7 +115,7 @@ export function CourseHome({
 const emptyLessonForUnauthored: CourseLesson = {
   id: '', title: '', tools: [], practice: 'single',
   review: { model: '', philosophy: null, japanese: null },
-  listen: { audio: '', transcript: [], methodCards: [] },
+  listen: [],
   exercises: [], make: [], teachBack: { prompt: '' },
   family: { whoKnows: '', aiExample: '', applyTool: '', notes: [] },
   parentCard: { tool: '', method: '', sources: [], dinnerQuestion: '' },

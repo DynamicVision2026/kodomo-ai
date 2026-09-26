@@ -1,7 +1,7 @@
 /**
- * WO-C1 §3/§4: the course's own monotonic merge function — the pure counterpart to
- * shared/progressMerge.ts, for the course's progress shape instead of the Playground's
- * `ModuleProgressState`. Lives here, not imported by either side (same reasoning
+ * WO-C1 §3/§4, updated WO-C2 §2/§5: the course's own monotonic merge function — the pure
+ * counterpart to shared/progressMerge.ts, for the course's progress shape instead of the
+ * Playground's `ModuleProgressState`. Lives here, not imported by either side (same reasoning
  * shared/progressMerge.ts's own header comment gives): `backend/src/schema.ts`'s
  * `CourseProgressDoc`/`CourseLessonProgress` and `src/course/progress.ts`'s matching types both
  * structurally mirror the shapes below rather than importing them, so neither tsconfig
@@ -13,23 +13,30 @@
  * request) syncing the same profile's course progress.
  *
  * Field-by-field merge rules:
- *  - `lessons[id].listenDone`        -> OR
- *  - `lessons[id].exercisesDone`     -> union (distinct exercise ids)
- *  - `lessons[id].makeDone`          -> OR
- *  - `lessons[id].teachBackDone`     -> OR
- *  - `lessons[id].stars`             -> max (a count that only ever increases)
- *  - `lessons[id].lastStepAt`        -> max (latest ISO timestamp wins — ties broken by string
- *                                       compare, which is safe for ISO 8601's lexical ordering)
- *  - `earlyUnlockedParts`            -> union (a parent's early unlock, once granted, is never
- *                                       revoked by a later merge — WO-C1 §4: "Replaying never
- *                                       lowers progress")
- *  - `sixtyPercentNoticeShown`       -> union (once shown anywhere, never re-shown)
+ *  - `lessons[id].listenADone`/`listenBDone`  -> OR
+ *  - `lessons[id].exercisesDone`              -> union (distinct exercise ids)
+ *  - `lessons[id].makeADone`/`makeBDone`      -> OR
+ *  - `lessons[id].teachBackDone`              -> OR
+ *  - `lessons[id].stars`                      -> max (a count that only ever increases)
+ *  - `lessons[id].lastStepAt`                 -> max (latest ISO timestamp wins — ties broken by
+ *                                                string compare, safe for ISO 8601's lexical order)
+ *  - `earlyUnlockedParts`                     -> union (a parent's early unlock, once granted, is
+ *                                                never revoked by a later merge — WO-C1 §4:
+ *                                                "Replaying never lowers progress")
+ *  - `sixtyPercentNoticeShown`                -> union (once shown anywhere, never re-shown)
+ *
+ * WO-C2 §2 BREAKING CHANGE from WO-C1: `listenDone`/`makeDone` (single booleans) are replaced by
+ * per-tool `listenADone`/`listenBDone` and `makeADone`/`makeBDone` — the new progress weights
+ * (きくA/B = 10+10, つくるA/B = 10+10) score each tool's きく/つくる step independently, matching
+ * `CourseLesson.listen`/`.make` already being one block per tool.
  */
 
 export interface CourseLessonProgressState {
-  listenDone: boolean;
+  listenADone: boolean;
+  listenBDone: boolean;
   exercisesDone: string[];
-  makeDone: boolean;
+  makeADone: boolean;
+  makeBDone: boolean;
   teachBackDone: boolean;
   stars: number;
   lastStepAt: string;
@@ -42,7 +49,11 @@ export interface CourseProgressState {
 }
 
 export function emptyLessonProgressState(): CourseLessonProgressState {
-  return { listenDone: false, exercisesDone: [], makeDone: false, teachBackDone: false, stars: 0, lastStepAt: '' };
+  return {
+    listenADone: false, listenBDone: false, exercisesDone: [],
+    makeADone: false, makeBDone: false, teachBackDone: false,
+    stars: 0, lastStepAt: '',
+  };
 }
 
 export function emptyCourseProgressState(): CourseProgressState {
@@ -55,9 +66,11 @@ function unique(a: string[], b: string[]): string[] {
 
 function mergeLessonProgress(a: CourseLessonProgressState, b: CourseLessonProgressState): CourseLessonProgressState {
   return {
-    listenDone: a.listenDone || b.listenDone,
+    listenADone: a.listenADone || b.listenADone,
+    listenBDone: a.listenBDone || b.listenBDone,
     exercisesDone: unique(a.exercisesDone, b.exercisesDone),
-    makeDone: a.makeDone || b.makeDone,
+    makeADone: a.makeADone || b.makeADone,
+    makeBDone: a.makeBDone || b.makeBDone,
     teachBackDone: a.teachBackDone || b.teachBackDone,
     stars: Math.max(a.stars, b.stars),
     lastStepAt: a.lastStepAt > b.lastStepAt ? a.lastStepAt : b.lastStepAt,
