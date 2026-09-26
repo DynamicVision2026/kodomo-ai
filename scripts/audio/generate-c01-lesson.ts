@@ -12,13 +12,18 @@
  *     `public/audio/course/shared/<file>` instead — these are exactly the sheet rows whose own
  *     `file` column has no `c01_` prefix.
  *   - the two きく blocks (`c01_listen_A.mp3`, `c01_listen_B.mp3`) are each built by joining every
- *     row belonging to that file, in sheet order, with a fixed gap between lines (same
- *     DEFAULT_GAP_MS convention scripts/audio/generate-1-1-model.ts already uses) — the running
- *     start time of each VOICE row (never an SE row) is then written back into this lesson's own
- *     `listen[].transcript[].start`, index-aligned 1:1 with the sheet's own voice rows for that
- *     file (verified equal count and equal text, in order, against c01.lesson.json — see this
- *     script's own `--dry-run`). `transcript[].start` is the ONLY field in c01.lesson.json this
- *     script (or anyone) may write, per the Coordinator's own instruction.
+ *     row belonging to that file, in sheet order, back-to-back (the Founder-approved audio-A
+ *     sample was built the same way — no artificial gap is inserted between segments; each TTS
+ *     clip's own natural trailing pause after sentence-final punctuation is what separates lines,
+ *     and a sound-effect cue is its own 1-second silence-placeholder segment in the same sequence,
+ *     kept at that fixed length per the Coordinator's own instruction so a real SFX asset can drop
+ *     in later without re-recording or re-timing any voice line). The running start time of each
+ *     VOICE row (never an SE row), measured via ffprobe against the ACTUAL synthesized segments —
+ *     not an assumed gap — is then written back into this lesson's own `listen[].transcript[].start`,
+ *     index-aligned 1:1 with the sheet's own voice rows for that file (verified equal count and
+ *     equal text, in order, against c01.lesson.json — see this script's own `--dry-run`).
+ *     `transcript[].start` is the ONLY field in c01.lesson.json this script (or anyone) may write,
+ *     per the Coordinator's own instruction.
  *
  * ---- Voices (Founder decision, 26 Sep 2026) --------------------------------------------------
  * ポン太 and ハテナ reuse Story 1-1's own MODEL voices EXACTLY (scripts/audio/generate-1-1-model.ts
@@ -68,7 +73,7 @@
  *   npx tsx scripts/audio/generate-c01-lesson.ts --dry-run              # validate the sheet + naming + join plan; no token/ffmpeg needed
  *   npx tsx scripts/audio/generate-c01-lesson.ts --samples --dry-run    # same, scoped to the WO-C2b §3 sample set
  *   npx tsx scripts/audio/generate-c01-lesson.ts --samples              # WO-C2b §3: one line per voice (9) + first minute of audio A — needs GCP_ACCESS_TOKEN + ffmpeg
- *   npx tsx scripts/audio/generate-c01-lesson.ts --full                 # WO-C2b §4: everything, only after the Founder approves the sample voices
+ *   npx tsx scripts/audio/generate-c01-lesson.ts --full                 # WO-C2b §4: everything (Founder-approved 26 Sep 2026) — needs GCP_ACCESS_TOKEN + ffmpeg
  */
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -247,6 +252,24 @@ function verifyTranscriptAlignment(rows: SheetRow[]): void {
   });
 }
 
+/** Coordinator's own instruction, self-enforced rather than trusted: `transcript[].start` is the
+ *  ONLY field `--full` may write in c01.lesson.json. Compares `original` (parsed fresh from disk
+ *  before any mutation) against `updated` (the in-memory object about to be written) with every
+ *  `listen[].transcript[].start` stripped from both — any remaining difference means something
+ *  else changed, and the write is refused rather than silently shipped. */
+function assertOnlyTranscriptStartsChanged(original: unknown, updated: unknown): void {
+  const strip = (obj: unknown): unknown => {
+    const clone = JSON.parse(JSON.stringify(obj)) as { listen?: { transcript?: { start?: number }[] }[] };
+    for (const block of clone.listen ?? []) {
+      for (const line of block.transcript ?? []) delete line.start;
+    }
+    return clone;
+  };
+  if (JSON.stringify(strip(original)) !== JSON.stringify(strip(updated))) {
+    throw new Error('c01.lesson.json changed somewhere other than listen[].transcript[].start — refusing to write.');
+  }
+}
+
 function dryRun(samplesOnly: boolean) {
   const rows = loadSheet();
   const voiceRows = rows.filter((r) => r.type === 'voice');
@@ -342,6 +365,33 @@ async function synthesizeClip(row: SheetRow, outPath: string) {
   writeFileSync(outPath, Buffer.from(body.audioContent, 'base64'));
 }
 
+/** `--full`'s own retry log — every clip that needed more than one attempt, or never succeeded at
+ *  all. Reported verbatim at the end of the run (WO-C2b instruction 8: "any failed or retried
+ *  lines"); a clean run prints an empty list, not silence, so "nothing to report" is never
+ *  ambiguous with "this wasn't checked". */
+const retryLog: { clip: string; speaker: string; attempts: number; failed: boolean }[] = [];
+
+/** Wraps `synthesizeClip` with up to 2 retries (3 attempts total) on a transient failure — a single
+ *  bad line shouldn't abort all 250. Records every non-first-try outcome into `retryLog`; re-throws
+ *  after the final attempt so a genuinely broken line (bad voice name, quota) still stops the run
+ *  rather than silently shipping a missing clip. */
+async function synthesizeClipWithRetry(row: SheetRow, outPath: string, maxAttempts = 3): Promise<void> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await synthesizeClip(row, outPath);
+      if (attempt > 1) retryLog.push({ clip: row.clip, speaker: row.speaker, attempts: attempt, failed: false });
+      return;
+    } catch (err) {
+      if (attempt === maxAttempts) {
+        retryLog.push({ clip: row.clip, speaker: row.speaker, attempts: attempt, failed: true });
+        throw err;
+      }
+      console.log(`  retrying [${row.clip}] ${row.speaker} (attempt ${attempt} failed: ${(err as Error).message.split('\n')[0]})`);
+      await new Promise((r) => setTimeout(r, 1000 * attempt));
+    }
+  }
+}
+
 /** Seconds of real audio in an existing file — used to decide how many lines make up "the first
  *  minute" and to compute each line's real `start` offset (the full-run join uses the same
  *  helper). Requires ffmpeg's own ffprobe companion, checked by `requireFfmpeg`. */
@@ -412,6 +462,75 @@ async function runSamples() {
   console.log(`\n${picked.length} sample lines + 1 audio-A sample written. Artifact-ready copies (numbered, romanized names): ${ARTIFACT_DIR}`);
 }
 
+/** WO-C2b §4, run only after Founder approval of the samples: every standalone clip to its real
+ *  production path, both きく blocks synthesized-then-joined with real ffprobe-measured timing, and
+ *  `listen[].transcript[].start` written back — the ONLY field this touches in c01.lesson.json. */
+async function runFull() {
+  requireFfmpeg();
+  const rows = loadSheet();
+  assertDistinctVoices();
+  console.log('Verifying transcript alignment against c01.lesson.json...');
+  verifyTranscriptAlignment(rows);
+
+  mkdirSync(LESSON_DIR, { recursive: true });
+  mkdirSync(SHARED_DIR, { recursive: true });
+  mkdirSync(STAGING_DIR, { recursive: true });
+
+  const standaloneRows = rows.filter((r) => r.type === 'voice' && !JOIN_TARGETS.has(r.file));
+  console.log(`\nGenerating ${standaloneRows.length} standalone clips...`);
+  let totalChars = 0;
+  for (const row of standaloneRows) {
+    const outPath = outputPathFor(row);
+    console.log(`  [${row.clip}] ${row.speaker} -> ${outPath}`);
+    await synthesizeClipWithRetry(row, outPath);
+    totalChars += row.text_ja.length;
+  }
+
+  const originalLessonJson = readFileSync(LESSON_PATH, 'utf8');
+  const lesson = JSON.parse(originalLessonJson);
+  const joinFiles = ['c01_listen_A.mp3', 'c01_listen_B.mp3'];
+  for (const [blockIndex, file] of joinFiles.entries()) {
+    console.log(`\nBuilding ${file}...`);
+    const block = file.replace('.mp3', '');
+    mkdirSync(resolve(STAGING_DIR, block), { recursive: true });
+    const fileRows = rows.filter((r) => r.file === file);
+    const segmentPaths: string[] = [];
+    let clockSec = 0;
+    let voiceIndex = 0;
+    for (const row of fileRows) {
+      const segPath = stagingPathFor(row);
+      if (row.type === 'SE') {
+        synthesizeSilence(segPath, 1); // kept at this fixed placeholder length — see file header
+      } else {
+        await synthesizeClipWithRetry(row, segPath);
+        totalChars += row.text_ja.length;
+      }
+      const durationSec = ffprobeDurationSec(segPath);
+      if (row.type === 'voice') {
+        lesson.listen[blockIndex].transcript[voiceIndex].start = Number(clockSec.toFixed(3));
+        voiceIndex++;
+      }
+      clockSec += durationSec;
+      segmentPaths.push(segPath);
+    }
+    const outPath = resolve(LESSON_DIR, file);
+    concatFiles(segmentPaths, outPath);
+    console.log(`  ${segmentPaths.length} segments, ${clockSec.toFixed(1)}s -> ${outPath}`);
+  }
+
+  assertOnlyTranscriptStartsChanged(JSON.parse(originalLessonJson), lesson);
+  writeFileSync(LESSON_PATH, JSON.stringify(lesson, null, 2) + '\n');
+  console.log(`\nWrote transcript start times to ${LESSON_PATH} (listen[].transcript[].start only).`);
+
+  console.log(`\n${standaloneRows.length + rows.filter((r) => r.type === 'voice' && JOIN_TARGETS.has(r.file)).length} voiced lines generated, ${totalChars} characters total.`);
+  if (retryLog.length === 0) {
+    console.log('No retries or failures.');
+  } else {
+    console.log(`${retryLog.length} clip(s) needed a retry:`);
+    for (const r of retryLog) console.log(`  [${r.clip}] ${r.speaker}: ${r.attempts} attempt(s)${r.failed ? ' — FAILED' : ' — succeeded'}`);
+  }
+}
+
 const args = process.argv.slice(2);
 if (args.includes('--check')) {
   await checkAccess();
@@ -422,7 +541,7 @@ if (args.includes('--check')) {
 } else if (args.includes('--samples')) {
   await runSamples();
 } else if (args.includes('--full')) {
-  throw new Error('--full is intentionally not implemented yet: WO-C2b instruction 3 — "Don\'t generate the rest until the Founder approves the voices" (the samples). Implement the full run only after that approval.');
+  await runFull();
 } else {
   console.log('Usage: --check | --list-voices | --dry-run [--samples] | --samples | --full');
 }

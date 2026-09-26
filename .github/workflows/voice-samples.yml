@@ -1,11 +1,12 @@
 name: WO-C2b voice samples (manual, never touches production)
 
 # Founder decision (26 Sep 2026): a manual, separate workflow — never wired to `push`/`pull_request`
-# — for exactly one purpose: proving Lesson 1's Text-to-Speech setup works and producing REVIEW
-# samples. It never writes to c01.lesson.json, never uploads to public/audio/course (samples land
-# only in this run's own artifact), and never touches ci.yml's own deploy jobs or production
-# traffic. Reuses ci.yml's existing Workload Identity Federation auth (same secrets, same
-# `google-github-actions/auth@v2` step) — no new GCP credential is created for this.
+# — for proving Lesson 1's Text-to-Speech setup works, producing REVIEW samples, and (once the
+# Founder approves those samples) the real generation run. It never touches ci.yml's own deploy
+# jobs or production traffic — c01 stays blocked in production regardless of mode (the lesson-level
+# review fields this gates on are never written here). Reuses ci.yml's existing Workload Identity
+# Federation auth (same secrets, same `google-github-actions/auth@v2` step) — no new GCP credential
+# is created for this.
 #
 # Modes (dispatch input `mode`), always run in this order regardless of which one you pick — each
 # later mode implies every earlier check already passed:
@@ -17,8 +18,17 @@ name: WO-C2b voice samples (manual, never touches production)
 #                  own VOICES table should be checked against before any sample is generated.
 #   samples      - also generates WO-C2b §3's review set (one line per of the 9 roles + the first
 #                  ~minute of audio A joined with its sound-effect placeholders) and uploads it as
-#                  a workflow artifact. Never runs without Founder-visible approval of this exact
-#                  dispatch (this workflow doesn't auto-trigger — a human always starts it by hand).
+#                  a workflow artifact. Writes only under public/audio/course/_samples/ — never a
+#                  real production path, never c01.lesson.json. Never runs without Founder-visible
+#                  approval of this exact dispatch (this workflow doesn't auto-trigger).
+#   full         - Founder-approved (26 Sep 2026) real generation: all 250 voiced lines to their
+#                  real production paths, the two きく blocks joined, `listen[].transcript[].start`
+#                  written back (the ONLY field in c01.lesson.json this touches — self-enforced by
+#                  the script itself, not just this workflow). Commits the generated audio files and
+#                  the updated c01.lesson.json straight to this run's own branch (never main/a
+#                  protected branch — this workflow only ever runs against the branch it was
+#                  dispatched on) so the two artifacts below aren't the only place the result lives,
+#                  then runs the RELEASE=1 content gate to confirm every one of the 250 files exists.
 
 on:
   workflow_dispatch:
@@ -31,10 +41,11 @@ on:
           - check
           - list-voices
           - samples
+          - full
         default: check
 
 permissions:
-  contents: read
+  contents: write   # 'full' mode commits generated audio + c01.lesson.json back to the dispatch branch
   id-token: write   # Workload Identity Federation — no long-lived key ever touches this repo
 
 jobs:
@@ -94,10 +105,11 @@ jobs:
           retention-days: 14
 
       # ubuntu-latest images normally already carry ffmpeg, but the join step is a hard
-      # requirement (WO-C2b §3's audio-A sample is a real concat, not just 9 separate lines) —
-      # installed explicitly rather than assumed, per instruction 1.
+      # requirement (WO-C2b §3's audio-A sample and §4's two real きく masters are both real
+      # concats, not just separate lines) — installed explicitly rather than assumed, per
+      # instruction 1.
       - name: Install ffmpeg
-        if: ${{ inputs.mode == 'samples' }}
+        if: ${{ inputs.mode == 'samples' || inputs.mode == 'full' }}
         run: |
           sudo apt-get update -y
           sudo apt-get install -y ffmpeg
@@ -118,4 +130,58 @@ jobs:
         with:
           name: voice-samples
           path: public/audio/course/_samples/artifact/
+          retention-days: 14
+
+      # WO-C2b §4, Founder-approved: every standalone clip to its real path, both きく blocks
+      # synthesized then joined with real ffprobe-measured timing, `listen[].transcript[].start`
+      # written back (self-enforced as the only field touched — see generate-c01-lesson.ts's own
+      # assertOnlyTranscriptStartsChanged). c01 stays blocked in production either way: this never
+      # writes the lesson-level review fields gate:course-review checks under RELEASE=1.
+      - name: Generate all 250 lines + join the two きく blocks
+        if: ${{ inputs.mode == 'full' }}
+        env:
+          GCP_ACCESS_TOKEN: ${{ steps.token.outputs.token }}
+        run: npx tsx scripts/audio/generate-c01-lesson.ts --full
+
+      # Self-check before trusting the run: c01.lesson.json's only diff from HEAD must be
+      # `transcript[].start` additions (the script already refuses to write anything else, but this
+      # confirms it from the outside too — any other change here means something is wrong upstream,
+      # not something to silently commit).
+      - name: Confirm c01.lesson.json's only change is transcript[].start
+        if: ${{ inputs.mode == 'full' }}
+        run: |
+          if git diff --name-only -- src/course/content/lessons/c01.lesson.json | grep -q .; then
+            CHANGED_KEYS=$(git diff -U0 -- src/course/content/lessons/c01.lesson.json | grep -E '^[+-]' | grep -vE '^(\+\+\+|---)' | grep -vE '"start":' || true)
+            if [ -n "$CHANGED_KEYS" ]; then
+              echo "::error::c01.lesson.json changed a field other than transcript[].start:"
+              echo "$CHANGED_KEYS"
+              exit 1
+            fi
+          fi
+          echo "OK: c01.lesson.json's only diff is transcript[].start."
+
+      - name: Gate — release audio-file check (RELEASE=1)
+        if: ${{ inputs.mode == 'full' }}
+        run: RELEASE=1 npx tsx scripts/gate-course-review-approved.ts
+
+      # Committed straight to this run's own dispatch branch (never main) so the generated audio
+      # and the transcript timing live in the repo, not only in this run's own artifact below.
+      - name: Commit the generated audio + updated c01.lesson.json
+        if: ${{ inputs.mode == 'full' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/audio/course/c01 public/audio/course/shared src/course/content/lessons/c01.lesson.json
+          git commit -m "WO-C2b: generate all 250 Lesson 1 voice clips + join きく A/B (Founder-approved voices)" \
+            -m "Real TTS generation, Founder-approved voice table. Writes only listen[].transcript[].start in c01.lesson.json (self-enforced by the generation script) — no other field touched, lesson-level review fields stay null, c01 stays blocked in production."
+          git push origin "HEAD:${{ github.ref_name }}"
+
+      - name: Upload the two きく master files
+        if: ${{ inputs.mode == 'full' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: listen-masters
+          path: |
+            public/audio/course/c01/c01_listen_A.mp3
+            public/audio/course/c01/c01_listen_B.mp3
           retention-days: 14
