@@ -252,6 +252,18 @@ function verifyTranscriptAlignment(rows: SheetRow[]): void {
   });
 }
 
+/** c01.lesson.json's own indent width — 1 space, not the more common 2 (confirmed by round-trip:
+ *  `JSON.stringify(JSON.parse(text), null, 1)` reproduces the file byte-for-byte). Detected rather
+ *  than hardcoded so a re-run after a reformat (or a future lesson file with a different
+ *  convention) still writes back a MINIMAL diff — the very first version of this write path
+ *  hardcoded `, null, 2)` and, against this file's real 1-space indent, rewrote every single line
+ *  of the file (identical content, wrong whitespace), which both defeated "no other changes" in
+ *  spirit and made CI's own line-based diff-check (voice-samples.yml) fail outright. */
+function detectIndentWidth(rawJson: string): number {
+  const match = rawJson.match(/\n( +)"/);
+  return match ? match[1]!.length : 2;
+}
+
 /** Coordinator's own instruction, self-enforced rather than trusted: `transcript[].start` is the
  *  ONLY field `--full` may write in c01.lesson.json. Compares `original` (parsed fresh from disk
  *  before any mutation) against `updated` (the in-memory object about to be written) with every
@@ -519,7 +531,7 @@ async function runFull() {
   }
 
   assertOnlyTranscriptStartsChanged(JSON.parse(originalLessonJson), lesson);
-  writeFileSync(LESSON_PATH, JSON.stringify(lesson, null, 2) + '\n');
+  writeFileSync(LESSON_PATH, JSON.stringify(lesson, null, detectIndentWidth(originalLessonJson)) + '\n');
   console.log(`\nWrote transcript start times to ${LESSON_PATH} (listen[].transcript[].start only).`);
 
   console.log(`\n${standaloneRows.length + rows.filter((r) => r.type === 'voice' && JOIN_TARGETS.has(r.file)).length} voiced lines generated, ${totalChars} characters total.`);
