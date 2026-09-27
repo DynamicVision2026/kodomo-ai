@@ -74,10 +74,17 @@ export function BeginnerCourseApp() {
 
   if (me === 'loading') return <main className="ad12 course-loading"><p className="ad12-ui-text">{courseUi.loading}</p></main>;
   if (me === null) {
+    // WO-C5 follow-up: `?next=` (LoginPage.tsx's own `resolveNextPath`, already used by
+    // src/lp/LandingPage.tsx and src/shell/MissionShell.tsx the exact same way) sends the parent
+    // back to THIS page after login instead of falling back to /play/ — `window.location.pathname`
+    // is always same-origin/relative by construction, and `resolveNextPath` itself still refuses
+    // anything that isn't (`next.startsWith('/') && !next.startsWith('//')`), so this can never
+    // become an open redirect.
+    const next = `${window.location.pathname}${window.location.search}`;
     return (
       <main className="ad12 course-loading">
         <p className="ad12-ui-text">{courseUi.loginRequired}</p>
-        <a className="ad12-ink-button ad12-tappable" href="/login/">{courseUi.loginCta}</a>
+        <a className="ad12-ink-button ad12-tappable" href={`/login/?next=${encodeURIComponent(next)}`}>{courseUi.loginCta}</a>
       </main>
     );
   }

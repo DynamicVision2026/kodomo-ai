@@ -148,6 +148,16 @@ test.describe('WO-C5 — BEGINNER_LAUNCH off: production behaves exactly as befo
   });
 });
 
+test.describe('WO-C5 follow-up — the login link sends a parent back to /course/beginner/, not always to /play/', () => {
+  test('a not-yet-logged-in visitor\'s login link carries ?next= back to this exact page', async ({ page }) => {
+    await page.route('**/api/v1/me', (route) => route.fulfill({ status: 401, json: { error: 'unauthorized' } }));
+    await page.goto('/course/beginner/');
+    await expect(page.getByText('ログインが 必要です。')).toBeVisible();
+    const loginLink = page.getByRole('link', { name: 'ログインする' });
+    await expect(loginLink).toHaveAttribute('href', `/login/?next=${encodeURIComponent('/course/beginner/')}`);
+  });
+});
+
 test('WO-C5 — the final page appears only once all 7 lessons are at 100%, and plays through to the certificate', async ({ page }) => {
   await mockBeginnerBackend(page, { courseAllowed: true, licensed: true, progress: allDoneBeginnerProgress() });
   await page.goto('/course/beginner/');
