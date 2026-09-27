@@ -408,9 +408,16 @@ function synthesizeSilence(path: string, seconds: number): void {
   if (res.status !== 0) throw new Error(`ffmpeg silence generation failed for ${path}: ${res.stderr?.toString()}`);
 }
 
+/** The concat-demuxer's own file list is always written under the gitignored STAGING_DIR, never
+ *  next to `outPath` — `outPath` can be a real, committed `public/` path (a joined master or the
+ *  fix-check reel), and a `<file>.concat.txt` sibling there would get committed right along with
+ *  it (caught on this pipeline's own first `public/`-writing run: 8 stray `*_listen.mp3.concat.txt`
+ *  files landed in `public/audio/course/` alongside the real masters — fixed here, not worked
+ *  around at the call site, since every join goes through this one function). */
 function concatFiles(paths: string[], outPath: string): void {
   mkdirSync(resolve(outPath, '..'), { recursive: true });
-  const listPath = `${outPath}.concat.txt`;
+  mkdirSync(STAGING_DIR, { recursive: true });
+  const listPath = resolve(STAGING_DIR, `_concat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.txt`);
   writeFileSync(listPath, paths.map((p) => `file '${p.replace(/'/g, "'\\''")}'`).join('\n') + '\n');
   const res = spawnSync('ffmpeg', ['-y', '-f', 'concat', '-safe', '0', '-i', listPath, '-c:a', 'libmp3lame', '-q:a', '2', outPath]);
   if (res.status !== 0) throw new Error(`ffmpeg concat failed for ${outPath}: ${res.stderr?.toString()}`);
