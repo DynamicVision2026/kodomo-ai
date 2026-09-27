@@ -1,0 +1,126 @@
+name: WO-C4 beginner course audio (manual, never touches production)
+
+# Founder decision (27 Sep 2026): a manual, separate workflow — never wired to `push`/`pull_request`
+# — for generating the beginner course's (b01–b07 + ending) voiced audio from
+# content/course/beginner/beginner.audio-sheet.csv. Voices are already Founder-approved (identical
+# table to Lesson 1's own voice-samples.yml run), so there is no samples-approval gate here — only
+# `check` (free access/enablement check) and `full` (the real generation run).
+#
+# Nothing here ever reaches production: every generated audio file lives under a brand-new
+# top-level audio/ directory (never public/, never src/ — see scripts/audio/generate-beginner-audio.ts's
+# own file header), which is neither bundled by Vite nor scanned by any content/release gate. The
+# beginner lessons have no lesson.json yet and are not wired into CourseApp.tsx — that is
+# explicitly separate, later work. c01–c06 content and audio, the production content gate, and
+# ci.yml's own deploy jobs are never read or written by this workflow.
+#
+# `full` mode commits ONLY content/course/beginner/beginner.timings.json back to this run's own
+# dispatch branch (never main) — no audio file is ever committed; the 749 per-line clips and 8
+# joined masters are pure intermediate/staging output. The 7 review reels (`bNN_review.mp3` +
+# `bNN_review.csv`) plus `b_ending.mp3` are uploaded as a single workflow artifact named
+# `beginner-audio-review` for the Founder to listen to and check.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'What to run'
+        required: true
+        type: choice
+        options:
+          - check
+          - full
+        default: check
+
+permissions:
+  contents: write   # 'full' mode commits beginner.timings.json back to the dispatch branch
+  id-token: write   # Workload Identity Federation — no long-lived key ever touches this repo
+
+jobs:
+  beginner-audio:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: kodomo-ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+
+      - id: auth
+        name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      # Same REST-transport convention as voice-samples.yml (Founder decision, 26 Sep 2026) — one
+      # masked bearer token authenticates every REST call generate-beginner-audio.ts makes below.
+      - name: Mint a REST access token
+        id: token
+        run: |
+          TOKEN=$(gcloud auth print-access-token)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Check Text-to-Speech access + API enablement
+        env:
+          GCP_ACCESS_TOKEN: ${{ steps.token.outputs.token }}
+        run: npx tsx scripts/audio/generate-beginner-audio.ts --check
+
+      - name: Validate the sheet (dry run — no token/ffmpeg needed)
+        run: npx tsx scripts/audio/generate-beginner-audio.ts --dry-run
+
+      - name: Install ffmpeg
+        if: ${{ inputs.mode == 'full' }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg
+
+      # Generates the 749 clips + 8 joined masters under audio/course/ (never public/ or src/),
+      # writes content/course/beginner/beginner.timings.json, and builds the 7 review reels + CSVs
+      # under audio/course/_review/.
+      - name: Generate all beginner-course audio
+        if: ${{ inputs.mode == 'full' }}
+        env:
+          GCP_ACCESS_TOKEN: ${{ steps.token.outputs.token }}
+        run: npx tsx scripts/audio/generate-beginner-audio.ts --full
+
+      # Self-check before trusting the run: only beginner.timings.json may have changed — never
+      # c01–c06's own content or audio, never the content gate, never anything under public/ or
+      # src/. Mirrors voice-samples.yml's own "confirm nothing unexpected changed" discipline.
+      - name: Confirm only beginner.timings.json changed
+        if: ${{ inputs.mode == 'full' }}
+        run: |
+          CHANGED=$(git status --porcelain -- . ':!content/course/beginner/beginner.timings.json')
+          if [ -n "$CHANGED" ]; then
+            echo "::error::Unexpected changes outside beginner.timings.json:"
+            echo "$CHANGED"
+            exit 1
+          fi
+          echo "OK: only content/course/beginner/beginner.timings.json changed."
+
+      - name: Commit beginner.timings.json
+        if: ${{ inputs.mode == 'full' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add content/course/beginner/beginner.timings.json
+          git commit -m "WO-C4: generate beginner course (b01-b07 + ending) audio, write timings.json" \
+            -m "Real TTS generation, Founder-approved voice table (identical to Lesson 1). Audio files are never committed (see .gitignore) — only this timing metadata. Nothing reaches production; beginner lessons are not wired into the app."
+          git push origin "HEAD:${{ github.ref_name }}"
+
+      - name: Upload the beginner-audio-review artifact
+        if: ${{ inputs.mode == 'full' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: beginner-audio-review
+          path: |
+            audio/course/_review/*_review.mp3
+            audio/course/_review/*_review.csv
+            audio/course/beginner/b_ending.mp3
+          retention-days: 30

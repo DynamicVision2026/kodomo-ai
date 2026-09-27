@@ -16,3 +16,9 @@ test-results
 playwright-report
 blob-report
 playwright/.cache
+
+# WO-C4: generated beginner-course audio staging/output — never committed (see
+# scripts/audio/generate-beginner-audio.ts and .github/workflows/beginner-audio.yml, which upload
+# the review reels as a workflow artifact instead). content/course/beginner/*.csv and *.json are
+# tracked normally; this only ignores the top-level audio/ tree.
+/audio/
