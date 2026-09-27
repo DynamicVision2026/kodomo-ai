@@ -1,7 +1,24 @@
-# RS-01 — Signal Diagnosis Validation, Trial Scene 1: 赤信号
+# RS-01 — Signal Diagnosis Validation, Trial Scene 1: 赤信号 (Full Audit Report)
 
 ナゼホリ（仮）· 27 Sep 2026 · Research record. Not a curriculum change.
 Scope: one scene only. Tests whether **Question → Answer → Signal → Diagnosis → Tool → Next Question** reliably produces a natural next question. Does not design Lessons 4–6 and does not generalise beyond this scene.
+
+## How to read this report
+
+The report has two parts.
+
+| Part | Label | Content |
+|---|---|---|
+| **Part I** | **ORIGINAL TRIAL RECORD** | The trial exactly as first run and committed (commit `b1429d4`). **Kept word for word.** Nothing in Part I has been edited, reordered or cleaned up. |
+| **Part II** | **RETROSPECTIVE ANALYSIS** | Added afterwards, in response to the supplement request. Fills in the fields the original run did not record: answer depth, question origin, per-tool fit scores, criterion-level candidate scoring, two-level confidence, the special review of Q3, the formal Depth Check after A3, and the test of Q4. Where Part II disagrees with Part I, **both are shown** and the change is logged in §II.11. |
+
+When a judgment in Part II repeats something Part I actually recorded, it is tagged **[ORIGINAL]**. Everything else in Part II is **RETROSPECTIVE ANALYSIS**, including every score the original run did not give, every candidate question it did not list, and every tool-fit rating it did not give.
+
+---
+
+# PART I — ORIGINAL TRIAL RECORD
+
+*(Kept word for word from commit `b1429d4`.)*
 
 ---
 
@@ -377,3 +394,541 @@ Optional on-ramp for younger children (between Q1 and Q2): 「こっちが赤の
 - **Weak: Diagnose → one Tool.** For the best question in the scene, the tool choice was ambiguous (C/D/E) and added nothing the diagnosis had not already given. For F, the tool attracted false positives more often than it produced a question. The tool templates sometimes produced wording less natural than the child's own.
 
 - **Net:** in this scene the value lies in the **diagnostic test** (make the answer do work and see where it breaks), not in **choosing one of six labels**. B and STOP fit cleanly. C/D/E overlap on the counterfactual question. F and A are more often false signals than real ones here. One scene cannot say whether this pattern holds elsewhere. The findings above are hypotheses for the next trial scenes, not conclusions about the course.
+
+
+---
+---
+
+# PART II — RETROSPECTIVE ANALYSIS
+
+Everything below was written **after** the original run, and all of it is **RETROSPECTIVE ANALYSIS** unless tagged **[ORIGINAL]**. The accepted chain Q1–A3 and the original STOP decision are the evidence base. They are examined here, not replaced.
+
+## II.0 Evidence inventory: what the original run did and did not record
+
+| Item the supplement asks for | Recorded in Part I? | Where it is now |
+|---|---|---|
+| Exact questions and answers Q1–A3 | **Yes** | Part I §1, §A |
+| What was noticed, surface cue, underlying signal, diagnosis, root of question | **Yes**, per step | Part I §1. Restated with [ORIGINAL] tags in §II.2–II.5 |
+| Candidate tools considered | **Yes**, as a list with prose | Part I §1 |
+| Fit rating for **each** tool (HIGH/MEDIUM/LOW) | **No** | §II.2–II.5 (retrospective) |
+| Candidate next questions | **Yes**, with verdicts | Part I §1 tables |
+| Criterion-level scoring of candidates (7 columns) | **No** | §II.2–II.5 (retrospective) |
+| Candidates not listed originally | — | Marked **[RETRO-ADDED]** |
+| Answer depth (RULE / IMMEDIATE REASON / MECHANISM / CONSEQUENCE / ROOT PURPOSE) | **No** | §II.2–II.5 (retrospective) |
+| Question origin (answer-internal / depth / boundary / perspective / purpose / new topic) | **No** | §II.2–II.5 (retrospective) |
+| Question-quality vs tool-label confidence split | **Partly.** Only STEP 1 had "MEDIUM (question HIGH, label ambiguous)". STEP 2 had one merged "HIGH". STEP 3 had one "HIGH" for the STOP decision. | §II.2–II.5 (retrospective) |
+| Depth Check after A3 | **No.** Only the STOP test (「自分のことばでこたえられる？」) was applied. | §II.5 (retrospective) |
+| Q4 Purpose Probe | **No** | §II.5 (retrospective) |
+| Purpose Probe as a category | **No** | §II.6 (retrospective) |
+
+**Process caveat [RETRO].** Part I shows candidate questions and diagnosis side by side. The record **cannot show** whether the diagnosis came first and generated the questions, or whether the questions came first and the diagnosis evaluated them. §II.12 Q2 takes this into account.
+
+## II.1 Scales used in Part II
+
+**Answer depth**
+
+| Level | Meaning in this scene |
+|---|---|
+| RULE | "Red means stop"; "it's the rule" |
+| IMMEDIATE REASON | The direct, visible reason: a car might hit you |
+| MECHANISM | How stopping actually produces safety: judgment is fallible, others act on expectations |
+| CONSEQUENCE | What happens if you don't stop: collision, injury, surprise |
+| ROOT PURPOSE | What the whole practice is ultimately for: protecting oneself and others from harm |
+
+**Question origin.** These are written out as names on purpose, because their letters would clash with the tool letters A–F.
+
+| Origin | Meaning |
+|---|---|
+| Answer-internal | Something inside the answer is unclear or incomplete |
+| Depth | The answer is correct but stays at a shallower level |
+| Boundary | Tests the explanation on a nearby case |
+| Perspective | Examines another affected person's position |
+| Purpose | Asks what the rule or action is ultimately for |
+| New-topic | Interesting, but opens a different inquiry |
+
+---
+
+## II.2 TRANSITION 1: A1 → Q2
+
+### Previous answer
+> 「赤は『止まれ』っていう合図なの。赤のときにわたると、車が来て、ぶつかるかもしれないでしょ。あぶないからだよ。」
+
+### Answer depth [RETRO]
+**RULE + IMMEDIATE REASON + CONSEQUENCE (for oneself).**
+- RULE: 「赤は『止まれ』っていう合図」.
+- IMMEDIATE REASON: 「車が来て」.
+- CONSEQUENCE: 「ぶつかる」「あぶない」. This is harm to **oneself** only.
+- It is not MECHANISM: it does not say *why* cars come when your light is red.
+- It is not ROOT PURPOSE: protection of oneself is implied, but only in the case where a car is visible, and other people do not appear at all.
+
+### What was noticed? [ORIGINAL]
+The answer stacks a rule on top of a danger reason. The danger reason depends on an unsaid link, "when my light is red, cars come". The reason is conditional (「かもしれない」), while the rule is unconditional.
+
+### Surface cue [ORIGINAL]
+「あぶない」「から」「かもしれない」
+
+### Underlying signal [ORIGINAL, restated]
+The reason explains the dangerous case (a car is coming). It does not yet explain why the rule still applies when no car is in sight.
+
+### Question origin [RETRO]
+**Boundary** (primary): the child tests the explanation on the nearby case of an empty crossing. **Answer-internal** (secondary): the reason given covers fewer cases than the rule it is supposed to justify.
+
+### Diagnosis [ORIGINAL]
+The reason covers fewer cases than the rule. The explanation rests on an unstated condition, "a car is coming", which the child has real, experience-based reasons to doubt.
+
+### Root of the child's question [RETRO wording of ORIGINAL content]
+> 「あぶないのが見えないときも、ほんとうに止まらなきゃいけないの？」
+> *Is red about danger, or is it about something else?*
+
+### Tool audit
+
+| Tool | Fit | Why |
+|---|---|---|
+| A: Lid | **LOW** | 「あぶない」 is a cue, but the same sentence already says what it means (車が来て、ぶつかる). No snag. [ORIGINAL rejection; RETRO rating] |
+| B: Dominoes | **MEDIUM** | 「赤 → ？ → 車が来る」: the middle (the cars have green, it is their turn) is a real gap for younger children and a non-gap for older ones. The natural wording is a fact question, not a 「なんで」. [ORIGINAL as branch 2b; RETRO rating] |
+| C: Hidden condition | **HIGH** | A1 contains a prediction (「わたると、ぶつかるかもしれない」) that holds only if a car is coming. Both C conditions are met: without the condition the reason fails, and there is real doubt (empty roads). C's template 「もし〇〇じゃなかったら？」 gives Q2 almost word for word. [ORIGINAL selection; RETRO rating] |
+| D: Umbrella | **MEDIUM** | The D test (「はみだすもの？」) immediately finds "red, but no car". But A1 makes no explicit broad claim, so the generalisation 「赤のときは車が来る」 is only implicit and D's cue list would miss it. [ORIGINAL said "equally defensible" with C; **RETRO downgrades D slightly**, see §II.11] |
+| E: Eraser | **LOW** | E's move (toggle one factor: the car) is visible in Q2, but E's trigger (a comparison with several differences) is missing from A1. [ORIGINAL observation; RETRO rating] |
+| F: Seesaw | **LOW** | Nobody else's position appears in A1, and the child has not wondered about drivers. [ORIGINAL rejection; RETRO rating] |
+| NONE / STOP | **MEDIUM** | A1 is true and good enough for everyday behaviour. Many children would stop here, and that would be a valid outcome. [ORIGINAL; RETRO rating] |
+
+**Selected tool:** **C**. [ORIGINAL: "C, with D equally defensible"]
+**Tool-label confidence:** **MEDIUM**. C fits best on the definitions, but the same question also comes out of D's test and matches E's move. A learner could reach Q2 through any of the three.
+
+### Candidate questions
+
+| # | Candidate question | Nat. | Cont. | Depth | Tool fit | Age | Curr. value | Overall |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 「じゃあ、車が来てないときは、わたってもいいの？」 [ORIGINAL] | HIGH | HIGH | MEDIUM | MEDIUM | HIGH | HIGH | **HIGH** |
+| 2 | 「こっちが赤のとき、車の信号は何色なの？」 [ORIGINAL] | MEDIUM | HIGH | MEDIUM | MEDIUM | HIGH | MEDIUM | **MEDIUM** |
+| 3 | 「赤だと、なんで車が来るの？」 [ORIGINAL] | LOW | HIGH | MEDIUM | HIGH | MEDIUM | LOW | **LOW** |
+| 4 | 「あぶないって、どういうこと？」 [ORIGINAL] | LOW | MEDIUM | LOW | LOW | HIGH | MEDIUM (as a counter-example) | **LOW** |
+| 5 | 「運転してる人から見たら、どう？」 [ORIGINAL] | LOW | MEDIUM | MEDIUM | LOW | MEDIUM | LOW | **LOW** |
+| 6 | 「救急車は、赤でも行くよね？」 [RETRO-ADDED; Part I mentioned it only as a probe] | MEDIUM | MEDIUM | MEDIUM | LOW | HIGH | MEDIUM | **LOW** (here) |
+| 7 | これでOK (STOP) [ORIGINAL] | — | — | — | — | — | MEDIUM | **MEDIUM** |
+
+1. **Selected.** It is what children really say at empty crossings, and it forces the explanation to separate *danger* from *rule*. Depth is rated only MEDIUM because the question frames the problem sharply but does not itself push the answer to a deeper level (see A2).
+2. Kept as optional branch 2b. It is a real gap for younger children only, and it is a plain fact question.
+3. The same diagnosis as #2, but the B-template wording is unnatural for a child. Rejected in favour of #2.
+4. A cue with no snag. This is the scene's clearest negative example.
+5. Unprompted. A curriculum designer's question, not a child's.
+6. A genuine exception to "everyone stops at red", but A1 never said 「みんな」, so the question has no hook in *this* answer. It would be a candidate only if the adult said 「みんな止まるの」.
+7. Valid for some children. Not selected, because a stronger question clearly exists.
+
+### Two-level confidence for Q2 [RETRO]
+
+| Criterion | Score |
+|---|---|
+| Naturalness | HIGH |
+| Logical continuity | HIGH |
+| Depth progress | MEDIUM |
+| Diagnostic validity | HIGH |
+| Age clarity | HIGH |
+| Curriculum value | HIGH |
+| **Overall question confidence** | **HIGH** |
+| **Tool-label confidence (C)** | **MEDIUM** |
+
+[ORIGINAL: "MEDIUM (question itself would rate HIGH)". The retrospective split agrees with it.]
+
+---
+
+## II.3 TRANSITION 2: A2 → Q3
+
+### Previous answer
+> 「それでも止まるんだよ。来てないように見えても、急に車が出てくることがあるからね。それに、赤で止まるのは、きまりだから。」
+
+### Answer depth [RETRO]
+**IMMEDIATE REASON (widened) + RULE.**
+- 「急に車が出てくることがある」 widens the immediate reason to hidden danger. It is still the danger story, just extended.
+- 「きまりだから」 is **RULE**, an appeal to the rule itself.
+- An honest observation: in one strand, A2 is **shallower** than A1. It falls back on the rule. This is not a defect planted in the answer; it is how real parents typically answer a boundary challenge. It is also exactly what makes Q3 possible.
+
+### What was noticed? [ORIGINAL]
+Two separate reasons. The second (「きまりだから」) does not depend on danger at all. What the child hears: *you stop even if it is safe, because it is the rule*.
+
+### Surface cue [ORIGINAL]
+「きまりだから」 (also 「急に」「ことがある」)
+
+### Underlying signal [ORIGINAL, restated]
+The answer now says that the rule applies even when danger is absent. But "it's the rule" does not explain why a rule should bind in exactly the cases where its visible reason has gone.
+
+### Question origin [RETRO]
+**Answer-internal** (「きまりだから」 is offered as a reason but does not explain). **Purpose** (the child is really asking what the rule is for). **Boundary** (carried over from Q2: the 「あぶなくないとき」 frame).
+
+### Diagnosis [ORIGINAL, sharpened RETRO]
+Unresolved: **what makes a rule worth keeping when, in this particular moment, its reason seems to be missing?** Part I described this as a missing middle (「きまり → ？ → 車がいなくても止まる」). The retrospective review (§II.4) finds that the missing piece is the **purpose and function of the rule**, not a causal step.
+
+### Root of the child's question
+> 「自分で『だいじょうぶ』って分かるときも、なんで守らなきゃいけないの？」
+> *Why does this rule still matter when I think I can judge the situation myself?*
+
+### Tool audit
+
+| Tool | Fit | Why |
+|---|---|---|
+| A: Lid | **LOW** | 「きまり」 is not vague; its meaning is clear. The nearby question 「だれが決めたの？」 is about the rule's **source**, not its meaning. [ORIGINAL; RETRO rating] |
+| B: Dominoes | **MEDIUM** | The B test runs literally (「きまり → ？ → 車がいなくても止まる」, and the child cannot say the middle), and the natural question is close to B's template. But what fills the gap is the rule's *purpose and function*, not a causal step (§II.4). [ORIGINAL rated the transition HIGH; **RETRO rates B fit MEDIUM**] |
+| C: Hidden condition | **LOW** | 「急に出てくることがある」 carries no hidden condition worth doubting. The condition that *does* matter ("the rule works only if everyone keeps it every time") is not yet stated, so it cannot be probed yet. [RETRO] |
+| D: Umbrella | **MEDIUM fit / LOW value** | 「見通しがいい道でも？」 tests 「急に出てくる」 properly, but it repeats the Q2 pressure and loops. [ORIGINAL rejection as a loop; RETRO rating] |
+| E: Eraser | **LOW** | Comparing "car coming" with "no car" is already settled by A2 itself (the rule is the same either way). Erasing the car tells the child nothing new. [RETRO] |
+| F: Seesaw | **LOW** | 「ぼくがわたったら、だれかこまる？」 would have the child guess the answer (others rely on you) before being told it. It becomes relevant only after A3. [ORIGINAL rejection; RETRO rating] |
+| NONE / STOP | **LOW** | A child who has just asked Q2 is usually not satisfied by 「きまりだから」. [ORIGINAL; RETRO rating] |
+| (no tool) Purpose Probe | **HIGH** | Not one of the six tools. Describes the move better than B does (§II.4, §II.6). [RETRO] |
+
+**Selected tool:** **B**, together with a Purpose Probe. [ORIGINAL: "B"; RETRO: adds the Purpose Probe]
+**Tool-label confidence (B):** **MEDIUM**. [ORIGINAL implied HIGH through the merged transition score]
+
+### Candidate questions
+
+| # | Candidate question | Nat. | Cont. | Depth | Tool fit | Age | Curr. value | Overall |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 「なんで、あぶなくないときも、きまりを守るの？」 [ORIGINAL] | HIGH | HIGH | HIGH | MEDIUM | HIGH | HIGH | **HIGH** |
+| 2 | 「きまりだと、なんで車がいなくても止まるの？」 [ORIGINAL] | MEDIUM | HIGH | HIGH | MEDIUM | MEDIUM | MEDIUM | **MEDIUM** |
+| 3 | 「きまりって、だれが決めたの？」 [ORIGINAL] | HIGH | MEDIUM | LOW | LOW (none fits) | HIGH | MEDIUM (as a "new inquiry" example) | **LOW** for this chain |
+| 4 | 「見通しがいい道でも、急に来るの？」 [ORIGINAL] | MEDIUM | HIGH | LOW | MEDIUM | HIGH | LOW | **LOW** |
+| 5 | 「ぼくがわたったら、だれかこまるの？」 [ORIGINAL] | LOW | MEDIUM | MEDIUM | LOW | HIGH | MEDIUM | **LOW** |
+| 6 | 「じゃあ、だれも見てなかったら、わたってもいい？」 [RETRO-ADDED] | HIGH | MEDIUM | LOW | MEDIUM (C/D) | HIGH | MEDIUM (as a warning) | **LOW** |
+| 7 | 「きまりをやぶったら、どうなるの？」 [RETRO-ADDED] | HIGH | MEDIUM | LOW | LOW | HIGH | LOW | **LOW** |
+
+1. **Selected.** Natural, clear to an 8-year-old, and aimed squarely at the gap between the rule and its reason.
+2. The same move in stiffer, template-shaped wording.
+3. A natural question, but it opens a new inquiry into law and authority, and the answer ("the country decided") does not explain *why stop*.
+4. Loops on the Q2 pressure without adding information.
+5. Premature. See the tool audit.
+6. **[RETRO-ADDED]** Realistic, since children do ask this. But it steers the conversation toward *being caught*, which makes the rule about punishment rather than purpose. A useful warning example of a natural question that pulls *away* from the root.
+7. **[RETRO-ADDED]** Moves to penalties: a consequence-for-me frame, not a purpose frame. Same risk as #6.
+
+### Two-level confidence for Q3 [RETRO]
+See §II.4.
+
+---
+
+## II.4 Special review of Q3
+
+> 「なんで、あぶなくないときも、きまりを守るの？」
+> Part I: **Tool B · HIGH**
+
+**Test: is Q3 really filling a missing causal middle?**
+
+B is defined as: *the answer gives a reason, but the child cannot explain how that reason actually leads to the result* (〇〇 → ？ → △△).
+
+1. **What does the literal B test give?** 「きまり → ？ → 車がいなくても止まる」. The child cannot fill the middle, so the B test "fires". That much of Part I stands.
+2. **But is the link causal?** No. A rule does not *cause* stopping the way warmth causes ice to melt. The link between 「きまり」 and 「止まる」 is **normative**: it is about justification, not physical cause.
+3. **What does A3 actually put in the "middle"?**
+   - 「自分で『今はだいじょうぶ』って決めると、見まちがえることがある」. This is causal-ish: it links "safe-looking" to "maybe not safe". It is the closest thing to a B-type middle.
+   - 「運転してる人は『赤なら、人は止まってる』と思って走ってる」. This is a **mechanism of coordination**: others act on the assumption that you will stop.
+   - 「みんなが同じきまりを守るから、安心して道を使える」. This is the rule's **function**, one step short of its purpose.
+   So one of the three pieces is B-shaped. The other two answer "what is the rule for, and how does it work?"
+4. **What is the child actually doing?** Moving from a **rule** to the **purpose behind the rule**, in a case where the rule's visible reason is missing. That is a purpose probe inside a boundary frame.
+
+**Classification options**
+
+| Option | Assessment |
+|---|---|
+| B alone | Defensible on the literal test and the template. It misdescribes the intellectual move: the child is not asking for a causal link. |
+| **B + Purpose Probe** | **Best fit.** B's test finds *where* the gap is (after 「きまりだから」). The Purpose Probe describes *what kind* of gap it is. |
+| NONE + Purpose Probe | Also defensible. It would be the preferred reading if B were defined strictly as physical or causal mechanism. The current B definition ("how that reason leads to the result") is loose enough to cover it. |
+| Other (C, F) | No. See the tool audit in §II.3. |
+
+**Result (independent of the supplement's hypothesis).** The concern is **partly** borne out. B is not wrong. It is not HIGH either, because the missing "middle" is the rule's purpose and function, not a causal step. This finding was not reached just to satisfy the question; it rests on the fact that two of the three pieces A3 supplies are not causal.
+
+| | Score |
+|---|---|
+| Naturalness | HIGH |
+| Logical continuity | HIGH |
+| Depth progress | HIGH (RULE → MECHANISM + partial PURPOSE) |
+| Diagnostic validity | HIGH (the gap after 「きまりだから」 is real) |
+| Age clarity | HIGH |
+| Curriculum value | HIGH as a chain step |
+| **Q3 question-quality confidence** | **HIGH** |
+| **Q3 Tool-B confidence** | **MEDIUM** |
+
+**Consequence for Part I.** Part I's "Tool B · HIGH" merged these two judgments into one. Part I also called A2 → Q3 "GREEN" and said "This may be B's strongest home" (Part I §E.1). The retrospective view is that it is GREEN **as a question-chain example** but only **YELLOW as a Tool B exemplar**, and that §E.1 overstated B's case. Logged in §II.11.
+
+---
+
+## II.5 TRANSITION 3: A3 → STOP or Q4
+
+### Previous answer
+> 「自分で『今はだいじょうぶ』って決めると、見まちがえることがあるでしょ。それに、運転してる人は『赤なら、人は止まってる』と思って走ってるんだよ。みんなが同じきまりを守るから、安心して道を使えるの。」
+
+### Answer depth [RETRO]
+**MECHANISM (primary) + partial ROOT PURPOSE.**
+- MECHANISM: individual judgment can be wrong, and drivers act on the expectation that pedestrians will stop.
+- Partial ROOT PURPOSE: 「安心して道を使える」 names the rule's **function** (predictability and trust). It does not name what that function protects (no one gets hurt).
+- CONSEQUENCE is not stated here. It was stated back in A1 (「ぶつかる」), and only for oneself.
+
+### What was noticed? [ORIGINAL]
+The answer fills in the gap with (1) your own judgment can be wrong, and (2) others rely on you. It brings in the driver's seat without being asked.
+
+### Surface cue [ORIGINAL + RETRO]
+[ORIGINAL] 「みんな」「運転してる人は…と思って」「見まちがえる」. [RETRO-ADDED] 「安心」.
+
+### Underlying signal
+[ORIGINAL] No remaining snag on the original question.
+[RETRO] A **depth gap** remains where there is no snag. The chain has explained how the rule works (shared predictability) but has not said what it is ultimately for (no one gets hurt, including other people). This is not something in A3 "breaking"; it is A3 stopping one level short.
+
+### Question origin [RETRO]
+For any Q4: **Purpose** (synthesis). Not answer-internal.
+
+### Diagnosis
+[ORIGINAL] "No remaining snag that bears on the original question."
+[RETRO] That is correct as far as snags go. But the root purpose is not yet **explicit**. Protection of oneself appeared in A1; other people appeared in A3, but only as *actors who rely on you*, never as *people who could be hurt*. 「安心」 sits one level below "no one gets hurt".
+
+### Root of the child's question (if a Q4 is asked)
+> 「けっきょく、赤で止まるのは、何を守るため？」
+
+### Formal Depth Check [RETRO]
+
+**1. What level has A3 reached?**
+MECHANISM, plus the rule's function (安心 / predictability). **Not** an explicit ROOT PURPOSE.
+
+**2. Can the child now answer 「なんで、赤信号では止まるの？」 in their own words?**
+Yes, at the mechanism level. A likely restatement:
+> 「車が見えなくても、自分の目はまちがえるかもしれないし、車の人は止まってるって思ってるから。」
+
+This passes Part I's STOP test ("can you say it yourself, including the case that bothered you?"). But notice what the likely restatement **leaves out**: *why* that matters, meaning somebody could get hurt. The child's version gets the mechanism and drops the purpose.
+
+**3. Has the answer explicitly reached the root purpose (protecting oneself and others from harm)?**
+**No. It stops one step earlier**, at shared rules making road use predictable (安心).
+- **Oneself:** explicit in A1 (「ぶつかるかもしれない」), but only in the visible-car case.
+- **Others:** present in A3 as people who *rely* on you; never as people who could be *harmed* (a driver who swerves, other pedestrians, cyclists, a child who copies you).
+- **安心 vs. "no one gets hurt":** closely related but **not identical**. 安心 is the *means-level function* (everyone can predict everyone). Harm prevention is the *end* that predictability serves. An adult closes this gap without noticing; an 8-year-old may not.
+
+**Depth Check verdict [RETRO].** The original STOP was **correct in its own terms**: there was no remaining snag. It was **premature as a depth judgment**: the root purpose was implied across A1 + A3 but never said.
+
+### Tool audit
+
+| Tool | Fit | Why |
+|---|---|---|
+| A: Lid | **LOW** | On 「見まちがえる」 → 「たとえば？」: drifts into safety tips [ORIGINAL]. On 「安心」 → 「安心って、どういうこと？」: formally A, and its answer *would* reach the root. But an 8-year-old can picture 安心, so there is no felt snag [RETRO]. |
+| B: Dominoes | **MEDIUM** (for young children) | 「と思って走ってる → ？ → あぶない」: the missing middle is "so they don't slow down and can't stop in time". This is the same content as branch 3-F. [ORIGINAL; RETRO rating] |
+| C: Hidden condition | **MEDIUM fit / LOW value** | 「みんなが同じきまりを守るから、安心」 depends on the unstated condition that everyone really does keep it, and children see adults crossing on red, so there is real doubt. 「守らない人がいたら？」 is natural, but it shifts from *why I stop* to *what about people who don't*. [RETRO: Part I treated this as D (R7); the C reading is stronger than the D reading, but it is still a branch away from the root] |
+| D: Umbrella | **LOW** | 「みんな」 here states a condition for the system to work, not an empirical claim. A false signal. [ORIGINAL; RETRO rating] |
+| E: Eraser | **LOW** | No comparison in A3. [RETRO] |
+| F: Seesaw | **LOW** | The parent has already given the driver's seat, so F has nothing left to do (branch 3-F). [ORIGINAL; RETRO rating] |
+| NONE / STOP | **MEDIUM** | No snag remains [ORIGINAL]. But the Depth Check shows the purpose is not explicit [RETRO]. |
+| (no tool) Purpose Probe / synthesis | **MEDIUM–HIGH** | The only move that reaches the root explicitly. Its naturalness depends heavily on wording (below). [RETRO] |
+
+**Selected tool:** **NONE.** [ORIGINAL: NONE → これでOK. RETRO: NONE among the six tools; an optional Purpose-Probe synthesis, see the Q4 test]
+**Tool-label confidence:** **HIGH** that none of A–F is the right move here.
+
+### Candidate questions
+
+| # | Candidate question | Nat. | Cont. | Depth | Tool fit | Age | Curr. value | Overall |
+|---|---|---|---|---|---|---|---|---|
+| 1 | これでOK (STOP) [ORIGINAL] | — | — | none | — | — | HIGH (as a STOP example) | **MEDIUM** [RETRO; ORIGINAL rated it HIGH] |
+| 2 | 「じゃあ、信号を守るのは、何のため？」 (the supplement's Q4) [RETRO] | LOW | MEDIUM | MEDIUM | NONE (purpose) | HIGH | MEDIUM | **MEDIUM** |
+| 3 | 「じゃあ、赤で止まるのは、自分も、車の人も、けがをしないためってこと？」 (revised Q4) [RETRO] | MEDIUM | HIGH | MEDIUM | NONE (purpose / check-back) | HIGH | HIGH | **MEDIUM–HIGH** |
+| 4 | 「安心って、どういうこと？」 [RETRO-ADDED] | LOW | HIGH | MEDIUM | MEDIUM (A) | HIGH | LOW | **LOW** |
+| 5 | 「でも、守らない人もいるよね？」 / 「守らない人がいたら、どうなるの？」 [ORIGINAL as D; RETRO re-read as C] | HIGH | MEDIUM | MEDIUM | MEDIUM (C) / LOW (D) | HIGH | MEDIUM | **MEDIUM** (C reading) |
+| 6 | 「運転してる人から見たら、赤なのに人が出てきたら、どうなるの？」 [ORIGINAL, branch 3-F] | MEDIUM | HIGH | LOW | LOW (F) | HIGH | LOW | **LOW** |
+| 7 | 「見まちがえるって、たとえばどんなとき？」 [ORIGINAL] | MEDIUM | MEDIUM | LOW | LOW (A) | HIGH | LOW | **LOW** |
+
+### Test of the supplement's Q4 [RETRO]
+
+> **Q4 (as proposed):** 「じゃあ、信号を守るのは、何のため？」
+> **Possible A4:** 「自分も、ほかの人も、けがをしないように守るためだよ。」
+
+| Criterion | Score | Reason |
+|---|---|---|
+| Naturalness | **LOW** | The adult has just spent three turns explaining; a child rarely follows up with "so what is it for?". This is the question a *teacher* asks to wrap up a lesson. |
+| Logical continuity | **MEDIUM** | It does not grow out of a snag in A3. It also quietly widens the scope from 「赤で止まる」 to 「信号を守る」 in general. |
+| Depth progress | **MEDIUM** | It makes the purpose explicit. The likely A4 is close to a stock phrase and adds little that is new. |
+| Diagnostic validity | **LOW–MEDIUM** | Nothing in A3 is *broken*. The gap is a depth gap (found by the Depth Check), not a snag. |
+| Tool fit | **NONE** | None of A–F. A pure Purpose Probe. |
+| Age clarity | **HIGH** | Words simple enough for an 8-year-old. |
+| Curriculum value | **MEDIUM** | It models the move to purpose, but in a teacher's voice. |
+
+**Decision: Option 3, REVISE Q4.**
+
+- **Why not Option 1 (keep STOP unchanged):** the Depth Check shows the chain never *says* the root purpose, and an 8-year-old's restatement is likely to leave it out. The purpose move does real work.
+- **Why not Option 2 (add Q4 as proposed):** its wording is adult-led and abstract (「何のため」), and it widens the scope to 信号 in general.
+- **Revised Q4:** a **check-back**, where the child tries out their own summary and asks for confirmation. Children naturally make 「〜ってこと？」 moves.
+
+> **Q4 (revised):** 「じゃあ、赤で止まるのは、自分も、車の人も、けがをしないためってこと？」
+> **A4 (realistic):** 「そう。ぶつかったら、きみがけがをするし、よけようとした車の人や、まわりの人がけがをすることもある。だから、車が見えなくても、みんな止まるんだよ。」
+> **→ これでOK**
+
+Scoring of the revised Q4 [RETRO]:
+
+| Criterion | Score |
+|---|---|
+| Naturalness | MEDIUM. Plausible for ages 10+; for 8–9, the adult may need to prompt it (「じゃあ、まとめると？」). |
+| Logical continuity | HIGH. It brings together A1 (ぶつかる) and A3 (車の人). |
+| Depth progress | MEDIUM. MECHANISM → explicit ROOT PURPOSE. |
+| Diagnostic validity | MEDIUM. Found by the Depth Check, not by a snag. |
+| Age clarity | HIGH. |
+| Curriculum value | HIGH as a model of synthesis and of stopping well. |
+| **Overall question confidence** | **MEDIUM** |
+| **Tool-label confidence** | **HIGH** that it is NONE of A–F |
+
+**Status in the chain.** Q4 (revised) is recorded as an **optional synthesis step after the snag-driven chain has ended**. It is not a fourth diagnostic transition. The original STOP decision is kept in Part I and stays the end of snag-driven questioning.
+
+---
+
+## II.6 Purpose Probe: current hypothesis [RETRO]
+
+No seventh tool is proposed. Evidence from this scene only:
+
+| Option | Assessment |
+|---|---|
+| Already covered by Tool B? | **Partly.** B's test *locates* the gap after 「きまりだから」 (Q3). But B frames the gap as a causal middle, which misdescribes a purpose gap. B cannot produce Q4 at all, because A3 has no snag. |
+| A meta-level depth move above the six tools? | **Current hypothesis: yes.** The six tools find *snags inside an answer*. The Purpose Probe is a **direction of deepening**, and it applies even when nothing in the answer is broken. It pairs naturally with the STOP test: "no snag remains" (STOP test) vs. "has the root been reached?" (Depth Check). |
+| Just ordinary 「なんで」? | **On the surface, yes.** Q3 is a plain 「なんで」. Japanese 「なんで」 covers both *cause* (why did the ice melt) and *purpose* (why do we keep this rule). The difference is what the なんで aims at, not its wording. That ambiguity is itself a finding: children may not know which of the two they are asking. |
+| Not distinct enough to matter? | **No.** It mattered twice in this scene: it best describes Q3, and it is the only move that reaches the root (Q4). |
+
+**Hypothesis to test in later scenes (not a framework change):** the Purpose Probe behaves like a depth check that sits *above* the tools, and matters most in "why is this rule so" scenes. It may matter little in scenes about natural mechanisms (for example, ice melting), where B's causal middle is the real target.
+
+---
+
+## II.7 Question-generation ladder
+
+```
+Q1  「なんで、赤信号では止まるの？」
+ ↓
+A1  「赤は『止まれ』っていう合図なの。赤のときにわたると、車が来て、ぶつかるかもしれないでしょ。あぶないからだよ。」
+    depth: RULE + IMMEDIATE REASON + CONSEQUENCE (self)
+ ↓
+Signal     The reason covers the dangerous case, not the no-car case
+ ↓
+Diagnosis  Hidden condition "a car is coming"; empty crossings are real counterexamples
+ ↓
+Tools      C HIGH · D MEDIUM · B MEDIUM · E LOW · A LOW · F LOW · STOP MEDIUM
+ ↓
+Candidates 車が来てないときは？(H) · 車の信号は何色？(M) · 赤だと、なんで車が来る？(L)
+           あぶないって、どういうこと？(L) · 運転手から見たら？(L) · 救急車は？(L)
+ ↓
+Q2  「じゃあ、車が来てないときは、わたってもいいの？」
+    question HIGH · tool C, label MEDIUM · origin Boundary + Answer-internal
+ ↓
+A2  「それでも止まるんだよ。来てないように見えても、急に車が出てくることがあるからね。それに、赤で止まるのは、きまりだから。」
+    depth: IMMEDIATE REASON (widened) + RULE   ← falls back on the rule
+ ↓
+Signal     「きまりだから」 is given as a reason, but it does not explain why the rule binds when it looks safe
+ ↓
+Diagnosis  What makes a rule worth keeping when its visible reason is missing (a purpose gap)
+ ↓
+Tools      B MEDIUM · Purpose Probe HIGH · D MEDIUM/low value · F LOW · C LOW · E LOW · A LOW · STOP LOW
+ ↓
+Candidates あぶなくないときも、なんで守る？(H) · きまりだと、なんで…？(M)
+           だれが決めた？(L, new topic) · 見通しがいい道でも？(L, loop)
+           ぼくがわたったら、だれかこまる？(L) · だれも見てなかったら？(L) · やぶったら？(L)
+ ↓
+Q3  「なんで、あぶなくないときも、きまりを守るの？」
+    question HIGH · tool B + Purpose Probe, B label MEDIUM · origin Answer-internal + Purpose + Boundary
+ ↓
+A3  「自分で『今はだいじょうぶ』って決めると、見まちがえることがあるでしょ。それに、運転してる人は『赤なら、人は止まってる』と思って走ってるんだよ。みんなが同じきまりを守るから、安心して道を使えるの。」
+    depth: MECHANISM + rule's function (安心); root purpose not explicit
+ ↓
+Depth Check  No snag remains (original STOP test: pass)
+             Root purpose explicit? No, it stops at 安心 / predictability
+ ↓
+STOP (original) ── kept as the end of snag-driven questioning
+ ↓ (optional synthesis, RETRO)
+Q4r 「じゃあ、赤で止まるのは、自分も、車の人も、けがをしないためってこと？」
+    question MEDIUM · tool NONE (Purpose Probe) · origin Purpose
+ ↓
+A4  「そう。ぶつかったら、きみがけがをするし、よけようとした車の人や、まわりの人がけがをすることもある。だから、車が見えなくても、みんな止まるんだよ。」
+    depth: ROOT PURPOSE (explicit)
+ ↓
+これでOK → Root understanding (§II.8)
+```
+
+---
+
+## II.8 Final root understanding
+
+### Adult formulation
+We stop at red lights to protect ourselves and other people from harm. We stop even when no danger is visible, for two reasons: our own judgment that "it's safe now" can be wrong, and everyone else on the road is acting on the expectation that we will stop. A traffic signal protects people only because everyone keeps it every time. That shared predictability is *how* it protects; preventing harm is *what* it is for.
+
+### Child-facing formulation (age 8+)
+> 「赤で止まるのは、じぶんも、まわりの人も、けがをしないため。
+> 車が見えなくても止まるのは、じぶんの目は、まちがえることがあるし、車の人は『止まってくれる』と思って走っているから。」
+
+---
+
+## II.9 Final curriculum audit table
+
+| Step | Previous answer depth | Signal | Diagnosis | Question origin | Selected tool | Tool confidence | Selected next question | Question confidence | Depth gained | Curriculum status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| A1 → Q2 | RULE + IMMEDIATE REASON + CONSEQUENCE (self) | The reason covers the dangerous case, not the no-car case | Hidden condition "a car is coming" | Boundary + Answer-internal | C (D, E also reach it) | MEDIUM | 「じゃあ、車が来てないときは、わたってもいいの？」 | HIGH | **Framing, not level.** Separates danger from rule; A2 does not rise a level. | **YELLOW.** GREEN as a question; YELLOW as a tool exemplar because of the C/D/E overlap. |
+| A2 → Q3 | IMMEDIATE REASON (widened) + RULE | 「きまりだから」 does not explain the safe case | What the rule is for when its visible reason is absent | Answer-internal + Purpose + Boundary | B + Purpose Probe | MEDIUM (B) | 「なんで、あぶなくないときも、きまりを守るの？」 | HIGH | **Large.** RULE → MECHANISM + function. | **GREEN as a chain example / YELLOW as a Tool B exemplar.** [ORIGINAL: GREEN] |
+| A3 → STOP | MECHANISM + function (安心) | No snag remains | Nothing unresolved for snag-driven questioning | — | NONE | HIGH | これでOK | MEDIUM (STOP correct on snags, early on depth) | — | **GREEN** as a STOP-on-snag example, *paired with* a Depth Check. [ORIGINAL: GREEN] |
+| A3 → Q4r (optional, RETRO) | MECHANISM + function (安心) | Root purpose not explicit | Depth gap: 安心 is the means; "no one gets hurt" is the end | Purpose | NONE (Purpose Probe) | HIGH that it is none of A–F | 「じゃあ、赤で止まるのは、自分も、車の人も、けがをしないためってこと？」 | MEDIUM | **Small but decisive.** MECHANISM → explicit ROOT PURPOSE. | **YELLOW.** Right move; wording and age fit need testing with children. |
+| A1 → Q2b (branch) | RULE + IMMEDIATE REASON | 「赤 → 車が来る」 link unsaid | The turn-taking model is missing (depends on age) | Answer-internal | B (diagnosis); fact question (wording) | MEDIUM | 「こっちが赤のとき、車の信号は何色なの？」 | MEDIUM | IMMEDIATE REASON → MECHANISM (turn-taking) | **YELLOW** [ORIGINAL] |
+
+---
+
+## II.10 Rejected-path appendix (complete)
+
+"Q-conf" is question-quality confidence. "T-conf" is confidence that the apparent tool is the right label for the move. Rows R1–R10 come from Part I, with their fields completed retrospectively. Rows R11 onward are **[RETRO-ADDED]**.
+
+| # | Followed | Candidate | Signal that seemed to trigger it | Apparent tool | Q-conf | T-conf | Exact reason for rejection |
+|---|---|---|---|---|---|---|---|
+| R1 | A1 | 「あぶないって、どういうこと？」 | The cue word 「あぶない」 | A | LOW | LOW | The same sentence already says what it means (車が来て、ぶつかる). A cue with no snag. |
+| R2 | A1 | 「運転してる人から見たら、どう？」 | Cars are mentioned, so drivers exist | F | LOW | LOW | F fired because drivers *exist*, not because their seat was *ignored*. The child has not wondered about drivers. |
+| R3 | A1 | 「赤だと、なんで車が来るの？」 | Unsaid link 「赤 → 車が来る」 | B | LOW | MEDIUM | The diagnosis is right; the template wording is unnatural. Replaced by the fact question in branch 2b. |
+| R4 | A2 | 「きまりって、だれが決めたの？」 | 「きまり」 | none (looks like A) | LOW (for this chain) | LOW | Asks about the rule's source or authority, not its meaning. A new inquiry into law and history that does not deepen *why stop*. A legitimate question in its own right. |
+| R5 | A2 | 「見通しがいい道でも、急に来るの？」 | 「急に」「ことがある」 | D | LOW | MEDIUM | A valid test, but a loop: it repeats Q2's counterexample pressure and adds nothing. |
+| R6 | A2 | 「ぼくがわたったら、だれかこまるの？」 | Crossing affects others (implicit) | F | LOW | LOW | Premature. The child would be guessing the answer before A3 gives it. |
+| R7 | A3 | 「でも、守らない人もいるよね？」 | 「みんなが…守る」 | D [ORIGINAL]; C [RETRO] | MEDIUM (C reading) | LOW (D) / MEDIUM (C) | As D, a false signal: 「みんな」 states a condition for the system, not a claim about the world. As C, a real hidden condition. Rejected because it shifts from *why I stop* to *people who don't*. |
+| R8 | A3 | 「見まちがえるって、たとえばどんなとき？」 | 「見まちがえる」 | A | LOW | MEDIUM | Answerable, but drifts from *why* into *what to watch for* (safety tips). |
+| R9 | A2b | 「人の信号と車の信号が、どっちも赤になることある？」 | Two signal sets (pedestrian / car) | E | LOW | LOW | Clever and factually interesting (Japan has 全赤 intervals), but not something a child asks. |
+| R10 | A3 | 「運転してる人から見たら…どうなるの？」 | 「運転してる人は…と思って」 | F | LOW | LOW | The parent had already given the driver's seat. The question only unpacks a B-type middle step. |
+| R11 | A1 | 「救急車は、赤でも行くよね？」 | Implicit "everyone stops" | D | LOW (here) | LOW (here) | A genuine exception, but A1 never said 「みんな」, so it has no hook in this answer. Would be a valid D if the adult said 「みんな止まるの」. **[RETRO-ADDED]** |
+| R12 | A1 / A2 | 「人も車も赤で止まるけど、同じりゆう？」 | Pedestrians vs cars comparison | E | LOW | LOW | Never arose. No answer compared the two. Adult-designed. **[RETRO-ADDED]** |
+| R13 | A1 | 「なんで、止まれは赤なの？」 | 「赤は…合図」 | none | LOW (for this chain) | — | A question about why the colour red was chosen (history or perception). New topic. **[RETRO-ADDED]** |
+| R14 | A2b | 「じゅんばんは、だれが決めてるの？」 | 「じゅんばん」 | none | LOW (for this chain) | — | Authority or engineering (signal timing). New topic. [ORIGINAL mention in branch 2b; fields completed RETRO] |
+| R15 | A2 | 「じゃあ、だれも見てなかったら、わたってもいい？」 | Rule vs. being watched | C / D | LOW | MEDIUM | Natural, but it turns the rule into a matter of *being caught*: punishment, not purpose. It pulls away from the root. **[RETRO-ADDED]** |
+| R16 | A2 | 「きまりをやぶったら、どうなるの？」 | 「きまり」 | none | LOW | — | Moves to penalties. Same risk as R15. **[RETRO-ADDED]** |
+| R17 | A3 | 「安心って、どういうこと？」 | 「安心」 | A | LOW | MEDIUM | Formally A, and its answer would reach the root. But 安心 is easy for an 8-year-old to picture, so there is no felt snag. The Q4 check-back does the same job more naturally. **[RETRO-ADDED]** |
+| R18 | A3 | 「じゃあ、信号を守るのは、何のため？」 | Root purpose not explicit | NONE (Purpose) | MEDIUM | HIGH (none of A–F) | Not rejected outright: **revised** into Q4r. The original wording is teacher-voiced and widens the scope to all signals. **[RETRO]** |
+
+---
+
+## II.11 Changes to original judgments (logged, not silently applied)
+
+| # | Part I said | Part II says | Why |
+|---|---|---|---|
+| 1 | A1 → Q2: C and D "equally defensible" | C fit HIGH, D fit MEDIUM; label confidence still MEDIUM | A1 contains an explicit prediction (C's domain) but no explicit broad claim (D's domain). The overlap finding stands. |
+| 2 | A2 → Q3: "Tool B · HIGH" | Question HIGH; Tool B label MEDIUM; best reading B + Purpose Probe | Two of the three pieces A3 supplies are function and purpose, not causal steps (§II.4). |
+| 3 | A2 → Q3: GREEN | GREEN as a chain example, YELLOW as a Tool B exemplar | Follows from #2. |
+| 4 | Part I §E.1: 「きまりだから」 "may be B's strongest home" | Overstated. B's test *locates* the gap well; B's framing (causal middle) *misdescribes* it. | Follows from #2. |
+| 5 | A3 → これでOK, confidence HIGH | STOP correct for snags (kept); overall MEDIUM, because the root purpose is not explicit | The formal Depth Check (§II.5) was not applied in the original run. |
+| 6 | STOP test: 「自分のことばでこたえられる？」 | Needed but not enough: a child can pass it at the mechanism level | The likely child restatement leaves out the purpose. |
+| 7 | R7 as a D false signal | Still rejected, but the C reading is stronger than D and is a real hidden condition | Retrospective tool audit. |
+
+Unchanged: the accepted chain Q1–A3, the choice of Q2 and Q3, the rejection of A on 「あぶない」, the F findings, the C/D/E overlap finding, and the "who decided" finding.
+
+---
+
+## II.12 Final conclusion
+
+### 1. Did the red-light scene produce a natural multi-step questioning chain?
+**STRONGLY SUPPORTED** (within a simulated dialogue).
+Q2 and Q3 are both questions children actually ask, each grows directly out of the previous answer, and each realistic adult answer made the next question possible without being weakened on purpose. **Limitation:** every adult answer and child question in this report was written by the researcher. Real children and parents have not been observed yet.
+
+### 2. Did diagnosis help *generate* the next questions, or mainly help *evaluate and filter* them?
+**PARTIALLY SUPPORTED** as a generative aid.
+- **Testing the answer on a real case** did generative work. "Apply A1 to an empty crossing" *is* the thought that produces Q2, and "apply 「きまりだから」 to the safe case" *is* the thought that produces Q3.
+- **Choosing a tool** mostly came after, as labelling and filtering: it was used to reject A on 「あぶない」, F on the driver, and D on 「みんな」.
+- The original record cannot show whether diagnosis came before the candidate questions (§II.0 caveat). The evidence fits "testing generates, tool choice filters" at least as well as "the tool generates".
+
+### 3. How much did the six tools contribute to generating the chain?
+**PARTIALLY SUPPORTED: small generative contribution, moderate filtering contribution.**
+- C's template (「もし〇〇じゃなかったら？」) matches Q2, but D's test and E's move reach it too, so no single tool can claim it.
+- B's test finds where the gap in Q3 is, but misdescribes what kind of gap it is (§II.4).
+- The root purpose (Q4r) is reached by a move that is **not** one of the six tools.
+- A, D, E and F contributed mainly as **false positives** that had to be rejected. That is itself useful: knowing *not* to ask 「あぶないって、どういうこと？」 is part of the skill.
+
+### 4. Did the chain naturally reach the root purpose: protecting oneself and others?
+**PARTIALLY SUPPORTED.**
+Protection of oneself appeared naturally in A1. Other people appeared naturally in A3, but as people who *rely on you*, not as people who could be *hurt*. The snag-driven chain stopped at 「安心して道を使える」, one level short of the root. Reaching the root explicitly needed a Purpose-Probe synthesis (Q4r), which is only moderately natural and, for younger children, may need an adult prompt.
+
+### 5. Does this completed case now contain material strong enough to become a canonical curriculum example?
+**PARTIALLY SUPPORTED.**
+- **Strong enough as a chain example:** Q1 → Q2 → Q3 → STOP (+ optional Q4r) shows a natural movement from rule, through an exception, to mechanism and then purpose.
+- **Strong enough as a counter-example:** the rejection of A on 「あぶない」 clearly shows that a surface cue is not a signal.
+- **Not yet strong enough as a single-tool exemplar:** Q2's label is ambiguous (C/D/E), and Q3's label (B) is only MEDIUM.
+- **Needs testing before canonical use:** Q4r's wording and age fit, and the pairing of the STOP test with a Depth Check.
