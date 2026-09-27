@@ -512,15 +512,15 @@
     },
     {
       "clip": "b02-L64",
-      "start": 302.333
+      "start": 302.309
     },
     {
       "clip": "b02-L65",
-      "start": 305.517
+      "start": 305.493
     },
     {
       "clip": "b02-L66",
-      "start": 313.117
+      "start": 313.093
     }
   ],
   "b03_listen.mp3": [
@@ -816,11 +816,11 @@
     },
     {
       "clip": "b04-L02",
-      "start": 7.448
+      "start": 7.424
     },
     {
       "clip": "b04-L03",
-      "start": 13.368
+      "start": 13.344
     },
     {
       "clip": "b04-L04",
@@ -1714,31 +1714,31 @@
     },
     {
       "clip": "b07-L45",
-      "start": 181.672
+      "start": 181.696
     },
     {
       "clip": "b07-L46",
-      "start": 187.544
+      "start": 187.568
     },
     {
       "clip": "b07-L47",
-      "start": 191.088
+      "start": 191.112
     },
     {
       "clip": "b07-L48",
-      "start": 196
+      "start": 196.024
     },
     {
       "clip": "b07-L49",
-      "start": 200.672
+      "start": 200.696
     },
     {
       "clip": "b07-L50",
-      "start": 206.448
+      "start": 206.472
     },
     {
       "clip": "b07-L51",
-      "start": 211.072
+      "start": 211.096
     }
   ],
   "b_ending.mp3": [
@@ -1764,99 +1764,99 @@
     },
     {
       "clip": "END-L05",
-      "start": 22.784
+      "start": 23.048
     },
     {
       "clip": "END-L06",
-      "start": 27.264
+      "start": 27.552
     },
     {
       "clip": "END-L07",
-      "start": 31.528
+      "start": 31.816
     },
     {
       "clip": "END-L08",
-      "start": 36.92
+      "start": 37.184
     },
     {
       "clip": "END-L09",
-      "start": 41.208
+      "start": 41.472
     },
     {
       "clip": "END-L10",
-      "start": 46.384
+      "start": 46.672
     },
     {
       "clip": "END-L11",
-      "start": 52.208
+      "start": 52.496
     },
     {
       "clip": "END-L12",
-      "start": 55.512
+      "start": 55.8
     },
     {
       "clip": "END-L13",
-      "start": 58.84
+      "start": 59.128
     },
     {
       "clip": "END-L14",
-      "start": 62.384
+      "start": 62.672
     },
     {
       "clip": "END-L15",
-      "start": 69.216
+      "start": 69.504
     },
     {
       "clip": "END-L16",
-      "start": 72.904
+      "start": 73.216
     },
     {
       "clip": "END-L17",
-      "start": 78.176
+      "start": 78.488
     },
     {
       "clip": "END-L18",
-      "start": 81.456
+      "start": 81.768
     },
     {
       "clip": "END-L19",
-      "start": 86.392
+      "start": 86.704
     },
     {
       "clip": "END-L20",
-      "start": 89.84
+      "start": 90.152
     },
     {
       "clip": "END-L21",
-      "start": 94.32
+      "start": 94.632
     },
     {
       "clip": "END-L22",
-      "start": 101.056
+      "start": 101.368
     },
     {
       "clip": "END-L23",
-      "start": 106.856
+      "start": 107.168
     },
     {
       "clip": "END-L24",
-      "start": 111.744
+      "start": 112.056
     },
     {
       "clip": "END-L25",
-      "start": 115.84
+      "start": 116.152
     },
     {
       "clip": "END-L26",
-      "start": 118.52
+      "start": 118.832
     },
     {
       "clip": "END-L27",
-      "start": 122.328
+      "start": 122.64
     },
     {
       "clip": "END-L28",
-      "start": 125.888
+      "start": 126.2
     }
   ]
 }
