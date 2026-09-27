@@ -93,10 +93,16 @@ jobs:
       # Self-check before trusting the run: only beginner.timings.json may have changed — never
       # c01–c06's own content or audio, never the content gate, never anything under public/ or
       # src/. Mirrors voice-samples.yml's own "confirm nothing unexpected changed" discipline.
+      # Also excludes google-github-actions/auth@v2's own exported-credentials file
+      # (`gha-creds-*.json`, written to the repo root and removed by that action's own "Post
+      # Authenticate" cleanup step, which runs AFTER this one) — a real false positive caught on
+      # this workflow's first run: it is never staged or committed either way (the commit step
+      # below only ever `git add`s the one timings file), so relaxing this check for it widens
+      # nothing.
       - name: Confirm only beginner.timings.json changed
         if: ${{ inputs.mode == 'full' }}
         run: |
-          CHANGED=$(git status --porcelain -- . ':!content/course/beginner/beginner.timings.json')
+          CHANGED=$(git status --porcelain -- . ':!content/course/beginner/beginner.timings.json' ':!gha-creds-*.json')
           if [ -n "$CHANGED" ]; then
             echo "::error::Unexpected changes outside beginner.timings.json:"
             echo "$CHANGED"
