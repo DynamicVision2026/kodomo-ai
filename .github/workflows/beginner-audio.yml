@@ -6,18 +6,20 @@ name: WO-C4 beginner course audio (manual, never touches production)
 # table to Lesson 1's own voice-samples.yml run), so there is no samples-approval gate here — only
 # `check` (free access/enablement check) and `full` (the real generation run).
 #
-# Nothing here ever reaches production: every generated audio file lives under a brand-new
-# top-level audio/ directory (never public/, never src/ — see scripts/audio/generate-beginner-audio.ts's
-# own file header), which is neither bundled by Vite nor scanned by any content/release gate. The
-# beginner lessons have no lesson.json yet and are not wired into CourseApp.tsx — that is
-# explicitly separate, later work. c01–c06 content and audio, the production content gate, and
-# ci.yml's own deploy jobs are never read or written by this workflow.
+# Nothing here ever reaches production: `public/audio/course/<lessonId>/…` is real, servable audio
+# (WO-C4b's own "keep the final full set … stored the same way as c01's audio"), but the beginner
+# lessons have no lesson.json yet and are not wired into CourseApp.tsx — that is explicitly
+# separate, later work ("still don't add the lessons to the app"). Intermediate per-line/per-gap
+# clips and the check-reel's own scratch files stay under a gitignored top-level audio/ directory,
+# never committed — see scripts/audio/generate-beginner-audio.ts's own file header. c01–c06
+# content and audio, the production content gate, and ci.yml's own deploy jobs are never read or
+# written by this workflow.
 #
-# `full` mode commits ONLY content/course/beginner/beginner.timings.json back to this run's own
-# dispatch branch (never main) — no audio file is ever committed; the 749 per-line clips and 8
-# joined masters are pure intermediate/staging output. The 7 review reels (`bNN_review.mp3` +
-# `bNN_review.csv`) plus `b_ending.mp3` are uploaded as a single workflow artifact named
-# `beginner-audio-review` for the Founder to listen to and check.
+# `full` mode commits the FULL final set — every file under public/audio/course/ this run produces,
+# plus content/course/beginner/beginner.timings.json — back to this run's own dispatch branch
+# (never main). WO-C4b's own check reel, `fix-check.mp3` (the new b_ending.mp3 + 10 お母さん lines
+# picked across lessons), is uploaded as its own workflow artifact, `beginner-audio-fixcheck`, and
+# is never committed (it's a review aid, not production content).
 
 on:
   workflow_dispatch:
@@ -32,7 +34,7 @@ on:
         default: check
 
 permissions:
-  contents: write   # 'full' mode commits beginner.timings.json back to the dispatch branch
+  contents: write   # 'full' mode commits public/audio/course/** + beginner.timings.json back to the dispatch branch
   id-token: write   # Workload Identity Federation — no long-lived key ever touches this repo
 
 jobs:
@@ -81,52 +83,47 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y ffmpeg
 
-      # Generates the 749 clips + 8 joined masters under audio/course/ (never public/ or src/),
-      # writes content/course/beginner/beginner.timings.json, and builds the 7 review reels + CSVs
-      # under audio/course/_review/.
+      # Generates the 749 final files under public/audio/course/<lessonId>/ (committed below),
+      # writes content/course/beginner/beginner.timings.json, and builds fix-check.mp3 under the
+      # gitignored audio/course/_fixcheck/ (uploaded as an artifact, never committed).
       - name: Generate all beginner-course audio
         if: ${{ inputs.mode == 'full' }}
         env:
           GCP_ACCESS_TOKEN: ${{ steps.token.outputs.token }}
         run: npx tsx scripts/audio/generate-beginner-audio.ts --full
 
-      # Self-check before trusting the run: only beginner.timings.json may have changed — never
-      # c01–c06's own content or audio, never the content gate, never anything under public/ or
-      # src/. Mirrors voice-samples.yml's own "confirm nothing unexpected changed" discipline.
-      # Also excludes google-github-actions/auth@v2's own exported-credentials file
-      # (`gha-creds-*.json`, written to the repo root and removed by that action's own "Post
-      # Authenticate" cleanup step, which runs AFTER this one) — a real false positive caught on
-      # this workflow's first run: it is never staged or committed either way (the commit step
-      # below only ever `git add`s the one timings file), so relaxing this check for it widens
-      # nothing.
-      - name: Confirm only beginner.timings.json changed
+      # Self-check before trusting the run: only public/audio/course/** and beginner.timings.json
+      # may have changed — never c01–c06's own content or audio, never the content gate, never
+      # anything else under public/ or src/. Also excludes google-github-actions/auth@v2's own
+      # exported-credentials file (`gha-creds-*.json`, written to the repo root and removed by that
+      # action's own "Post Authenticate" cleanup step, which runs AFTER this one) — a real false
+      # positive caught on this workflow's first (WO-C4) run; it is never staged or committed
+      # either way, so excluding it from this check widens nothing.
+      - name: Confirm only public/audio/course + timings.json changed
         if: ${{ inputs.mode == 'full' }}
         run: |
-          CHANGED=$(git status --porcelain -- . ':!content/course/beginner/beginner.timings.json' ':!gha-creds-*.json')
+          CHANGED=$(git status --porcelain -- . ':!public/audio/course/**' ':!content/course/beginner/beginner.timings.json' ':!gha-creds-*.json')
           if [ -n "$CHANGED" ]; then
-            echo "::error::Unexpected changes outside beginner.timings.json:"
+            echo "::error::Unexpected changes outside public/audio/course/** and beginner.timings.json:"
             echo "$CHANGED"
             exit 1
           fi
-          echo "OK: only content/course/beginner/beginner.timings.json changed."
+          echo "OK: only public/audio/course/** and content/course/beginner/beginner.timings.json changed."
 
-      - name: Commit beginner.timings.json
+      - name: Commit the beginner-course audio + timings.json
         if: ${{ inputs.mode == 'full' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add content/course/beginner/beginner.timings.json
-          git commit -m "WO-C4: generate beginner course (b01-b07 + ending) audio, write timings.json" \
-            -m "Real TTS generation, Founder-approved voice table (identical to Lesson 1). Audio files are never committed (see .gitignore) — only this timing metadata. Nothing reaches production; beginner lessons are not wired into the app."
+          git add public/audio/course content/course/beginner/beginner.timings.json
+          git commit -m "WO-C4b: audio fix run - お母さん pitch, real ふたり overlay, END-L04 pause; commit full 749-file set" \
+            -m "Real TTS generation, Founder-approved voice table (お母さん pitch -1.0, every other role unchanged from Lesson 1's table). Stored under public/audio/course/ the same way as c01's own audio, ready for the app later; beginner lessons are still not wired into CourseApp.tsx."
           git push origin "HEAD:${{ github.ref_name }}"
 
-      - name: Upload the beginner-audio-review artifact
+      - name: Upload the beginner-audio-fixcheck artifact
         if: ${{ inputs.mode == 'full' }}
         uses: actions/upload-artifact@v4
         with:
-          name: beginner-audio-review
-          path: |
-            audio/course/_review/*_review.mp3
-            audio/course/_review/*_review.csv
-            audio/course/beginner/b_ending.mp3
+          name: beginner-audio-fixcheck
+          path: audio/course/_fixcheck/fix-check.mp3
           retention-days: 30
