@@ -1,0 +1,274 @@
+/**
+ * WO-C5 — 入門コース's own top-level state machine/router, a SEPARATE tree from `CourseApp.tsx`
+ * (stage2/c01-c12) — same "own entry, own route, never generalise the existing shell" discipline
+ * WO-C1 itself established for the course shell vs. MissionShell. Reuses the same family/profile/
+ * progress infrastructure (`fetchMe`/`getCourseProgress`/`putCourseProgress`), just against
+ * `BEGINNER_COURSE_ID` instead of `COURSE_ID`.
+ *
+ * WO-C5 §6/§7 — two independent gates, checked in order:
+ * 1. `BEGINNER_LAUNCH` (`VITE_BEGINNER_LAUNCH === '1' || me.courseAllowed`) — the same
+ *    allowlist/build-flag mechanism `COURSE_ENABLED`/`courseAllowed` already gates stage2 with.
+ *    Off in production until the Founder switches it on; staff/allowlisted families see it early.
+ * 2. Once past the launch gate, `licensed` (an active `m1` entitlement — WO's own "existing
+ *    Module 1 licences count") decides whether the garden's lessons are actually openable or
+ *    shown locked with the purchase CTA (`BeginnerCourseHome`'s own `licensed` prop) — never a
+ *    second screen, so a family always sees the same garden shape either way.
+ */
+import { useEffect, useState } from 'react';
+import { fetchMe, getCourseProgress, putCourseProgress, type MeResponse } from './api';
+import { BEGINNER_COURSE_ID } from './beginnerCourseId';
+import { isBeginnerCourseLicensed } from './beginnerLicence';
+import { beginnerManifest, beginnerEndingLesson, getBeginnerLesson } from './content/beginnerManifest';
+import { courseUi } from './content/courseManifest';
+import { emptyCourseProgress, emptyLessonProgress, type CourseProgressState } from './progress';
+import { track } from '../engine/analytics';
+import { BeginnerCourseHome } from './screens/BeginnerCourseHome';
+import { BeginnerLessonScreen } from './screens/BeginnerLessonScreen';
+import { BeginnerParentScreen } from './screens/BeginnerParentScreen';
+import { ListenScreen } from './screens/ListenScreen';
+import { ExerciseScreen } from './screens/ExerciseScreen';
+import { AuditScreen } from './screens/AuditScreen';
+import { HomeTaskScreen } from './screens/HomeTaskScreen';
+import { EndingScreen } from './screens/EndingScreen';
+import './course.css';
+
+const BEGINNER_LAUNCH_BUILD_FLAG = import.meta.env.VITE_BEGINNER_LAUNCH === '1';
+
+type Screen =
+  | { kind: 'home' }
+  | { kind: 'lesson'; lessonId: string }
+  | { kind: 'listen'; lessonId: string }
+  | { kind: 'exercise'; lessonId: string; index: number }
+  | { kind: 'audit'; lessonId: string; index: number }
+  | { kind: 'home-task'; lessonId: string }
+  | { kind: 'ending' }
+  | { kind: 'parent'; focusLessonId: string | null };
+
+export function BeginnerCourseApp() {
+  const [me, setMe] = useState<MeResponse | null | 'loading'>('loading');
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [progress, setProgress] = useState<CourseProgressState | 'loading'>('loading');
+  const [screen, setScreen] = useState<Screen>({ kind: 'home' });
+
+  useEffect(() => {
+    fetchMe().then(setMe);
+  }, []);
+
+  useEffect(() => {
+    if (!profileId) return;
+    setProgress('loading');
+    getCourseProgress(profileId, BEGINNER_COURSE_ID).then((p) => setProgress(p ?? emptyCourseProgress()));
+  }, [profileId]);
+
+  async function persist(next: CourseProgressState) {
+    setProgress(next);
+    if (!profileId) return;
+    const merged = await putCourseProgress(profileId, BEGINNER_COURSE_ID, next);
+    if (merged) setProgress(merged);
+  }
+
+  function updateProgress(updater: (prev: CourseProgressState) => CourseProgressState) {
+    if (progress === 'loading') return;
+    void persist(updater(progress));
+  }
+
+  if (me === 'loading') return <main className="ad12 course-loading"><p className="ad12-ui-text">{courseUi.loading}</p></main>;
+  if (me === null) {
+    return (
+      <main className="ad12 course-loading">
+        <p className="ad12-ui-text">{courseUi.loginRequired}</p>
+        <a className="ad12-ink-button ad12-tappable" href="/login/">{courseUi.loginCta}</a>
+      </main>
+    );
+  }
+  if (!BEGINNER_LAUNCH_BUILD_FLAG && !me.courseAllowed) {
+    return (
+      <main className="ad12 course-loading">
+        <p className="ad12-ui-text">{courseUi.comingSoon}</p>
+      </main>
+    );
+  }
+  if (!profileId) {
+    return (
+      <main className="ad12 course-loading course-profile-picker">
+        <p className="ad12-ui-text">{courseUi.profilePickTitle}</p>
+        {me.profiles.map((p, i) => (
+          <button key={p.id} type="button" className="ad12-ink-button ad12-tappable" onClick={() => setProfileId(p.id)}>
+            {courseUi.profileLabel} {i + 1}
+          </button>
+        ))}
+      </main>
+    );
+  }
+  if (progress === 'loading') return <main className="ad12 course-loading"><p className="ad12-ui-text">{courseUi.loading}</p></main>;
+
+  const licensed = isBeginnerCourseLicensed(me);
+
+  function markListenDone(lessonId: string) {
+    updateProgress((prev) => {
+      const lesson = prev.lessons[lessonId] ?? emptyLessonProgress();
+      track('course_listen_done', { lessonId, courseId: BEGINNER_COURSE_ID });
+      return { ...prev, lessons: { ...prev.lessons, [lessonId]: { ...lesson, listenADone: true, lastStepAt: new Date().toISOString() } } };
+    });
+  }
+
+  function markExerciseItemDone(lessonId: string, exerciseId: string) {
+    updateProgress((prev) => {
+      const prevLesson = prev.lessons[lessonId] ?? emptyLessonProgress();
+      track('course_item_done', { lessonId, exerciseId, courseId: BEGINNER_COURSE_ID });
+      const nextLesson = {
+        ...prevLesson,
+        exercisesDone: Array.from(new Set([...prevLesson.exercisesDone, exerciseId])),
+        lastStepAt: new Date().toISOString(),
+      };
+      return { ...prev, lessons: { ...prev.lessons, [lessonId]: nextLesson } };
+    });
+  }
+
+  function markAuditItemDone(lessonId: string, auditId: string) {
+    updateProgress((prev) => {
+      const prevLesson = prev.lessons[lessonId] ?? emptyLessonProgress();
+      track('course_audit_item_done', { lessonId, auditId, courseId: BEGINNER_COURSE_ID });
+      const nextLesson = {
+        ...prevLesson,
+        exercisesDone: Array.from(new Set([...prevLesson.exercisesDone, auditId])),
+        lastStepAt: new Date().toISOString(),
+      };
+      return { ...prev, lessons: { ...prev.lessons, [lessonId]: nextLesson } };
+    });
+  }
+
+  function addStar(lessonId: string) {
+    updateProgress((prev) => {
+      const lesson = prev.lessons[lessonId] ?? emptyLessonProgress();
+      track('course_home_star', { lessonId, courseId: BEGINNER_COURSE_ID });
+      return { ...prev, lessons: { ...prev.lessons, [lessonId]: { ...lesson, stars: lesson.stars + 1 } } };
+    });
+  }
+
+  function earlyUnlock(lessonId: string) {
+    if (progress === 'loading') return;
+    if (progress.earlyUnlockedParts.includes(lessonId)) return;
+    void persist({ ...progress, earlyUnlockedParts: [...progress.earlyUnlockedParts, lessonId] });
+  }
+
+  if (screen.kind === 'home') {
+    return (
+      <BeginnerCourseHome
+        manifest={beginnerManifest}
+        progress={progress}
+        licensed={licensed}
+        getLesson={getBeginnerLesson}
+        onOpenLesson={(lessonId) => { track('course_lesson_start', { lessonId, courseId: BEGINNER_COURSE_ID }); setScreen({ kind: 'lesson', lessonId }); }}
+        onOpenEnding={() => setScreen({ kind: 'ending' })}
+        onOpenParent={() => setScreen({ kind: 'parent', focusLessonId: null })}
+      />
+    );
+  }
+
+  if (screen.kind === 'parent') {
+    return (
+      <BeginnerParentScreen
+        manifest={beginnerManifest}
+        progress={progress}
+        getLesson={getBeginnerLesson}
+        focusLessonId={screen.focusLessonId}
+        onEarlyUnlock={earlyUnlock}
+        onBack={() => setScreen({ kind: 'home' })}
+      />
+    );
+  }
+
+  if (screen.kind === 'ending') {
+    return (
+      <EndingScreen
+        lesson={beginnerEndingLesson}
+        onDone={() => setScreen({ kind: 'home' })}
+        onBack={() => setScreen({ kind: 'home' })}
+      />
+    );
+  }
+
+  if (!licensed) { setScreen({ kind: 'home' }); return null; } // unreachable in practice: BeginnerCourseHome only ever opens a lesson when licensed
+
+  const lesson = getBeginnerLesson(screen.lessonId);
+  if (!lesson) return null; // unreachable in practice: every transition below only ever targets a resolvable lessonId
+  const lessonProgress = progress.lessons[screen.lessonId];
+
+  if (screen.kind === 'lesson') {
+    return (
+      <BeginnerLessonScreen
+        lesson={lesson}
+        progress={lessonProgress}
+        onOpenListen={() => setScreen({ kind: 'listen', lessonId: lesson.id })}
+        onOpenExercise={() => setScreen({ kind: 'exercise', lessonId: lesson.id, index: 0 })}
+        onOpenAudit={() => setScreen({ kind: 'audit', lessonId: lesson.id, index: 0 })}
+        onOpenHome={() => setScreen({ kind: 'home-task', lessonId: lesson.id })}
+        onBack={() => setScreen({ kind: 'home' })}
+      />
+    );
+  }
+
+  if (screen.kind === 'listen') {
+    return (
+      <ListenScreen
+        lessonTitle={lesson.title}
+        block={lesson.listen}
+        onDone={() => { markListenDone(lesson.id); setScreen({ kind: 'lesson', lessonId: lesson.id }); }}
+        onBack={() => setScreen({ kind: 'lesson', lessonId: lesson.id })}
+      />
+    );
+  }
+
+  if (screen.kind === 'exercise') {
+    const exercise = lesson.exercises[screen.index];
+    if (!exercise) { setScreen({ kind: 'lesson', lessonId: lesson.id }); return null; }
+    return (
+      <ExerciseScreen
+        key={screen.index}
+        exercise={exercise}
+        position={{ index: screen.index, total: lesson.exercises.length }}
+        onItemDone={(id) => markExerciseItemDone(lesson.id, id)}
+        onNext={() => {
+          const nextIndex = screen.index + 1;
+          if (nextIndex >= lesson.exercises.length) setScreen({ kind: 'lesson', lessonId: lesson.id });
+          else setScreen({ kind: 'exercise', lessonId: lesson.id, index: nextIndex });
+        }}
+        onBack={() => setScreen({ kind: 'lesson', lessonId: lesson.id })}
+      />
+    );
+  }
+
+  if (screen.kind === 'audit') {
+    const item = lesson.audit[screen.index];
+    if (!item) { setScreen({ kind: 'lesson', lessonId: lesson.id }); return null; }
+    return (
+      <AuditScreen
+        key={screen.index}
+        lessonId={lesson.id}
+        item={item}
+        position={{ index: screen.index, total: lesson.audit.length }}
+        onItemDone={(id) => markAuditItemDone(lesson.id, id)}
+        onNext={() => {
+          const nextIndex = screen.index + 1;
+          if (nextIndex >= lesson.audit.length) setScreen({ kind: 'lesson', lessonId: lesson.id });
+          else setScreen({ kind: 'audit', lessonId: lesson.id, index: nextIndex });
+        }}
+        onBack={() => setScreen({ kind: 'lesson', lessonId: lesson.id })}
+      />
+    );
+  }
+
+  if (screen.kind === 'home-task') {
+    return (
+      <HomeTaskScreen
+        home={lesson.home}
+        stars={lessonProgress?.stars ?? 0}
+        onStar={() => addStar(lesson.id)}
+        onBack={() => setScreen({ kind: 'lesson', lessonId: lesson.id })}
+      />
+    );
+  }
+
+  return null;
+}

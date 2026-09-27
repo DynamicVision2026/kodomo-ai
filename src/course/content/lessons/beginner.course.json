@@ -1,0 +1,62 @@
+{
+ "courseId": "beginner",
+ "title": "入門コース",
+ "price": {
+  "yen": 4980,
+  "kind": "one-time family licence",
+  "sku": "kodomo-ai-m1"
+ },
+ "parts": [
+  {
+   "id": "b01",
+   "kind": "lesson",
+   "tool": "A",
+   "icon": "bento"
+  },
+  {
+   "id": "b02",
+   "kind": "lesson",
+   "tool": "B",
+   "icon": "domino"
+  },
+  {
+   "id": "b03",
+   "kind": "lesson",
+   "tool": "D",
+   "icon": "kasa"
+  },
+  {
+   "id": "b04",
+   "kind": "lesson",
+   "tool": "E",
+   "icon": "keshigomu"
+  },
+  {
+   "id": "b05",
+   "kind": "lesson",
+   "tool": "C",
+   "icon": "fumidai"
+  },
+  {
+   "id": "b06",
+   "kind": "lesson",
+   "tool": "F",
+   "icon": "seesaw"
+  },
+  {
+   "id": "b07",
+   "kind": "lesson",
+   "tool": "G",
+   "icon": "ami"
+  },
+  {
+   "id": "b-ending",
+   "kind": "ending",
+   "opensWhen": "all lessons 100%"
+  }
+ ],
+ "finalScreen": {
+  "line": "AIが答えたら、もう一問。",
+  "sub": "ふしぎは、きみのもの。"
+ }
+}

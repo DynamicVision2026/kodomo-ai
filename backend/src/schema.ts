@@ -191,6 +191,18 @@ export interface CourseAllowFamiliesDoc {
   familyIds: string[];
 }
 
+/**
+ * WO-C5 §6: `config/playground.lockedSections`, same hand-edited-in-Firestore-console pattern as
+ * `CourseAllowFamiliesDoc` above. Empty by default (the WO's own "empty lock list for later") — the
+ * Playground is free entry for every logged-in family; a future section id added here is the one
+ * hook for locking part of it again without another code change. `sectionIds` are mission ids
+ * (the same space `FREE_MISSION_IDS`/`missionOrder` already use), not yet authored by anything —
+ * no admin UI, same as the course allowlist.
+ */
+export interface PlaygroundLockDoc {
+  sectionIds: string[];
+}
+
 /** Append-only; no endpoint ever updates or deletes an entry (AD-16 §8). */
 export interface AuditLogDoc {
   at: string;
@@ -293,6 +305,7 @@ export const claimPath = (tokenHash: string) => `claims/${tokenHash}`;
 export const staffPath = (email: string) => `staff/${email}`;
 export const refundPolicyPath = () => 'config/refundPolicy';
 export const courseAllowFamiliesPath = () => 'config/course.allowFamilies';
+export const playgroundLockPath = () => 'config/playground.lockedSections';
 export const auditLogCollection = () => 'auditLog';
 export const auditLogPath = (id: string) => `auditLog/${id}`;
 export const profilesCollection = (familyId: string) => `families/${familyId}/profiles`;

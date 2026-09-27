@@ -36,7 +36,7 @@ import { stripRuby } from '../../pipeline/lib/ruby.js';
 import { checkKanjiFloor } from '../../pipeline/lib/kanjiFloor.js';
 import { lintText, type LintIssue } from '../../pipeline/lib/lintText.js';
 import { courseUi } from '../../src/course/content/courseManifest.js';
-import type { CourseLesson, CourseReviewStamp } from '../../src/course/content/types.js';
+import type { CourseLesson, CourseReviewStamp, CourseBeginnerLesson, CourseEndingLesson } from '../../src/course/content/types.js';
 
 const COURSE_STAGE = 2; // WO-C1's own "Stage 2" — see CourseManifest.courseStage's own doc comment
 
@@ -271,6 +271,114 @@ export function checkCourseLesson(lesson: CourseLesson, gradeOf: GradeMap, opts:
     for (const i of lintParentFacing(text, gradeOf)) lintIssues.push(`[${i.rule}] ${i.message} (parent-facing)`);
   }
 
+  const approved = isFullyApproved(lesson.review);
+  return {
+    approvalIssues,
+    contentLintIssues: approved ? lintIssues : [],
+    contentLintWarnings: approved ? [] : lintIssues,
+  };
+}
+
+/* =================================================================================================
+ * WO-C5 §8 — the beginner course's own lesson/ending shape (single `listen` object, `audit`/`home`
+ * instead of make/teachBack/family). Reuses every rule/helper above unchanged; only the
+ * field-collection walk differs, since the schema differs.
+ *
+ * §8's own two lint exemptions: the seven tool labels (unchanged mechanism, `TOOL_NAME_EXEMPT`
+ * already reads live from `courseUi.toolLabels`, which now includes `G`) PLUS the two exact
+ * strings `もう一問`/`もう 一問` (Grade-3 kanji 問, appearing in b07's own title/toolCard/transcript
+ * teach-lines and b-ending's END-L28/screenLine) — these need a SECOND exemption the existing
+ * tool-name one doesn't cover: `TOOL_NAME_EXEMPT` only silences `kanji-floor` (checkKanjiFloorExempt
+ * below), but 問 needs `ruby-required`/`kanji-grade` silenced too (those come straight from
+ * `lintText`, not `checkKanjiFloor`). `AI` needed no code change: it's Latin, not kanji, and
+ * doesn't match either banned/PII word list — confirmed by direct inspection before writing this,
+ * flagged in the WO-C5 report as a no-op exemption rather than assumed silently.
+ * ================================================================================================= */
+const KANJI_GRADE_EXEMPT: readonly string[] = ['もう 一問', 'もう一問'];
+
+function redactKanjiGradeExempt(text: string): string {
+  let out = text;
+  for (const s of KANJI_GRADE_EXEMPT) out = out.split(s).join('');
+  return out;
+}
+
+function lintChildFacingBeginner(text: string, gradeOf: GradeMap): LintIssue[] {
+  const issues = lintText(redactKanjiGradeExempt(text), COURSE_STAGE, gradeOf).filter(
+    (i) => i.rule !== 'length' && i.rule !== 'banned-word' && i.rule !== 'pii-word',
+  );
+  return [
+    ...issues,
+    ...bannedAndPiiIssues(text, gradeOf),
+    ...checkKanjiFloorExempt(text),
+    ...checkSentenceLengths(text, COURSE_STAGE),
+  ];
+}
+
+function beginnerChildFacingTexts(lesson: CourseBeginnerLesson): string[] {
+  const texts: string[] = [lesson.title];
+  const block = lesson.listen;
+  for (const line of block.transcript) texts.push(line.text);
+  texts.push(block.toolCard.when, block.toolCard.how);
+  for (const ex of lesson.exercises) {
+    texts.push(ex.scene.text, ex.q0.text);
+    for (const step of ex.steps) {
+      texts.push(step.answer.text, step.hint.h1, step.hint.h2Highlight);
+      for (const opt of step.options) texts.push(opt.text, opt.reply.text, opt.feedback);
+    }
+  }
+  for (const item of lesson.audit) {
+    texts.push(item.scene, item.q0[1], item.answer[1], item.prompt);
+    for (const c of item.cards) texts.push(c[1], c[2]);
+  }
+  texts.push(lesson.home.title, ...lesson.home.steps, ...lesson.home.wordHints);
+  return texts;
+}
+
+/** `home.button` is pressed by the PARENT (WO-C5 §3 screen 4: "the big button... for the parent to
+ *  press"), same audience as `home.parentNote` — not scanned as child-audience text. */
+function beginnerParentFacingTexts(lesson: CourseBeginnerLesson): string[] {
+  return [lesson.home.parentNote, lesson.home.button];
+}
+
+export function checkBeginnerCourseLesson(lesson: CourseBeginnerLesson, gradeOf: GradeMap, opts: CourseGateOptions): CourseGateResult {
+  const approvalIssues: string[] = [];
+  if (opts.strict) {
+    if (!isFullyApproved(lesson.review)) {
+      approvalIssues.push(`lesson ${lesson.id}: not fully approved (${approvalLabel(lesson.review)})`);
+    }
+    for (const ex of lesson.exercises) {
+      if (!isFullyApproved(ex.review)) {
+        approvalIssues.push(`lesson ${lesson.id} exercise ${ex.id}: not fully approved (${approvalLabel(ex.review)})`);
+      }
+    }
+  }
+
+  const lintIssues: string[] = [];
+  for (const text of beginnerChildFacingTexts(lesson)) {
+    for (const i of lintChildFacingBeginner(text, gradeOf)) lintIssues.push(`[${i.rule}] ${i.message}`);
+  }
+  for (const text of beginnerParentFacingTexts(lesson)) {
+    for (const i of lintParentFacing(text, gradeOf)) lintIssues.push(`[${i.rule}] ${i.message} (parent-facing)`);
+  }
+
+  const approved = isFullyApproved(lesson.review);
+  return {
+    approvalIssues,
+    contentLintIssues: approved ? lintIssues : [],
+    contentLintWarnings: approved ? [] : lintIssues,
+  };
+}
+
+export function checkBeginnerEndingLesson(lesson: CourseEndingLesson, gradeOf: GradeMap, opts: CourseGateOptions): CourseGateResult {
+  const approvalIssues: string[] = [];
+  if (opts.strict && !isFullyApproved(lesson.review)) {
+    approvalIssues.push(`lesson ${lesson.id}: not fully approved (${approvalLabel(lesson.review)})`);
+  }
+  const texts = [lesson.title, lesson.scene, lesson.screenLine, lesson.screenSub, ...lesson.transcript.map((l) => l.text)];
+  const lintIssues: string[] = [];
+  for (const text of texts) {
+    for (const i of lintChildFacingBeginner(text, gradeOf)) lintIssues.push(`[${i.rule}] ${i.message}`);
+  }
   const approved = isFullyApproved(lesson.review);
   return {
     approvalIssues,

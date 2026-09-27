@@ -32,10 +32,44 @@ export function exerciseAnswerAudioPath(lessonId: string, exerciseId: string): s
 
 export type ExerciseOptionAudioPart = 'ask' | 'reply' | 'feedback';
 
+/** WO-C5 §2 b07 chains: step 0's clips are unprefixed (`..._a_ask.mp3`), step 1 is `_s1_`-prefixed,
+ *  step 2 is `_s2_`, etc. — the WO's own "don't play it twice" means there is no per-step `answer`
+ *  clip beyond step 0 (a later step's `answer` text is the same audio as the PREVIOUS step's chosen
+ *  option's own `reply`, already played). */
+function chainStepInfix(stepIndex: number): string {
+  return stepIndex === 0 ? '' : `_s${stepIndex}`;
+}
+
 export function exerciseOptionAudioPath(
-  lessonId: string, exerciseId: string, optionId: string, part: ExerciseOptionAudioPart,
+  lessonId: string, exerciseId: string, optionId: string, part: ExerciseOptionAudioPart, stepIndex = 0,
 ): string {
-  return `${lessonDir(lessonId)}/${lessonId}_e${exerciseNumber(exerciseId)}_${optionId}_${part}.mp3`;
+  return `${lessonDir(lessonId)}/${lessonId}_e${exerciseNumber(exerciseId)}${chainStepInfix(stepIndex)}_${optionId}_${part}.mp3`;
+}
+
+/* ---- WO-C5 §3 チェック (audit) audio paths — 'b01-k1' -> lessonId 'b01', auditNumber '1' -------- */
+
+function auditNumber(auditId: string): string {
+  return auditId.replace(/^k/, '');
+}
+
+export function auditQ0AudioPath(lessonId: string, auditId: string): string {
+  return `${lessonDir(lessonId)}/${lessonId}_k${auditNumber(auditId)}_q0.mp3`;
+}
+
+export function auditAnswerAudioPath(lessonId: string, auditId: string): string {
+  return `${lessonDir(lessonId)}/${lessonId}_k${auditNumber(auditId)}_answer.mp3`;
+}
+
+export function auditPromptAudioPath(lessonId: string, auditId: string): string {
+  return `${lessonDir(lessonId)}/${lessonId}_k${auditNumber(auditId)}_prompt.mp3`;
+}
+
+export function auditCardAudioPath(lessonId: string, auditId: string, cardIndex: number): string {
+  return `${lessonDir(lessonId)}/${lessonId}_k${auditNumber(auditId)}_c${cardIndex}.mp3`;
+}
+
+export function auditCardFeedbackAudioPath(lessonId: string, auditId: string, cardIndex: number): string {
+  return `${lessonDir(lessonId)}/${lessonId}_k${auditNumber(auditId)}_c${cardIndex}_feedback.mp3`;
 }
 
 /** `lineIndex` is 0-based (the dialogue array's own index); the sheet's own file names are

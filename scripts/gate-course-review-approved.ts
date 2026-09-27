@@ -12,9 +12,9 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { loadGradeMap } from '../pipeline/lib/kanji.js';
-import { checkCourseLesson } from './lib/courseContentGate.js';
-import { loadAudioSheet, distinctAudioFiles } from './lib/audioSheet.js';
-import type { CourseManifest, CourseLesson } from '../src/course/content/types.js';
+import { checkCourseLesson, checkBeginnerCourseLesson, checkBeginnerEndingLesson } from './lib/courseContentGate.js';
+import { loadAudioSheet, distinctAudioFiles, type AudioSheetRow } from './lib/audioSheet.js';
+import type { CourseManifest, CourseLesson, CourseBeginnerManifest, CourseBeginnerLesson, CourseEndingLesson } from '../src/course/content/types.js';
 
 const ROOT = process.cwd();
 const COURSE_DIR = resolve(ROOT, 'src/course/content');
@@ -99,6 +99,101 @@ for (const part of manifest.parts) {
   for (const issue of result.contentLintWarnings) {
     warnings++;
     console.warn(`WARN gate:course-review — lesson ${lesson.id} (pending review): ${issue}`);
+  }
+}
+
+/* =================================================================================================
+ * WO-C5 §8 — the beginner course (b01-b07 + b-ending), a SEPARATE manifest
+ * (`content/lessons/beginner.course.json`, `courseId: 'beginner'`) from `course.json`'s own
+ * `stage2` roster above — read directly rather than added to that manifest, so nothing here can
+ * ever affect c01-c12's own gate behaviour. Audio-file check generalizes c01's own
+ * `distinctAudioFiles` (hardcoded to a `c01_` filename prefix) via `content/course/beginner/
+ * beginner.audio-sheet.csv`'s own `clip` id prefix instead — never touching `scripts/lib/
+ * audioSheet.ts`'s existing c01-only helper, for the same "zero risk to the c01 gate" reason
+ * WO-C4's own generation script wrote its own lesson-id derivation rather than reusing it.
+ * ================================================================================================= */
+const BEGINNER_COURSE_DIR = resolve(ROOT, 'src/course/content/lessons');
+const BEGINNER_MANIFEST_PATH = resolve(BEGINNER_COURSE_DIR, 'beginner.course.json');
+const BEGINNER_AUDIO_SHEET_PATH = resolve(ROOT, 'content/course/beginner/beginner.audio-sheet.csv');
+
+function beginnerLessonIdForClip(clip: string): string | null {
+  const m = clip.match(/^(b\d\d)-/);
+  if (m) return m[1]!;
+  return clip.startsWith('END-') ? 'beginner' : null;
+}
+
+/** Every DISTINCT final file the beginner sheet implies must exist, one entry per joined きく/
+ *  ending master (not one per line) plus every standalone clip — mirrors c01's own
+ *  `distinctAudioFiles` but keyed by clip-id prefix instead of a hardcoded filename prefix. */
+function beginnerDistinctAudioFiles(rows: AudioSheetRow[]): { file: string; lessonId: string }[] {
+  const files = new Map<string, string>();
+  for (const row of rows) {
+    const lessonId = beginnerLessonIdForClip(row.clip);
+    if (lessonId) files.set(row.file, lessonId);
+  }
+  return [...files.entries()].map(([file, lessonId]) => ({ file, lessonId }));
+}
+
+function checkBeginnerAudioFilesExist(lessonId: string, audio: string): string[] {
+  const audioPath = resolve(PUBLIC_DIR, audio);
+  return existsSync(audioPath) ? [] : [`lesson ${lessonId} listen: audio file missing — public/${audio}`];
+}
+
+if (existsSync(BEGINNER_MANIFEST_PATH)) {
+  const beginnerManifest = JSON.parse(readFileSync(BEGINNER_MANIFEST_PATH, 'utf8')) as CourseBeginnerManifest;
+
+  for (const part of beginnerManifest.parts) {
+    if (part.kind !== 'lesson') continue;
+    const lessonPath = resolve(BEGINNER_COURSE_DIR, `${part.id}.lesson.json`);
+    if (!existsSync(lessonPath)) continue;
+
+    const lesson = JSON.parse(readFileSync(lessonPath, 'utf8')) as CourseBeginnerLesson;
+    checked++;
+    const result = checkBeginnerCourseLesson(lesson, gradeOf, { strict: STRICT });
+
+    for (const issue of result.approvalIssues) { failures++; console.error(`FAIL gate:course-review — ${issue}`); }
+    if (STRICT) {
+      for (const issue of checkBeginnerAudioFilesExist(lesson.id, lesson.listen.audio)) {
+        failures++;
+        console.error(`FAIL gate:course-review — ${issue}`);
+      }
+    }
+    for (const issue of result.contentLintIssues) { failures++; console.error(`FAIL gate:course-review — lesson ${lesson.id}: ${issue}`); }
+    for (const issue of result.contentLintWarnings) { warnings++; console.warn(`WARN gate:course-review — lesson ${lesson.id} (pending review): ${issue}`); }
+  }
+
+  const endingPart = beginnerManifest.parts.find((p) => p.kind === 'ending');
+  if (endingPart) {
+    const endingPath = resolve(BEGINNER_COURSE_DIR, `${endingPart.id}.json`);
+    if (existsSync(endingPath)) {
+      const ending = JSON.parse(readFileSync(endingPath, 'utf8')) as CourseEndingLesson;
+      checked++;
+      const result = checkBeginnerEndingLesson(ending, gradeOf, { strict: STRICT });
+      for (const issue of result.approvalIssues) { failures++; console.error(`FAIL gate:course-review — ${issue}`); }
+      if (STRICT) {
+        for (const issue of checkBeginnerAudioFilesExist(ending.id, ending.audio)) {
+          failures++;
+          console.error(`FAIL gate:course-review — ${issue}`);
+        }
+      }
+      for (const issue of result.contentLintIssues) { failures++; console.error(`FAIL gate:course-review — lesson ${ending.id}: ${issue}`); }
+      for (const issue of result.contentLintWarnings) { warnings++; console.warn(`WARN gate:course-review — lesson ${ending.id} (pending review): ${issue}`); }
+    }
+  }
+
+  if (STRICT && existsSync(BEGINNER_AUDIO_SHEET_PATH)) {
+    const rows = loadAudioSheet(BEGINNER_AUDIO_SHEET_PATH);
+    const joinTargetFiles = new Set(
+      beginnerManifest.parts.map((p) => (p.kind === 'lesson' ? `${p.id}_listen.mp3` : 'b_ending.mp3')),
+    );
+    for (const { file, lessonId } of beginnerDistinctAudioFiles(rows)) {
+      if (joinTargetFiles.has(file)) continue; // already checked via each lesson's own listen.audio / ending.audio
+      const relPath = `audio/course/${lessonId}/${file}`;
+      if (!existsSync(resolve(PUBLIC_DIR, relPath))) {
+        failures++;
+        console.error(`FAIL gate:course-review — beginner course: audio clip missing — public/${relPath}`);
+      }
+    }
   }
 }
 

@@ -38,7 +38,13 @@ export type EventName =
   // in shared/courseProgressMerge.ts); `course_lesson_complete`/`course_stage_complete` fire on
   // the 100%-crossing exactly once, mirroring `shouldShowSixtyPercentNotice`'s own once-only shape.
   | 'course_lesson_start' | 'course_listen_done' | 'course_item_done' | 'course_make_done'
-  | 'course_teachback_done' | 'course_family_star' | 'course_lesson_complete' | 'course_stage_complete';
+  | 'course_teachback_done' | 'course_family_star' | 'course_lesson_complete' | 'course_stage_complete'
+  /** WO-C5 §4 — the beginner course reuses every `course_*` event above (`courseId: 'beginner'`
+   *  distinguishes it from stage2 in the event props) and adds these two of its own: チェック's
+   *  own item-done event (audit ids share `course_item_done`'s exercise-id shape but are a
+   *  logically distinct step) and おうちで's ★ press (distinct from stage2's `course_family_star`
+   *  since it's pressed by a parent from a different screen, on a different condition). */
+  | 'course_audit_item_done' | 'course_home_star';
 
 type Props = Record<string, string | number | boolean>;
 

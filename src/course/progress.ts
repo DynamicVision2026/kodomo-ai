@@ -9,7 +9,7 @@
  * how `src/engine/storage.ts` and `backend/src/schema.ts`'s `ProgressDoc` both already build on
  * `shared/progressMerge.ts`'s `ModuleProgressState` rather than keeping their own copies.
  */
-import type { CourseLesson, CoursePart } from './content/types';
+import type { CourseLesson, CourseBeginnerLesson, CoursePart } from './content/types';
 import {
   emptyLessonProgressState,
   emptyCourseProgressState,
@@ -137,6 +137,59 @@ export function computeStepUnlocks(lesson: CourseLesson, progress: CourseLessonP
     make: exerciseBDone,
     teachBack: allMakeBlocksDone(lesson, p),
     family: p.teachBackDone,
+  };
+}
+
+/**
+ * WO-C5 §4 — beginner-course lesson percent: きく 30 + れんしゅう 50 (10 per item, 5 items) +
+ * チェック 20 (5 per item, 4 items) = 100. Reuses the EXACT SAME `CourseLessonProgressState` shape
+ * as c01-c06 (no new progress type): `listenADone` doubles as きく-done (this lesson has only one
+ * listen step, never two), and `exercisesDone` holds BOTH this lesson's practice-item ids
+ * (`b0N-eNN`) AND its audit-item ids (`kN`) unioned in the same array — safe since the two id
+ * spaces never collide, and it lets `exercisesDone`'s existing union-merge semantics
+ * (shared/courseProgressMerge.ts) cover both categories with zero backend/merge changes. `stars`
+ * is the おうちで ★ counter, same semantics as c01-c06's family star (never required for 100%).
+ */
+export function computeBeginnerLessonPercent(lesson: CourseBeginnerLesson, progress: CourseLessonProgress | undefined): number {
+  if (!progress) return 0;
+  const exerciseIds = new Set(lesson.exercises.map((e) => e.id));
+  const auditIds = new Set(lesson.audit.map((a) => a.id));
+  const exerciseDone = progress.exercisesDone.filter((id) => exerciseIds.has(id)).length;
+  const auditDone = progress.exercisesDone.filter((id) => auditIds.has(id)).length;
+  let percent = 0;
+  if (progress.listenADone) percent += 30;
+  percent += lesson.exercises.length > 0 ? (exerciseDone / lesson.exercises.length) * 50 : 0;
+  percent += lesson.audit.length > 0 ? (auditDone / lesson.audit.length) * 20 : 0;
+  return Math.min(100, Math.round(percent));
+}
+
+/** WO-C5 §3: きく→れんしゅう→チェック→おうちで, each opening once the previous is fully done —
+ *  same "stays reachable once unlocked" rule as `computeStepUnlocks`. おうちで's own ★ press is
+ *  never gated further (a parent can press it as soon as it's reachable). */
+export interface CourseBeginnerStepUnlocks {
+  listen: boolean;
+  exercise: boolean;
+  audit: boolean;
+  home: boolean;
+}
+
+/** WO-C5 §3/§4: the final page (さいごのページ) appears once all 7 lessons are at 100% — `percents`
+ *  must be in lesson order, one entry per lesson (mirrors `computeStagePercent`'s own "already in
+ *  the same order/length as the manifest" contract). An empty list (no lessons authored yet) is
+ *  never "complete" — there's nothing to have finished. */
+export function allBeginnerLessonsComplete(percents: number[]): boolean {
+  return percents.length > 0 && percents.every((p) => p >= 100);
+}
+
+export function computeBeginnerStepUnlocks(lesson: CourseBeginnerLesson, progress: CourseLessonProgress | undefined): CourseBeginnerStepUnlocks {
+  const p = progress ?? emptyLessonProgress();
+  const exerciseDone = lesson.exercises.every((e) => p.exercisesDone.includes(e.id));
+  const auditDone = lesson.audit.every((a) => p.exercisesDone.includes(a.id));
+  return {
+    listen: true,
+    exercise: p.listenADone,
+    audit: exerciseDone,
+    home: auditDone,
   };
 }
 

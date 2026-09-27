@@ -3,8 +3,9 @@ import type { ProfileDoc } from '../schema.js';
 import { profilePath } from '../schema.js';
 import { resolveSession } from '../session.js';
 import { passesCsrfCheck } from '../csrf.js';
-import { checkUnitAccess, ensureTrialStarted, recordFirstPaidUse, recordTrialUnitOpened } from '../access.js';
+import { checkUnitAccess, recordFirstPaidUse } from '../access.js';
 import { isFreeMission } from '../../../shared/freeMissions.js';
+import { isModuleEntitled } from '../family.js';
 
 async function ownsProfile(env: Env, familyId: string, profileId: string): Promise<boolean> {
   const profile = await env.db.get<ProfileDoc>(profilePath(familyId, profileId));
@@ -39,18 +40,19 @@ export async function handleUnitOpen(request: Request, env: Env, unitId: string)
   if (!(await ownsProfile(env, familyId, profileId))) return new Response('not found', { status: 404 });
 
   const now = new Date();
-  const access = await checkUnitAccess(env, familyId, moduleId, unitId, now);
+  const access = await checkUnitAccess(env, familyId, moduleId, unitId);
   if (!access.allowed) {
     return new Response(JSON.stringify({ error: access.reason }), { status: 403, headers: { 'content-type': 'application/json' } });
   }
 
-  if (isFreeMission(moduleId, unitId)) {
-    await ensureTrialStarted(env, familyId, moduleId, now);
-    // AD-15's own 2-hour-grace rule (backend/src/access.ts) — stamp every successful open of
-    // the trial unit, not just the first, so a lesson genuinely underway right at the 72-hour
-    // boundary can still be finished.
-    await recordTrialUnitOpened(env, familyId, moduleId, now);
-  } else {
+  // WO-C5 §6: the Playground's own trial clock is retired — `checkUnitAccess` above no longer
+  // gates entry on entitlement/trial at all for it, so there's nothing left to start here. The
+  // refund-eligibility evidence this used to record only in the `else` branch (`recordFirstPaidUse`,
+  // read by backend/src/refund.ts's `computeEligibilitySnapshot`) keeps its exact old meaning —
+  // "an ENTITLED family used a non-free unit" — by checking entitlement explicitly now, since
+  // access no longer implies it. A family with no entitlement at all (freely browsing the now-open
+  // Playground) never had anything paid to record in the first place.
+  if (!isFreeMission(moduleId, unitId) && (await isModuleEntitled(env, familyId, moduleId))) {
     await recordFirstPaidUse(env, familyId, moduleId, unitId, profileId, now);
   }
 

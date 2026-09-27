@@ -255,6 +255,88 @@
   opacity: 0.55;
 }
 
+/* WO-C5 §2 — b07's chain step indicator/trail. */
+.course-exercise__chain-step {
+  font-weight: 700;
+}
+
+.course-exercise__chain-trail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.course-exercise__chain-trail-chip {
+  background: var(--ad12-field-1);
+  border-radius: var(--ad12-radius-chip);
+  padding: 0.15rem 0.5rem;
+}
+
+/* WO-C5 §3 — おうちで. */
+.course-hometask__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.course-hometask__hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.course-hometask__hint-card {
+  background: var(--ad12-field-1);
+  border-radius: var(--ad12-radius-chip);
+  padding: 0.3rem 0.6rem;
+}
+
+.course-hometask__parent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.course-hometask__parent-heading {
+  font-weight: 700;
+}
+
+/* WO-C5 §3 screen 5 — さいごのページ. */
+.course-ending--message,
+.course-ending--certificate {
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+
+.course-ending__seal {
+  font-size: 2.5rem;
+}
+
+.course-ending__certificate-heading {
+  font-weight: 700;
+}
+
+/* WO-C5 §4 — the beginner course's own 7-flower garden (per-lesson icon, no depth-tab row). */
+.course-beginner-flower__button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.course-beginner-flower--locked {
+  opacity: 0.55;
+}
+
+.course-beginner-flower--done {
+  opacity: 0.85;
+}
+
 /*
  * WO-C2 §4 — breakpoints: phone <700px (the default, single-column, above), iPad portrait
  * 700-999px, iPad landscape >=1000px. No sideways scroll at any size — `.course-screen`'s own

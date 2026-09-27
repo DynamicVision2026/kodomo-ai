@@ -64,11 +64,22 @@ function highlightSubstring(text: string, needle: string) {
 }
 
 export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack }: ExerciseScreenProps) {
+  const [stepIndex, setStepIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>({ kind: 'picking' });
   const [missCount, setMissCount] = useState(0);
   const [triedIds, setTriedIds] = useState<string[]>([]);
   const [hintShown, setHintShown] = useState(false);
-  const exerciseStep = exercise.steps[0];
+  /** WO-C5 §2 b07 chains: the intended card's own text at each completed earlier step, shown as a
+   *  compact trail while the child works through the remaining steps. */
+  const [chainTrail, setChainTrail] = useState<string[]>([]);
+  // WO-C5 §2: chains are b07's own tool-G exercises specifically ("2-3 step chains"), never
+  // inferred from `steps.length` alone — c00-demo-e02 (pre-existing stage2 content, tool B) also
+  // happens to declare 2 steps for its own, unrelated reason, and ExerciseScreen has always only
+  // ever read `steps[0]` for it (this screen's own original header comment: "in steps[0].
+  // displayOrder order"); gating on `tool === 'G'` too keeps that exact pre-existing behavior
+  // untouched for every non-chain exercise, whatever its own `steps` array happens to contain.
+  const isChain = exercise.tool === 'G' && exercise.steps.length > 1;
+  const exerciseStep = exercise.steps[stepIndex];
   const options = exerciseStep?.options ?? [];
   const displayOrder = exerciseStep?.displayOrder ?? options.map((o) => o.id);
   const orderedOptions = displayOrder
@@ -76,18 +87,42 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
     .filter((o): o is CourseExerciseOption => !!o);
 
   const isLastItem = position.index + 1 >= position.total;
+  const isLastStep = stepIndex + 1 >= exercise.steps.length;
   const showH1 = hintShown || missCount >= 1;
   const showH2 = missCount >= 2;
 
+  /** WO-C5 §2: `sameTool` also counts as success (the child used today's own tool, just on a
+   *  different, still-valid angle) — c01-c06 never author this role, so this only ever widens
+   *  behaviour for the beginner course's own content. */
+  function isSuccess(option: CourseExerciseOption): boolean {
+    return option.role === 'best' || option.role === 'sameTool';
+  }
+
   function choose(option: CourseExerciseOption) {
-    if (option.role === 'best') {
-      setPhase({ kind: 'solved', optionId: option.id, exploring: false, exploreOptionId: null });
-      onItemDone(exercise.id);
+    if (isSuccess(option)) {
+      if (isChain && !isLastStep) {
+        // WO-C5 §2: "don't play it twice" — the reply/feedback beat below plays this option's own
+        // audio once; the NEXT step's own `answer` (identical text) is then shown without its own
+        // voice cue, advancing only once this beat is acknowledged (`chainNext`).
+        setPhase({ kind: 'solved', optionId: option.id, exploring: false, exploreOptionId: null });
+      } else {
+        setPhase({ kind: 'solved', optionId: option.id, exploring: false, exploreOptionId: null });
+        onItemDone(exercise.id);
+      }
     } else {
       setMissCount((c) => c + 1);
       setTriedIds((ids) => (ids.includes(option.id) ? ids : [...ids, option.id]));
       setPhase({ kind: 'miss', optionId: option.id });
     }
+  }
+
+  function chainNext(caughtWord: string) {
+    setChainTrail((t) => [...t, caughtWord]);
+    setStepIndex((i) => i + 1);
+    setPhase({ kind: 'picking' });
+    setMissCount(0);
+    setTriedIds([]);
+    setHintShown(false);
   }
 
   function handleNext() {
@@ -118,11 +153,23 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
         {Array.from({ length: position.total }, (_, i) => (
           <span
             key={i}
-            className={`course-exercise__dot ${i < position.index || (i === position.index && phase.kind === 'solved') ? 'course-exercise__dot--done' : ''}`}
+            className={`course-exercise__dot ${i < position.index || (i === position.index && phase.kind === 'solved' && (!isChain || isLastStep)) ? 'course-exercise__dot--done' : ''}`}
           />
         ))}
       </div>
       <p className="ad12-ui-text">{courseUi.exerciseProgressLabel} {position.index + 1}/{position.total}</p>
+      {isChain && (
+        <>
+          <p className="ad12-ui-text course-exercise__chain-step">
+            {courseUi.chainStepLabel.replace('{n}', String(stepIndex + 1)).replace('{total}', String(exercise.steps.length))}
+          </p>
+          {chainTrail.length > 0 && (
+            <div className="course-exercise__chain-trail" aria-hidden="true">
+              {chainTrail.map((word, i) => <span key={i} className="course-exercise__chain-trail-chip ad12-ui-text">「{word}」</span>)}
+            </div>
+          )}
+        </>
+      )}
       <Plane className="course-exercise__scene">
         <p className="ad12-ui-text"><Ruby text={exercise.scene.text} /></p>
       </Plane>
@@ -134,7 +181,10 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
           <p className="ad12-reading-text">
             {showH2 ? highlightSubstring(exerciseStep.answer.text, exerciseStep.hint.h2Highlight) : <Ruby text={exerciseStep.answer.text} />}
           </p>
-          <VoiceCue src={exerciseAnswerAudioPath(lessonId, exercise.id)} />
+          {/* WO-C5 §2 "don't play it twice": a chain step beyond the first has no own answer
+              clip — its text is the exact audio already played as the previous step's chosen
+              reply, a beat ago. */}
+          {stepIndex === 0 && <VoiceCue src={exerciseAnswerAudioPath(lessonId, exercise.id)} />}
         </Plane>
       )}
 
@@ -173,13 +223,15 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
 
       {phase.kind === 'miss' && chosen && (
         <>
-          {chosen.kind === 'question' && (
-            <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'ask')} />
+          {/* WO-C5 §2: a `stop`-kind option (b07's nearMiss 「ふーん、そうなんだ。」 card) is spoken
+              like a question card too — same `ask` clip mechanism, just never a success role. */}
+          {(chosen.kind === 'question' || chosen.kind === 'stop') && (
+            <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'ask', stepIndex)} />
           )}
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
-          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'reply')} />
+          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'reply', stepIndex)} />
           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
-          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'feedback')} />
+          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'feedback', stepIndex)} />
           <p className="ad12-ui-text">{courseUi.practice.retryPrompt}</p>
           <VoiceCue src={SHARED_AUDIO.practiceRetryPrompt} />
           <button type="button" className="ad12-ink-button ad12-tappable course-screen__primary" onClick={() => setPhase({ kind: 'picking' })}>
@@ -190,63 +242,75 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
 
       {phase.kind === 'solved' && chosen && (
         <>
-          {chosen.kind === 'question' && (
-            <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'ask')} />
+          {(chosen.kind === 'question' || chosen.kind === 'stop') && (
+            <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'ask', stepIndex)} />
           )}
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
-          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'reply')} />
+          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'reply', stepIndex)} />
           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
-          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'feedback')} />
-          {chosen.tool && (
-            <Plane className="course-exercise__badge">
-              <p className="ad12-ui-text">
-                {courseUi.practice.badgeToolUsed}：「{courseUi.toolLabels[chosen.tool].label}」
-              </p>
-            </Plane>
-          )}
+          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'feedback', stepIndex)} />
 
-          {phase.exploring && (
-            <Plane className="course-exercise__explore">
-              {phase.exploreOptionId ? (
-                (() => {
-                  const other = orderedOptions.find((o) => o.id === phase.exploreOptionId);
-                  if (!other) return null;
-                  return (
-                    <>
-                      {other.kind === 'question' && (
-                        <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'ask')} />
-                      )}
-                      <DialoguePlane speaker={other.reply.speaker} text={other.reply.text} />
-                      <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'reply')} />
-                      <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={other.feedback} />
-                      <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'feedback')} />
-                      <button
-                        type="button"
-                        className="ad12-ink-button ad12-tappable"
-                        onClick={() => setPhase({ ...phase, exploreOptionId: null })}
-                      >
-                        {courseUi.practice.closeLabel}
-                      </button>
-                    </>
-                  );
-                })()
-              ) : (
-                <div className="course-exercise__options">
-                  {orderedOptions.filter((o) => o.id !== chosen.id).map((option) => (
-                    <MoveCard key={option.id} text={option.text} onCommit={() => setPhase({ ...phase, exploreOptionId: option.id })} />
-                  ))}
-                </div>
-              )}
-            </Plane>
-          )}
-
-          <button type="button" className="ad12-ink-button ad12-tappable course-screen__primary" onClick={handleNext}>
-            {courseUi.practice.nextLabel}
-          </button>
-          {!phase.exploring && orderedOptions.length > 1 && (
-            <button type="button" className="ad12-ink-button ad12-tappable" onClick={() => setPhase({ ...phase, exploring: true })}>
-              {courseUi.practice.seeOtherCardsLabel}
+          {isChain && !isLastStep ? (
+            <button
+              type="button"
+              className="ad12-ink-button ad12-tappable course-screen__primary"
+              onClick={() => chainNext(exerciseStep!.hint.h2Highlight)}
+            >
+              {courseUi.practice.nextLabel}
             </button>
+          ) : (
+            <>
+              {chosen.tool && (
+                <Plane className="course-exercise__badge">
+                  <p className="ad12-ui-text">
+                    {isChain ? courseUi.beginnerToolBadgeLabel : courseUi.practice.badgeToolUsed}：「{courseUi.toolLabels[chosen.tool].label}」
+                  </p>
+                </Plane>
+              )}
+              {phase.exploring && (
+                <Plane className="course-exercise__explore">
+                  {phase.exploreOptionId ? (
+                    (() => {
+                      const other = orderedOptions.find((o) => o.id === phase.exploreOptionId);
+                      if (!other) return null;
+                      return (
+                        <>
+                          {(other.kind === 'question' || other.kind === 'stop') && (
+                            <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'ask', stepIndex)} />
+                          )}
+                          <DialoguePlane speaker={other.reply.speaker} text={other.reply.text} />
+                          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'reply', stepIndex)} />
+                          <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={other.feedback} />
+                          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'feedback', stepIndex)} />
+                          <button
+                            type="button"
+                            className="ad12-ink-button ad12-tappable"
+                            onClick={() => setPhase({ ...phase, exploreOptionId: null })}
+                          >
+                            {courseUi.practice.closeLabel}
+                          </button>
+                        </>
+                      );
+                    })()
+                  ) : (
+                    <div className="course-exercise__options">
+                      {orderedOptions.filter((o) => o.id !== chosen.id).map((option) => (
+                        <MoveCard key={option.id} text={option.text} onCommit={() => setPhase({ ...phase, exploreOptionId: option.id })} />
+                      ))}
+                    </div>
+                  )}
+                </Plane>
+              )}
+
+              <button type="button" className="ad12-ink-button ad12-tappable course-screen__primary" onClick={handleNext}>
+                {courseUi.practice.nextLabel}
+              </button>
+              {!phase.exploring && orderedOptions.length > 1 && (
+                <button type="button" className="ad12-ink-button ad12-tappable" onClick={() => setPhase({ ...phase, exploring: true })}>
+                  {courseUi.practice.seeOtherCardsLabel}
+                </button>
+              )}
+            </>
           )}
         </>
       )}

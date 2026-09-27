@@ -15,7 +15,10 @@
  * inline below and summarized in the WO-C1/WO-C2 completion reports.
  */
 
-export type CourseToolId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
+/** WO-C5 §2 adds a 7th tool, `G` (もう 一問／なんで？ゲーム, the beginner course's Lesson 7) — a
+ *  new icon in the same AD-18 visual style (`src/course/assets/icons/README.md`), additive to the
+ *  six c01-c06 icons. Widening this union is safe for existing content: c01-c06 never use `G`. */
+export type CourseToolId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
 
 export type CoursePracticeShape = 'single' | 'chain2' | 'chain3' | 'chain45' | 'review';
 
@@ -94,8 +97,14 @@ export interface CourseSpeechLine {
   audioCue?: string;
 }
 
-export type CourseOptionRole = 'best' | 'otherTool' | 'nearMiss';
-export type CourseOptionKind = 'question' | 'okButton';
+/** WO-C5 §2: the beginner course adds `sameTool` (the child used today's tool on a different,
+ *  still-valid angle — ExerciseScreen treats it as a SUCCESS alongside `best`, not a miss) to the
+ *  three roles c01-c06 already use. Additive — c01-c06 content never uses `sameTool`. */
+export type CourseOptionRole = 'best' | 'otherTool' | 'nearMiss' | 'sameTool';
+/** WO-C5 §2: `stop` (「ふーん、そうなんだ。」, b07's なんで？ゲーム) is spoken by ポン太 like a
+ *  question card — ExerciseScreen renders it identically to `question` (voiced reply, standard
+ *  card), the `kind` value only distinguishes it for authoring clarity. Additive. */
+export type CourseOptionKind = 'question' | 'okButton' | 'stop';
 
 export interface CourseExerciseOption {
   id: string;
@@ -272,7 +281,10 @@ export interface CourseLesson {
   listenReview?: CourseReviewStamp;
 }
 
-export type CoursePartKind = 'playground' | 'lesson';
+/** WO-C5: `'ending'` is new — the beginner course's さいごのページ (opens once all 7 lessons are
+ *  100%). Additive to the two kinds `stage2`'s own `course.json` uses; that manifest never emits
+ *  `'ending'`, so this is a no-op there. */
+export type CoursePartKind = 'playground' | 'lesson' | 'ending';
 
 export interface CoursePart {
   id: string;
@@ -282,6 +294,106 @@ export interface CoursePart {
    *  counts as flower 1... Don't add a progress bar inside the Playground" — this count is read
    *  from the course side only, nothing is written back into Playground state). */
   missions?: number;
+}
+
+/* =================================================================================================
+ * WO-C5 — 入門コース (beginner course): a SECOND, separate course (`courseId: 'beginner'`) built on
+ * this same content-type vocabulary, alongside `stage2` (c01-c12) rather than merged into it. Its
+ * own manifest lives at `content/lessons/beginner.course.json` / loaded by
+ * `content/beginnerManifest.ts` — `course.json`/`courseManifest.ts` (stage2's own files) are
+ * untouched. Reuses `CourseListenBlock`/`CourseExercise`/`CourseExerciseStep`/`CourseSpeechLine`
+ * unchanged (the widened `CourseToolId`/`CourseOptionRole`/`CourseOptionKind` above cover every
+ * beginner-only value) — only the LESSON-level shape differs (single `listen` object, no
+ * make/teachBack/family, two new sections `audit`/`home`), so only that shape gets a new type
+ * rather than widening `CourseLesson` itself with a bunch of now-conditionally-required fields.
+ * ================================================================================================= */
+
+/** WO-C5 §3 screen 3 (チェック): one of 4 per lesson. Voiced `q0`/`answer`/`prompt`, then 3 cards —
+ *  tapping one voices+shows its own feedback (no reply line, unlike a practice-item option).
+ *  `ok` advances to the next item; anything else prompts a retry, narrowing to the remaining
+ *  card(s) after a repeated miss (3 cards total, so a second miss always leaves exactly one). */
+export type CourseAuditCardRole = 'ok' | 'other' | 'none' | 'near';
+
+/** The real content authors each card as a positional tuple, `[role, text, feedback]` — not an
+ *  object (WO-C5 §2's own "cards[[role,text,feedback]]" is literal, not shorthand). */
+export type CourseAuditCard = [role: CourseAuditCardRole, text: string, feedback: string];
+
+/** Also positional (`[speaker, text]`), same reasoning as `CourseAuditCard`. */
+export type CourseAuditLine = [speaker: string, text: string];
+
+export interface CourseAuditItem {
+  id: string;
+  scene: string;
+  q0: CourseAuditLine;
+  answer: CourseAuditLine;
+  prompt: string;
+  cards: CourseAuditCard[];
+}
+
+/** WO-C5 §3 screen 4 (おうちで): voiced `title`+`steps`, `wordHints` as small reference cards, and
+ *  a parent-only area (`parentNote` + the big `button` a parent presses, storing a ★ — same
+ *  `stars` counter/semantics as the existing course's family-star, never required for 100%). */
+export interface CourseHomeTask {
+  title: string;
+  steps: string[];
+  wordHints: string[];
+  button: string;
+  parentNote: string;
+}
+
+/**
+ * A beginner-course lesson (b01-b07). `listen` is a SINGLE block (not an array — WO-C5 §2's own
+ * first "shape difference from c01"), reusing `CourseListenBlock`'s exact field set. No
+ * make/teachBack/family/parentCard — きく→れんしゅう→チェック→おうちで is the whole flow.
+ */
+export interface CourseBeginnerLesson {
+  id: string;
+  course: 'beginner';
+  title: string;
+  tool: CourseToolId;
+  listen: CourseListenBlock;
+  exercises: CourseExercise[];
+  audit: CourseAuditItem[];
+  home: CourseHomeTask;
+  review: CourseReviewStamp;
+  /** Authoring-only fields real content carries (`n`, `object`, `factChecks`, `version`) — never
+   *  rendered by any screen, kept optional/untyped-through rather than stripped from the content
+   *  (WO-C5 §1: "Ignore unknown fields... not rendered"). */
+  factChecks?: CourseFactCheck[];
+}
+
+/** The beginner course's さいごのページ (b-ending.json) — its own shape, not a `CourseListenBlock`
+ *  (no `tool`/`methodCards`/`thenExercises`/`toolCard`, and its transcript lines carry no
+ *  `section`/`part`). `screenLine`/`screenSub` are the full-screen text shown once the transcript
+ *  finishes playing (WO-C5 §3 screen 5) — same two strings as `beginner.course.json`'s own
+ *  `finalScreen.{line,sub}`, kept on the lesson file too so the ending screen needs only this one
+ *  object. */
+export interface CourseEndingLesson {
+  id: string;
+  course: 'beginner';
+  title: string;
+  scene: string;
+  transcript: CourseTranscriptLine[];
+  screenLine: string;
+  screenSub: string;
+  review: CourseReviewStamp;
+  audio: string;
+}
+
+export interface CourseBeginnerPart {
+  id: string;
+  kind: 'lesson' | 'ending';
+  tool?: CourseToolId;
+  icon?: string;
+  opensWhen?: string;
+}
+
+export interface CourseBeginnerManifest {
+  courseId: 'beginner';
+  title: string;
+  price: { yen: number; kind: string; sku: string };
+  parts: CourseBeginnerPart[];
+  finalScreen: { line: string; sub: string };
 }
 
 /**
@@ -362,6 +474,25 @@ export interface CourseUiStrings {
   parentMonthLabel: string;
   parentDayLabel: string;
   toolLabels: Record<CourseToolId, { object: string; label: string }>;
+  /** WO-C5 §9 — new chrome for the beginner course's own screens; c01-c06 never read these. */
+  beginnerCourseTitle: string;
+  beginnerGardenTitle: string;
+  lessonStepListenSingle: string;
+  lessonStepExerciseSingle: string;
+  lessonStepAudit: string;
+  lessonStepHome: string;
+  auditOkLabel: string;
+  beginnerToolBadgeLabel: string;
+  /** Template — `{n}`/`{total}` are replaced by the caller (e.g. "なんで？ 1/3"). */
+  chainStepLabel: string;
+  beginnerLockedCta: string;
+  endingPartTitle: string;
+  homeButtonFallback: string;
+  certificateContinueLabel: string;
+  certificateHeading: string;
+  certificateBlankLabel: string;
+  printCentreLabel: string;
+  beginnerHanamaruLabel: string;
   practice: {
     nextPrompt: string;
     /** The fixed guide character's name (WO-C2 §3.2: "reply voiced by reply speaker, then

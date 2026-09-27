@@ -19,6 +19,10 @@ export default defineConfig({
         // through src/main.tsx/MissionShell (Coordinator: "build a separate course shell with
         // its own entry and route... do not generalise MissionShell or main.tsx").
         course: resolve(__dirname, 'course/index.html'),
+        // WO-C5: 入門コース's own shell — separate entry/route from stage2's `course`, behind its
+        // own `BEGINNER_LAUNCH` flag at runtime (this route always builds; the flag decides
+        // whether production actually shows it).
+        courseBeginner: resolve(__dirname, 'course/beginner/index.html'),
         login: resolve(__dirname, 'login/index.html'),
         account: resolve(__dirname, 'account/index.html'),
         claim: resolve(__dirname, 'claim/index.html'),
