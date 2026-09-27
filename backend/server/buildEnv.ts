@@ -90,5 +90,6 @@ export function buildEnv(): Env {
     SHOPIFY_ADMIN_API_TOKEN: process.env.SHOPIFY_ADMIN_API_TOKEN,
     SHOPIFY_VARIANT_IDS: variantIds,
     IAP_AUDIENCE: process.env.IAP_AUDIENCE,
+    BEGINNER_LAUNCH: process.env.BEGINNER_LAUNCH,
   };
 }

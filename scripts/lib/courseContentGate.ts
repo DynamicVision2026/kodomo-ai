@@ -185,10 +185,21 @@ function parentFacingTexts(lesson: CourseLesson): string[] {
 const PII_SAFE_SENTENCES: readonly string[] = [
   'AIには、名前や学校名、じゅうしょを入れない',
   'お子さんの名前・学校名・住所などは入力しないでください。',
+  // WO-C5 follow-up (Coordinator, 27 Sep) — b05-e04's own story about mailing a letter: a plot
+  // reference to needing a stamp/address to send mail, never a request for the CHILD's own
+  // personal data. `bannedAndPiiIssues` checks at SENTENCE granularity (`splitIntoSentences`),
+  // so each multi-sentence field the Coordinator approved is split into its own allowlist entries
+  // below — only the one sub-sentence that actually contains 「じゅうしょ」 needs listing.
+  'じゅうしょも、まだ書いてないね。', // from 'あっ、きってをはらなきゃ。じゅうしょも、まだ書いてないね。'
+  '「きってと、じゅうしょがある」。', // from the e04 feedback's own first sentence
+  '手紙を出すには、きってと、じゅうしょがいる。', // factChecks[].claim — not currently scanned, listed for completeness
 ];
 
 const BANNED_WORD_SAFE_SENTENCES: readonly string[] = [
   '正解を言わせる場面ではありません。',
+  // WO-C5 follow-up (Coordinator, 27 Sep) — b05: a reassurance ("wasn't a mistake"), never a
+  // wrong-answer scoring moment.
+  'お姉ちゃんの答えは、まちがいじゃなかったよ。',
 ];
 
 function dropAllowlistedIssues(issues: LintIssue[], sentence: string): LintIssue[] {
@@ -302,14 +313,41 @@ function redactKanjiGradeExempt(text: string): string {
   return out;
 }
 
+/**
+ * WO-C5 follow-up (Coordinator, post-27-Sep sign-off): the beginner course's own text is signed
+ * off by the Founder + 酒井先生, and these 8 kana spellings are DELIBERATE — not an oversight the
+ * gate should keep catching. Exact-word allowlist, scoped to beginner content only
+ * (`lintChildFacingBeginner`/`checkKanjiFloorExemptBeginner`, never `lintChildFacing`/
+ * `checkKanjiFloorExempt` — c01-c06's own kanji-floor rule is completely unaffected): the 46
+ * findings this silences (lesson/id/word triples) are listed in the WO-C5 follow-up report for
+ * the Coordinator's own spot-check. Same "never add without sign-off" discipline as
+ * `PII_SAFE_SENTENCES`/`BANNED_WORD_SAFE_SENTENCES` above, just at word (not sentence) granularity
+ * — matching how `TOOL_NAME_EXEMPT`/`KANJI_GRADE_EXEMPT` already redact by exact word, not sentence.
+ */
+const BEGINNER_KANJI_FLOOR_EXEMPT: readonly string[] = ['ほん', 'なに', 'はは', 'いま', 'あさ', 'まち', 'からだ', 'はやい'];
+
+function redactBeginnerKanjiFloorExempt(text: string): string {
+  let out = text;
+  for (const s of BEGINNER_KANJI_FLOOR_EXEMPT) out = out.split(s).join('');
+  return out;
+}
+
+function checkKanjiFloorExemptBeginner(text: string): LintIssue[] {
+  return checkKanjiFloor(redactBeginnerKanjiFloorExempt(redactToolNamesForKanjiFloor(text))).map((v) => ({
+    rule: 'kanji-floor',
+    message: `「${v.kana}」should be written 「${v.kanji}」 (AD-05 kanji floor)`,
+    text,
+  }));
+}
+
 function lintChildFacingBeginner(text: string, gradeOf: GradeMap): LintIssue[] {
   const issues = lintText(redactKanjiGradeExempt(text), COURSE_STAGE, gradeOf).filter(
-    (i) => i.rule !== 'length' && i.rule !== 'banned-word' && i.rule !== 'pii-word',
+    (i) => i.rule !== 'length' && i.rule !== 'banned-word' && i.rule !== 'pii-word' && i.rule !== 'kanji-floor',
   );
   return [
     ...issues,
     ...bannedAndPiiIssues(text, gradeOf),
-    ...checkKanjiFloorExempt(text),
+    ...checkKanjiFloorExemptBeginner(text),
     ...checkSentenceLengths(text, COURSE_STAGE),
   ];
 }

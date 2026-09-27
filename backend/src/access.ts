@@ -2,11 +2,14 @@ import type { Env } from './types.js';
 import type { TrialDoc, UsageDoc } from './schema.js';
 import { trialPath, usagePath } from './schema.js';
 import { isModuleEntitled } from './family.js';
+import { isFreeMission } from '../../shared/freeMissions.js';
+import { trialState, trialWindow, TRIAL_GRACE_MS } from './trial.js';
 import { isPlaygroundSectionLocked } from './playground.js';
-import { trialState, TRIAL_GRACE_MS } from './trial.js';
+import { isBeginnerLaunchEnabled } from './course.js';
 
 /** The Playground's own module id (`src/modules/m1/module.json`'s `id`) — the one moduleId
- *  `checkUnitAccess` ever special-cases into free entry (WO-C5 §6). */
+ *  `checkUnitAccess` ever special-cases (WO-C5 §6), and only once `isBeginnerLaunchEnabled` says
+ *  so for the requesting family. */
 const PLAYGROUND_MODULE_ID = 'm1';
 
 export type AccessRefusalReason = 'trial_expired' | 'not_entitled';
@@ -16,43 +19,62 @@ export type AccessResult = { allowed: true } | { allowed: false; reason: AccessR
  * AD-16 §6's own "the AD-15 gate": whether `familyId` may open `unitId` (a mission id) inside
  * `moduleId` right now.
  *
- * WO-C5 §6 (retires the 72-hour account-first trial this function used to enforce): the Playground
- * (`moduleId === 'm1'`) is now free entry for every logged-in family, gated only by
- * `config/playground.lockedSections` (backend/src/playground.ts) — empty by default, so this
- * unconditionally passes today; a section id added there later is the one hook for locking part of
- * it again. Entitlement no longer matters for Playground ACCESS at all — the `kodomo-ai-m1`
- * entitlement's own meaning going forward is "unlocks the 入門コース" (see
- * backend/src/course.ts's sibling course-progress handler), not "unlocks the Playground." Any
- * OTHER module (none exist yet) keeps the plain entitled-or-refused check, unchanged.
- *
- * `TrialDoc`/`trial.ts`'s own start/expiry machinery is dead code from this function's point of
- * view now — a family's pre-existing trial doc, if any, is simply never read here again. AD-15's
- * progress-write 2-hour grace (`isProgressWriteAllowed` below) is a SEPARATE operation the WO left
- * untouched (progress saves, not unit opens) and still reads it exactly as before.
+ * WO-C5 §6/follow-up: the Playground becomes free entry for every logged-in family, gated only by
+ * `config/playground.lockedSections` — BUT ONLY once `isBeginnerLaunchEnabled` is true for this
+ * family (the build-time `BEGINNER_LAUNCH` flag, or this family's own row in
+ * `config/course.allowFamilies` — the exact same flag/allowlist pair the frontend's own
+ * `BEGINNER_LAUNCH` check already uses, so a family sees the free Playground here at exactly the
+ * same moment it can see /course/beginner/ at all). While that's false (production, today, for
+ * every family not on the allowlist), this falls straight through to the ORIGINAL AD-15/AD-16
+ * entitlement-or-trial gate, UNCHANGED — a live family must get exactly the old behaviour until
+ * the Founder actually turns the flag on. An actively entitled module always passes (also covers
+ * "refunded/revoked M1: access falls back to the existing trial state/dates" — a revoked
+ * entitlement just makes this check fall through to the SAME trial doc below, exactly as if it
+ * had never been entitled; nothing here or in `ensureTrialStarted` ever resets/recreates a trial
+ * doc that already exists). Otherwise, only the module's own free/trial unit(s)
+ * (shared/freeMissions.ts) can ever pass, and only while that module's trial hasn't elapsed —
+ * `not_started` counts as passing (the caller starts it via `ensureTrialStarted`), `expired`
+ * closes it, with NO exception here: AD-15's own "expired trial: new 1-1 start blocked" is
+ * unconditional — a NEW open or a RE-open of 1-1 is refused the instant `now` passes `endsAt`,
+ * whatever `TrialDoc.lastOpenedAt` says. The 2-hour grace this module also implements applies to a
+ * DIFFERENT operation entirely — see `isProgressWriteAllowed` below, used by `handlePutProgress`
+ * (backend/src/handlers/progress.ts) to keep accepting progress SAVES for a lesson that was
+ * already legitimately opened before `endsAt`, without ever re-opening (or re-entering) it. AD-16
+ * §0: trial expiry is the only place any of this ever refuses anything — never login, `/me`,
+ * profiles, or purchase.
  */
 export async function checkUnitAccess(
   env: Env,
   familyId: string,
   moduleId: string,
   unitId: string,
+  now: Date = new Date(),
 ): Promise<AccessResult> {
-  if (moduleId === PLAYGROUND_MODULE_ID) {
+  if (moduleId === PLAYGROUND_MODULE_ID && (await isBeginnerLaunchEnabled(env, familyId))) {
     if (await isPlaygroundSectionLocked(env, unitId)) return { allowed: false, reason: 'not_entitled' };
     return { allowed: true };
   }
+
   if (await isModuleEntitled(env, familyId, moduleId)) return { allowed: true };
-  return { allowed: false, reason: 'not_entitled' };
+  if (!isFreeMission(moduleId, unitId)) return { allowed: false, reason: 'not_entitled' };
+
+  const trial = await env.db.get<TrialDoc>(trialPath(familyId, moduleId));
+  if (trialState(trial, now) === 'expired') return { allowed: false, reason: 'trial_expired' };
+  return { allowed: true };
 }
 
 /**
  * AD-15's own 2-hour-grace rule, precisely scoped: "only progress writes for a lesson opened
- * before `endsAt` are accepted until `endsAt` + 2 hours" — never a re-open of the unit itself.
- * WO-C5 §6 left this operation (a progress SAVE, not a unit open) untouched on purpose: a family
- * with a trial doc from before the Playground went free still reads exactly the same here as it
- * always did. Since nothing starts a NEW trial doc any more (`checkUnitAccess` above no longer
- * gates Playground access on one at all), this simply never fires for any family whose first
- * Playground open happens after WO-C5 — `trial` is `null`, `trialState` returns `not_started`, and
- * this returns `true` unconditionally, the same as it always has for a family with no trial history.
+ * before `endsAt` are accepted until `endsAt` + 2 hours" — never a re-open of the unit itself
+ * (`checkUnitAccess` above has no exception for this at all). `TrialDoc.lastOpenedAt` is set only
+ * by `recordTrialUnitOpened`, itself only ever called right after `checkUnitAccess` already
+ * allowed the open — so by construction, a non-null `lastOpenedAt` can never be later than
+ * `endsAt` (opening is unconditionally refused from `endsAt` onward), meaning "opened before
+ * endsAt" reduces to "has ever been opened at all". The grace window itself is anchored at
+ * `endsAt`, not at `lastOpenedAt` — a lesson opened at hour 71 gets the same cutoff (`endsAt` + 2h)
+ * as one opened at hour 1, never a sliding/renewable window. WO-C5 follow-up: left entirely
+ * untouched — this is a progress-SAVE rule, not a unit-open one, and the Coordinator's own
+ * instruction was to leave it exactly as it was regardless of BEGINNER_LAUNCH.
  */
 export async function isProgressWriteAllowed(env: Env, familyId: string, moduleId: string, now: Date = new Date()): Promise<boolean> {
   const trial = await env.db.get<TrialDoc>(trialPath(familyId, moduleId));
@@ -60,6 +82,39 @@ export async function isProgressWriteAllowed(env: Env, familyId: string, moduleI
   if (state !== 'expired') return true; // not_started/active — same as before this rule existed.
   if (!trial?.lastOpenedAt) return false; // never actually opened — nothing to extend grace to.
   return now.getTime() - new Date(trial.endsAt).getTime() <= TRIAL_GRACE_MS;
+}
+
+/** Idempotent, race-safe (transactional): the first call for a family+module actually starts the
+ *  clock; every later call is a no-op returning the SAME doc (AD-16 §5: "not started -> active",
+ *  never restarted — this is also what makes the "refunded/revoked: no new trial created" rule
+ *  hold: a family with an existing trial doc from before their purchase/refund gets that SAME
+ *  doc back, dates untouched). WO-C5 follow-up: only called from `handleUnitOpen` while
+ *  `isBeginnerLaunchEnabled` is false for the family — a family who already sees the free
+ *  Playground never starts a new trial clock at all. */
+export async function ensureTrialStarted(env: Env, familyId: string, moduleId: string, now: Date = new Date()): Promise<TrialDoc> {
+  const path = trialPath(familyId, moduleId);
+  return env.db.runTransaction(async (tx) => {
+    const existing = await tx.get<TrialDoc>(path);
+    if (existing) return existing;
+    const doc: TrialDoc = { ...trialWindow(now), convertedAt: null, convertedOrderId: null, lastOpenedAt: null };
+    tx.set(path, doc);
+    return doc;
+  });
+}
+
+/** Stamps "the trial unit was just opened" on every server-accepted open of it (`checkUnitAccess`
+ *  already having allowed it, so this only ever runs while the trial was still active or not yet
+ *  started) — the ONE signal `isProgressWriteAllowed` above reads to grant its 2-hour progress-
+ *  save grace. Always called together with `ensureTrialStarted` (backend/src/handlers/units.ts)
+ *  so a trial doc always exists by the time this runs; a missing doc (shouldn't happen) is a
+ *  silent no-op rather than fabricating one out of order. */
+export async function recordTrialUnitOpened(env: Env, familyId: string, moduleId: string, now: Date = new Date()): Promise<void> {
+  const path = trialPath(familyId, moduleId);
+  await env.db.runTransaction(async (tx) => {
+    const existing = await tx.get<TrialDoc>(path);
+    if (!existing) return;
+    tx.set(path, { ...existing, lastOpenedAt: now.toISOString() });
+  });
 }
 
 /** AD-16 §6: "the first server-accepted open of any non-trial unit... if not already set." Never

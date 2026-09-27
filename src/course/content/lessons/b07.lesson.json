@@ -1320,14 +1320,20 @@
   {
    "where": "e02（にじ）",
    "claim": "雨上がりの空に水のつぶがのこっていて、お日さまの光が水のつぶに入ると、いろいろな色に分かれる",
-   "status": "to confirm with a source before release",
-   "sources": []
+   "status": "confirmed 27 Sep 2026",
+   "sources": [
+    "https://kids.gakken.co.jp/kagaku/kagaku110/science0339/",
+    "https://www.jma.go.jp/jma/kishou/know/faq/faq13.html"
+   ]
   },
   {
    "where": "e03（朝ごはん）",
    "claim": "食べたものは、おなかの中でこまかくなり、体中にはこばれて、体をうごかす力になる",
-   "status": "to confirm with a source before release",
-   "sources": []
+   "status": "confirmed 27 Sep 2026",
+   "sources": [
+    "https://edu.web.nhk/school/watch/clip/?das_id=D0005301453_00000",
+    "https://www.ncvc.go.jp/hospital/pub/knowledge/diet/diet01/"
+   ]
   },
   {
    "where": "e04（せきがえ）",

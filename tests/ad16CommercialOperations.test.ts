@@ -404,16 +404,18 @@ describe('AD-16 §7 — refunds/create revokes the entitlement, never touches pr
 });
 
 // ---------------------------------------------------------------------------------------------
-// WO-C5 §6 — the 72-hour trial is retired: the Playground is free entry for every logged-in
-// family, whatever a pre-existing trial doc (from before this change) says. Replaces the old
-// "AD-16 §0 — trial expiry closes Lesson 1-1 only" / "AD-15 — unit-open has NO grace" suites,
-// which asserted the exact opposite (a stale trial doc used to refuse re-entry) — that refusal
-// path no longer exists in `checkUnitAccess` (backend/src/access.ts) at all.
+// WO-C5 §6/follow-up — the 72-hour trial retires and the Playground becomes free ONLY once
+// `isBeginnerLaunchEnabled` is true for the family (`env.BEGINNER_LAUNCH === '1'`, or the family's
+// own id in `config/course.allowFamilies` — the exact same flag/allowlist pair as the frontend's
+// own BEGINNER_LAUNCH check). Every test in THIS block sets the flag on directly, proving the NEW
+// behavior; the next describe block below proves the OLD behavior holds byte-for-byte with the
+// flag off, which is what a live, non-allowlisted family gets today.
 // ---------------------------------------------------------------------------------------------
 
-describe('WO-C5 §6 — the Playground is free entry regardless of entitlement or any trial history', () => {
+describe('WO-C5 §6/follow-up — BEGINNER_LAUNCH on: the Playground is free entry regardless of entitlement or any trial history', () => {
   it('a family with NO entitlement at all can open any Playground unit, not just the old free one', async () => {
     const env = fakeEnv();
+    env.BEGINNER_LAUNCH = '1';
     const { token } = await loginFamily(env, 'neverpaid@example.com');
     const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
     const { id: profileId } = await createRes.json();
@@ -429,6 +431,7 @@ describe('WO-C5 §6 — the Playground is free entry regardless of entitlement o
 
   it('a stale, long-expired trial doc from before this change has no effect on opening at all', async () => {
     const env = fakeEnv();
+    env.BEGINNER_LAUNCH = '1';
     const { familyId, token } = await loginFamily(env, 'oldtrialdoc@example.com');
     await env.db.set(trialPath(familyId, 'm1'), {
       startedAt: new Date(Date.now() - 500 * 60 * 60 * 1000).toISOString(),
@@ -447,6 +450,7 @@ describe('WO-C5 §6 — the Playground is free entry regardless of entitlement o
 
   it('opening a unit no longer starts or touches any trial doc — the clock is retired, not just tolerant', async () => {
     const env = fakeEnv();
+    env.BEGINNER_LAUNCH = '1';
     const { familyId, token } = await loginFamily(env, 'notrialstarted@example.com');
     const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
     const { id: profileId } = await createRes.json();
@@ -481,6 +485,7 @@ describe('WO-C5 §6 — the Playground is free entry regardless of entitlement o
 
   it('a section id added to config/playground.lockedSections refuses that one unit only — the future lock hook actually works', async () => {
     const env = fakeEnv();
+    env.BEGINNER_LAUNCH = '1';
     const { token } = await loginFamily(env, 'lockedsection@example.com');
     await env.db.set('config/playground.lockedSections', { sectionIds: ['m1-s2-1-7'] });
     const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
@@ -497,6 +502,174 @@ describe('WO-C5 §6 — the Playground is free entry regardless of entitlement o
       env, 'm1-s2-1-6',
     );
     expect(openRes.status).toBe(200);
+  });
+
+  it('the per-family allowlist (config/course.allowFamilies) works too, without the global env flag — and only for THAT family', async () => {
+    const env = fakeEnv(); // BEGINNER_LAUNCH unset — this test is entirely about the allowlist path
+    const { familyId: allowedFamilyId, token: allowedToken } = await loginFamily(env, 'allowlisted@example.com');
+    const { token: otherToken } = await loginFamily(env, 'notallowlisted@example.com');
+    await env.db.set('config/course.allowFamilies', { familyIds: [allowedFamilyId] });
+
+    const allowedProfile = await handleCreateProfile(authedRequest('/api/v1/profiles', allowedToken, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: allowedProfileId } = await allowedProfile.json();
+    const otherProfile = await handleCreateProfile(authedRequest('/api/v1/profiles', otherToken, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: otherProfileId } = await otherProfile.json();
+
+    // The allowlisted family: a normally-paid unit (m1-s2-1-5) opens free, no entitlement needed.
+    const allowedRes = await handleUnitOpen(
+      authedRequest('/api/v1/units/m1-s2-1-5/open', allowedToken, { method: 'POST', body: JSON.stringify({ profileId: allowedProfileId, moduleId: 'm1' }) }),
+      env, 'm1-s2-1-5',
+    );
+    expect(allowedRes.status).toBe(200);
+
+    // A different, non-allowlisted family, same env/flag state: the SAME paid unit is refused —
+    // the old entitlement gate, unaffected, since BEGINNER_LAUNCH is off for everyone else.
+    const otherRes = await handleUnitOpen(
+      authedRequest('/api/v1/units/m1-s2-1-5/open', otherToken, { method: 'POST', body: JSON.stringify({ profileId: otherProfileId, moduleId: 'm1' }) }),
+      env, 'm1-s2-1-5',
+    );
+    expect(otherRes.status).toBe(403);
+    expect((await otherRes.json()).error).toBe('not_entitled');
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// WO-C5 follow-up item 1 — the safety check itself: with BEGINNER_LAUNCH OFF (env.BEGINNER_LAUNCH
+// unset, family not in config/course.allowFamilies — the exact state every live family is in
+// today, since the allowlist doc doesn't exist until staff add a row to it), `checkUnitAccess`/
+// `handleUnitOpen` must behave BYTE-FOR-BYTE like the pre-WO-C5 code: same trial start/expiry/
+// grace, same refund-eligibility recording. These are the same assertions the original AD-16 §0/
+// AD-15 suites made before WO-C5's first pass wrongly made them unconditional — restored here,
+// against the CURRENT code, with the flag verifiably off.
+// ---------------------------------------------------------------------------------------------
+
+describe('WO-C5 follow-up — BEGINNER_LAUNCH off: production behaves exactly as before (trial intact)', () => {
+  it('after the trial has expired, login still succeeds and a purchase intent can still be created', async () => {
+    const env = fakeEnv();
+    const { familyId, token } = await loginFamily(env, 'stillbuys-flagoff@example.com');
+    await env.db.set(trialPath(familyId, 'm1'), {
+      startedAt: new Date(Date.now() - 100 * 60 * 60 * 1000).toISOString(),
+      endsAt: new Date(Date.now() - 28 * 60 * 60 * 1000).toISOString(),
+      convertedAt: null, convertedOrderId: null, lastOpenedAt: null,
+    } satisfies TrialDoc);
+
+    const meRes = await handleMe(authedRequest('/api/v1/me', token, { method: 'GET' }), env);
+    expect(meRes.status).toBe(200);
+    const me = await meRes.json();
+    expect(me.familyId).toBe(familyId);
+    expect(me.trials).toEqual([{ moduleId: 'm1', state: 'expired', endsAt: expect.any(String) }]);
+
+    const intentRes = await handleCreatePurchaseIntent(
+      authedRequest('/api/v1/purchase-intents', token, { method: 'POST', body: JSON.stringify({ moduleId: 'm1' }) }),
+      env,
+    );
+    expect(intentRes.status).toBe(201);
+
+    // The trial unit itself (1-1) is now refused — exactly the pre-WO-C5 behavior.
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+    const openRes = await handleUnitOpen(
+      authedRequest('/api/v1/units/m1-s2-1-1/open', token, { method: 'POST', body: JSON.stringify({ profileId, moduleId: 'm1' }) }),
+      env, 'm1-s2-1-1',
+    );
+    expect(openRes.status).toBe(403);
+    expect((await openRes.json()).error).toBe('trial_expired');
+  });
+
+  it('an unentitled family opening a PAID (non-free) unit is refused not_entitled — the Playground is NOT free with the flag off', async () => {
+    const env = fakeEnv();
+    const { token } = await loginFamily(env, 'notentitled-flagoff@example.com');
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+    const openRes = await handleUnitOpen(
+      authedRequest('/api/v1/units/m1-s2-1-5/open', token, { method: 'POST', body: JSON.stringify({ profileId, moduleId: 'm1' }) }),
+      env, 'm1-s2-1-5',
+    );
+    expect(openRes.status).toBe(403);
+    expect((await openRes.json()).error).toBe('not_entitled');
+  });
+
+  async function openTrialUnit(env: Env, token: string, profileId: string) {
+    return handleUnitOpen(
+      authedRequest('/api/v1/units/m1-s2-1-1/open', token, { method: 'POST', body: JSON.stringify({ profileId, moduleId: 'm1' }) }),
+      env, 'm1-s2-1-1',
+    );
+  }
+
+  it('a trial that expired moments ago is refused — even with a recent open on record, even well inside the 2-hour window', async () => {
+    const env = fakeEnv();
+    const { familyId, token } = await loginFamily(env, 'reopen-just-expired-flagoff@example.com');
+    await env.db.set(trialPath(familyId, 'm1'), {
+      startedAt: new Date(Date.now() - 74 * 60 * 60 * 1000).toISOString(),
+      endsAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // expired 5 minutes ago
+      convertedAt: null, convertedOrderId: null,
+      lastOpenedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // opened 10 minutes ago — irrelevant to opening
+    } satisfies TrialDoc);
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+
+    const openRes = await openTrialUnit(env, token, profileId);
+    expect(openRes.status).toBe(403);
+    expect((await openRes.json()).error).toBe('trial_expired');
+  });
+
+  it('a genuinely fresh 72-hour trial (never opened before) records its own first open time, no grace needed', async () => {
+    const env = fakeEnv();
+    const { token } = await loginFamily(env, 'freshtrial-flagoff@example.com');
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+
+    const before = Date.now();
+    const openRes = await openTrialUnit(env, token, profileId);
+    expect(openRes.status).toBe(200);
+
+    const { familyId } = await (async () => {
+      const me = await handleMe(authedRequest('/api/v1/me', token, { method: 'GET' }), env);
+      return me.json();
+    })();
+    const trial = await env.db.get<TrialDoc>(trialPath(familyId, 'm1'));
+    expect(trial?.lastOpenedAt).not.toBeNull();
+    expect(new Date(trial!.lastOpenedAt!).getTime()).toBeGreaterThanOrEqual(before);
+  });
+
+  it("refunded M1 falls back to the SAME existing trial (dates unchanged) — no new trial is ever created", async () => {
+    const env = fakeEnv();
+    const { familyId, token } = await loginFamily(env, 'refunded-flagoff@example.com');
+    const originalStartedAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+    const originalEndsAt = new Date(Date.now() + 62 * 60 * 60 * 1000).toISOString(); // still active
+    await env.db.set(trialPath(familyId, 'm1'), {
+      startedAt: originalStartedAt, endsAt: originalEndsAt,
+      convertedAt: null, convertedOrderId: null, lastOpenedAt: null,
+    } satisfies TrialDoc);
+    await env.db.set(entitlementPath(familyId, 'm1'), {
+      status: 'revoked', shopifyOrderId: 'order-1', grantedAt: originalStartedAt,
+      revokedAt: new Date().toISOString(), revokedReason: 'refund',
+    } satisfies EntitlementDoc);
+
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+    const openRes = await openTrialUnit(env, token, profileId);
+    expect(openRes.status).toBe(200); // falls back to the still-active original trial — allowed
+
+    const trial = await env.db.get<TrialDoc>(trialPath(familyId, 'm1'));
+    expect(trial?.startedAt).toBe(originalStartedAt);
+    expect(trial?.endsAt).toBe(originalEndsAt); // untouched — no new trial was created
+  });
+
+  it('opening a paid unit (1-2) of an ENTITLED family still records first-paid-use exactly as before', async () => {
+    const env = fakeEnv();
+    const { familyId, token } = await loginFamily(env, 'paiduse-flagoff@example.com');
+    await env.db.set(entitlementPath(familyId, 'm1'), { status: 'active', shopifyOrderId: 'o1', grantedAt: new Date().toISOString(), revokedAt: null, revokedReason: null });
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+
+    const res = await handleUnitOpen(
+      authedRequest('/api/v1/units/m1-s2-1-2/open', token, { method: 'POST', body: JSON.stringify({ profileId, moduleId: 'm1' }) }),
+      env, 'm1-s2-1-2',
+    );
+    expect(res.status).toBe(200);
+    const usage = await env.db.get<UsageDoc>(usagePath(familyId, 'm1'));
+    expect(usage?.firstPaidUnitId).toBe('m1-s2-1-2');
   });
 });
 

@@ -50,4 +50,11 @@ export interface Env {
    *  `/projects/123456789/apps/kodomo-ai-admin` — required for the admin service only; the
    *  public backend never reads this. */
   IAP_AUDIENCE?: string;
+  /** WO-C5 §7/follow-up: the server-side twin of the frontend build's `VITE_BEGINNER_LAUNCH` —
+   *  set (or not) alongside it on every deploy, never independently. `'1'` means the beginner
+   *  course (and the Playground access changes that ship with it) is on for every family;
+   *  unset/anything else means backend/src/course.ts's `isBeginnerLaunchEnabled` falls back to
+   *  the per-family `config/course.allowFamilies` allowlist, same as the frontend's own
+   *  `me.courseAllowed` fallback. */
+  BEGINNER_LAUNCH?: string;
 }

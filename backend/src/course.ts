@@ -18,3 +18,20 @@ export async function isCourseAllowedForFamily(env: Env, familyId: string): Prom
   const ids = await getCourseAllowedFamilyIds(env);
   return ids.includes(familyId);
 }
+
+/**
+ * WO-C5 §7/follow-up: the backend-side twin of the frontend's own `BEGINNER_LAUNCH` gate
+ * (`VITE_BEGINNER_LAUNCH === '1' || me.courseAllowed`, src/course/BeginnerCourseApp.tsx) — reused
+ * here by `backend/src/access.ts`'s `checkUnitAccess` so the Playground's own access rules (free
+ * entry, no trial) change for a family at EXACTLY the moment the beginner course itself becomes
+ * visible to them, never before. `env.BEGINNER_LAUNCH` is the server-side env var a real deploy
+ * sets alongside the frontend build's `VITE_BEGINNER_LAUNCH` (both flipped together — see
+ * docs/launch-runbook.md); `isCourseAllowedForFamily` reuses the SAME `config/course.allowFamilies`
+ * allowlist stage2's own `courseAllowed` already reads, per the original WO-C5's own "the existing
+ * COURSE_ENABLED / allowlist mechanism" instruction — one allowlist, not a second one to keep in
+ * sync.
+ */
+export async function isBeginnerLaunchEnabled(env: Env, familyId: string): Promise<boolean> {
+  if (env.BEGINNER_LAUNCH === '1') return true;
+  return isCourseAllowedForFamily(env, familyId);
+}
