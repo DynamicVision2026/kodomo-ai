@@ -1,6 +1,7 @@
 import type { Env } from './types.js';
 import type { CourseAllowFamiliesDoc } from './schema.js';
 import { courseAllowFamiliesPath } from './schema.js';
+import { getFamily, normalizeEmail } from './family.js';
 
 /**
  * WO-C1 §1/§4: `config/course.allowFamilies`, edited by hand in the Firestore console — the
@@ -14,9 +15,33 @@ export async function getCourseAllowedFamilyIds(env: Env): Promise<string[]> {
   return doc?.familyIds ?? [];
 }
 
+/**
+ * WO-C5 preview follow-up: a server-side-only staff preview list, by VERIFIED login email
+ * (`FamilyDoc.email` — set once, only ever from an already-verified OTP, `getOrCreateFamilyIdInTx`'s
+ * own doc comment) rather than by familyId — the Founder asked for this specifically because he
+ * won't edit Firestore, and a staff mailbox is easier to hand out than a familyId nobody sees
+ * without an Admin Dashboard round-trip. `COURSE_PREVIEW_EMAILS` is set only in the backend's own
+ * deploy env (ci.yml's `deploy-backend` job) — never a `VITE_*` var, so it never reaches the
+ * frontend bundle at all; it's staff's own mailbox address, not a secret, but there's still no
+ * reason to ship it client-side. Comma-separated, case/whitespace-insensitive exact match only
+ * (`normalizeEmail` — the same trim+lowercase already used for the email-uniqueness index, so
+ * "Info@Domo-AI.com" and "info@domo-ai.com " both match the one canonical form).
+ */
+function coursePreviewEmails(env: Env): string[] {
+  return (env.COURSE_PREVIEW_EMAILS ?? '')
+    .split(',')
+    .map((e) => normalizeEmail(e))
+    .filter(Boolean);
+}
+
 export async function isCourseAllowedForFamily(env: Env, familyId: string): Promise<boolean> {
   const ids = await getCourseAllowedFamilyIds(env);
-  return ids.includes(familyId);
+  if (ids.includes(familyId)) return true;
+
+  const previewEmails = coursePreviewEmails(env);
+  if (previewEmails.length === 0) return false;
+  const family = await getFamily(env, familyId);
+  return !!family && previewEmails.includes(normalizeEmail(family.email));
 }
 
 /**

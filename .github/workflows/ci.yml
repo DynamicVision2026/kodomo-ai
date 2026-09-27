@@ -113,6 +113,11 @@ jobs:
       # only ever missing its runtime config. See the deploy step below for why
       # SHOPIFY_VARIANT_IDS's own JSON value isn't set via a plain ${{ }} substitution here.
       SHOPIFY_SHOP_DOMAIN: soul-id-2.myshopify.com
+      # WO-C5 preview follow-up: staff's own preview access to the beginner course, by verified
+      # login email — BEGINNER_LAUNCH itself stays off; this is a narrower, per-email allowlist
+      # (backend/src/course.ts's own `isCourseAllowedForFamily`), not a general-availability flag.
+      # Our own mailbox, not a secret — plain env var, never a `VITE_*`/frontend build arg.
+      COURSE_PREVIEW_EMAILS: info@domo-ai.com
     steps:
       - uses: actions/checkout@v4
 
@@ -177,7 +182,7 @@ jobs:
             --allow-unauthenticated \
             --no-traffic \
             --tag="$TAG" \
-            --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }},SHOPIFY_SHOP_DOMAIN=${{ env.SHOPIFY_SHOP_DOMAIN }},SHOPIFY_VARIANT_IDS=$SHOPIFY_VARIANT_IDS_JSON" \
+            --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }},SHOPIFY_SHOP_DOMAIN=${{ env.SHOPIFY_SHOP_DOMAIN }},SHOPIFY_VARIANT_IDS=$SHOPIFY_VARIANT_IDS_JSON,COURSE_PREVIEW_EMAILS=${{ env.COURSE_PREVIEW_EMAILS }}" \
             --set-secrets="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest,EMAIL_API_KEY=EMAIL_API_KEY:latest"
           BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
             --region="${{ env.REGION }}" --format='value(status.url)')

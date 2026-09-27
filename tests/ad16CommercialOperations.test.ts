@@ -673,6 +673,70 @@ describe('WO-C5 follow-up — BEGINNER_LAUNCH off: production behaves exactly as
   });
 });
 
+// ---------------------------------------------------------------------------------------------
+// WO-C5 preview follow-up — COURSE_PREVIEW_EMAILS: a server-side-only staff preview allowlist by
+// verified login email (never a familyId row in config/course.allowFamilies), because the Founder
+// asked for this specifically to avoid touching Firestore. Same effect as the allowlist
+// (courseAllowed + isBeginnerLaunchEnabled), case/whitespace-insensitive exact match only, and a
+// no-op for every other family — with BEGINNER_LAUNCH still off.
+// ---------------------------------------------------------------------------------------------
+
+describe('WO-C5 preview follow-up — COURSE_PREVIEW_EMAILS: staff preview access by login email', () => {
+  it('a family whose login email is on the list is courseAllowed via /me — no allowFamilies row needed', async () => {
+    const env = fakeEnv();
+    env.COURSE_PREVIEW_EMAILS = 'info@domo-ai.com';
+    const { token } = await loginFamily(env, 'info@domo-ai.com');
+    const meRes = await handleMe(authedRequest('/api/v1/me', token, { method: 'GET' }), env);
+    const me = await meRes.json();
+    expect(me.courseAllowed).toBe(true);
+  });
+
+  it('matching is case- and whitespace-insensitive, exact match only', async () => {
+    const env = fakeEnv();
+    env.COURSE_PREVIEW_EMAILS = ' Info@Domo-AI.com ,other@example.com';
+    const { token } = await loginFamily(env, 'INFO@DOMO-AI.COM');
+    const meRes = await handleMe(authedRequest('/api/v1/me', token, { method: 'GET' }), env);
+    expect((await meRes.json()).courseAllowed).toBe(true);
+  });
+
+  it('a different family (any other email) is unaffected, even with the list configured', async () => {
+    const env = fakeEnv();
+    env.COURSE_PREVIEW_EMAILS = 'info@domo-ai.com';
+    const { token } = await loginFamily(env, 'someoneelse@example.com');
+    const meRes = await handleMe(authedRequest('/api/v1/me', token, { method: 'GET' }), env);
+    expect((await meRes.json()).courseAllowed).toBe(false);
+  });
+
+  it('the preview family also gets the free Playground (isBeginnerLaunchEnabled), same as an allowFamilies row would', async () => {
+    const env = fakeEnv();
+    env.COURSE_PREVIEW_EMAILS = 'info@domo-ai.com';
+    const { token } = await loginFamily(env, 'info@domo-ai.com');
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+
+    // A normally-paid, unentitled unit opens free — the same WO-C5 §6 behavior an allowFamilies
+    // row already produces.
+    const openRes = await handleUnitOpen(
+      authedRequest('/api/v1/units/m1-s2-1-5/open', token, { method: 'POST', body: JSON.stringify({ profileId, moduleId: 'm1' }) }),
+      env, 'm1-s2-1-5',
+    );
+    expect(openRes.status).toBe(200);
+  });
+
+  it('flag-off production is unchanged for everyone when COURSE_PREVIEW_EMAILS is unset (the real deploy default until this ships)', async () => {
+    const env = fakeEnv(); // no COURSE_PREVIEW_EMAILS set, same as every other test in this file
+    const { token } = await loginFamily(env, 'ordinaryfamily@example.com');
+    const createRes = await handleCreateProfile(authedRequest('/api/v1/profiles', token, { method: 'POST', body: JSON.stringify({ avatarId: 'a1', nicknameId: 'n1', stage: 2 }) }), env);
+    const { id: profileId } = await createRes.json();
+    const openRes = await handleUnitOpen(
+      authedRequest('/api/v1/units/m1-s2-1-5/open', token, { method: 'POST', body: JSON.stringify({ profileId, moduleId: 'm1' }) }),
+      env, 'm1-s2-1-5',
+    );
+    expect(openRes.status).toBe(403);
+    expect((await openRes.json()).error).toBe('not_entitled');
+  });
+});
+
 describe('AD-15 — progress-write grace: a lesson opened before endsAt keeps saving until endsAt + 2h', () => {
   function putProgress(env: Env, token: string, profileId: string, missions: ModuleProgressState['missions']) {
     const state: ModuleProgressState = { ...emptyModuleProgress(), missions };

@@ -57,4 +57,12 @@ export interface Env {
    *  the per-family `config/course.allowFamilies` allowlist, same as the frontend's own
    *  `me.courseAllowed` fallback. */
   BEGINNER_LAUNCH?: string;
+  /** WO-C5 preview follow-up: comma-separated staff email(s) that count as allowlisted for the
+   *  course preview (`backend/src/course.ts`'s `isCourseAllowedForFamily`) without needing a row
+   *  in `config/course.allowFamilies` — the Founder asked for this specifically because he won't
+   *  edit Firestore. Matched against a family's own VERIFIED login email, case/whitespace-
+   *  insensitive exact match only. Set only in the backend's own deploy env (never a `VITE_*`
+   *  var) — it's staff's own mailbox, not a secret, but there's no reason to ship it client-side
+   *  either. */
+  COURSE_PREVIEW_EMAILS?: string;
 }

@@ -91,5 +91,6 @@ export function buildEnv(): Env {
     SHOPIFY_VARIANT_IDS: variantIds,
     IAP_AUDIENCE: process.env.IAP_AUDIENCE,
     BEGINNER_LAUNCH: process.env.BEGINNER_LAUNCH,
+    COURSE_PREVIEW_EMAILS: process.env.COURSE_PREVIEW_EMAILS,
   };
 }
