@@ -72,23 +72,51 @@ describe('PrivacyPage', () => {
     expect(screen.getByText(/入力する項目は/)).toBeInTheDocument();
   });
 
-  it('names the real third parties involved in checkout and analytics', () => {
+  it('names Shopify and KOMOJU as the checkout/payment platforms (COPY-01 §8 follow-up: KOMOJU stays named, only PayPal is dropped)', () => {
     render(<PrivacyPage />);
     expect(screen.getAllByText(/Shopify/).length).toBeGreaterThan(0);
     expect(screen.getByText(/KOMOJU/)).toBeInTheDocument();
-    expect(screen.getByText(/PayPal/)).toBeInTheDocument();
+    expect(screen.queryByText(/PayPal/)).not.toBeInTheDocument();
   });
 
-  it('AD-13/15: discloses the Family Account server-side data (Firestore), the email processor, and the APPI overseas-transfer note', () => {
+  it('AD-13/15/COPY-01 §8 follow-up: discloses the Family Account server-side data (Firestore), names Postmark alone with its country, and names the /account deletion path', () => {
     render(<PrivacyPage />);
     expect(screen.getByText(/Firestore/)).toBeInTheDocument();
-    expect(screen.getByText(/Postmark/)).toBeInTheDocument();
-    expect(screen.getByText(/外国にある/)).toBeInTheDocument();
+    expect(screen.getByText(/Postmark、所在国：アメリカ合衆国/)).toBeInTheDocument();
+    expect(screen.queryByText(/Amazon SES/)).not.toBeInTheDocument();
     expect(screen.getByText(/\/account/)).toBeInTheDocument(); // deletion path is named, not just promised
   });
 
   it('gives a real contact email, not a placeholder', () => {
     render(<PrivacyPage />);
     expect(screen.getByText(COMPANY.email)).toBeInTheDocument();
+  });
+
+  it('COPY-01 §8: shows an updated 改定日', () => {
+    render(<PrivacyPage />);
+    expect(screen.getByText(/改定日/)).toBeInTheDocument();
+  });
+
+  it('COPY-01 §8: states plainly that this backend never receives/stores card or other payment details', () => {
+    render(<PrivacyPage />);
+    const text = document.body.textContent ?? '';
+    expect(text.replace(/\s+/g, '')).toContain('当社が、クレジットカード番号などのお支払い情報を受け取ることはありません。'.replace(/\s+/g, ''));
+  });
+
+  it('COPY-01 §8: no longer describes a no-account "free trial" mode or a 72-hour account trial — true before and after BEGINNER_LAUNCH, since login has always been required in every real deployment (src/family/api.ts\'s isFamilyApiConfigured() is unconditionally true — Dockerfile.frontend always sets VITE_FAMILY_API_URL)', () => {
+    render(<PrivacyPage />);
+    const text = document.body.textContent ?? '';
+    expect(text).not.toContain('無料でお試しいただける範囲');
+    expect(text).not.toContain('アカウント登録なし');
+    expect(text).not.toContain('72時間');
+    expect(text).not.toContain('お試し期間');
+    expect(screen.getByText(/本サービスは、保護者の方のメールアドレスでログインしてご利用いただきます。/)).toBeInTheDocument();
+  });
+
+  it('COPY-01 §8: section 4 always describes Family Account storage as what happens on login, not conditioned on purchase-or-trial', () => {
+    render(<PrivacyPage />);
+    expect(
+      screen.getByText(/ファミリーアカウントでログインしてご利用いただく場合、以下の情報を当社のサーバー/),
+    ).toBeInTheDocument();
   });
 });

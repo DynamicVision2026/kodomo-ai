@@ -5,11 +5,37 @@ import '../legal.css';
  * Privacy policy — DRAFT. Describes what this codebase actually does (verified across this
  * repo): no free-text input anywhere in the child flow, no child PII fields ever (gate:no-
  * free-text, src/engine/storage.ts), and — since AD-13's Family Account — a purchasing family's
- * parent email and profile/progress records ARE stored server-side (Firestore, Tokyo region),
- * unlike the fully-local guest/trial-only path. Real content, still pending the founder's own
- * legal review before publishing (same caveat as the 特商法 page) — in particular the exact
- * processor list (email provider — Postmark or SES, per AD-13's own launch blockers) and the
- * APPI overseas-transfer disclosure below need the founder's final sign-off on wording.
+ * parent email and profile/progress records ARE stored server-side (Firestore, Tokyo region).
+ * Real content, still pending the founder's own legal review before publishing (same caveat as
+ * the 特商法 page) — the APPI overseas-transfer disclosure below needs the founder's final
+ * sign-off on wording.
+ *
+ * COPY-01 §8 (Coordinator, prepared 28 Sep 2026): sections 2-4's first paragraphs rewritten —
+ * true both before and after BEGINNER_LAUNCH, so NOT flag-gated (unlike src/legal/tokushoho/
+ * TokushohoPage.tsx's own BEGINNER_LAUNCH-gated rows). Root cause this rewrite fixes: the prior
+ * wording described a no-account "無料でお試しいただける範囲" local-only guest mode and a
+ * 72-hour account trial — neither has been true since AD-13's account-first model shipped
+ * (verified: `src/family/api.ts`'s `isFamilyApiConfigured()` reads `VITE_FAMILY_API_URL`, which
+ * `Dockerfile.frontend` sets unconditionally, so every real deployment already requires a family
+ * login before any mission opens — `src/shell/MissionShell.tsx#enterMission`'s "no session"
+ * branch is a redirect to /login/, never anonymous local play). Section 3 now states plainly that
+ * this backend never receives/stores card numbers or other payment details (confirmed:
+ * `backend/src/shopify.ts`'s `ShopifyOrderPayload` type — the entire shape the webhook payload
+ * handler reads — has no such field at all); KOMOJU stays named (Coordinator decision, 28 Sep
+ * 2026 follow-up) — only PayPal is dropped (Founder decision: not offered). Section 4's Postmark
+ * paragraph is firmed up per the same follow-up: names Postmark alone (the "または Amazon SES"
+ * hedge is dropped — no SES code exists anywhere in this repo, only
+ * `backend/server/postmarkEmail.ts`) and states its country directly, dropping both the old
+ * "we'll announce the specific provider later" sentence AND the APPI overseas-transfer disclosure
+ * sentence that used to accompany it — the Coordinator's own replacement text was exactly one
+ * sentence; flagged back to the Coordinator in case dropping that legal disclosure line was
+ * unintended, since neither instruction explicitly called out removing it.
+ *
+ * NOT YET PUBLISHED: held per the Coordinator's own instruction (28 Sep 2026) pending 酒井先生's
+ * and the founder's legal sign-off — this commit is prepared/committed locally but deliberately
+ * not pushed. Do not push this file's changes to the production branch until that sign-off is
+ * confirmed (a push to this repo's own production branch auto-deploys to the live site — see
+ * docs/launch-runbook.md).
  */
 export function PrivacyPage() {
   return (
@@ -18,6 +44,7 @@ export function PrivacyPage() {
         このページは草案です。公開前に必ず内容をご確認ください。
       </p>
       <h1>プライバシーポリシー</h1>
+      <p className="legal__revision-date">改定日：2026年9月28日</p>
 
       <section>
         <h2>1. 事業者情報</h2>
@@ -32,9 +59,8 @@ export function PrivacyPage() {
         <p>
           本サービスのアプリ部分に、お名前・ご住所・学校名などを入力する項目はありません。
           お子さまが選ぶのは、あらかじめ用意されたアバターとニックネームのみです。
-          無料でお試しいただける範囲（アカウント登録なし）では、進行状況はお使いの端末の中だけに
-          保存され、当社のサーバーには送信されません。ご購入後またはお試し期間中にログインされた
-          場合は、下記「4. ファミリーアカウントとして保存する情報」のとおり、サーバー側にも
+          本サービスは、保護者の方のメールアドレスでログインしてご利用いただきます。
+          進行状況は、下記「4. ファミリーアカウントとして保存する情報」のとおり、当社のサーバーに
           保存されます。
         </p>
       </section>
@@ -43,17 +69,17 @@ export function PrivacyPage() {
         <h2>3. ご購入時に取得する情報</h2>
         <p>
           ご購入手続きは外部の決済プラットフォーム（Shopify）上で行われ、お名前・お支払い情報は
-          Shopify および決済代行会社（KOMOJU、PayPal）が取得します。当社は、ご購入者様の
-          メールアドレスを Shopify から受け取り、ファミリーアカウントの識別・ログインのために
-          使用します。
+          Shopify および決済代行会社（KOMOJU）が取得します。当社が、クレジットカード番号などの
+          お支払い情報を受け取ることはありません。当社は、ご購入者様のメールアドレスを Shopify
+          から受け取り、ファミリーアカウントの識別・ログインのために使用します。
         </p>
       </section>
 
       <section>
         <h2>4. ファミリーアカウントとして保存する情報</h2>
         <p>
-          ご購入いただいた場合、またはお試し期間（アカウント登録から72時間）中にログインされた
-          場合、以下の情報を当社のサーバー（Google Cloud, Firestore、東京リージョン）に保存します。
+          ファミリーアカウントでログインしてご利用いただく場合、以下の情報を当社のサーバー
+          （Google Cloud, Firestore、東京リージョン）に保存します。
         </p>
         <ul>
           <li>保護者の方のメールアドレス（ログイン用）</li>
@@ -61,10 +87,8 @@ export function PrivacyPage() {
           <li>ミッションの進行状況・学習記録</li>
         </ul>
         <p>
-          ログイン確認コードの送信には、外部のメール配信事業者（Postmark または Amazon SES）を
-          利用します。これらの事業者は日本国外に所在するため、個人情報保護法に基づく外国にある
-          第三者への提供に該当します。具体的な事業者名・所在国は、契約確定後に本ページで
-          ご案内します。
+          ログイン確認コードの送信には、外部のメール配信事業者（Postmark、所在国：アメリカ合衆国）を
+          利用します。
         </p>
         <p>
           保存されたデータは、アカウント設定画面（/account）からいつでも削除いただけます。
