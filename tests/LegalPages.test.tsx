@@ -1,10 +1,13 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { TokushohoPage } from '../src/legal/tokushoho/TokushohoPage';
 import { PrivacyPage } from '../src/legal/privacy/PrivacyPage';
 import { COMPANY } from '../src/legal/company';
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  vi.unstubAllEnvs();
+});
 
 describe('TokushohoPage', () => {
   it('shows a draft banner (this has not had the founder\'s legal review yet)', () => {
@@ -33,6 +36,28 @@ describe('TokushohoPage', () => {
     expect(screen.queryByText(/30日間/)).not.toBeInTheDocument();
     expect(screen.getByText(/世帯ライセンス/)).toBeInTheDocument();
     expect(screen.queryByText(/household licence/)).not.toBeInTheDocument();
+  });
+
+  it('flag off (today\'s real deploy state): still names the product "モジュール1" and the refund row is still the pending placeholder', () => {
+    render(<TokushohoPage />);
+    expect(screen.getByText(/モジュール1/)).toBeInTheDocument();
+    expect(screen.getByText(/返金ポリシーは近日公開予定です/)).toBeInTheDocument();
+  });
+
+  it('COPY-01: once BEGINNER_LAUNCH is on, 商品名 says 入門コース and the refund row carries the exact legally-approved sentence', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_BEGINNER_LAUNCH', '1');
+    const { TokushohoPage: LaunchedTokushohoPage } = await import('../src/legal/tokushoho/TokushohoPage');
+    render(<LaunchedTokushohoPage />);
+    expect(screen.getAllByText(/入門コース/).length).toBeGreaterThan(0);
+    expect(screen.getByText('ナゼホリ（仮）（入門コース）')).toBeInTheDocument();
+    expect(screen.queryByText(/モジュール1/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'ご購入から10日以内で、入門コースのレッスンをまだ始めていない場合は、info@domo-ai.com までご連絡いただければ返金いたします。' +
+          'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。',
+      ),
+    ).toBeInTheDocument();
   });
 });
 

@@ -118,6 +118,11 @@ jobs:
       # (backend/src/course.ts's own `isCourseAllowedForFamily`), not a general-availability flag.
       # Our own mailbox, not a secret — plain env var, never a `VITE_*`/frontend build arg.
       COURSE_PREVIEW_EMAILS: info@domo-ai.com
+      # COPY-01/WO-C5 launch decision (Founder's own call, not this session's): sourced from the
+      # `vars.BEGINNER_LAUNCH` repo variable, same mechanism as the frontend's own
+      # `vars.VITE_BEGINNER_LAUNCH` (deploy-frontend, below) — unset today, so this stays a no-op
+      # ('' !== '1') until both are flipped to '1' together. See docs/launch-runbook.md.
+      BEGINNER_LAUNCH: ${{ vars.BEGINNER_LAUNCH }}
     steps:
       - uses: actions/checkout@v4
 
@@ -182,7 +187,7 @@ jobs:
             --allow-unauthenticated \
             --no-traffic \
             --tag="$TAG" \
-            --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }},SHOPIFY_SHOP_DOMAIN=${{ env.SHOPIFY_SHOP_DOMAIN }},SHOPIFY_VARIANT_IDS=$SHOPIFY_VARIANT_IDS_JSON,COURSE_PREVIEW_EMAILS=${{ env.COURSE_PREVIEW_EMAILS }}" \
+            --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }},SHOPIFY_SHOP_DOMAIN=${{ env.SHOPIFY_SHOP_DOMAIN }},SHOPIFY_VARIANT_IDS=$SHOPIFY_VARIANT_IDS_JSON,COURSE_PREVIEW_EMAILS=${{ env.COURSE_PREVIEW_EMAILS }},BEGINNER_LAUNCH=${{ env.BEGINNER_LAUNCH }}" \
             --set-secrets="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest,EMAIL_API_KEY=EMAIL_API_KEY:latest"
           BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
             --region="${{ env.REGION }}" --format='value(status.url)')

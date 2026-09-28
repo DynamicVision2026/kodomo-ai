@@ -602,6 +602,38 @@ as the deploy steps:
 
 ---
 
+## Beginner-course launch (WO-C5/COPY-01) — the two flags, switched together
+
+The 入門コース launch (Playground free, 72-hour trial retired, new landing page/FAQ/emails —
+COPY-01) is gated behind exactly two flags, both defaulting to unset/off in every deploy to date.
+Flipping only one leaves the site in an inconsistent state (e.g. new marketing copy promising a
+free Playground while the backend still enforces the old trial, or vice versa) — **set both to
+`1` in the same push/redeploy**:
+
+| Flag | Where | Set via | Controls |
+|---|---|---|---|
+| `VITE_BEGINNER_LAUNCH` | Frontend build arg (`Dockerfile.frontend`, threaded from `.github/workflows/ci.yml`'s `deploy-frontend` job) | GitHub repo variable `vars.VITE_BEGINNER_LAUNCH` (Settings → Secrets and variables → Actions → Variables) | `/` shows the new landing page instead of the old one (`src/lp/main.tsx`); `src/course/BeginnerCourseApp.tsx`'s own build-flag branch; `/legal/tokushoho/`'s 商品名/refund rows (`src/legal/tokushoho/TokushohoPage.tsx`) |
+| `BEGINNER_LAUNCH` | Backend env var (`.github/workflows/ci.yml`'s `deploy-backend` job) | GitHub repo variable `vars.BEGINNER_LAUNCH` | `isBeginnerLaunchEnabled`/`isCourseAllowedForFamily` (`backend/src/course.ts`) — course visibility + free Playground entry, trial retirement (`backend/src/access.ts`, `backend/src/handlers/units.ts`); the two purchase emails' new copy (`backend/src/email.ts`) |
+
+Both repo variables are unset today, so both env vars resolve to `''` (`!== '1'`) — a no-op.
+Setting a GitHub Actions **variable** does not itself trigger a deploy; the next push to the
+production branch (or a manual re-run of the latest `deploy-frontend`/`deploy-backend` jobs)
+picks it up.
+
+Not required for launch, safe to leave as-is either way:
+- `COURSE_PREVIEW_EMAILS` (staff preview access by login email, `info@domo-ai.com` today) — a
+  narrower mechanism that keeps working once `BEGINNER_LAUNCH` is on (it's now redundant, not
+  broken); remove it whenever staff no longer need a separate preview path.
+- `config/course.allowFamilies` (Firestore) — the original per-family allowlist. Once
+  `BEGINNER_LAUNCH=1`, `isBeginnerLaunchEnabled` short-circuits before ever reading it.
+
+Separately, manual (Shopify Admin, not a code flag — COPY-01 §4/§7, Founder's own action, text
+only): paste the new product title/description, and add the ★ refund sentence as its own
+paragraph in Settings → Policies' refund policy (headed 「ナゼホリ入門コースについて」, other
+products' terms untouched).
+
+---
+
 ## Platform history
 
 Parts 1 and 3 originally targeted Cloudflare Workers + KV; the founder later moved the backend
