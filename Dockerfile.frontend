@@ -43,6 +43,7 @@ COPY shared ./shared
 COPY backend ./backend
 COPY play ./play
 COPY course ./course
+COPY lp-new ./lp-new
 COPY login ./login
 COPY account ./account
 COPY claim ./claim
@@ -64,6 +65,13 @@ ENV VITE_FAMILY_API_URL=/api/v1
 # the real Shopify product URL at deploy time.
 ARG VITE_SHOPIFY_PRODUCT_URL
 ENV VITE_SHOPIFY_PRODUCT_URL=$VITE_SHOPIFY_PRODUCT_URL
+# COPY-01/WO-C5: the frontend's own half of the BEGINNER_LAUNCH flag — src/lp/main.tsx picks the
+# new (post-launch) landing-page copy over the old one only when this is exactly '1', same as
+# src/course/BeginnerCourseApp.tsx's existing VITE_BEGINNER_LAUNCH check. Absent (the default,
+# same as every deploy to date) means `undefined !== '1'`, so this is a no-op until a real launch
+# decision sets it — /lp-new/ (unconditional, noindexed) is unaffected either way.
+ARG VITE_BEGINNER_LAUNCH
+ENV VITE_BEGINNER_LAUNCH=$VITE_BEGINNER_LAUNCH
 RUN npm run build
 
 # ---- 2. compile backend/server/frontendIndex.ts -> dist-server/**/*.js (same as Dockerfile's

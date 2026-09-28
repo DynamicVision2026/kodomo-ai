@@ -1,0 +1,164 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { NewLandingPage } from '../src/lp/NewLandingPage';
+
+let plausible: ReturnType<typeof vi.fn>;
+let originalLocation: Location;
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+}
+
+beforeEach(() => {
+  localStorage.clear();
+  plausible = vi.fn();
+  window.plausible = plausible;
+  originalLocation = window.location;
+  Object.defineProperty(window, 'location', { value: { ...originalLocation, href: '' }, writable: true });
+});
+
+afterEach(() => {
+  cleanup();
+  delete window.plausible;
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+  Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
+});
+
+// COPY-01 (28 Sep 2026, 酒井先生-reviewed): the post-launch landing page. This component only
+// ever renders in production once BEGINNER_LAUNCH is on (src/lp/main.tsx's own gate) or on the
+// noindexed /lp-new/ preview route (src/lp/newMain.tsx) — these tests exercise the component
+// directly, the same way BeginnerCourseApp's own licensed-gated content is tested via its screens
+// rather than main.tsx.
+describe('NewLandingPage (COPY-01)', () => {
+  it('tracks lp_view on mount', () => {
+    render(<NewLandingPage />);
+    expect(plausible).toHaveBeenCalledWith('lp_view', expect.anything());
+  });
+
+  it('shows the COPY-01 hero headline and both CTAs', () => {
+    render(<NewLandingPage />);
+    expect(screen.getByText('AIが答えたら、もう一問。')).toBeInTheDocument();
+    expect(screen.getByText('無料のプレイグラウンドで、あそんでみる').closest('a')).toHaveAttribute('href', '/login/?next=/play/');
+    expect(screen.getByText('入門コースを見る（¥4,980 税込・買い切り）').closest('a')).toHaveAttribute('href', '#price');
+  });
+
+  it('renders all 7 entrance cards in order, each with its tool, situation and example question', () => {
+    render(<NewLandingPage />);
+    const cards = document.querySelectorAll('.lp__entrance');
+    expect(cards).toHaveLength(7);
+    expect(cards[0]!.textContent).toContain('おべんとうばこ');
+    expect(cards[0]!.textContent).toContain('ふたを あける');
+    expect(cards[6]!.textContent).toContain('虫とりあみ');
+    expect(cards[6]!.textContent).toContain('もう 一問');
+  });
+
+  it('renders every §8 safety line', () => {
+    render(<NewLandingPage />);
+    for (const line of [
+      'アプリの中で、AIにはつながりません。',
+      'お子さんが文字を入力する場面はありません。',
+      'お子さんの名前や学校名などの個人情報は、入力しません。',
+      '広告はありません。',
+      '点数やランキング（順位）はありません。',
+      'ログインは、おうちの方のメールアドレスと6けたのコードだけ。パスワードはいりません。',
+    ]) {
+      expect(screen.getByText(line)).toBeInTheDocument();
+    }
+  });
+
+  it('renders all 15 FAQ questions, with the refund answer starred and using the exact legally-approved sentence', () => {
+    render(<NewLandingPage />);
+    const dts = document.querySelectorAll('.lp__faq dt');
+    expect(dts).toHaveLength(15);
+    const refundDt = Array.from(dts).find((dt) => dt.textContent?.includes('返金はできますか？'));
+    expect(refundDt?.textContent).toBe('★ 返金はできますか？');
+    expect(
+      screen.getByText(
+        'ご購入から10日以内で、入門コースのレッスンをまだ始めていない場合は、info@domo-ai.com までご連絡いただければ返金いたします。' +
+          'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('the price section shows the ¥4,980 amount, household-licence facts, the ★ refund note, and the prior-Module-1-buyer line', () => {
+    render(<NewLandingPage />);
+    const price = document.querySelector('.lp__price')!;
+    expect(price.textContent).toContain('¥4,980');
+    expect(price.textContent).toContain('買い切り・月額料金なし');
+    expect(price.textContent).toContain('子どものプロフィール3人まで・端末5台まで');
+    expect(price.textContent).toContain('プレイグラウンドは無料です');
+    expect(price.textContent).toContain('以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。');
+    expect(price.querySelector('.lp__refund-note')?.textContent).toContain('ご購入から10日以内で');
+  });
+
+  it('never uses retired naming ("お試し", "体験期間", "トライアル") anywhere', () => {
+    render(<NewLandingPage />);
+    const text = document.body.textContent ?? '';
+    for (const retired of ['お試し', '体験期間', 'トライアル', 'trial']) {
+      expect(text).not.toContain(retired);
+    }
+  });
+
+  it('"72時間"/"無料体験" appear exactly once — the FAQ question that explicitly says the trial is gone — never as a live offer elsewhere', () => {
+    render(<NewLandingPage />);
+    const dts = Array.from(document.querySelectorAll('.lp__faq dt'));
+    const trialFaqIndex = dts.findIndex((dt) => dt.textContent?.includes('72時間の無料体験は、なくなったのですか？'));
+    expect(trialFaqIndex).toBeGreaterThanOrEqual(0);
+    const dds = document.querySelectorAll('.lp__faq dd');
+    expect(dds[trialFaqIndex]!.textContent).toContain('終了いたしました');
+
+    const text = document.body.textContent ?? '';
+    expect(text.split('72時間').length - 1).toBe(1);
+    expect(text.split('無料体験').length - 1).toBe(1);
+  });
+
+  it('a logged-out visitor clicking the price-section purchase button is sent to /login/, never straight to a purchase-intent call', async () => {
+    const user = userEvent.setup();
+    render(<NewLandingPage />);
+    const buyButton = screen.getByText('入門コースを買う');
+    expect(buyButton.tagName).toBe('BUTTON');
+
+    await user.click(buyButton);
+    await waitFor(() => expect(window.location.href).toBe('/login/?next=/account/'));
+  });
+
+  it('a logged-in parent completing checkout is offered a link into /course/beginner/, not /play/', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    let entitled = false;
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/me')) {
+        return jsonResponse({
+          familyId: 'f1', email: 'p***@example.com',
+          entitlements: entitled ? [{ moduleId: 'm1', status: 'active' }] : [],
+          profiles: [], trials: [],
+        });
+      }
+      if (url.endsWith('/purchase-intents')) {
+        return jsonResponse({ url: 'https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc', expiresAt: '2026-02-01T00:00:00.000Z' }, 201);
+      }
+      return new Response('not found', { status: 404 });
+    }));
+    vi.stubGlobal('open', vi.fn(() => ({ location: { href: '' } }) as unknown as Window));
+    const { NewLandingPage: LoggedInNewLandingPage } = await import('../src/lp/NewLandingPage');
+    const user = userEvent.setup();
+    render(<LoggedInNewLandingPage />);
+
+    await user.click(screen.getByText('入門コースを買う'));
+    await waitFor(() =>
+      expect(
+        screen.getByText('お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。'),
+      ).toBeInTheDocument(),
+    );
+
+    entitled = true;
+    window.dispatchEvent(new Event('focus'));
+
+    await waitFor(() => expect(screen.getByText('ご購入ありがとうございます！')).toBeInTheDocument());
+    const openLink = screen.getByText('入門コースをひらく').closest('a');
+    expect(openLink).toHaveAttribute('href', '/course/beginner/');
+  });
+});

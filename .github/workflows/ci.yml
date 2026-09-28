@@ -600,6 +600,7 @@ jobs:
         run: |
           docker build -f Dockerfile.frontend \
             --build-arg VITE_SHOPIFY_PRODUCT_URL="${{ vars.VITE_SHOPIFY_PRODUCT_URL }}" \
+            --build-arg VITE_BEGINNER_LAUNCH="${{ vars.VITE_BEGINNER_LAUNCH }}" \
             -t "$IMAGE:${{ github.sha }}" \
             -t "$IMAGE:latest" \
             .
@@ -644,7 +645,7 @@ jobs:
         run: |
           CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
           FAIL=0
-          for path in / /play/ /login/ /account/ /claim/ /legal/privacy/ /legal/tokushoho/; do
+          for path in / /lp-new/ /play/ /login/ /account/ /claim/ /legal/privacy/ /legal/tokushoho/; do
             STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${CANDIDATE_URL}${path}")
             if [ "$STATUS" != "200" ]; then
               echo "::error::${path} returned ${STATUS} on the candidate revision"

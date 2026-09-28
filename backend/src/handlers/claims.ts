@@ -106,7 +106,7 @@ export async function handleConfirmClaim(request: Request, env: Env, token: stri
 
   if (result.order.entitlementState === 'granted') {
     const family = await getFamily(env, familyId);
-    if (family) await env.email.send(moduleActivatedEmail(family.email, loginUrl(env)));
+    if (family) await env.email.send(moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
   }
 
   return jsonResponse({ ok: true, orderName: result.order.orderName });

@@ -190,10 +190,40 @@
   color: #444;
 }
 
+.lp__entrances {
+  list-style: none;
+  padding-left: 0;
+  margin: 1.5rem 0 0;
+}
+.lp__entrance {
+  padding: 0.9rem 0;
+  border-top: 1px dashed #ddd;
+}
+.lp__entrance-heading {
+  font-weight: 700;
+  margin: 0 0 0.3rem;
+}
+.lp__entrance-when {
+  color: #555;
+  font-size: 0.9rem;
+  margin: 0 0 0.3rem;
+}
+.lp__entrance-example {
+  color: #2f6fb0;
+  margin: 0;
+}
+
+.lp__refund-note {
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
 .lp__footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 1rem 1.5rem;
   padding: 2rem 0;
   font-size: 0.85rem;
+  color: #555;
 }

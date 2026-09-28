@@ -42,8 +42,22 @@ export function loginCodeEmail(to: string, code: string): EmailMessage {
 /** AD-16 §7/§10: "Module 1 activated" — sent to the FAMILY ACCOUNT email (never the purchaser
  *  email directly; when binding was by token/email_match they're normally the same address, but
  *  the distinction matters for the mother/father scenario — see AD-16 §1's own example) right
- *  after the webhook grants the entitlement. */
-export function moduleActivatedEmail(to: string, loginUrl: string): EmailMessage {
+ *  after the webhook grants the entitlement.
+ *
+ *  COPY-01 (28 Sep 2026, 酒井先生-reviewed): the naming-table retcon ("モジュール1" -> "入門コース")
+ *  applies only once `beginnerLaunch` is true — the same "go live at the same moment as
+ *  BEGINNER_LAUNCH, never before" rule every other COPY-01 surface follows. COPY-01 §5 didn't give
+ *  this specific email new prose (only §5b's claim-flow email, below), so this is the minimal,
+ *  unambiguous rename §1's naming table and §6's search-and-remove list both call for — flagged
+ *  in this work order's own report for the Coordinator to confirm or replace with fuller copy. */
+export function moduleActivatedEmail(to: string, loginUrl: string, beginnerLaunch: boolean): EmailMessage {
+  if (beginnerLaunch) {
+    return {
+      to,
+      subject: 'ナゼホリ入門コースが使えるようになりました',
+      text: `ご購入ありがとうございます。入門コースが使えるようになりました。以下のリンクからログインし、メールで届く確認コードを入力してください。\n\n${loginUrl}`,
+    };
+  }
   return {
     to,
     subject: 'ナゼホリ モジュール1が使えるようになりました',
@@ -53,8 +67,31 @@ export function moduleActivatedEmail(to: string, loginUrl: string): EmailMessage
 
 /** AD-16 §2/§7: sent to the PURCHASER email (contact information only, never assumed to be the
  *  account holder) when an order can't be bound by token or existing account email — opens
- *  `/claim`, which requires logging in as the family the purchase is FOR. */
-export function claimYourPurchaseEmail(to: string, orderName: string, claimUrl: string): EmailMessage {
+ *  `/claim`, which requires logging in as the family the purchase is FOR.
+ *
+ *  COPY-01 §5b's own copy ("ご購入のメール ... the link that connects the purchase to the family
+ *  account") maps onto this flow specifically — "このリンクは、ご購入いただいた方専用です" is only
+ *  true of the PURCHASER's own email, this function's actual recipient (moduleActivatedEmail's
+ *  recipient is the family-account holder, who isn't always the purchaser — see its own doc
+ *  comment), and "つなげてください" describes exactly what visiting `/claim` does: bind the order to
+ *  a family account that doesn't have it yet. Gated on `beginnerLaunch` like every other COPY-01
+ *  surface; `orderName` is unused in the new copy (not part of COPY-01's given text) but kept in
+ *  the old branch below. */
+export function claimYourPurchaseEmail(to: string, orderName: string, claimUrl: string, beginnerLaunch: boolean): EmailMessage {
+  if (beginnerLaunch) {
+    return {
+      to,
+      subject: 'ナゼホリ入門コース｜ご購入ありがとうございます',
+      text:
+        `ナゼホリ入門コースをご購入いただき、ありがとうございます。\n\n` +
+        `下のボタンから、ご家族のアカウントとつなげてください。\n` +
+        `つなげると、入門コースの7つのレッスンがひらきます。\n\n` +
+        `［入門コースをひらく］\n${claimUrl}\n\n` +
+        `このリンクは、ご購入いただいた方専用です。\n` +
+        `ご不明な点は、info@domo-ai.com までお問い合わせください。\n\n` +
+        `ナゼホリ（Beyond Culture 獨歩文化株式会社）`,
+    };
+  }
   return {
     to,
     subject: 'ナゼホリ ご購入の受け取り手続きのお願い',

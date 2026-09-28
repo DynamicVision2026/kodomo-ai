@@ -227,11 +227,11 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
   if (result.doc.bindingState === 'bound' && result.doc.entitlementState === 'granted' && result.doc.familyId) {
     const family = await getFamily(env, result.doc.familyId);
     if (family) {
-      await env.email.send(moduleActivatedEmail(family.email, loginUrl(env)));
+      await env.email.send(moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
       emailSent = true;
     }
   } else if (result.claim && email) {
-    await env.email.send(claimYourPurchaseEmail(email, result.doc.orderName, claimUrl(env, result.claim.token)));
+    await env.email.send(claimYourPurchaseEmail(email, result.doc.orderName, claimUrl(env, result.claim.token), env.BEGINNER_LAUNCH === '1'));
     emailSent = true;
   }
   await logOrderProcessed(orderId, result.doc, emailSent);

@@ -23,6 +23,10 @@ export default defineConfig({
         // own `BEGINNER_LAUNCH` flag at runtime (this route always builds; the flag decides
         // whether production actually shows it).
         courseBeginner: resolve(__dirname, 'course/beginner/index.html'),
+        // COPY-01: the new (post-launch) landing-page copy, always built and reachable at this
+        // hidden, noindexed path regardless of `BEGINNER_LAUNCH` — so the Founder can review it
+        // pre-launch. The real "/" route (the `lp` entry above) stays flag-gated, unlike this one.
+        lpNew: resolve(__dirname, 'lp-new/index.html'),
         login: resolve(__dirname, 'login/index.html'),
         account: resolve(__dirname, 'account/index.html'),
         claim: resolve(__dirname, 'claim/index.html'),
