@@ -45,6 +45,9 @@ independent (do it whenever, including in parallel with 1-3).
 
 2B. Deploy kodomo-ai-admin (IAP) ── independent of 2, needs 1's Firestore project
 
+2C. Map domo-ai.com to 2 ── needs 2 deployed; the canonical-origin cutover in 2C's own
+                             last step needs 2C's DNS to be confirmed live FIRST
+
 4. Content pipeline keys ──> real Mission content (independent of 1-3)
 ```
 
@@ -373,6 +376,131 @@ gotten right by hand) → add field `role` (type `string`) = `operator`.
 - Order #1006 shows `binding = token` — recording a test refund request there freezes an
   eligibility snapshot (days since payment, whether the paid lesson was opened first) that
   never silently recomputes afterward, plus a direct link to open the order in Shopify admin.
+
+---
+
+## Part 2C — Custom domain: domo-ai.com
+
+Connects `https://domo-ai.com` (and `https://www.domo-ai.com`, redirecting to it) to the
+existing public frontend service (`kodomo-ai`). **No load balancer, no second Cloud Run service,
+and no new reverse-proxy code are needed** — `backend/server/frontendIndex.ts` (Part 2's own
+"Architect decision, post-incident" server) already serves every real route AND reverse-proxies
+`/api/*` to `kodomo-ai-backend` from ONE service. Mapping a domain straight to `kodomo-ai` is
+therefore enough to make `/`, `/course/`, `/course/beginner/`, `/login/`, `/account/`, `/claim/`,
+the legal pages, and `/api/*` all work at `https://domo-ai.com` in one step.
+
+This is a real-world, external step (DNS + a Google-verified domain) that only someone with
+`gcloud` access to the `kodomo-ai` project AND admin access to the お名前メール control panel for
+`domo-ai.com` can actually carry out — no session working in this repo can run these commands or
+edit that DNS zone itself. The commands below are exactly what to run.
+
+### 1. Verify domain ownership (one-time, if not already done)
+
+Cloud Run refuses to map a domain it can't confirm you own. If `domo-ai.com` isn't already
+verified under this Google Cloud account:
+```sh
+gcloud domains verify domo-ai.com
+```
+This opens Google Search Console and walks through verification (usually a TXT record — a
+temporary one, only for proving ownership, not part of the permanent DNS set below). Skip this
+step if `gcloud run domain-mappings create` below doesn't complain about ownership.
+
+### 2. Create the domain mappings
+
+```sh
+gcloud run domain-mappings create --service=kodomo-ai --domain=domo-ai.com --region=asia-northeast1
+gcloud run domain-mappings create --service=kodomo-ai --domain=www.domo-ai.com --region=asia-northeast1
+```
+Both point at the SAME service — `www` is not a separate deploy. (If either command errors that
+domain mappings aren't supported in `asia-northeast1`, its own error message names the region(s)
+that do support them; re-run with that region instead — the mapping is a routing resource,
+independent of which region actually runs the service's containers.)
+
+Each command prints the DNS records Cloud Run needs for that exact hostname — **treat that
+printed output as the authoritative source**, not the table below, since Google can change the
+exact IP set over time. As of this session, a root-domain mapping (`domo-ai.com`) asks for 4 A
+records and 4 AAAA records, and a subdomain mapping (`www.domo-ai.com`) asks for 1 CNAME:
+
+| Type | Name | Value |
+|---|---|---|
+| A | `@` (domo-ai.com) | `216.239.32.21` |
+| A | `@` (domo-ai.com) | `216.239.34.21` |
+| A | `@` (domo-ai.com) | `216.239.36.21` |
+| A | `@` (domo-ai.com) | `216.239.38.21` |
+| AAAA | `@` (domo-ai.com) | `2001:4860:4802:32::15` |
+| AAAA | `@` (domo-ai.com) | `2001:4860:4802:34::15` |
+| AAAA | `@` (domo-ai.com) | `2001:4860:4802:36::15` |
+| AAAA | `@` (domo-ai.com) | `2001:4860:4802:38::15` |
+| CNAME | `www` | `ghs.googlehosted.com.` |
+
+**Web records only** — add exactly these in お名前メール's DNS panel, and do not touch the
+existing MX, DKIM, Return-Path (CNAME under `pm-bounces.` or similar), or DMARC (`_dmarc.`)
+records already there for mail. They're different record names/types (mail records live at `@`
+MX and various `_domainkey`/`pm-bounces`/`_dmarc` subdomains, none of which collide with the A/
+AAAA/CNAME rows above) — Postmark's sending domain for `no-reply@domo-ai.com` depends on those
+staying exactly as they are.
+
+### 3. Wait for propagation, then verify
+
+```sh
+gcloud run domain-mappings describe --domain=domo-ai.com --region=asia-northeast1 --format='value(status.conditions)'
+gcloud run domain-mappings describe --domain=www.domo-ai.com --region=asia-northeast1 --format='value(status.conditions)'
+# both should show a "Ready" condition True once DNS has propagated and Google has issued the
+# managed TLS certificate — this can take anywhere from minutes to a few hours.
+
+dig +short domo-ai.com A
+dig +short www.domo-ai.com CNAME
+curl -s -o /dev/null -w '%{http_code}\n' https://domo-ai.com/          # expect 200
+curl -s -o /dev/null -w '%{http_code}\n' https://www.domo-ai.com/      # expect 200 (will 301 once the app-level redirect below is live)
+```
+
+### 4. Only THEN flip the app's own canonical-origin config
+
+This session has already prepared (in this repo, as an unpushed local commit) the one-line
+config change this needs: `.github/workflows/ci.yml`'s `deploy-frontend` job's `CANONICAL_HOST`
+and `deploy-backend`/`deploy-admin`'s `CANONICAL_ORIGIN` both switch from the `*.run.app` URL to
+`https://domo-ai.com` (keeping the old `*.run.app` origin listed in `APP_ORIGINS`, the CSRF
+allowlist, so it isn't suddenly rejected — see that file's own comments). **Deliberately not
+pushed yet** — a normal push to the production branch deploys immediately, and
+`backend/server/frontendIndex.ts`'s `canonicalRedirect` would then force-redirect every visitor,
+including everyone currently on the `*.run.app` URL, to `domo-ai.com` — which is exactly the
+outage this ordering avoids: pushed before step 3 confirms `Ready`, this would 301 the entire
+live site toward a domain that doesn't resolve yet.
+
+Once step 3's checks are green, say so — that's the signal to push this held commit and let CI's
+own `deploy-frontend`/`deploy-backend`/`deploy-admin` jobs redeploy with the new canonical origin
+on the next run.
+
+### 5. `www` → apex redirect — no extra config
+
+Mapping `www.domo-ai.com` to the same `kodomo-ai` service is deliberately all that's needed: once
+`CANONICAL_HOST=domo-ai.com` is live (step 4), `canonicalRedirect` 301s ANY other Host header —
+`www.domo-ai.com` included — to `domo-ai.com`, path and query preserved. No separate redirect
+rule, no load balancer, no registrar-side "domain forwarding" product.
+
+### 6. The `*.run.app` URL as a fallback
+
+The same mechanism means the old `*.run.app` URL keeps *resolving* (Cloud Run never stops serving
+its own default hostname alongside a mapped custom domain) — a visit there 301s to `domo-ai.com`
+rather than 404ing or going dark. That's a real trade-off, not a true independent fallback: if
+`domo-ai.com`'s own DNS ever broke, the `*.run.app` redirect target would be unreachable too, so
+it wouldn't help in exactly that failure mode. The alternative — leaving `*.run.app` fully,
+independently live (no redirect) — is the two-hostname architecture `frontendIndex.ts`'s own
+`canonicalRedirect` exists to CLOSE (its header comment: a real production incident traced to
+exactly that). This runbook keeps the redirect and treats "still resolves, redirects you to the
+live site" as the fallback — flag it back if a stronger, independent fallback matters enough to
+reopen that trade-off.
+
+### 7. Shopify's own "return to store" link (manual, Shopify Admin)
+
+Outside this repo entirely — nothing in `backend/src/shopify.ts`/`purchaseIntents.ts` builds or
+stores this link; Shopify generates it itself from the shop's own storefront/domain
+configuration. This session cannot access Shopify Admin to locate or change it, and doesn't want
+to guess an exact menu path with false confidence. Founder action: in Shopify Admin for
+`soul-id-2.myshopify.com`, find wherever the checkout/order-status page's "return to store" (or
+equivalent storefront-link/logo-link) setting lives — likely Settings → Checkout → the checkout
+branding/editor — and point it at `https://domo-ai.com` so a customer who just bought
+`kodomo-ai-m1` lands back on the ナゼホリ site, not an unrelated storefront.
 
 ---
 

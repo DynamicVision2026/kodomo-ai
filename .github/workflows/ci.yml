@@ -92,11 +92,18 @@ jobs:
       REGION: asia-northeast1
       SERVICE: kodomo-ai-backend
       AR_REPO: kodomo-ai-images
-      # Architect decision (same-origin API via reverse proxy): the canonical frontend origin —
-      # both the CSRF allowlist (APP_ORIGINS) and the base every emailed/redirect link is built
-      # from (APP_BASE_URL). Update the day domo-ai.com goes live — see the matching comment on
-      # deploy-frontend's own CANONICAL_HOST.
-      CANONICAL_ORIGIN: https://kodomo-ai-421702481956.asia-northeast1.run.app
+      # domo-ai.com migration (Founder decision, custom domain live): the canonical frontend
+      # origin — the base every emailed/redirect link is built from (APP_BASE_URL), and the one
+      # ALWAYS-allowed entry in the CSRF allowlist (APP_ORIGINS, below). See the matching comment
+      # on deploy-frontend's own CANONICAL_HOST.
+      CANONICAL_ORIGIN: https://domo-ai.com
+      # Kept in APP_ORIGINS (never APP_BASE_URL — links always point at the ONE canonical place,
+      # see backend/src/links.ts's own doc comment) so the *.run.app URL keeps working as a
+      # fallback: deploy-frontend's own CANONICAL_HOST now force-redirects any browser visit to
+      # this host over to domo-ai.com, but a direct API caller (or a stale bookmark's in-flight
+      # request before that redirect lands) hitting this origin is still accepted, not CSRF-
+      # rejected. Remove once the Founder is confident domo-ai.com is fully stable.
+      LEGACY_RUN_APP_ORIGIN: https://kodomo-ai-421702481956.asia-northeast1.run.app
       # Founder-confirmed final sender identity (postmarkEmail.ts's own optional fromName/replyTo
       # support) — EMAIL_FROM alone was missing from the live service entirely before this.
       # EMAIL_API_KEY (the actual Postmark server token — buildEnv.ts's own buildEmailSender
@@ -187,7 +194,7 @@ jobs:
             --allow-unauthenticated \
             --no-traffic \
             --tag="$TAG" \
-            --set-env-vars="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }},SHOPIFY_SHOP_DOMAIN=${{ env.SHOPIFY_SHOP_DOMAIN }},SHOPIFY_VARIANT_IDS=$SHOPIFY_VARIANT_IDS_JSON,COURSE_PREVIEW_EMAILS=${{ env.COURSE_PREVIEW_EMAILS }},BEGINNER_LAUNCH=${{ env.BEGINNER_LAUNCH }}" \
+            --set-env-vars="^;^GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }};APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},${{ env.LEGACY_RUN_APP_ORIGIN }};APP_BASE_URL=${{ env.CANONICAL_ORIGIN }};EMAIL_FROM=${{ env.EMAIL_FROM }};EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }};EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }};SHOPIFY_SHOP_DOMAIN=${{ env.SHOPIFY_SHOP_DOMAIN }};SHOPIFY_VARIANT_IDS=$SHOPIFY_VARIANT_IDS_JSON;COURSE_PREVIEW_EMAILS=${{ env.COURSE_PREVIEW_EMAILS }};BEGINNER_LAUNCH=${{ env.BEGINNER_LAUNCH }}" \
             --set-secrets="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest,EMAIL_API_KEY=EMAIL_API_KEY:latest"
           BASE_URL=$(gcloud run services describe "${{ env.SERVICE }}" \
             --region="${{ env.REGION }}" --format='value(status.url)')
@@ -261,7 +268,9 @@ jobs:
       AR_REPO: kodomo-ai-images
       # Same canonical origin deploy-backend uses — the admin dashboard's own resend-welcome/
       # resend-claim actions build login/claim links from it (backend/src/links.ts).
-      CANONICAL_ORIGIN: https://kodomo-ai-421702481956.asia-northeast1.run.app
+      CANONICAL_ORIGIN: https://domo-ai.com
+      # Same run.app-fallback reasoning as deploy-backend's own LEGACY_RUN_APP_ORIGIN.
+      LEGACY_RUN_APP_ORIGIN: https://kodomo-ai-421702481956.asia-northeast1.run.app
       EMAIL_FROM: no-reply@domo-ai.com
       EMAIL_FROM_NAME: ナゼホリ
       EMAIL_REPLY_TO: info@domo-ai.com
@@ -326,9 +335,13 @@ jobs:
           TAG: candidate-${{ github.run_number }}
           IAP_AUDIENCE: ${{ vars.IAP_AUDIENCE }}
         run: |
-          ENV_VARS="GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},APP_BASE_URL=${{ env.CANONICAL_ORIGIN }},EMAIL_FROM=${{ env.EMAIL_FROM }},EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }},EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }},SHOPIFY_SHOP_DOMAIN=${{ env.SHOPIFY_SHOP_DOMAIN }}"
+          # "^;^" switches gcloud's own --set-env-vars pair-separator from the default comma to
+          # `;` — required now that APP_ORIGINS's own value below carries a literal comma (two
+          # origins during the domo-ai.com migration), which the default comma-separated parsing
+          # would otherwise misread as the start of a new KEY=VALUE pair.
+          ENV_VARS="^;^GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }};APP_ORIGINS=${{ env.CANONICAL_ORIGIN }},${{ env.LEGACY_RUN_APP_ORIGIN }};APP_BASE_URL=${{ env.CANONICAL_ORIGIN }};EMAIL_FROM=${{ env.EMAIL_FROM }};EMAIL_FROM_NAME=${{ env.EMAIL_FROM_NAME }};EMAIL_REPLY_TO=${{ env.EMAIL_REPLY_TO }};SHOPIFY_SHOP_DOMAIN=${{ env.SHOPIFY_SHOP_DOMAIN }}"
           if [ -n "$IAP_AUDIENCE" ]; then
-            ENV_VARS="$ENV_VARS,IAP_AUDIENCE=$IAP_AUDIENCE"
+            ENV_VARS="$ENV_VARS;IAP_AUDIENCE=$IAP_AUDIENCE"
           fi
           SECRETS="ADMIN_TOKEN=ADMIN_TOKEN:latest,SHOPIFY_WEBHOOK_SECRET=SHOPIFY_WEBHOOK_SECRET:latest,AUTH_PEPPER=AUTH_PEPPER:latest,EMAIL_API_KEY=EMAIL_API_KEY:latest"
 
@@ -544,9 +557,13 @@ jobs:
       # this service answers as itself — backend/server/frontendIndex.ts 301-redirects any other
       # Host to this (its own doc comment explains why: the OTHER default Cloud Run URL this same
       # service is also reachable at was the actual root of the CORS/session-isolation incident
-      # this whole migration replaces). Update this the day the domo-ai.com custom domain goes
-      # live — nothing else in this job needs to change alongside it.
-      CANONICAL_HOST: kodomo-ai-421702481956.asia-northeast1.run.app
+      # this whole migration replaces). domo-ai.com custom domain is now live (both domo-ai.com
+      # and www.domo-ai.com are Cloud Run domain-mapped to this same service —
+      # docs/launch-runbook.md's own "Custom domain: domo-ai.com" section): this same redirect
+      # mechanism is what turns a www.domo-ai.com visit into a 301 to domo-ai.com, and what turns
+      # a *.run.app visit into a 301 here too (that URL still resolves, never a dead link — see
+      # that same doc section for the "keep run.app working" trade-off this implies).
+      CANONICAL_HOST: domo-ai.com
     steps:
       - uses: actions/checkout@v4
 
@@ -650,7 +667,7 @@ jobs:
         run: |
           CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
           FAIL=0
-          for path in / /lp-new/ /play/ /login/ /account/ /claim/ /legal/privacy/ /legal/tokushoho/; do
+          for path in / /lp-new/ /play/ /course/ /course/beginner/ /login/ /account/ /claim/ /legal/privacy/ /legal/tokushoho/; do
             STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${CANDIDATE_URL}${path}")
             if [ "$STATUS" != "200" ]; then
               echo "::error::${path} returned ${STATUS} on the candidate revision"
