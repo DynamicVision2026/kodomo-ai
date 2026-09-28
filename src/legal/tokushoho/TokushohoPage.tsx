@@ -29,8 +29,8 @@ const ROWS: [string, ReactNode][] = [
   ['販売価格', `${PRODUCT.price}（買い切り、世帯ライセンス — ご家庭内の全員でご利用いただけます）`],
   ['商品代金以外に必要な費用', 'ございません（インターネット接続料金等はお客様のご負担となります）'],
   // Founder-confirmed against Shopify Settings → Payments, 28 Sep 2026 (same confirmation as
-  // COPY-01 §7's FAQ answer) — effective today, not gated on BEGINNER_LAUNCH. PayPal omitted:
-  // not visible in the Founder's screenshots; the Founder is checking whether it's still on.
+  // COPY-01 §7's FAQ answer) — effective today, not gated on BEGINNER_LAUNCH. PayPal deliberately
+  // excluded (Founder decision, 28 Sep 2026): not offered.
   ['お支払い方法', 'クレジットカード（Visa・Mastercard・American Express・JCB）、Shop Pay、Apple Pay、Google Pay、PayPay、メルペイ'],
   ['お支払い時期', 'ご注文確定時'],
   [
