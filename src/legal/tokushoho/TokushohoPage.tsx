@@ -28,7 +28,10 @@ const ROWS: [string, ReactNode][] = [
   ['商品名', `${PRODUCT.workingTitle}（${BEGINNER_LAUNCH ? '入門コース' : 'モジュール1'}）`],
   ['販売価格', `${PRODUCT.price}（買い切り、世帯ライセンス — ご家庭内の全員でご利用いただけます）`],
   ['商品代金以外に必要な費用', 'ございません（インターネット接続料金等はお客様のご負担となります）'],
-  ['お支払い方法', 'クレジットカード、PayPay、PayPal'],
+  // Founder-confirmed against Shopify Settings → Payments, 28 Sep 2026 (same confirmation as
+  // COPY-01 §7's FAQ answer) — effective today, not gated on BEGINNER_LAUNCH. PayPal omitted:
+  // not visible in the Founder's screenshots; the Founder is checking whether it's still on.
+  ['お支払い方法', 'クレジットカード（Visa・Mastercard・American Express・JCB）、Shop Pay、Apple Pay、Google Pay、PayPay、メルペイ'],
   ['お支払い時期', 'ご注文確定時'],
   [
     '商品の引き渡し時期',
