@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { Plane } from '../../ad12/Plane';
 import { Ruby } from '../../engine/ruby';
-import { VoiceCue } from '../VoiceCue';
+import { useVoiceQueue } from '../useVoiceQueue';
 import { courseUi } from '../content/courseManifest';
 import { familyIntroAudioPath } from '../audioPaths';
 import type { CourseFamily } from '../content/types';
@@ -25,6 +25,9 @@ export interface FamilyScreenProps {
 export function FamilyScreen({ lessonId, family, stars, starsEnabled, onStar, onBack }: FamilyScreenProps) {
   const [chosenIndex, setChosenIndex] = useState<number | null>(null);
 
+  // Founder iPad Safari fix (28 Sep 2026): see courseAudioPlayer.ts's own doc comment.
+  useVoiceQueue(family.intro ? [familyIntroAudioPath(lessonId)] : [], `intro-${lessonId}`);
+
   return (
     <main className="ad12 course-screen course-family">
       <button type="button" className="ad12-ink-button ad12-tappable course-screen__back" onClick={onBack}>{courseUi.back}</button>
@@ -32,7 +35,6 @@ export function FamilyScreen({ lessonId, family, stars, starsEnabled, onStar, on
       {family.intro && (
         <Plane>
           <p className="ad12-reading-text"><Ruby text={family.intro} /></p>
-          <VoiceCue src={familyIntroAudioPath(lessonId)} />
         </Plane>
       )}
 

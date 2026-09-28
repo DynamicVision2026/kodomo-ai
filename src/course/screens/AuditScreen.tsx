@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { MoveCard } from '../../ad12/MoveCard';
 import { Plane } from '../../ad12/Plane';
 import { DialoguePlane } from '../DialoguePlane';
-import { VoiceCue } from '../VoiceCue';
+import { useVoiceQueue } from '../useVoiceQueue';
 import { Ruby } from '../../engine/ruby';
 import { courseUi } from '../content/courseManifest';
 import {
@@ -51,6 +51,21 @@ export function AuditScreen({ lessonId, item, position, onItemDone, onNext, onBa
     else onNext();
   }
 
+  const card = phase.kind === 'result' ? item.cards[phase.cardIndex] : undefined;
+
+  // Founder iPad Safari fix (28 Sep 2026): see courseAudioPlayer.ts's own doc comment — every
+  // VoiceCue this screen used to mount in parallel (q0+answer+prompt all fire together on initial
+  // mount) now queues through one shared, already-unlocked <audio> element instead.
+  useVoiceQueue([auditQ0AudioPath(lessonId, item.id), auditAnswerAudioPath(lessonId, item.id)], `intro-${item.id}`);
+  useVoiceQueue(
+    phase.kind === 'picking' ? [auditPromptAudioPath(lessonId, item.id)] : [],
+    phase.kind === 'picking' ? `picking-${item.id}-${removedIndexes.length}` : `none-${item.id}`,
+  );
+  useVoiceQueue(
+    phase.kind === 'result' ? [auditCardAudioPath(lessonId, item.id, phase.cardIndex), auditCardFeedbackAudioPath(lessonId, item.id, phase.cardIndex)] : [],
+    phase.kind === 'result' ? `result-${item.id}-${phase.cardIndex}` : `none-${item.id}`,
+  );
+
   if (phase.kind === 'complete') {
     return (
       <main className="ad12 course-screen course-audit course-audit--complete">
@@ -61,8 +76,6 @@ export function AuditScreen({ lessonId, item, position, onItemDone, onNext, onBa
       </main>
     );
   }
-
-  const card = phase.kind === 'result' ? item.cards[phase.cardIndex] : undefined;
 
   return (
     <main className="ad12 course-screen course-audit">
@@ -76,14 +89,11 @@ export function AuditScreen({ lessonId, item, position, onItemDone, onNext, onBa
         <p className="ad12-ui-text"><Ruby text={item.scene} /></p>
       </Plane>
       <DialoguePlane speaker={item.q0[0]} text={item.q0[1]} />
-      <VoiceCue src={auditQ0AudioPath(lessonId, item.id)} />
       <DialoguePlane speaker={item.answer[0]} text={item.answer[1]} />
-      <VoiceCue src={auditAnswerAudioPath(lessonId, item.id)} />
 
       {phase.kind === 'picking' && (
         <>
           <p className="ad12-ui-text">{item.prompt}</p>
-          <VoiceCue src={auditPromptAudioPath(lessonId, item.id)} />
           <div className="course-exercise__options">
             {item.cards.map((c, i) => {
               if (removedIndexes.includes(i)) return null;
@@ -95,9 +105,7 @@ export function AuditScreen({ lessonId, item, position, onItemDone, onNext, onBa
 
       {phase.kind === 'result' && card && (
         <>
-          <VoiceCue src={auditCardAudioPath(lessonId, item.id, phase.cardIndex)} />
           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={card[2]} />
-          <VoiceCue src={auditCardFeedbackAudioPath(lessonId, item.id, phase.cardIndex)} />
           {card[0] === 'ok' ? (
             <>
               <p className="ad12-reading-text">{courseUi.auditOkLabel}</p>

@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Icon } from '../Icon';
 import { Plane } from '../../ad12/Plane';
 import { courseUi } from '../content/courseManifest';
+import { unlock as unlockCourseAudio } from '../courseAudioPlayer';
 import type { CourseLesson } from '../content/types';
 import { computeLessonPercent, computeStepUnlocks, emptyLessonProgress, type CourseLessonProgress } from '../progress';
 
@@ -35,8 +36,11 @@ export function LessonScreen({
   const exerciseBDoneCount = (blockB?.thenExercises ?? []).filter((id) => p.exercisesDone.includes(id)).length;
   const makeAllDone = lesson.make.every((_, i) => (i === 0 ? p.makeADone : p.makeBDone));
 
+  // Founder iPad Safari fix (28 Sep 2026): see BeginnerLessonScreen.tsx's own identical comment —
+  // this is stage2's own copy of the same fix (courseAudioPlayer.ts's own doc comment has the
+  // full explanation).
   function guarded(unlocked: boolean, onSelect: () => void) {
-    return unlocked ? onSelect : () => setNote(courseUi.stepLockedNote);
+    return unlocked ? () => { unlockCourseAudio(); onSelect(); } : () => setNote(courseUi.stepLockedNote);
   }
 
   return (

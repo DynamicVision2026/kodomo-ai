@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { Plane } from '../../ad12/Plane';
 import { Ruby } from '../../engine/ruby';
-import { VoiceCue } from '../VoiceCue';
+import { useVoiceQueue } from '../useVoiceQueue';
 import { courseUi } from '../content/courseManifest';
 import { teachBackPromptAudioPath } from '../audioPaths';
 import type { CourseTeachBack } from '../content/types';
@@ -23,6 +23,11 @@ export interface TeachBackScreenProps {
 export function TeachBackScreen({ lessonId, teachBack, onTeachBackDone, onBack }: TeachBackScreenProps) {
   const [done, setDone] = useState(false);
   const [revealedHelp, setRevealedHelp] = useState<Set<number>>(new Set());
+
+  // Founder iPad Safari fix (28 Sep 2026): see courseAudioPlayer.ts's own doc comment — a fresh
+  // <audio> element per screen mount needs its OWN gesture activation; this shared, already-
+  // unlocked element doesn't.
+  useVoiceQueue([teachBackPromptAudioPath(lessonId)], `intro-${lessonId}`);
 
   function toggleHelp(i: number) {
     setRevealedHelp((prev) => {
@@ -45,7 +50,6 @@ export function TeachBackScreen({ lessonId, teachBack, onTeachBackDone, onBack }
       <Plane>
         <p className="ad12-reading-text"><Ruby text={teachBack.prompt} /></p>
       </Plane>
-      <VoiceCue src={teachBackPromptAudioPath(lessonId)} />
 
       {teachBack.cards?.map((card, i) => (
         <Plane key={card.tool} className="course-teachback__card">

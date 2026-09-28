@@ -4,20 +4,26 @@
  * a second miss always narrows down to the one remaining (correct) card, and there's never a
  * score or red cross shown.
  */
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuditScreen } from '../src/course/screens/AuditScreen';
+import { __resetCourseAudioPlayerForTests } from '../src/course/courseAudioPlayer';
 import type { CourseAuditItem } from '../src/course/content/types';
 
 // jsdom's HTMLMediaElement.play() has no real media pipeline and returns undefined rather than a
-// Promise — VoiceCue.tsx's own `.play().catch(...)` (real production code, not a test-only path)
-// throws on that. Same stubbing technique tests/ListeningPocket.test.tsx's own header comment
-// documents for the same jsdom gap.
+// Promise — courseAudioPlayer.ts's own `.play().catch(...)` (real production code, not a
+// test-only path) throws on that. Same stubbing technique tests/ListeningPocket.test.tsx's own
+// header comment documents for the same jsdom gap.
 beforeAll(() => {
   window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+  window.HTMLMediaElement.prototype.pause = () => { /* jsdom has no real media pipeline */ };
 });
 
+// courseAudioPlayer.ts is a module-scoped singleton (by design — one <audio> element for the
+// whole real page session) — reset it between tests so one test's queue state can't bleed into
+// the next within this file.
+beforeEach(() => __resetCourseAudioPlayerForTests());
 afterEach(() => cleanup());
 
 const ITEM: CourseAuditItem = {

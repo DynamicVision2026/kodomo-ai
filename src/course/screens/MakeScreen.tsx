@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { Plane } from '../../ad12/Plane';
 import { Icon } from '../Icon';
 import { DialoguePlane } from '../DialoguePlane';
-import { VoiceCue } from '../VoiceCue';
+import { useVoiceQueue } from '../useVoiceQueue';
 import { Ruby } from '../../engine/ruby';
 import { courseUi } from '../content/courseManifest';
 import { makeDialogueAudioPath, SHARED_AUDIO } from '../audioPaths';
@@ -49,6 +49,16 @@ export function MakeScreen({ lessonId, blocks, blockIndex, onMakeDone, onNextBlo
   const [hintLevel, setHintLevel] = useState<0 | 1 | 2>(0);
   const [peekRevealed, setPeekRevealed] = useState(false);
   const block = blocks[blockIndex];
+
+  // Founder iPad Safari fix (28 Sep 2026): see courseAudioPlayer.ts's own doc comment — every
+  // VoiceCue this screen used to mount in parallel (one per dialogue line, all at once, plus the
+  // shared "say it" prompt) now queues through one shared, already-unlocked <audio> element.
+  // Hooks must run unconditionally, so this sits before the `!block` early return below.
+  useVoiceQueue(
+    block ? [...block.dialogue.map((_, i) => makeDialogueAudioPath(lessonId, block.tool, i)), SHARED_AUDIO.makeSayItPrompt] : [],
+    `block-${lessonId}-${block?.tool ?? 'none'}-${blockIndex}`,
+  );
+
   if (!block) return null;
 
   const highlightLineIndex = hintLevel === 2 && block.hint
@@ -76,7 +86,6 @@ export function MakeScreen({ lessonId, blocks, blockIndex, onMakeDone, onNextBlo
           ) : (
             <DialoguePlane speaker={line.speaker} text={line.text} />
           )}
-          <VoiceCue src={makeDialogueAudioPath(lessonId, block.tool, i)} />
         </div>
       ))}
 
@@ -122,7 +131,6 @@ export function MakeScreen({ lessonId, blocks, blockIndex, onMakeDone, onNextBlo
       )}
 
       <p className="ad12-ui-text course-make__say-prompt">{courseUi.makeSayItPrompt}</p>
-      <VoiceCue src={SHARED_AUDIO.makeSayItPrompt} />
 
       {!tried ? (
         <button type="button" className="ad12-ink-button ad12-tappable course-screen__primary" onClick={handleTried}>

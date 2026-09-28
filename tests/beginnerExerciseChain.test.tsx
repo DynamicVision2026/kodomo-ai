@@ -3,18 +3,21 @@
  * `sameTool` counts as success, and b07's multi-step chains ("don't play it twice": `onItemDone`
  * only fires once, at the LAST step).
  */
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExerciseScreen } from '../src/course/screens/ExerciseScreen';
+import { __resetCourseAudioPlayerForTests } from '../src/course/courseAudioPlayer';
 import type { CourseExercise } from '../src/course/content/types';
 
 // See tests/beginnerAudit.test.tsx's identical stub for why this is needed (jsdom's
-// HTMLMediaElement.play() gap, VoiceCue.tsx's own real `.play().catch(...)` call site).
+// HTMLMediaElement.play() gap, courseAudioPlayer.ts's own real `.play().catch(...)` call site).
 beforeAll(() => {
   window.HTMLMediaElement.prototype.play = () => Promise.resolve();
+  window.HTMLMediaElement.prototype.pause = () => { /* jsdom has no real media pipeline */ };
 });
 
+beforeEach(() => __resetCourseAudioPlayerForTests());
 afterEach(() => cleanup());
 
 const CHAIN_EXERCISE: CourseExercise = {

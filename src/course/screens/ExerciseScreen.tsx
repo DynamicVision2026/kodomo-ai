@@ -15,7 +15,7 @@ import { useState } from 'react';
 import { MoveCard } from '../../ad12/MoveCard';
 import { Plane } from '../../ad12/Plane';
 import { DialoguePlane } from '../DialoguePlane';
-import { VoiceCue } from '../VoiceCue';
+import { useVoiceQueue } from '../useVoiceQueue';
 import { Ruby } from '../../engine/ruby';
 import { courseUi } from '../content/courseManifest';
 import { exerciseQ0AudioPath, exerciseAnswerAudioPath, exerciseOptionAudioPath, SHARED_AUDIO } from '../audioPaths';
@@ -130,6 +130,61 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
     else onNext();
   }
 
+  const chosen = phase.kind === 'miss' || phase.kind === 'solved'
+    ? orderedOptions.find((o) => o.id === phase.optionId)
+    : undefined;
+  const lessonId = lessonIdOf(exercise.id);
+
+  // Founder iPad Safari fix (28 Sep 2026): every VoiceCue this screen used to mount in parallel
+  // (up to 3-4 per phase) now queues through one shared, already-unlocked <audio> element instead
+  // — see courseAudioPlayer.ts's own doc comment for why simultaneous fresh <audio> elements were
+  // the actual bug. Two independent queues, matching the two independent "narrates once" scopes
+  // the original per-VoiceCue `[src]` effects had: q0/answer play once per exercise mount
+  // (unaffected by later phase/retry churn), everything else replays each time its own phase
+  // moment is freshly entered.
+  useVoiceQueue(
+    [exerciseQ0AudioPath(lessonId, exercise.id), stepIndex === 0 ? exerciseAnswerAudioPath(lessonId, exercise.id) : undefined],
+    `intro-${exercise.id}`,
+  );
+
+  let phaseVoiceSrcs: (string | undefined)[] = [];
+  let phaseVoiceKey = `none-${exercise.id}-${stepIndex}`;
+  if (phase.kind === 'picking') {
+    phaseVoiceSrcs = [SHARED_AUDIO.practiceNextPrompt];
+    phaseVoiceKey = `picking-${exercise.id}-${stepIndex}-${missCount}`;
+  } else if (phase.kind === 'miss' && chosen) {
+    phaseVoiceSrcs = [
+      (chosen.kind === 'question' || chosen.kind === 'stop')
+        ? exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'ask', stepIndex) : undefined,
+      exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'reply', stepIndex),
+      exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'feedback', stepIndex),
+      SHARED_AUDIO.practiceRetryPrompt,
+    ];
+    phaseVoiceKey = `miss-${exercise.id}-${stepIndex}-${chosen.id}-${missCount}`;
+  } else if (phase.kind === 'solved' && chosen) {
+    const other = phase.exploring && phase.exploreOptionId
+      ? orderedOptions.find((o) => o.id === phase.exploreOptionId)
+      : undefined;
+    if (other) {
+      phaseVoiceSrcs = [
+        (other.kind === 'question' || other.kind === 'stop')
+          ? exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'ask', stepIndex) : undefined,
+        exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'reply', stepIndex),
+        exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'feedback', stepIndex),
+      ];
+      phaseVoiceKey = `explore-${exercise.id}-${stepIndex}-${chosen.id}-${other.id}`;
+    } else {
+      phaseVoiceSrcs = [
+        (chosen.kind === 'question' || chosen.kind === 'stop')
+          ? exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'ask', stepIndex) : undefined,
+        exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'reply', stepIndex),
+        exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'feedback', stepIndex),
+      ];
+      phaseVoiceKey = `solved-${exercise.id}-${stepIndex}-${chosen.id}`;
+    }
+  }
+  useVoiceQueue(phaseVoiceSrcs, phaseVoiceKey);
+
   if (phase.kind === 'complete') {
     return (
       <main className="ad12 course-screen course-exercise course-exercise--complete">
@@ -140,11 +195,6 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
       </main>
     );
   }
-
-  const chosen = phase.kind === 'miss' || phase.kind === 'solved'
-    ? orderedOptions.find((o) => o.id === phase.optionId)
-    : undefined;
-  const lessonId = lessonIdOf(exercise.id);
 
   return (
     <main className="ad12 course-screen course-exercise">
@@ -174,24 +224,18 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
         <p className="ad12-ui-text"><Ruby text={exercise.scene.text} /></p>
       </Plane>
       <DialoguePlane speaker={exercise.q0.speaker} text={exercise.q0.text} />
-      <VoiceCue src={exerciseQ0AudioPath(lessonId, exercise.id)} />
       {exerciseStep && (
         <Plane className="course-exercise__answer">
           <p className="ad12-ui-text course-dialogue__speaker">{exerciseStep.answer.speaker}</p>
           <p className="ad12-reading-text">
             {showH2 ? highlightSubstring(exerciseStep.answer.text, exerciseStep.hint.h2Highlight) : <Ruby text={exerciseStep.answer.text} />}
           </p>
-          {/* WO-C5 §2 "don't play it twice": a chain step beyond the first has no own answer
-              clip — its text is the exact audio already played as the previous step's chosen
-              reply, a beat ago. */}
-          {stepIndex === 0 && <VoiceCue src={exerciseAnswerAudioPath(lessonId, exercise.id)} />}
         </Plane>
       )}
 
       {phase.kind === 'picking' && exerciseStep && (
         <>
           <p className="ad12-ui-text">{courseUi.practice.nextPrompt}</p>
-          <VoiceCue src={SHARED_AUDIO.practiceNextPrompt} />
           <div className="course-exercise__options">
             {orderedOptions.map((option) => {
               const tried = triedIds.includes(option.id);
@@ -223,17 +267,9 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
 
       {phase.kind === 'miss' && chosen && (
         <>
-          {/* WO-C5 §2: a `stop`-kind option (b07's nearMiss 「ふーん、そうなんだ。」 card) is spoken
-              like a question card too — same `ask` clip mechanism, just never a success role. */}
-          {(chosen.kind === 'question' || chosen.kind === 'stop') && (
-            <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'ask', stepIndex)} />
-          )}
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
-          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'reply', stepIndex)} />
           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
-          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'feedback', stepIndex)} />
           <p className="ad12-ui-text">{courseUi.practice.retryPrompt}</p>
-          <VoiceCue src={SHARED_AUDIO.practiceRetryPrompt} />
           <button type="button" className="ad12-ink-button ad12-tappable course-screen__primary" onClick={() => setPhase({ kind: 'picking' })}>
             {courseUi.practice.retryLabel}
           </button>
@@ -242,13 +278,8 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
 
       {phase.kind === 'solved' && chosen && (
         <>
-          {(chosen.kind === 'question' || chosen.kind === 'stop') && (
-            <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'ask', stepIndex)} />
-          )}
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
-          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'reply', stepIndex)} />
           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
-          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, chosen.id, 'feedback', stepIndex)} />
 
           {isChain && !isLastStep ? (
             <button
@@ -275,13 +306,8 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
                       if (!other) return null;
                       return (
                         <>
-                          {(other.kind === 'question' || other.kind === 'stop') && (
-                            <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'ask', stepIndex)} />
-                          )}
                           <DialoguePlane speaker={other.reply.speaker} text={other.reply.text} />
-                          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'reply', stepIndex)} />
                           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={other.feedback} />
-                          <VoiceCue src={exerciseOptionAudioPath(lessonId, exercise.id, other.id, 'feedback', stepIndex)} />
                           <button
                             type="button"
                             className="ad12-ink-button ad12-tappable"

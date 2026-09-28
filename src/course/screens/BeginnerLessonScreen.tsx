@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Icon } from '../Icon';
 import { Plane } from '../../ad12/Plane';
 import { courseUi } from '../content/courseManifest';
+import { unlock as unlockCourseAudio } from '../courseAudioPlayer';
 import type { CourseBeginnerLesson } from '../content/types';
 import { computeBeginnerLessonPercent, computeBeginnerStepUnlocks, emptyLessonProgress, type CourseLessonProgress } from '../progress';
 
@@ -30,8 +31,12 @@ export function BeginnerLessonScreen({
   const exerciseDoneCount = lesson.exercises.filter((e) => p.exercisesDone.includes(e.id)).length;
   const auditDoneCount = lesson.audit.filter((a) => p.exercisesDone.includes(a.id)).length;
 
+  // Founder iPad Safari fix (28 Sep 2026): every step tap is a real user gesture — the one place
+  // every entry into an audio-driven screen already passes through — so this is where the shared
+  // course-audio element gets its one-time activation (see courseAudioPlayer.ts's own doc
+  // comment). A no-op after the first call.
   function guarded(unlocked: boolean, onSelect: () => void) {
-    return unlocked ? onSelect : () => setNote(courseUi.stepLockedNote);
+    return unlocked ? () => { unlockCourseAudio(); onSelect(); } : () => setNote(courseUi.stepLockedNote);
   }
 
   return (
