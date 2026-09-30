@@ -1,0 +1,64 @@
+/* Post-launch-check (Founder, domo-ai.com): the small Course Home / garden header —
+   ナゼホリ · プレイグラウンド / 入門コース · アカウント · ログアウト. Uses AD-12 tokens only
+   (gate:no-old-theme scans every /play stylesheet for the retired cream/gold palette). */
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+  background: var(--ad12-paper);
+  color: var(--ad12-ink);
+  border-radius: var(--ad12-radius-chip);
+  font-family: var(--ad12-font);
+  font-size: var(--ad12-ui-size);
+  font-weight: var(--ad12-ui-weight);
+}
+
+.site-header__brand {
+  font-weight: 700;
+  color: var(--ad12-ink);
+  text-decoration: none;
+}
+
+.site-header__switch {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: auto;
+}
+
+.site-header__switch-link {
+  color: var(--ad12-ink);
+  text-decoration: underline;
+}
+
+.site-header__switch-current {
+  font-weight: 700;
+}
+
+.site-header__switch-divider {
+  opacity: 0.5;
+}
+
+.site-header__link {
+  background: none;
+  border: none;
+  color: var(--ad12-ink);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+@media (max-width: 480px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+  }
+  .site-header__switch {
+    order: 3;
+    margin-right: 0;
+    flex-basis: 100%;
+  }
+}

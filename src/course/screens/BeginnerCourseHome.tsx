@@ -13,6 +13,7 @@
 import { useState } from 'react';
 import { Icon } from '../Icon';
 import { Plane } from '../../ad12/Plane';
+import { SiteHeader } from '../../ad12/SiteHeader';
 import { courseUi } from '../content/courseManifest';
 import type { CourseBeginnerLesson, CourseBeginnerManifest } from '../content/types';
 import {
@@ -45,6 +46,17 @@ export function BeginnerCourseHome({
 
   return (
     <main className="ad12 course-home">
+      <SiteHeader
+        ui={{
+          brandLabel: courseUi.siteHeaderBrandLabel,
+          playgroundLabel: courseUi.siteHeaderPlaygroundLabel,
+          courseLabel: courseUi.siteHeaderCourseLabel,
+          accountLabel: courseUi.siteHeaderAccountLabel,
+          logoutLabel: courseUi.siteHeaderLogoutLabel,
+        }}
+        current="course"
+        homeHref="/course/beginner/"
+      />
       <h1 className="ad12-reading-text course-home__title">{courseUi.beginnerGardenTitle}</h1>
       {note && <Plane className="course-home__note"><p className="ad12-ui-text">{note}</p></Plane>}
       <div className="course-home__garden">

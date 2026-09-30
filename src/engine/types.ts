@@ -416,6 +416,17 @@ export interface ModuleUiStrings {
    *  by this app; only a parent, by hand, ever writes on the printed certificate. Real AI Lab
    *  never populates this line either (Architect decision #8). */
   certificateBlankLabel?: string;
+
+  // --- Post-launch-check (Founder, domo-ai.com): the small site header (src/ad12/SiteHeader.tsx)
+  // shown on Course Home once a real family account is configured — brand/home link, the
+  // Playground/beginner-course switcher, account, and logout. Optional so existing module
+  // fixtures without them keep working unchanged (SiteHeader itself never renders at all unless
+  // `isFamilyApiConfigured()`, so an absent value is never actually shown in production). -------
+  siteHeaderBrandLabel?: string;
+  siteHeaderPlaygroundLabel?: string;
+  siteHeaderCourseLabel?: string;
+  siteHeaderAccountLabel?: string;
+  siteHeaderLogoutLabel?: string;
 }
 
 /**

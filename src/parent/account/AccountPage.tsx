@@ -24,6 +24,12 @@ type DeleteStep = { kind: 'idle' } | { kind: 'code-sent' } | { kind: 'confirming
 const PURCHASE_MODULE_ID = moduleJson.id;
 const PURCHASE_MODULE_TITLE = moduleJson.title;
 
+// COPY-01 naming table, same "モジュール1 is retired as a public name once BEGINNER_LAUNCH is on"
+// rule TokushohoPage.tsx already applies to 商品名 — same underlying m1 entitlement either way,
+// only the public label changes.
+const BEGINNER_LAUNCH = import.meta.env.VITE_BEGINNER_LAUNCH === '1';
+const PURCHASED_MODULE_LABEL = BEGINNER_LAUNCH ? '入門コース' : 'Module 1';
+
 /** usePurchaseFlow (src/family, not exempt from gate:no-hardcoded-copy) stays copy-free — this
  *  mirrors src/lp/LandingPage.tsx's own identical map for the same reason. */
 const PURCHASE_ERROR_MESSAGE: Record<'not_configured' | 'other', string> = {
@@ -148,7 +154,7 @@ export function AccountPage() {
         {alreadyEntitled && purchasedModule &&
           (purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
             <p className="account__purchase-status">
-              ご購入済み：ナゼホリ Module 1（購入日：{formatPurchaseDate(purchasedModule.grantedAt)}）
+              ご購入済み：ナゼホリ {PURCHASED_MODULE_LABEL}（購入日：{formatPurchaseDate(purchasedModule.grantedAt)}）
             </p>
           )}
         {!alreadyEntitled &&

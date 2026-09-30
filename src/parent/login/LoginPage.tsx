@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { load, save } from '../../engine/storage';
-import { fetchMe, requestLoginCode, verifyLoginCode } from '../../family/api';
+import { fetchMe, requestLoginCode, verifyLoginCode, type MeResponse } from '../../family/api';
 import { hydrateFromServer, importGuestProfiles } from '../../family/session';
 import { track } from '../../engine/analytics';
 import { COMPANY } from '../../legal/company';
@@ -29,13 +29,30 @@ const CODE_ERROR_MESSAGE: Record<string, string> = {
   server: `エラーが発生しました。しばらくしてから、もう一度お試しください。解決しない場合は、${COMPANY.email} までご連絡ください。`,
 };
 
+/** Same visibility rule `BeginnerCourseApp.tsx`/`src/family/api.ts`'s own `MeResponse.courseAllowed`
+ *  doc comment already establish: the build-time general-availability flag, or this family's own
+ *  allowlist/preview-email grant (`me.courseAllowed`, computed server-side by
+ *  `isCourseAllowedForFamily`). Kept local rather than imported — the one-line expression isn't
+ *  worth a shared helper across two otherwise-unrelated files. */
+function courseVisible(me: MeResponse): boolean {
+  return import.meta.env.VITE_BEGINNER_LAUNCH === '1' || me.courseAllowed;
+}
+
 /** AD-16 §2: the claim flow (and any other future flow) sends a parent here with
- *  `?next=/some/path` so a successful login returns them to where they came from instead of
- *  always landing on `/play/`. Only ever a same-origin absolute path — never an open redirect to
- *  an arbitrary external URL, whatever `next` claims. */
-function resolveNextPath(): string {
+ *  `?next=/some/path` so a successful login returns them to where they came from instead of the
+ *  default below. Only ever a same-origin absolute path — never an open redirect to an arbitrary
+ *  external URL, whatever `next` claims.
+ *
+ *  Post-launch-check fix (Founder report, domo-ai.com): with no explicit `?next=`, a plain login
+ *  used to always land on `/play/` — never `/account/` (that only ever happens via an explicit
+ *  `?next=/account/`, e.g. the purchase CTA's own `/login/?next=/account/`, which is unaffected
+ *  by this change). The actual gap: `/play/` was the only default, even for a family the beginner
+ *  course is already visible to, who'd then have to navigate there themselves. Now: the course
+ *  garden if it's visible to this family, `/play/` otherwise. */
+function resolveNextPath(me: MeResponse): string {
   const next = new URLSearchParams(window.location.search).get('next');
-  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/play/';
+  if (next && next.startsWith('/') && !next.startsWith('//')) return next;
+  return courseVisible(me) ? '/course/beginner/' : '/play/';
 }
 
 /**
@@ -58,7 +75,7 @@ export function LoginPage() {
       const me = await fetchMe();
       if (cancelled) return;
       if (me) {
-        window.location.href = resolveNextPath();
+        window.location.href = resolveNextPath(me);
         return;
       }
       setStep({ kind: 'email' });
@@ -102,7 +119,7 @@ export function LoginPage() {
     appState = await hydrateFromServer(appState, result.me, moduleJson.id);
     save(appState);
     setStep({ kind: 'signed-in' });
-    window.location.href = resolveNextPath();
+    window.location.href = resolveNextPath(result.me);
   }
 
   return (

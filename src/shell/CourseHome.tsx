@@ -7,6 +7,7 @@ import { Toolbox } from './Toolbox';
 import { Mascot } from './Mascot';
 import { Ruby } from '../engine/ruby';
 import { HomePlane } from '../ad12/HomePlane';
+import { SiteHeader } from '../ad12/SiteHeader';
 import { audioScriptFor } from '../audio/registry';
 import '../ad12/tokens.css';
 import '../ad12/primitives.css';
@@ -109,6 +110,20 @@ export function CourseHome({
 
   return (
     <div className="ad12 course-home">
+      {ui.siteHeaderBrandLabel && ui.siteHeaderPlaygroundLabel && ui.siteHeaderCourseLabel &&
+        ui.siteHeaderAccountLabel && ui.siteHeaderLogoutLabel && (
+          <SiteHeader
+            ui={{
+              brandLabel: ui.siteHeaderBrandLabel,
+              playgroundLabel: ui.siteHeaderPlaygroundLabel,
+              courseLabel: ui.siteHeaderCourseLabel,
+              accountLabel: ui.siteHeaderAccountLabel,
+              logoutLabel: ui.siteHeaderLogoutLabel,
+            }}
+            current="playground"
+            homeHref="/play/"
+          />
+        )}
       <div className="course-home__scroll">
         <div className="course-home__header">
           <Mascot state="curious" />

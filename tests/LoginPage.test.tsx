@@ -57,18 +57,65 @@ describe('LoginPage', () => {
     expect(screen.queryByLabelText('メールアドレス')).not.toBeInTheDocument();
   });
 
-  it('a logged-in parent with no `next` param is sent to /play/ by default', async () => {
+  it('a logged-in parent with no `next` param, and the course not visible to them, is sent to /play/', async () => {
     vi.resetModules();
     stubLocation();
     vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [] })),
+      vi.fn(async () => jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [], courseAllowed: false })),
     );
     const { LoginPage } = await import('../src/parent/login/LoginPage');
 
     render(<LoginPage />);
 
     await waitFor(() => expect(window.location.href).toBe('/play/'));
+  });
+
+  it('post-launch-check fix (Founder report): a logged-in parent with no `next` param, course visible via VITE_BEGINNER_LAUNCH, is sent to /course/beginner/ — never /account/', async () => {
+    vi.resetModules();
+    stubLocation();
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    vi.stubEnv('VITE_BEGINNER_LAUNCH', '1');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [], courseAllowed: false })),
+    );
+    const { LoginPage } = await import('../src/parent/login/LoginPage');
+
+    render(<LoginPage />);
+
+    await waitFor(() => expect(window.location.href).toBe('/course/beginner/'));
+  });
+
+  it('a logged-in parent with no `next` param, course visible via this family\'s own courseAllowed grant (allowlist/preview email), is sent to /course/beginner/', async () => {
+    vi.resetModules();
+    stubLocation();
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [], courseAllowed: true })),
+    );
+    const { LoginPage } = await import('../src/parent/login/LoginPage');
+
+    render(<LoginPage />);
+
+    await waitFor(() => expect(window.location.href).toBe('/course/beginner/'));
+  });
+
+  it('an explicit `?next=/account/` still wins even when the course is visible to this family — never silently overridden', async () => {
+    vi.resetModules();
+    stubLocation('?next=/account/');
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    vi.stubEnv('VITE_BEGINNER_LAUNCH', '1');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [], courseAllowed: true })),
+    );
+    const { LoginPage } = await import('../src/parent/login/LoginPage');
+
+    render(<LoginPage />);
+
+    await waitFor(() => expect(window.location.href).toBe('/account/'));
   });
 });

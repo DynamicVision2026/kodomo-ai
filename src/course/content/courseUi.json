@@ -100,5 +100,10 @@
     "seeOtherCardsLabel": "ほかのカードも見てみる",
     "closeLabel": "とじる",
     "doneLabel": "れんしゅう、おわり！"
-  }
+  },
+  "siteHeaderBrandLabel": "ナゼホリ",
+  "siteHeaderPlaygroundLabel": "プレイグラウンド",
+  "siteHeaderCourseLabel": "入門コース",
+  "siteHeaderAccountLabel": "アカウント",
+  "siteHeaderLogoutLabel": "ログアウト"
 }

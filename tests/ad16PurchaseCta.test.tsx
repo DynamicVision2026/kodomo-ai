@@ -155,6 +155,20 @@ describe('AD-16 §1 — the account page purchase CTA', () => {
     expect(screen.getByText('ご購入済み：ナゼホリ Module 1（購入日：9月20日）')).toBeInTheDocument();
   });
 
+  it('post-launch-check (Founder): behind VITE_BEGINNER_LAUNCH, the same purchase line says 入門コース instead of Module 1 — same m1 entitlement either way', async () => {
+    vi.stubEnv('VITE_BEGINNER_LAUNCH', '1');
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/me')) return jsonResponse(ME_ENTITLED);
+      if (url.endsWith('/sessions')) return jsonResponse([]);
+      return new Response('not found', { status: 404 });
+    }));
+    await renderConfiguredAccountPage();
+    await waitFor(() => expect(screen.getByText('使用中の端末')).toBeInTheDocument());
+    expect(screen.getByText('ご購入済み：ナゼホリ 入門コース（購入日：9月20日）')).toBeInTheDocument();
+    expect(screen.queryByText(/Module 1/)).not.toBeInTheDocument();
+  });
+
   it('a 503 not_configured response is handled safely, with an honest message and no crash', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);

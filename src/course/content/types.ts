@@ -511,4 +511,12 @@ export interface CourseUiStrings {
     closeLabel: string;
     doneLabel: string;
   };
+  /** Post-launch-check (Founder, domo-ai.com): the small site header (src/ad12/SiteHeader.tsx)
+   *  shown on the garden once a real family account is configured — brand/home link, the
+   *  Playground/beginner-course switcher, account, and logout. */
+  siteHeaderBrandLabel: string;
+  siteHeaderPlaygroundLabel: string;
+  siteHeaderCourseLabel: string;
+  siteHeaderAccountLabel: string;
+  siteHeaderLogoutLabel: string;
 }
