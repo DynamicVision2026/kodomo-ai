@@ -683,6 +683,39 @@ jobs:
           else
             echo "OK /api/v1/me -> 401 (proxy reaches the real backend)"
           fi
+
+          # Post-launch-check (Founder report, domo-ai.com, 30 Sep): the real きく playback bug
+          # (ListenScreen.tsx/EndingScreen.tsx re-seeking a real audio element on every timeupdate
+          # tick, stalling real streamed MP3 decode) shipped invisibly because nothing in CI ever
+          # requested a real lesson audio file — every prior check here was HTML/JSON only. This
+          # doesn't catch THAT specific bug (it's a client-side playback bug, not a missing/broken
+          # file), but it does catch the adjacent, equally real failure mode of a lesson shipping
+          # with its audio file 404ing, wrong-content-typed, or truncated to a placeholder-sized
+          # stub — every one of which would make きく just as broken for a family.
+          check_audio_file() {
+            local url="$1"
+            local response
+            response=$(curl -s -o /dev/null -w '%{http_code} %{content_type} %{size_download}' "$url")
+            local status ctype size
+            read -r status ctype size <<< "$response"
+            if [ "$status" != "200" ]; then
+              echo "::error::${url} returned ${status} on the candidate revision (expected 200)"
+              FAIL=1
+            elif [ "$ctype" != "audio/mpeg" ]; then
+              echo "::error::${url} content-type is '${ctype}' on the candidate revision (expected audio/mpeg)"
+              FAIL=1
+            elif [ "$size" -le 1048576 ]; then
+              echo "::error::${url} is only ${size} bytes on the candidate revision (expected > 1MB — looks truncated or a placeholder)"
+              FAIL=1
+            else
+              echo "OK ${url} -> 200 audio/mpeg ${size} bytes"
+            fi
+          }
+          for lesson in b01 b02 b03 b04 b05 b06 b07; do
+            check_audio_file "${CANDIDATE_URL}/audio/course/${lesson}/${lesson}_listen.mp3"
+          done
+          check_audio_file "${CANDIDATE_URL}/audio/course/beginner/b_ending.mp3"
+
           if [ "$FAIL" != "0" ]; then
             echo "::error::Smoke tests failed — traffic NOT promoted, production still on the previous revision."
             exit 1

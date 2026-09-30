@@ -40,14 +40,24 @@ export function EndingScreen({ lesson, onDone, onBack }: EndingScreenProps) {
     if (lineTimeSec(i) <= currentSec) currentLineIndex = i;
   }
 
+  /** Post-launch-check fix (Founder report, domo-ai.com, 30 Sep) — same bug and same fix as
+   *  ListenScreen.tsx's own identical `updateFromPlayback`/`seekTo` split: `onTimeUpdate` must
+   *  only ever READ the reported position, never write it back to `audio.currentTime` (that
+   *  re-seeks a real, network-streamed file to ~its own position several times a second, which
+   *  stalls real playback outright — see that file's own doc comment for the full mechanism). */
+  function updateFromPlayback(sec: number) {
+    const clamped = Math.max(0, Math.min(duration, sec));
+    setCurrentSec(clamped);
+    if (clamped >= duration - 0.25) setReachedEnd(true);
+  }
+
   function seekTo(sec: number) {
     const clamped = Math.max(0, Math.min(duration, sec));
     const audio = audioRef.current;
     if (audio) {
       try { audio.currentTime = clamped; } catch { /* file not present yet in preview — ignore */ }
     }
-    setCurrentSec(clamped);
-    if (clamped >= duration - 0.25) setReachedEnd(true);
+    updateFromPlayback(sec);
   }
 
   function togglePlay() {
@@ -105,7 +115,7 @@ export function EndingScreen({ lesson, onDone, onBack }: EndingScreenProps) {
       <audio
         ref={audioRef}
         src={`/${lesson.audio}`}
-        onTimeUpdate={(e) => seekTo(e.currentTarget.currentTime)}
+        onTimeUpdate={(e) => updateFromPlayback(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onEnded={() => { setReachedEnd(true); setIsPlaying(false); }}
         onPause={() => setIsPlaying(false)}

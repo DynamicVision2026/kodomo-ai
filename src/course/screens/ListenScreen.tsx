@@ -56,15 +56,31 @@ export function ListenScreen({ lessonTitle, block, onDone, onBack }: ListenScree
     if (lineTimeSec(i) <= currentSec) currentLineIndex = i;
   }
 
+  /** Post-launch-check fix (Founder report, domo-ai.com, 30 Sep): the real cause of "plays the
+   *  first line, then stops" (reproduced on Mac Chrome too, not just iOS Safari — never an
+   *  autoplay/gesture issue). `onTimeUpdate` used to call `seekTo()` below with the position that
+   *  SAME event had just reported — re-assigning `audio.currentTime` to (approximately) its own
+   *  current value on every single timeupdate tick, several times a second. That is not a no-op:
+   *  each write forces the browser to re-seek the real, network-streamed MP3 to the nearest frame
+   *  near that byte offset, and against a real file (never an instantly-available local blob) this
+   *  compounds until the media pipeline stalls outright — which reads to a family as "the audio
+   *  stopped." This handler only ever READS the reported position to update UI state; it must
+   *  never write back to `audio.currentTime` — only a genuine seek (scrub drag, transcript tap,
+   *  both via `seekTo` below) may do that. */
+  function updateFromPlayback(sec: number) {
+    const clamped = Math.max(0, Math.min(duration, sec));
+    setCurrentSec(clamped);
+    if (clamped >= recapTimeSec) setReachedRecap(true);
+    if (clamped >= duration - 0.25) setReachedEnd(true);
+  }
+
   function seekTo(sec: number) {
     const clamped = Math.max(0, Math.min(duration, sec));
     const audio = audioRef.current;
     if (audio) {
       try { audio.currentTime = clamped; } catch { /* file not present yet in preview — ignore */ }
     }
-    setCurrentSec(clamped);
-    if (clamped >= recapTimeSec) setReachedRecap(true);
-    if (clamped >= duration - 0.25) setReachedEnd(true);
+    updateFromPlayback(sec);
   }
 
   function togglePlay() {
@@ -90,7 +106,7 @@ export function ListenScreen({ lessonTitle, block, onDone, onBack }: ListenScree
       <audio
         ref={audioRef}
         src={`/${block.audio}`}
-        onTimeUpdate={(e) => seekTo(e.currentTarget.currentTime)}
+        onTimeUpdate={(e) => updateFromPlayback(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => setMetadataDuration(e.currentTarget.duration)}
         onEnded={() => { setReachedEnd(true); setIsPlaying(false); }}
         onPause={() => setIsPlaying(false)}
