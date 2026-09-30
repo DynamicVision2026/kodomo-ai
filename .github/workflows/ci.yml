@@ -692,8 +692,16 @@ jobs:
           # file), but it does catch the adjacent, equally real failure mode of a lesson shipping
           # with its audio file 404ing, wrong-content-typed, or truncated to a placeholder-sized
           # stub — every one of which would make きく just as broken for a family.
+          # min_bytes is per-call, not one global constant: real file size tracks each audio's
+          # own transcript length (b01-b07 ~280s each -> 1.47-2.29MB; b_ending is a shorter ~126s
+          # -> 860KB, real and correct, NOT truncated — post-run-182 fix, this check's own first
+          # real run wrongly flagged it against a single 1MB-for-everything floor). The actual
+          # failure mode this guards against is a near-empty/placeholder stub (at most a few KB),
+          # so each floor sits comfortably below its file's real size with a wide margin, never
+          # tuned to the exact byte count.
           check_audio_file() {
             local url="$1"
+            local min_bytes="$2"
             local response
             response=$(curl -s -o /dev/null -w '%{http_code} %{content_type} %{size_download}' "$url")
             local status ctype size
@@ -704,17 +712,17 @@ jobs:
             elif [ "$ctype" != "audio/mpeg" ]; then
               echo "::error::${url} content-type is '${ctype}' on the candidate revision (expected audio/mpeg)"
               FAIL=1
-            elif [ "$size" -le 1048576 ]; then
-              echo "::error::${url} is only ${size} bytes on the candidate revision (expected > 1MB — looks truncated or a placeholder)"
+            elif [ "$size" -le "$min_bytes" ]; then
+              echo "::error::${url} is only ${size} bytes on the candidate revision (expected > ${min_bytes} — looks truncated or a placeholder)"
               FAIL=1
             else
               echo "OK ${url} -> 200 audio/mpeg ${size} bytes"
             fi
           }
           for lesson in b01 b02 b03 b04 b05 b06 b07; do
-            check_audio_file "${CANDIDATE_URL}/audio/course/${lesson}/${lesson}_listen.mp3"
+            check_audio_file "${CANDIDATE_URL}/audio/course/${lesson}/${lesson}_listen.mp3" 1048576
           done
-          check_audio_file "${CANDIDATE_URL}/audio/course/beginner/b_ending.mp3"
+          check_audio_file "${CANDIDATE_URL}/audio/course/beginner/b_ending.mp3" 307200
 
           if [ "$FAIL" != "0" ]; then
             echo "::error::Smoke tests failed — traffic NOT promoted, production still on the previous revision."
