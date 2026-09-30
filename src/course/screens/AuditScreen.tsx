@@ -11,6 +11,7 @@ import { MoveCard } from '../../ad12/MoveCard';
 import { Plane } from '../../ad12/Plane';
 import { DialoguePlane } from '../DialoguePlane';
 import { useVoiceQueue } from '../useVoiceQueue';
+import { useAudioError } from '../useAudioError';
 import { Ruby } from '../../engine/ruby';
 import { courseUi } from '../content/courseManifest';
 import {
@@ -56,15 +57,17 @@ export function AuditScreen({ lessonId, item, position, onItemDone, onNext, onBa
   // Founder iPad Safari fix (28 Sep 2026): see courseAudioPlayer.ts's own doc comment — every
   // VoiceCue this screen used to mount in parallel (q0+answer+prompt all fire together on initial
   // mount) now queues through one shared, already-unlocked <audio> element instead.
-  useVoiceQueue([auditQ0AudioPath(lessonId, item.id), auditAnswerAudioPath(lessonId, item.id)], `intro-${item.id}`);
-  useVoiceQueue(
-    phase.kind === 'picking' ? [auditPromptAudioPath(lessonId, item.id)] : [],
-    phase.kind === 'picking' ? `picking-${item.id}-${removedIndexes.length}` : `none-${item.id}`,
-  );
-  useVoiceQueue(
-    phase.kind === 'result' ? [auditCardAudioPath(lessonId, item.id, phase.cardIndex), auditCardFeedbackAudioPath(lessonId, item.id, phase.cardIndex)] : [],
-    phase.kind === 'result' ? `result-${item.id}-${phase.cardIndex}` : `none-${item.id}`,
-  );
+  const introSrcs = [auditQ0AudioPath(lessonId, item.id), auditAnswerAudioPath(lessonId, item.id)];
+  useVoiceQueue(introSrcs, `intro-${item.id}`);
+  const promptSrcs = phase.kind === 'picking' ? [auditPromptAudioPath(lessonId, item.id)] : [];
+  useVoiceQueue(promptSrcs, phase.kind === 'picking' ? `picking-${item.id}-${removedIndexes.length}` : `none-${item.id}`);
+  const resultSrcs = phase.kind === 'result' ? [auditCardAudioPath(lessonId, item.id, phase.cardIndex), auditCardFeedbackAudioPath(lessonId, item.id, phase.cardIndex)] : [];
+  useVoiceQueue(resultSrcs, phase.kind === 'result' ? `result-${item.id}-${phase.cardIndex}` : `none-${item.id}`);
+
+  const { failedSrc, retry: retryAudio } = useAudioError();
+  const introAudioFailed = failedSrc !== null && introSrcs.includes(failedSrc);
+  const promptAudioFailed = failedSrc !== null && promptSrcs.includes(failedSrc);
+  const resultAudioFailed = failedSrc !== null && resultSrcs.includes(failedSrc);
 
   if (phase.kind === 'complete') {
     return (
@@ -90,10 +93,18 @@ export function AuditScreen({ lessonId, item, position, onItemDone, onNext, onBa
       </Plane>
       <DialoguePlane speaker={item.q0[0]} text={item.q0[1]} />
       <DialoguePlane speaker={item.answer[0]} text={item.answer[1]} />
+      {introAudioFailed && (
+        <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retryAudio}>{courseUi.audioRetryLabel}</button>
+      )}
 
       {phase.kind === 'picking' && (
         <>
-          <p className="ad12-ui-text">{item.prompt}</p>
+          <p className="ad12-ui-text">
+            {item.prompt}
+            {promptAudioFailed && (
+              <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retryAudio}>{courseUi.audioRetryLabel}</button>
+            )}
+          </p>
           <div className="course-exercise__options">
             {item.cards.map((c, i) => {
               if (removedIndexes.includes(i)) return null;
@@ -106,6 +117,9 @@ export function AuditScreen({ lessonId, item, position, onItemDone, onNext, onBa
       {phase.kind === 'result' && card && (
         <>
           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={card[2]} />
+          {resultAudioFailed && (
+            <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retryAudio}>{courseUi.audioRetryLabel}</button>
+          )}
           {card[0] === 'ok' ? (
             <>
               <p className="ad12-reading-text">{courseUi.auditOkLabel}</p>

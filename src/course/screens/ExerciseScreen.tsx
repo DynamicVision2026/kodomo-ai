@@ -16,6 +16,7 @@ import { MoveCard } from '../../ad12/MoveCard';
 import { Plane } from '../../ad12/Plane';
 import { DialoguePlane } from '../DialoguePlane';
 import { useVoiceQueue } from '../useVoiceQueue';
+import { useAudioError } from '../useAudioError';
 import { Ruby } from '../../engine/ruby';
 import { courseUi } from '../content/courseManifest';
 import { exerciseQ0AudioPath, exerciseAnswerAudioPath, exerciseOptionAudioPath, SHARED_AUDIO } from '../audioPaths';
@@ -142,10 +143,8 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
   // the original per-VoiceCue `[src]` effects had: q0/answer play once per exercise mount
   // (unaffected by later phase/retry churn), everything else replays each time its own phase
   // moment is freshly entered.
-  useVoiceQueue(
-    [exerciseQ0AudioPath(lessonId, exercise.id), stepIndex === 0 ? exerciseAnswerAudioPath(lessonId, exercise.id) : undefined],
-    `intro-${exercise.id}`,
-  );
+  const introSrcs = [exerciseQ0AudioPath(lessonId, exercise.id), stepIndex === 0 ? exerciseAnswerAudioPath(lessonId, exercise.id) : undefined];
+  useVoiceQueue(introSrcs, `intro-${exercise.id}`);
 
   let phaseVoiceSrcs: (string | undefined)[] = [];
   let phaseVoiceKey = `none-${exercise.id}-${stepIndex}`;
@@ -184,6 +183,12 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
     }
   }
   useVoiceQueue(phaseVoiceSrcs, phaseVoiceKey);
+  const { failedSrc, retry } = useAudioError();
+  // WO-C6 A2: a quiet もういちど shows next to whichever line's own clip just failed — this
+  // screen has no single "current line" the way ListenScreen's transcript does, so it's anchored
+  // to the intro (scene/q0/answer) plane vs. the current phase's own dialogue/feedback plane.
+  const introAudioFailed = failedSrc !== null && introSrcs.includes(failedSrc);
+  const phaseAudioFailed = failedSrc !== null && phaseVoiceSrcs.includes(failedSrc);
 
   if (phase.kind === 'complete') {
     return (
@@ -229,6 +234,9 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
           <p className="ad12-ui-text course-dialogue__speaker">{exerciseStep.answer.speaker}</p>
           <p className="ad12-reading-text">
             {showH2 ? highlightSubstring(exerciseStep.answer.text, exerciseStep.hint.h2Highlight) : <Ruby text={exerciseStep.answer.text} />}
+            {introAudioFailed && (
+              <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retry}>{courseUi.audioRetryLabel}</button>
+            )}
           </p>
         </Plane>
       )}
@@ -269,6 +277,9 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
         <>
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
+          {phaseAudioFailed && (
+            <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retry}>{courseUi.audioRetryLabel}</button>
+          )}
           <p className="ad12-ui-text">{courseUi.practice.retryPrompt}</p>
           <button type="button" className="ad12-ink-button ad12-tappable course-screen__primary" onClick={() => setPhase({ kind: 'picking' })}>
             {courseUi.practice.retryLabel}
@@ -280,6 +291,9 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
         <>
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
           <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
+          {phaseAudioFailed && !phase.exploring && (
+            <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retry}>{courseUi.audioRetryLabel}</button>
+          )}
 
           {isChain && !isLastStep ? (
             <button

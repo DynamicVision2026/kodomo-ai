@@ -269,6 +269,7 @@ export function BeginnerCourseApp() {
   if (screen.kind === 'home-task') {
     return (
       <HomeTaskScreen
+        lessonId={lesson.id}
         home={lesson.home}
         stars={lessonProgress?.stars ?? 0}
         onStar={() => addStar(lesson.id)}

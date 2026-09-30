@@ -87,6 +87,16 @@ export function familyIntroAudioPath(lessonId: string): string {
   return `${lessonDir(lessonId)}/${lessonId}_family_intro.mp3`;
 }
 
+/* ---- WO-C6 A1 おうちで (home challenge) audio paths — title, then one clip per home.steps[i] --- */
+
+export function homeTitleAudioPath(lessonId: string): string {
+  return `${lessonDir(lessonId)}/${lessonId}_home_title.mp3`;
+}
+
+export function homeStepAudioPath(lessonId: string, stepIndex: number): string {
+  return `${lessonDir(lessonId)}/${lessonId}_home_s${stepIndex}.mp3`;
+}
+
 /** The 3 course-wide UI prompts (WO-C2b §4: reused across every future lesson, never
  *  lesson-prefixed) — keyed to what they say, not to any one lesson's content. */
 export const SHARED_AUDIO = {

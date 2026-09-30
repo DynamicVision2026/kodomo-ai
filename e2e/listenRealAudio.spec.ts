@@ -55,7 +55,11 @@ test('b01 きく: real audio (no mocks) keeps playing past the first transcript 
   await page.getByText('ふたを あける').click();
   await page.getByRole('button', { name: 'きく', exact: true }).click();
 
-  const audio = page.locator('audio');
+  // WO-C6 A2 follow-up: the lesson-hub tap above already unlocks courseAudioPlayer.ts's own
+  // shared singleton (now kept in the DOM, hidden, so e2e can reach it on screens that mount no
+  // <audio> of their own) — excluded here by its marker attribute so this stays ListenScreen's
+  // own real, ref-based <audio> element specifically.
+  const audio = page.locator('audio:not([data-shared-audio-player])');
   await expect(audio).toHaveCount(1);
 
   // A real, trusted Chromium click — Playwright's own click() satisfies the browser's

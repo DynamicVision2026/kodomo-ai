@@ -28,6 +28,8 @@ export function EndingScreen({ lesson, onDone, onBack }: EndingScreenProps) {
   const [duration, setDuration] = useState(160);
   const [isPlaying, setIsPlaying] = useState(false);
   const [reachedEnd, setReachedEnd] = useState(false);
+  // WO-C6 A2: same single-track reasoning as ListenScreen.tsx's own `loadFailed`.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   function lineTimeSec(index: number): number {
     const real = lesson.transcript[index]?.start;
@@ -70,6 +72,15 @@ export function EndingScreen({ lesson, onDone, onBack }: EndingScreenProps) {
       audio.play().catch(() => { /* placeholder audio may not exist yet in preview */ });
       setIsPlaying(true);
     }
+  }
+
+  function retryLoad() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setLoadFailed(false);
+    audio.load();
+    audio.play().catch(() => setLoadFailed(true));
+    setIsPlaying(true);
   }
 
   if (step === 'message') {
@@ -119,6 +130,8 @@ export function EndingScreen({ lesson, onDone, onBack }: EndingScreenProps) {
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onEnded={() => { setReachedEnd(true); setIsPlaying(false); }}
         onPause={() => setIsPlaying(false)}
+        onError={() => { setIsPlaying(false); setLoadFailed(true); }}
+        onPlaying={() => setLoadFailed(false)}
       />
 
       <Plane className="course-exercise__scene">
@@ -129,6 +142,9 @@ export function EndingScreen({ lesson, onDone, onBack }: EndingScreenProps) {
         <button type="button" className="ad12-ink-button ad12-tappable course-listen__play" onClick={togglePlay}>
           {isPlaying ? courseUi.listenPauseLabel : courseUi.listenPlayLabel}
         </button>
+        {loadFailed && (
+          <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retryLoad}>{courseUi.audioRetryLabel}</button>
+        )}
         <div className="course-listen__scrub">
           <input
             type="range"

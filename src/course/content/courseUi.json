@@ -105,5 +105,6 @@
   "siteHeaderPlaygroundLabel": "プレイグラウンド",
   "siteHeaderCourseLabel": "入門コース",
   "siteHeaderAccountLabel": "アカウント",
-  "siteHeaderLogoutLabel": "ログアウト"
+  "siteHeaderLogoutLabel": "ログアウト",
+  "audioRetryLabel": "もういちど"
 }

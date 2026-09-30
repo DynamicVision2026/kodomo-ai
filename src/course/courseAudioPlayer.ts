@@ -25,25 +25,72 @@ let unlocked = false;
 let queue: string[] = [];
 let queueIndex = 0;
 
+/** WO-C6 A2: "if a clip fails to load, show a quiet もういちど button on that line, and never
+ *  block the lesson." The queue itself always keeps moving (a bad clip is never allowed to stall
+ *  the rest of the lesson) — this is a side channel so the screen that owns the failed line can
+ *  show its own retry affordance, independent of queue advancement. */
+type AudioErrorListener = (failedSrc: string) => void;
+const errorListeners = new Set<AudioErrorListener>();
+let currentAttemptSrc: string | null = null;
+let currentAttemptHandled = false;
+
+export function onAudioError(listener: AudioErrorListener): () => void {
+  errorListeners.add(listener);
+  return () => errorListeners.delete(listener);
+}
+
 function getAudioEl(): HTMLAudioElement {
   if (!audioEl) {
     audioEl = new Audio();
+    audioEl.setAttribute('playsinline', '');
     audioEl.addEventListener('ended', playNextInQueue);
-    audioEl.addEventListener('error', playNextInQueue);
+    audioEl.addEventListener('error', () => {
+      if (currentAttemptSrc) reportAttemptFailure(currentAttemptSrc);
+    });
+    // Attached to the DOM (hidden) rather than left as a detached Audio() instance — same
+    // playback either way, but this is what lets e2e find the shared element with a normal
+    // `page.locator('audio')` on screens that render no <audio> of their own (ExerciseScreen,
+    // AuditScreen, HomeTaskScreen, MakeScreen, TeachBackScreen, FamilyScreen all rely on this
+    // singleton rather than mounting one themselves). The marker attribute lets a test on
+    // ListenScreen/EndingScreen (which each mount their OWN separate <audio>, already unlocked
+    // via this same shared element beforehand) distinguish the two.
+    audioEl.setAttribute('data-shared-audio-player', '');
+    audioEl.style.display = 'none';
+    document.body?.appendChild(audioEl);
   }
   return audioEl;
 }
 
-function playNextInQueue(): void {
-  if (queueIndex >= queue.length) return;
-  const src = queue[queueIndex++];
+function reportAttemptFailure(src: string): void {
+  if (currentAttemptHandled || currentAttemptSrc !== src) return;
+  currentAttemptHandled = true;
+  errorListeners.forEach((listener) => listener(src));
+  playNextInQueue();
+}
+
+function attempt(src: string): void {
+  currentAttemptSrc = src;
+  currentAttemptHandled = false;
   const el = getAudioEl();
   el.src = `/${src}`;
   el.play().catch(() => {
     // File not recorded yet, or the element genuinely isn't unlocked (shouldn't happen once
-    // unlock() has run) — either way, move on rather than getting stuck on one bad clip.
-    playNextInQueue();
+    // unlock() has run) — either way, report it (for the もういちど affordance) and move on
+    // rather than getting stuck on one bad clip.
+    reportAttemptFailure(src);
   });
+}
+
+function playNextInQueue(): void {
+  if (queueIndex >= queue.length) return;
+  attempt(queue[queueIndex++]!);
+}
+
+/** Replays exactly one clip (a child tapped もういちど on the line that failed), without
+ *  disturbing `queueIndex` — when this retry itself ends, `ended` resumes the queue right after
+ *  wherever it already moved on to when the original attempt failed. */
+export function retryClip(src: string): void {
+  attempt(src);
 }
 
 /** Call synchronously inside a real user-gesture click handler, once per page session — a no-op
@@ -84,6 +131,9 @@ export function stopQueue(): void {
 export function __resetCourseAudioPlayerForTests(): void {
   audioEl = null;
   unlocked = false;
+  errorListeners.clear();
+  currentAttemptSrc = null;
+  currentAttemptHandled = false;
   queue = [];
   queueIndex = 0;
 }

@@ -59,6 +59,8 @@ jobs:
         run: npm run gate:no-old-theme
       - name: Gate — course content review approval (WO-C1 §5, production builds only)
         run: npm run gate:course-review
+      - name: Gate — beginner course audio files exist (WO-C6 A3, always on — every PR, not just release)
+        run: npm run gate:beginner-audio-exists
       - name: Content lint (kanji grade, ruby, length, tags, banned words, PII)
         run: npm run lint:content
       - name: Unit tests

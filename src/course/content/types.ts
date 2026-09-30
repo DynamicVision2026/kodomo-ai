@@ -519,4 +519,7 @@ export interface CourseUiStrings {
   siteHeaderCourseLabel: string;
   siteHeaderAccountLabel: string;
   siteHeaderLogoutLabel: string;
+  /** WO-C6 A2: a quiet retry on the one line/card whose clip failed to load — never blocks the
+   *  lesson. Distinct from `practice.retryLabel` (which re-picks a wrong answer, not a clip). */
+  audioRetryLabel: string;
 }

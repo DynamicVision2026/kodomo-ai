@@ -38,6 +38,10 @@ export function ListenScreen({ lessonTitle, block, onDone, onBack }: ListenScree
   const [isPlaying, setIsPlaying] = useState(false);
   const [reachedEnd, setReachedEnd] = useState(false);
   const [reachedRecap, setReachedRecap] = useState(false);
+  // WO-C6 A2: きく has a single continuous track rather than a queue of short clips, so "the line
+  // that failed" is this whole track — a quiet もういちど sits by the play control instead of on
+  // any one transcript line.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const duration = metadataDuration ?? FALLBACK_DURATION_SEC[block.tool] ?? 300;
   const transcript = block.transcript;
@@ -95,6 +99,15 @@ export function ListenScreen({ lessonTitle, block, onDone, onBack }: ListenScree
     }
   }
 
+  function retryLoad() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setLoadFailed(false);
+    audio.load();
+    audio.play().catch(() => setLoadFailed(true));
+    setIsPlaying(true);
+  }
+
   return (
     <main className="ad12 course-screen course-listen">
       <button type="button" className="ad12-ink-button ad12-tappable course-screen__back" onClick={onBack}>{courseUi.back}</button>
@@ -110,12 +123,17 @@ export function ListenScreen({ lessonTitle, block, onDone, onBack }: ListenScree
         onLoadedMetadata={(e) => setMetadataDuration(e.currentTarget.duration)}
         onEnded={() => { setReachedEnd(true); setIsPlaying(false); }}
         onPause={() => setIsPlaying(false)}
+        onError={() => { setIsPlaying(false); setLoadFailed(true); }}
+        onPlaying={() => setLoadFailed(false)}
       />
 
       <Plane className="course-listen__player">
         <button type="button" className="ad12-ink-button ad12-tappable course-listen__play" onClick={togglePlay}>
           {isPlaying ? courseUi.listenPauseLabel : courseUi.listenPlayLabel}
         </button>
+        {loadFailed && (
+          <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retryLoad}>{courseUi.audioRetryLabel}</button>
+        )}
         <div className="course-listen__scrub">
           <input
             type="range"
