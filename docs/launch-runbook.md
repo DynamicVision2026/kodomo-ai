@@ -491,16 +491,34 @@ exactly that). This runbook keeps the redirect and treats "still resolves, redir
 live site" as the fallback — flag it back if a stronger, independent fallback matters enough to
 reopen that trade-off.
 
-### 7. Shopify's own "return to store" link (manual, Shopify Admin)
+### 7. Order-status page's "アプリを開いて学習を始める" button (manual, Shopify Admin)
 
 Outside this repo entirely — nothing in `backend/src/shopify.ts`/`purchaseIntents.ts` builds or
-stores this link; Shopify generates it itself from the shop's own storefront/domain
-configuration. This session cannot access Shopify Admin to locate or change it, and doesn't want
-to guess an exact menu path with false confidence. Founder action: in Shopify Admin for
-`soul-id-2.myshopify.com`, find wherever the checkout/order-status page's "return to store" (or
-equivalent storefront-link/logo-link) setting lives — likely Settings → Checkout → the checkout
-branding/editor — and point it at `https://domo-ai.com` so a customer who just bought
-`kodomo-ai-m1` lands back on the ナゼホリ site, not an unrelated storefront.
+stores this link; Shopify generates the order-status page, and this specific button was added to
+it by hand (it isn't a stock Shopify element — "return to store" is the closest built-in
+equivalent, but this button's own Japanese label means it was custom-added, most likely as a
+checkout-editor block or a snippet of custom Liquid/HTML on the Thank-you/Order-status page).
+This session cannot open Shopify Admin itself, so here's the exact click path for both ways that
+button is normally added — use whichever matches what's actually there:
+
+- **If it's a checkout-editor block** (most likely on Shopify's current checkout):
+  1. Shopify Admin → **Settings** → **Checkout**.
+  2. Click **Customize** next to the checkout — this opens the checkout editor.
+  3. In the page selector at the top (Checkout / Thank you / **Order status**), switch to
+     **Order status** — this button only needs to change here, not on the Thank-you page, unless
+     the same button also appears there (check both).
+  4. Click directly on the "アプリを開いて学習を始める" button in the preview to select its block.
+  5. In the right-hand settings panel, find its **Link**/**URL** field and replace whatever is
+     there now with `https://domo-ai.com/login` (the `/login` path, not just the bare domain —
+     item 7's ask is specifically the login page, not the marketing landing page).
+  6. **Save**, then open a real (or test) order-status page and click the button to confirm it
+     lands on `/login`.
+- **If it's custom Liquid/HTML** (only if no such block exists in the checkout editor above):
+  1. Shopify Admin → **Settings** → **Checkout** → scroll to **Order status page additional
+     scripts** (a free-text HTML/Liquid/JS box at the bottom of that settings page).
+  2. Find the `<a href="...">アプリを開いて学習を始める</a>` (or similar) markup there and change
+     its `href` to `https://domo-ai.com/login`.
+  3. **Save**, then re-check a real order-status page the same way as above.
 
 ---
 
@@ -604,23 +622,70 @@ check.
    (Admin → **Settings → Notifications → Order confirmation**) — one shared Liquid template for
    every product in the store; nothing in this repo sends it, builds it, or can scope it
    (`backend/src/email.ts` only ever sends the LOGIN/activation/claim emails, never the
-   Shopify-native purchase receipt — see its own doc comments). Two ways to fix it, Founder's
-   call: (a) add `{% if line_item.sku == 'kodomo-ai-m1' %}...{% else %}...{% endif %}` (or an
-   equivalent per-product block) to that one shared template so every product's order
-   confirmation shows its own real copy; or (b) if the store intends a single shared template,
-   make sure its default copy is product-neutral rather than any one product's own branding.
-   Either way, re-send a test order confirmation afterward and re-check it — same step 8 above
-   already covers confirming products A-D stay unaffected once this is edited.
+   Shopify-native purchase receipt — see its own doc comments).
+
+   The 漢字でんしゃ copy is almost certainly sitting in that template as a plain, unconditional
+   block (not generated per-product by Shopify itself, which only auto-renders the real line
+   item name/image/price) — that's why it shows on every order regardless of what was bought.
+   Fix: open **Settings → Notifications → Order confirmation**, find that block
+   (search the template for "記念乗車券" or "わたしのれっしゃ号" to locate it fast), and wrap it
+   in a per-SKU condition using this ready-to-paste pattern — drop it in at the same spot,
+   keeping your existing 漢字でんしゃ HTML as-is inside its branch and filling in the ナゼホリ
+   branch (the ★-marked lines are the only ones you need to write; everything else is
+   copy-paste):
+
+   ```liquid
+   {% assign has_nazehori = false %}
+   {% assign has_other_product = false %}
+   {% for line_item in line_items %}
+     {% if line_item.sku == 'kodomo-ai-m1' %}
+       {% assign has_nazehori = true %}
+     {% else %}
+       {% assign has_other_product = true %}
+     {% endif %}
+   {% endfor %}
+
+   {% if has_nazehori %}
+     <!-- ★ ナゼホリ branding — replace with real ナゼホリ marketing copy/images -->
+     <p>この度は「ナゼホリ」入門コースをご購入いただき、ありがとうございます。</p>
+     <p>下記のリンクからログインして、レッスンをはじめてください。</p>
+     <p><a href="https://domo-ai.com/login">https://domo-ai.com/login</a></p>
+   {% endif %}
+
+   {% if has_other_product %}
+     <!-- ★ existing 漢字でんしゃ block — move your CURRENT unconditional copy here unchanged,
+          e.g. the 記念乗車券／わたしのれっしゃ号／でんしゃに乗る！section as it is today -->
+   {% endif %}
+   ```
+
+   This handles a mixed cart (both blocks show if someone somehow buys both) without needing to
+   know Shopify's exact internal variable names beyond the standard `line_items`/`line_item.sku`
+   every Shopify notification template exposes. After saving, use **Preview** (top-right of the
+   template editor) with a real `kodomo-ai-m1` order, then **Send test** to your own inbox, to
+   confirm the ナゼホリ block shows and the 漢字でんしゃ block doesn't — then repeat for a real
+   漢字でんしゃ order to confirm the reverse. Step 8 above already covers confirming products A-D
+   stay fully unaffected once this is edited.
 
 10. **Product catalog listing — remove the 準備中 badge before go-live (manual, Shopify
     Admin).** The `kodomo-ai-m1` card on the store's own multi-product catalog page still shows
     a "準備中" (not yet available) badge as of 1 Oct 2026 — a real customer who lands there
     (e.g. from the storefront nav, not a direct product link) sees the product marked not
-    available even though checkout itself works. This is the product's own availability/tag/
-    badge setting in Shopify Admin (Products → kodomo-ai-m1 → check its sales-channel
-    availability, any "準備中"/"coming soon" tag driving the storefront theme's own badge
-    logic, and inventory-policy "track quantity"/"continue selling when out of stock" if the
-    badge is inventory-driven) — outside this repo, same as items 7 and 9 above.
+    available even though checkout itself works. This badge comes from one of two places —
+    check both, in this order, since either alone can cause it:
+    1. **A product tag.** Admin → **Products** → open **kodomo-ai-m1** → right-hand side,
+       **Tags** field. If a tag like `準備中` / `coming soon` / `sold-out` (or similar) is there,
+       remove it and **Save** — most Japanese Shopify themes drive a "準備中" catalog badge
+       directly off a tag like this, not off inventory at all.
+    2. **Inventory/availability, if step 1 shows no such tag.** Same product page →
+       **Inventory** section → confirm **Track quantity** is either off, or on with a real
+       quantity greater than 0; if "Track quantity" is on and quantity is 0, also check
+       **Continue selling when out of stock** — if that's off, a 0-quantity product shows as
+       unavailable/"sold out" on the catalog card, which some themes also label 準備中. Also
+       confirm the product's own **Sales channels** (bottom-right of the same page) includes
+       **Online Store** — a product excluded from that channel can show as unavailable or not
+       appear at all. Fix whichever of these is the actual cause, **Save**, then reload the
+       public catalog page (not just the product page — Shopify caches catalog pages briefly)
+       to confirm the badge is gone.
 
 **Items 7, 9 and 10 above are all Shopify storefront/template/catalog configuration this repo
 has no code path to reach — `backend/src/shopify.ts`'s `ShopifyOrderPayload`/webhook handlers

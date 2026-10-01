@@ -67,3 +67,17 @@ export const NOTICE_D_LEAD =
 export const NOTICE_D_PRIVACY_LINK_LABEL = 'プライバシーポリシー';
 export const NOTICE_D_PRIVACY_SUFFIX = 'をご覧ください。';
 export const NOTICE_D_PRIVACY_PREFIX = 'くわしくは、';
+
+/**
+ * Landing-page FAQ「返金はできますか？」— the Founder's final verbatim two bullets (flip-prep,
+ * 1 Oct 2026), replacing the old "近日公開予定" placeholder. The second bullet covers the same
+ * declined-consent case as `CONSENT_DECLINE_REFUND_NOTE` above, in the Founder's own FAQ wording
+ * rather than that shared Notice-D sentence — the two aren't byte-identical, but say the same
+ * thing (full refund, regardless of days since purchase, if the parent hasn't started using it).
+ */
+export const FAQ_REFUND_BULLETS: readonly string[] = [
+  'ご購入から10日以内で、入門コースのレッスンをまだ始めていない場合は、info@domo-ai.com までご連絡いただければ返金いたします。' +
+    'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。',
+  'ログイン時の同意をいただけないためにご利用になれない場合は、ご利用を始める前であれば、ご購入からの日数にかかわらず、' +
+    'info@domo-ai.com までご連絡いただければ全額返金いたします。',
+];

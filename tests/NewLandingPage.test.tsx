@@ -68,18 +68,23 @@ describe('NewLandingPage (COPY-01)', () => {
     }
   });
 
-  it('renders all 15 FAQ questions, with the refund answer starred and using the exact legally-approved sentence', () => {
+  it('renders all 15 FAQ questions, with the refund answer starred, using the exact legally-approved sentence plus the A6 gap-fill consent-decline bullet', () => {
     render(<NewLandingPage />);
     const dts = document.querySelectorAll('.lp__faq dt');
     expect(dts).toHaveLength(15);
     const refundDt = Array.from(dts).find((dt) => dt.textContent?.includes('返金はできますか？'));
     expect(refundDt?.textContent).toBe('★ 返金はできますか？');
-    expect(
-      screen.getByText(
+    const refundDd = refundDt?.nextElementSibling;
+    const text = (refundDd?.textContent ?? '').replace(/\s+/g, '');
+    expect(text).toContain(
+      (
         'ご購入から10日以内で、入門コースのレッスンをまだ始めていない場合は、info@domo-ai.com までご連絡いただければ返金いたします。' +
-          'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。',
-      ),
-    ).toBeInTheDocument();
+        'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。'
+      ).replace(/\s+/g, ''),
+    );
+    // A6 gap-fill (Founder, flip-prep 1 Oct 2026): the declined-login-consent refund bullet, same
+    // wording item A2 put in the old LandingPage.tsx's FAQ — previously missing from this file.
+    expect(text).toContain('ログイン時の同意をいただけないためにご利用になれない場合は'.replace(/\s+/g, ''));
   });
 
   it('the price section shows the ¥4,980 amount, household-licence facts, the ★ refund note, and the prior-Module-1-buyer line', () => {
@@ -91,6 +96,14 @@ describe('NewLandingPage (COPY-01)', () => {
     expect(price.textContent).toContain('プレイグラウンドは無料です');
     expect(price.textContent).toContain('以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。');
     expect(price.querySelector('.lp__refund-note')?.textContent).toContain('ご購入から10日以内で');
+  });
+
+  it('A6 gap-fill (Founder, flip-prep 1 Oct 2026): Notice D (the login-consent disclosure, item 5) appears above the buy button, same as every other buy-button surface', () => {
+    render(<NewLandingPage />);
+    const notice = document.querySelector('.lp__price .lp__notice-d');
+    expect(notice).not.toBeNull();
+    expect(notice?.textContent).toContain('保護者の方のメールアドレスでのログインが必要です');
+    expect(notice?.querySelector('a')).toHaveAttribute('href', '/legal/privacy/');
   });
 
   it('never uses retired naming ("お試し", "体験期間", "トライアル") anywhere', () => {
