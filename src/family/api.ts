@@ -63,10 +63,19 @@ export interface MeResponse {
   /** WO-C1 §1: true when this family is in `config/course.allowFamilies`. The course tile's own
    *  visibility rule is `import.meta.env.VITE_COURSE_ENABLED === '1' || me.courseAllowed`. */
   courseAllowed: boolean;
+  /** Consent at login: whether this family has recorded consent (no email is ever sent to an
+   *  address without it). */
+  consentRecorded: boolean;
 }
 
-export async function requestLoginCode(email: string): Promise<{ ok: true } | ApiFailure> {
-  const res = await apiFetch('/auth/request', { method: 'POST', body: JSON.stringify({ email }) });
+/** `consentTextVersion`: the version of the consent text the login screen just showed (see
+ *  shared/consent.ts) — sent with the request that the parent confirmed by pressing the consent
+ *  button. Omitted by callers acting for an already-consenting, signed-in family. */
+export async function requestLoginCode(email: string, consentTextVersion?: string): Promise<{ ok: true } | ApiFailure> {
+  const res = await apiFetch('/auth/request', {
+    method: 'POST',
+    body: JSON.stringify(consentTextVersion ? { email, consentTextVersion } : { email }),
+  });
   if (isFailure(res)) return res;
   if (!res.ok) return { ok: false, reason: 'server' };
   return { ok: true };

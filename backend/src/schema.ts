@@ -22,6 +22,11 @@ export interface FamilyDoc {
   profileCount: number;
   createdAt: string;
   updatedAt: string;
+  /** Consent at login: when the family agreed to the consent text on the login screen, and which
+   *  wording (shared/consent.ts `CONSENT_TEXT_VERSION`). Absent = no recorded consent, and then
+   *  no email of any kind is sent to this address (backend/src/emailGate.ts). */
+  consentAt?: string;
+  consentTextVersion?: string;
 }
 
 export interface EmailIndexDoc {
@@ -278,6 +283,9 @@ export interface LoginCodeDoc {
   /** Backs the 60-second resend cooldown (AD-13 §4) — separate from `windowStart`, which tracks
    *  the 1-hour/5-send window instead. */
   lastSentAt: string;
+  /** Consent given on the login screen WITH this request (carried to the family at verify). */
+  consentAt?: string;
+  consentTextVersion?: string;
 }
 
 export interface RateLimitDoc {

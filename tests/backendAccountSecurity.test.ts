@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import { CONSENT_TEXT_VERSION } from '../shared/consent';
 import { describe, it, expect } from 'vitest';
 import { handleAccountEmail, handleDeleteAccount } from '../backend/src/handlers/account';
 import { handleAuthRequest } from '../backend/src/handlers/authRequest';
@@ -23,7 +24,7 @@ function fakeEnv(): Env {
 async function seedFamily(env: Env, email: string): Promise<{ familyId: string; token: string }> {
   const familyId = 'f1';
   const now = new Date().toISOString();
-  await env.db.set(familyPath(familyId), { email, status: 'active', profileCount: 0, createdAt: now, updatedAt: now });
+  await env.db.set(familyPath(familyId), { email, status: 'active', profileCount: 0, createdAt: now, updatedAt: now, consentAt: now, consentTextVersion: CONSENT_TEXT_VERSION });
   await env.db.set(emailIndexPath(await emailHashOf(email)), { familyId, createdAt: now });
   // Account deletion's own OTP is requested through /auth/request, which only ever sends a real
   // code to a family with an active entitlement (AD-13 §4) — matches the real "delete an account

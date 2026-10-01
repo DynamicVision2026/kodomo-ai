@@ -3,6 +3,8 @@ import type { LoginCodeDoc } from './schema.js';
 import { loginCodePath } from './schema.js';
 import { emailHashOf, getOrCreateFamilyIdInTx, normalizeEmail } from './family.js';
 import { loginCodeEmail } from './email.js';
+import { addressHasConsent, sendEmailWithConsent } from './emailGate.js';
+import { CONSENT_TEXT_VERSION } from '../../shared/consent.js';
 import { hmacHex, randomOtp, timingSafeEqual } from './util.js';
 
 const CODE_TTL_MS = 10 * 60 * 1000; // AD-13 §4: "valid for 10 minutes"
@@ -10,7 +12,7 @@ const RESEND_COOLDOWN_MS = 60 * 1000; // "re-send cooldown 60 seconds"
 const SENDS_PER_HOUR = 5;
 const MAX_ATTEMPTS = 5;
 
-export type RequestOutcome = 'code_sent' | 'rate_limited';
+export type RequestOutcome = 'code_sent' | 'rate_limited' | 'consent_required';
 
 /**
  * AD-13 §4/§5 step 1, AD-15 "account-first": every well-formed email gets a real code now —
@@ -20,10 +22,21 @@ export type RequestOutcome = 'code_sent' | 'rate_limited';
  * this function's own logic (rate-limit bookkeeping is identical either way); it's even more
  * trivially true now that the branch it used to protect no longer exists.
  */
-export async function requestLoginCode(env: Env, rawEmail: string): Promise<RequestOutcome> {
+export async function requestLoginCode(
+  env: Env,
+  rawEmail: string,
+  consentTextVersion?: string,
+): Promise<RequestOutcome> {
   const email = normalizeEmail(rawEmail);
   const emailHash = await emailHashOf(email);
   const now = new Date();
+
+  // Consent at login: the login screen shows the consent text BEFORE the code is requested, and
+  // the request carries the version it showed. No consent in this request and none on record for
+  // this address = no code (and so no email) at all.
+  const consentGivenNow = consentTextVersion === CONSENT_TEXT_VERSION;
+  if (!consentGivenNow && !(await addressHasConsent(env, email))) return 'consent_required';
+
   const path = loginCodePath(emailHash);
   const existing = await env.db.get<LoginCodeDoc>(path);
 
@@ -43,8 +56,9 @@ export async function requestLoginCode(env: Env, rawEmail: string): Promise<Requ
     sendsInWindow,
     windowStart,
     lastSentAt: now.toISOString(),
-  });
-  await env.email.send(loginCodeEmail(email, code));
+    ...(consentGivenNow ? { consentAt: now.toISOString(), consentTextVersion: CONSENT_TEXT_VERSION } : {}),
+  } satisfies LoginCodeDoc);
+  await sendEmailWithConsent(env, loginCodeEmail(email, code), consentGivenNow ? { kind: 'login-request' } : undefined);
   return 'code_sent';
 }
 
@@ -60,23 +74,31 @@ export interface VerifyResult {
  *  "OTP to the new address" step needs exactly this half, since the whole point of that flow is
  *  confirming an address that does NOT have a family yet. */
 export async function verifyRawCode(env: Env, rawEmail: string, rawCode: string): Promise<VerifyOutcome> {
+  return (await verifyRawCodeWithDoc(env, rawEmail, rawCode)).outcome;
+}
+
+async function verifyRawCodeWithDoc(
+  env: Env,
+  rawEmail: string,
+  rawCode: string,
+): Promise<{ outcome: VerifyOutcome; doc?: LoginCodeDoc }> {
   const email = normalizeEmail(rawEmail);
   const emailHash = await emailHashOf(email);
   const path = loginCodePath(emailHash);
   const doc = await env.db.get<LoginCodeDoc>(path);
-  if (!doc || !doc.codeHmac) return 'invalid';
-  if (new Date(doc.expiresAt).getTime() <= Date.now()) return 'expired';
-  if (doc.attempts >= MAX_ATTEMPTS) return 'locked';
+  if (!doc || !doc.codeHmac) return { outcome: 'invalid' };
+  if (new Date(doc.expiresAt).getTime() <= Date.now()) return { outcome: 'expired' };
+  if (doc.attempts >= MAX_ATTEMPTS) return { outcome: 'locked' };
 
   const candidateHmac = await hmacHex(rawCode.trim(), env.AUTH_PEPPER);
   if (!timingSafeEqual(candidateHmac, doc.codeHmac)) {
     const attempts = doc.attempts + 1;
     await env.db.set(path, { ...doc, attempts });
-    return attempts >= MAX_ATTEMPTS ? 'locked' : 'invalid';
+    return { outcome: attempts >= MAX_ATTEMPTS ? 'locked' : 'invalid' };
   }
 
   await env.db.delete(path);
-  return 'ok';
+  return { outcome: 'ok', doc };
 }
 
 /**
@@ -95,11 +117,14 @@ export async function verifyRawCode(env: Env, rawEmail: string, rawCode: string)
  * a real bug this ticket exists to fix, not a design this file should re-introduce.
  */
 export async function verifyLoginCode(env: Env, rawEmail: string, rawCode: string): Promise<VerifyResult> {
-  const outcome = await verifyRawCode(env, rawEmail, rawCode);
+  const { outcome, doc } = await verifyRawCodeWithDoc(env, rawEmail, rawCode);
   if (outcome !== 'ok') return { outcome };
 
   const now = new Date();
-  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, rawEmail, now.toISOString()));
+  const consent = doc?.consentAt && doc.consentTextVersion
+    ? { consentAt: doc.consentAt, consentTextVersion: doc.consentTextVersion }
+    : undefined;
+  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, rawEmail, now.toISOString(), consent));
   return { outcome: 'ok', familyId };
 }
 
@@ -107,7 +132,7 @@ export async function verifyLoginCode(env: Env, rawEmail: string, rawCode: strin
  *  sends an ordinary 6-digit code to `email`, with no entitlement/family gating at all (unlike
  *  `requestLoginCode`) — the caller is already an authenticated session confirming an action,
  *  not an anonymous visitor whose knowledge of a purchase needs verifying. */
-export async function sendVerificationCode(env: Env, rawEmail: string): Promise<void> {
+export async function sendVerificationCode(env: Env, rawEmail: string, familyId: string): Promise<void> {
   const email = normalizeEmail(rawEmail);
   const emailHash = await emailHashOf(email);
   const now = new Date();
@@ -121,5 +146,5 @@ export async function sendVerificationCode(env: Env, rawEmail: string): Promise<
     windowStart: now.toISOString(),
     lastSentAt: now.toISOString(),
   });
-  await env.email.send(loginCodeEmail(email, code));
+  await sendEmailWithConsent(env, loginCodeEmail(email, code), { kind: 'family', familyId });
 }

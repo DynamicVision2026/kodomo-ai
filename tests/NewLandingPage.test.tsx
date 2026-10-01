@@ -121,7 +121,7 @@ describe('NewLandingPage (COPY-01)', () => {
     expect(buyButton.tagName).toBe('BUTTON');
 
     await user.click(buyButton);
-    await waitFor(() => expect(window.location.href).toBe('/login/?next=/account/'));
+    await waitFor(() => expect(window.location.href).toBe('/login/?next=%2Faccount%2F%3Fbuy%3D1'));
   });
 
   it('a logged-in parent completing checkout is offered a link into /course/beginner/, not /play/', async () => {
@@ -132,7 +132,7 @@ describe('NewLandingPage (COPY-01)', () => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) {
         return jsonResponse({
-          familyId: 'f1', email: 'p***@example.com',
+          familyId: 'f1', email: 'p***@example.com', consentRecorded: true,
           entitlements: entitled ? [{ moduleId: 'm1', status: 'active' }] : [],
           profiles: [], trials: [],
         });

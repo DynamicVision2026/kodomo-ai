@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import { CONSENT_TEXT_VERSION } from '../shared/consent';
 import { describe, it, expect } from 'vitest';
 import { handleShopifyOrderWebhook, handleShopifyRefundWebhook } from '../backend/src/handlers/webhook';
 import { handleCreatePurchaseIntent } from '../backend/src/handlers/purchaseIntents';
@@ -8,7 +9,7 @@ import { handleGetProgress, handlePutProgress } from '../backend/src/handlers/pr
 import { handleCreateProfile } from '../backend/src/handlers/profiles';
 import { handleMe } from '../backend/src/handlers/me';
 import type { Env } from '../backend/src/types';
-import type { EntitlementDoc, OrderDoc, PurchaseIntentDoc, TrialDoc, UsageDoc } from '../backend/src/schema';
+import type { ClaimDoc, EntitlementDoc, OrderDoc, PurchaseIntentDoc, TrialDoc, UsageDoc } from '../backend/src/schema';
 import { entitlementPath, familyPath, orderPath, purchaseIntentPath, trialPath, usagePath } from '../backend/src/schema';
 import { createSession, SESSION_COOKIE_NAME } from '../backend/src/session';
 import { getOrCreateFamilyIdInTx, emailHashOf } from '../backend/src/family';
@@ -71,9 +72,19 @@ function baseOrder(overrides: Record<string, unknown> = {}) {
 }
 
 async function loginFamily(env: Env, email: string): Promise<{ familyId: string; token: string }> {
-  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, email, new Date().toISOString()));
+  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, email, new Date().toISOString(), { consentAt: new Date().toISOString(), consentTextVersion: CONSENT_TEXT_VERSION }));
   const { token } = await createSession(env, familyId, 'test-device');
   return { familyId, token };
+}
+
+/** Consent at login blocks the claim email to an unconsented purchaser address, so these tests
+ *  can no longer read the token out of an email: they replace the order's claim with one whose
+ *  token they know (same hash scheme the real flow uses). */
+async function forceClaimToken(env: Env, orderId: number | string, token: string): Promise<void> {
+  const claims = await env.db.query<ClaimDoc>('claims', 'orderId', String(orderId));
+  const original = claims[0]!;
+  await env.db.delete(`claims/${original.id}`);
+  await env.db.set(`claims/${await hmacHex(token, env.AUTH_PEPPER)}`, original.data);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -172,13 +183,14 @@ describe('AD-16 §2 — claim flow: an order nobody could bind by token or email
     const orderDoc = await env.db.get<OrderDoc>(orderPath(order.id));
     expect(orderDoc?.bindingState).toBe('awaiting_claim');
 
-    const emails = (env.email as FakeEmailSender).sent.filter((m) => m.to === 'claimant@example.com');
-    expect(emails).toHaveLength(1);
-    const claimToken = emails[0]!.text.match(/token=([A-Za-z0-9_-]+)/)?.[1];
-    expect(claimToken).toBeTruthy();
+    // No claim email: claimant@example.com has no recorded consent.
+    expect((env.email as FakeEmailSender).sent.filter((m) => m.to === 'claimant@example.com')).toHaveLength(0);
+    const claimToken = 'known-claim-token-1';
+    await forceClaimToken(env, order.id, claimToken);
 
-    // The claimant logs in for the first time (account-first, per AD-15/16).
-    const { familyId, token } = await loginFamily(env, 'claimant@example.com');
+    // The parent logs in under a DIFFERENT email than the checkout email (the case the claim
+    // flow exists for — same-email logins are bound automatically at login).
+    const { familyId, token } = await loginFamily(env, 'parent-account@example.com');
 
     const getRes = await handleGetClaim(authedRequest(`/api/v1/claims/${claimToken}`, token, { method: 'GET' }), env, claimToken!);
     expect(getRes.status).toBe(200);
@@ -200,10 +212,10 @@ describe('AD-16 §2 — claim flow: an order nobody could bind by token or email
     const env = fakeEnv();
     const order = baseOrder({ id: 6201, name: '#6201', email: 'claimant2@example.com' });
     await postOrder(env, order);
-    const claimEmail = (env.email as FakeEmailSender).sent.find((m) => m.to === 'claimant2@example.com')!;
-    const claimToken = claimEmail.text.match(/token=([A-Za-z0-9_-]+)/)![1]!;
+    const claimToken = 'known-claim-token-2';
+    await forceClaimToken(env, order.id, claimToken);
 
-    const { token: tokenA } = await loginFamily(env, 'claimant2@example.com');
+    const { token: tokenA } = await loginFamily(env, 'parent-account2@example.com');
     await handleConfirmClaim(authedRequest(`/api/v1/claims/${claimToken}`, tokenA, { method: 'POST', body: '{}' }), env, claimToken);
 
     const { token: tokenB } = await loginFamily(env, 'someoneelse2@example.com');

@@ -1,8 +1,10 @@
+import { sendEmailWithConsent } from '../emailGate.js';
 import type { Env } from '../types.js';
 import { verifyLoginCode } from '../loginCode.js';
 import { createSession, serializeSessionCookie, SESSION_TTL_SECONDS } from '../session.js';
 import { buildMeResponse, deviceLabelFromUserAgent } from '../me.js';
 import { getFamily } from '../family.js';
+import { bindUnboundOrdersOnLogin } from '../bindOnLogin.js';
 import { deviceEvictedEmail } from '../email.js';
 import { passesCsrfCheck } from '../csrf.js';
 
@@ -37,7 +39,15 @@ export async function handleAuthVerify(request: Request, env: Env): Promise<Resp
 
   if (created.evicted) {
     const family = await getFamily(env, result.familyId);
-    if (family) await env.email.send(deviceEvictedEmail(family.email, label, created.evicted.session.label));
+    if (family) await sendEmailWithConsent(env, deviceEvictedEmail(family.email, label, created.evicted.session.label));
+  }
+
+  // Consent at login: a verified login binds any paid order still waiting on this email. Never
+  // allowed to fail the login itself.
+  try {
+    await bindUnboundOrdersOnLogin(env, result.familyId, body.email);
+  } catch (err) {
+    console.error('[bind-on-login] failed', err);
   }
 
   const me = await buildMeResponse(env, result.familyId);

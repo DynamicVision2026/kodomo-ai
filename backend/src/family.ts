@@ -35,18 +35,34 @@ export async function getFamily(env: Env, familyId: string): Promise<FamilyDoc |
  * state (AD-16 §0/§5: trial starts lazily at the trial unit's own first open, never at account
  * creation).
  */
+export interface ConsentRecord {
+  consentAt: string;
+  consentTextVersion: string;
+}
+
 export async function getOrCreateFamilyIdInTx(
   tx: { get<T>(path: string): Promise<T | null>; set<T>(path: string, data: T): void },
   email: string,
   now: string,
+  consent?: ConsentRecord,
 ): Promise<{ familyId: string; created: boolean }> {
   const normalized = normalizeEmail(email);
   const emailHash = await sha256Hex(normalized);
   const existing = await tx.get<EmailIndexDoc>(emailIndexPath(emailHash));
-  if (existing) return { familyId: existing.familyId, created: false };
+  if (existing) {
+    // Consent at login: a login that carried consent records it on the family — unless the
+    // family already agreed to this exact wording (keep the original agreement time).
+    if (consent) {
+      const family = await tx.get<FamilyDoc>(familyPath(existing.familyId));
+      if (family && family.consentTextVersion !== consent.consentTextVersion) {
+        tx.set(familyPath(existing.familyId), { ...family, ...consent, updatedAt: now } satisfies FamilyDoc);
+      }
+    }
+    return { familyId: existing.familyId, created: false };
+  }
 
   const familyId = randomToken(16);
-  const family: FamilyDoc = { email: normalized, status: 'active', profileCount: 0, createdAt: now, updatedAt: now };
+  const family: FamilyDoc = { email: normalized, status: 'active', profileCount: 0, createdAt: now, updatedAt: now, ...(consent ?? {}) };
   tx.set(familyPath(familyId), family);
   tx.set(emailIndexPath(emailHash), { familyId, createdAt: now } satisfies EmailIndexDoc);
   return { familyId, created: true };

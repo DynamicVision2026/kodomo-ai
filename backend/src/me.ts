@@ -34,6 +34,8 @@ export interface MeResponse {
    *  concern and never appears here; the course tile's own visibility rule is
    *  `VITE_COURSE_ENABLED || courseAllowed`. */
   courseAllowed: boolean;
+  /** Consent at login: whether this family has recorded consent (see backend/src/emailGate.ts). */
+  consentRecorded: boolean;
 }
 
 export async function buildMeResponse(env: Env, familyId: string): Promise<MeResponse | null> {
@@ -54,6 +56,7 @@ export async function buildMeResponse(env: Env, familyId: string): Promise<MeRes
       .map((p) => ({ id: p.id, avatarId: p.data.avatarId, nicknameId: p.data.nicknameId, stage: p.data.stage })),
     trials: trialDocs.map((t) => ({ moduleId: t.id, state: trialState(t.data), endsAt: t.data.endsAt })),
     courseAllowed,
+    consentRecorded: !!family.consentAt && !!family.consentTextVersion,
   };
 }
 

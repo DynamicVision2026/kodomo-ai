@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import { CONSENT_TEXT_VERSION } from '../shared/consent';
 import { describe, it, expect, vi } from 'vitest';
 import type { Env } from '../backend/src/types';
 import type { EntitlementDoc, FamilyDoc, OrderDoc, StaffDoc } from '../backend/src/schema';
@@ -46,7 +47,7 @@ async function seedStaff(env: Env, email: string, role: 'viewer' | 'operator'): 
 
 async function seedFamily(env: Env, familyId: string, email: string): Promise<void> {
   const now = new Date().toISOString();
-  await env.db.set(familyPath(familyId), { email, status: 'active', profileCount: 0, createdAt: now, updatedAt: now } satisfies FamilyDoc);
+  await env.db.set(familyPath(familyId), { email, status: 'active', profileCount: 0, createdAt: now, updatedAt: now, consentAt: now, consentTextVersion: CONSENT_TEXT_VERSION } satisfies FamilyDoc);
 }
 
 describe('AD-16 §8 — admin authentication: IAP JWT + staff/ allowlist, never another scheme', () => {
@@ -240,7 +241,9 @@ describe('Work order — every one of the five operator actions requires a writt
     });
     const res = await handleAdminApi(request, env, url);
     expect(res.status).toBe(202);
-    expect((env.email as FakeEmailSender).sent).toHaveLength(1);
+    // Consent at login: purchaser9@example.com has no family with recorded consent, so even an
+    // operator-triggered claim email is blocked at the gate — never sent.
+    expect((env.email as FakeEmailSender).sent).toHaveLength(0);
 
     const entries = await env.db.list(auditLogCollection());
     const relevant = entries.filter((e) => (e.data as { targetId: string }).targetId === 'order-9');

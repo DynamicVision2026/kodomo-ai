@@ -1,3 +1,4 @@
+import { sendEmailWithConsent } from '../emailGate.js';
 import type { Env } from '../types.js';
 import type { ClaimDoc, EntitlementDoc, OrderDoc, TrialDoc } from '../schema.js';
 import { claimPath, entitlementPath, orderPath, trialPath } from '../schema.js';
@@ -106,7 +107,7 @@ export async function handleConfirmClaim(request: Request, env: Env, token: stri
 
   if (result.order.entitlementState === 'granted') {
     const family = await getFamily(env, familyId);
-    if (family) await env.email.send(moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
+    if (family) await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
   }
 
   return jsonResponse({ ok: true, orderName: result.order.orderName });

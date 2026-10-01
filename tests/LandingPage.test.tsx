@@ -78,7 +78,7 @@ describe('LandingPage', () => {
     expect(screen.getByText('購入する', { selector: 'button' }).tagName).toBe('BUTTON');
 
     await user.click(screen.getByText('購入する ¥4,980（税込）'));
-    await waitFor(() => expect(window.location.href).toBe('/login/?next=/account/'));
+    await waitFor(() => expect(window.location.href).toBe('/login/?next=%2Faccount%2F%3Fbuy%3D1'));
   });
 
   it('a logged-in parent clicking a buy button opens checkout in a new tab and shows the waiting message', async () => {
@@ -87,7 +87,7 @@ describe('LandingPage', () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) {
-        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [] });
+        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', consentRecorded: true, entitlements: [], profiles: [], trials: [] });
       }
       if (url.endsWith('/purchase-intents')) {
         return jsonResponse({ url: 'https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc', expiresAt: '2026-02-01T00:00:00.000Z' }, 201);
@@ -128,7 +128,7 @@ describe('LandingPage', () => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) {
         return jsonResponse({
-          familyId: 'f1', email: 'p***@example.com',
+          familyId: 'f1', email: 'p***@example.com', consentRecorded: true,
           entitlements: entitled ? [{ moduleId: 'm1', status: 'active' }] : [],
           profiles: [], trials: [],
         });
@@ -168,7 +168,7 @@ describe('LandingPage', () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) {
-        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [] });
+        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', consentRecorded: true, entitlements: [], profiles: [], trials: [] });
       }
       if (url.endsWith('/purchase-intents')) {
         return jsonResponse({ url: 'https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc', expiresAt: '2026-02-01T00:00:00.000Z' }, 201);
@@ -191,7 +191,7 @@ describe('LandingPage', () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) {
-        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [] });
+        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', consentRecorded: true, entitlements: [], profiles: [], trials: [] });
       }
       if (url.endsWith('/purchase-intents')) return jsonResponse({ error: 'server' }, 500);
       return new Response('not found', { status: 404 });

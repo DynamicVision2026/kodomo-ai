@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   confirmEmailChange,
   deleteAccount,
@@ -62,6 +62,23 @@ export function AccountPage() {
     fetchMe().then(setMe);
     listSessions().then(setSessions);
   }, []);
+
+  // The landing page's buy button sends a parent through /login/ and back here with `?buy=1`:
+  // once signed in WITH recorded consent and not already entitled (a waiting order may just have
+  // been bound at login), go straight on to the Shopify checkout with the purchase token — one
+  // time only, and the flag is stripped from the URL so a refresh never re-opens checkout.
+  const autoBuyHandled = useRef(false);
+  useEffect(() => {
+    if (autoBuyHandled.current || me === 'loading' || !me) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('buy') !== '1') return;
+    autoBuyHandled.current = true;
+    params.delete('buy');
+    const query = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (query ? `?${query}` : ''));
+    const alreadyEntitled = me.entitlements.some((e) => e.moduleId === PURCHASE_MODULE_ID && e.status === 'active');
+    if (!alreadyEntitled && me.consentRecorded) void startPurchase();
+  }, [me, startPurchase]);
 
   // AD-14 decision 7: once the entitlement lands (usePurchaseFlow's own /me polling), refresh
   // this page's own `me` so the purchase section itself updates (alreadyEntitled below) rather

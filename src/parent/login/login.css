@@ -18,6 +18,25 @@
   margin-bottom: 1.75rem;
 }
 
+.login__consent {
+  border: 1px solid #ccd;
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.25rem;
+  background: #f7f8fb;
+}
+
+.login__consent-text {
+  margin: 0;
+  color: #333;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.login__consent-text + .login__consent-text {
+  margin-top: 0.6rem;
+}
+
 .login__form {
   display: flex;
   flex-direction: column;

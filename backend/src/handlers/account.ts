@@ -1,3 +1,4 @@
+import { sendEmailWithConsent } from '../emailGate.js';
 import type { Env } from '../types.js';
 import type { EmailIndexDoc, FamilyDoc, ProfileDoc, ProgressDoc, SessionDoc } from '../schema.js';
 import { emailIndexPath, familyPath, profilePath, profilesCollection, progressCollection, sessionsCollection } from '../schema.js';
@@ -53,7 +54,7 @@ export async function handleAccountEmail(request: Request, env: Env): Promise<Re
   }
 
   if (typeof body.code !== 'string' || !body.code) {
-    await sendVerificationCode(env, newEmail);
+    await sendVerificationCode(env, newEmail, familyId);
     return new Response(null, { status: 202 });
   }
 
@@ -72,8 +73,8 @@ export async function handleAccountEmail(request: Request, env: Env): Promise<Re
     tx.set(familyPath(familyId), { ...family, email: newEmail, updatedAt: now } satisfies FamilyDoc);
   });
 
-  await env.email.send(emailChangedEmail(oldEmail, newEmail));
-  await env.email.send(emailChangedEmail(newEmail, oldEmail));
+  await sendEmailWithConsent(env, emailChangedEmail(oldEmail, newEmail), { kind: 'family', familyId });
+  await sendEmailWithConsent(env, emailChangedEmail(newEmail, oldEmail), { kind: 'family', familyId });
   return jsonResponse({ email: newEmail });
 }
 

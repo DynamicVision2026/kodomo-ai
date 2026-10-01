@@ -1,3 +1,5 @@
+import { CONSENT_TEXT_VERSION } from '../../../shared/consent';
+import { CONSENT_BUTTON_LABEL, CONSENT_TEXT_PARAGRAPHS } from '../../legal/consentText';
 import { useEffect, useState, type FormEvent } from 'react';
 import { load, save } from '../../engine/storage';
 import { fetchMe, requestLoginCode, verifyLoginCode, type MeResponse } from '../../family/api';
@@ -74,7 +76,10 @@ export function LoginPage() {
     (async () => {
       const me = await fetchMe();
       if (cancelled) return;
-      if (me) {
+      // `?reconsent=1`: a signed-in family with no recorded consent (e.g. created before consent
+      // existed) is sent here to agree; it must see the form instead of being bounced onward.
+      const needsConsent = new URLSearchParams(window.location.search).get('reconsent') === '1' && !me?.consentRecorded;
+      if (me && !needsConsent) {
         window.location.href = resolveNextPath(me);
         return;
       }
@@ -90,7 +95,7 @@ export function LoginPage() {
     const email = emailInput.trim();
     if (!email) return;
     setStep({ kind: 'email-loading' });
-    const result = await requestLoginCode(email);
+    const result = await requestLoginCode(email, CONSENT_TEXT_VERSION);
     if ('reason' in result && result.reason === 'not_configured') {
       setStep({ kind: 'not-configured' });
       return;
@@ -133,6 +138,11 @@ export function LoginPage() {
           <p className="login__lead">
             メールアドレスを入力してください。ログイン用のコードをお送りします。はじめての方も、このまま登録できます。
           </p>
+          <div className="login__consent" data-consent-version={CONSENT_TEXT_VERSION}>
+            {CONSENT_TEXT_PARAGRAPHS.map((paragraph) => (
+              <p key={paragraph} className="login__consent-text">{paragraph}</p>
+            ))}
+          </div>
           <form className="login__form" onSubmit={submitEmail}>
             <label className="login__label" htmlFor="email">メールアドレス</label>
             <input
@@ -146,7 +156,7 @@ export function LoginPage() {
               autoComplete="email"
             />
             <button type="submit" className="login__submit" disabled={step.kind === 'email-loading' || !emailInput.trim()}>
-              {step.kind === 'email-loading' ? '送信中…' : 'コードを送る'}
+              {step.kind === 'email-loading' ? '送信中…' : CONSENT_BUTTON_LABEL}
             </button>
           </form>
         </>
