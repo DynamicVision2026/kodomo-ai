@@ -3,7 +3,7 @@ import { load, save } from '../engine/storage';
 import { track, setVariant } from '../engine/analytics';
 import { fetchMe } from '../family/api';
 import { usePurchaseFlow } from '../family/usePurchaseFlow';
-import { CONSENT_DECLINE_REFUND_NOTE, FAQ_REFUND_BULLETS } from '../legal/consentText';
+import { FAQ_REFUND_BULLETS } from '../legal/consentText';
 import { NoticeD } from '../legal/NoticeD';
 import { Mascot } from '../shell/Mascot';
 import moduleJson from '../modules/m1/module.json';
@@ -257,10 +257,11 @@ export function LandingPage() {
               the founder/legal review this whole section still needs regardless. */}
           <li>創設ファミリー特典（冬休みスペシャルシート 全9枚 を含む）</li>
         </ul>
-        {/* Item 10 (Founder, 1 Oct 2026): the same refund-for-declined-consent promise as Notice D
-            above, the FAQ, and the 特商法 page — kept to one source of wording
-            (CONSENT_DECLINE_REFUND_NOTE, src/legal/consentText.ts). */}
-        <p className="lp__price-refund-note">{CONSENT_DECLINE_REFUND_NOTE}</p>
+        {/* Founder (1 Oct 2026, final report follow-up): the refund-for-declined-consent promise
+            used to appear twice here — once in this paragraph, once inside Notice D right below
+            it. Notice D's own lead text already includes it (CONSENT_DECLINE_REFUND_NOTE, src/
+            legal/consentText.ts), so this duplicate paragraph is removed; Notice D is now the one
+            place it's shown here, same as every other buy-button surface. */}
         {/* Same startPurchase() as the hero CTA above — a real, always-clickable button (never a
             dead href="#"), routing through /login/ when logged out and straight to
             usePurchaseFlow's real purchase-intent flow when logged in. Its own not_configured
