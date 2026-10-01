@@ -42,6 +42,9 @@ export function ListenScreen({ lessonTitle, block, onDone, onBack }: ListenScree
   // that failed" is this whole track — a quiet もういちど sits by the play control instead of on
   // any one transcript line.
   const [loadFailed, setLoadFailed] = useState(false);
+  // Phone only (CSS hides the tab and always shows the transcript at >=700px): the transcript
+  // folds behind a ことば tab so the player stays the whole first screen.
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
 
   const duration = metadataDuration ?? FALLBACK_DURATION_SEC[block.tool] ?? 300;
   const transcript = block.transcript;
@@ -149,13 +152,24 @@ export function ListenScreen({ lessonTitle, block, onDone, onBack }: ListenScree
             <span
               className="course-listen__scrub-marker"
               style={{ left: `${(recapTimeSec / duration) * 100}%` }}
-              aria-hidden="true"
-            />
+            >
+              <span className="ad12-ui-text course-listen__scrub-marker-label">{courseUi.listenRecapMarkerLabel}</span>
+              <span className="course-listen__scrub-marker-dot" aria-hidden="true" />
+            </span>
           )}
         </div>
       </Plane>
 
-      <section className="course-listen__transcript">
+      <button
+        type="button"
+        className="ad12-tappable course-listen__tab"
+        aria-expanded={transcriptOpen}
+        onClick={() => setTranscriptOpen((o) => !o)}
+      >
+        {courseUi.listenTranscriptTabLabel}
+      </button>
+      <h2 className={`ad12-ui-text course-listen__transcript-heading ${transcriptOpen ? 'is-open' : ''}`}>{courseUi.listenTranscriptHeading}</h2>
+      <section className={`course-listen__transcript ${transcriptOpen ? 'is-open' : ''}`}>
         {transcript.map((line, i) => {
           const isFirstTeach = line.section === 'teach' && transcript[i - 1]?.section !== 'teach';
           return (

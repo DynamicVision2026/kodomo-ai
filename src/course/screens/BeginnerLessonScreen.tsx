@@ -39,42 +39,71 @@ export function BeginnerLessonScreen({
     return unlocked ? () => { unlockCourseAudio(); onSelect(); } : () => setNote(courseUi.stepLockedNote);
   }
 
+  // WO-C6 Push B §3: the current lesson's own next unopened step gets the one yellow ring — the
+  // exact same "which step is next" logic BeginnerCourseHome.tsx's own つぎは button uses, kept in
+  // lockstep with the real unlock state (never a second, separate notion of "current").
+  const exerciseDone = exerciseDoneCount >= lesson.exercises.length;
+  const auditDone = auditDoneCount >= lesson.audit.length;
+  const nextStep = !p.listenADone ? 'listen' : !exerciseDone ? 'exercise' : !auditDone ? 'audit' : 'home';
+
   return (
     <main className="ad12 course-screen course-lesson">
       <button type="button" className="ad12-ink-button ad12-tappable course-screen__back" onClick={onBack}>{courseUi.back}</button>
-      <h1 className="ad12-reading-text">{lesson.title}</h1>
-      <div className="course-lesson__tools">
-        <Icon tool={lesson.tool} size={48} />
-      </div>
-      <p className="ad12-ui-text">{percent}%</p>
+      <Plane className="course-lesson__tool">
+        <Icon tool={lesson.tool} size={96} className="course-lesson__tool-icon" />
+        <h1 className="ad12-reading-text course-lesson__tool-title">{lesson.title}</h1>
+      </Plane>
       {note && <Plane className="course-lesson__note"><p className="ad12-ui-text">{note}</p></Plane>}
 
       <div className="course-lesson__steps">
-        <BeginnerLessonStep label={courseUi.lessonStepListenSingle} done={p.listenADone} locked={!unlocks.listen} onSelect={guarded(unlocks.listen, onOpenListen)} />
         <BeginnerLessonStep
-          label={`${courseUi.lessonStepExerciseSingle}（${exerciseDoneCount}/${lesson.exercises.length}）`}
-          done={exerciseDoneCount >= lesson.exercises.length}
-          locked={!unlocks.exercise}
+          iconId="i-ear" label={courseUi.lessonStepListenSingle} subtitle={courseUi.lessonStepListenSubtitle}
+          done={p.listenADone} next={nextStep === 'listen'} locked={!unlocks.listen}
+          onSelect={guarded(unlocks.listen, onOpenListen)}
+        />
+        <BeginnerLessonStep
+          iconId="i-hand" label={courseUi.lessonStepExerciseSingle} subtitle={courseUi.lessonStepExerciseSubtitle}
+          done={exerciseDone} next={nextStep === 'exercise'} locked={!unlocks.exercise}
+          dots={{ done: exerciseDoneCount, total: lesson.exercises.length }}
           onSelect={guarded(unlocks.exercise, onOpenExercise)}
         />
         <BeginnerLessonStep
-          label={`${courseUi.lessonStepAudit}（${auditDoneCount}/${lesson.audit.length}）`}
-          done={auditDoneCount >= lesson.audit.length}
-          locked={!unlocks.audit}
+          iconId="i-glass" label={courseUi.lessonStepAudit} subtitle={courseUi.lessonStepAuditSubtitle}
+          done={auditDone} next={nextStep === 'audit'} locked={!unlocks.audit}
           onSelect={guarded(unlocks.audit, onOpenAudit)}
         />
-        <BeginnerLessonStep label={courseUi.lessonStepHome} done={p.stars > 0} locked={!unlocks.home} onSelect={guarded(unlocks.home, onOpenHome)} />
+        <BeginnerLessonStep
+          iconId="i-house" label={courseUi.lessonStepHome} subtitle={courseUi.lessonStepHomeSubtitle}
+          done={p.stars > 0} next={nextStep === 'home'} locked={!unlocks.home}
+          onSelect={guarded(unlocks.home, onOpenHome)}
+        />
       </div>
+      <p className="ad12-ui-text course-lesson__percent">{percent}%</p>
     </main>
   );
 }
 
-function BeginnerLessonStep({ label, done, locked, onSelect }: { label: string; done: boolean; locked: boolean; onSelect: () => void }) {
+function BeginnerLessonStep({ iconId, label, subtitle, done, next, locked, dots, onSelect }: {
+  iconId: string; label: string; subtitle: string; done: boolean; next: boolean; locked: boolean;
+  dots?: { done: number; total: number }; onSelect: () => void;
+}) {
   return (
-    <Plane className={`course-lesson__step ${done ? 'course-lesson__step--done' : ''} ${locked ? 'course-lesson__step--locked' : ''}`}>
+    <Plane className={`course-lesson__step ${done ? 'course-lesson__step--done' : ''} ${locked ? 'course-lesson__step--locked' : ''} ${next ? 'ad12-accent-active' : ''}`}>
       <button type="button" className="ad12-ink-button ad12-tappable course-lesson__step-button" onClick={onSelect}>
-        <span className="ad12-reading-text">{label}</span>
-        {done && <span className="ad12-ui-text course-lesson__step-check">✓</span>}
+        <span className={`course-lesson__step-badge ${done ? 'course-lesson__step-badge--done' : ''} ${next ? 'course-lesson__step-badge--next' : ''}`}>
+          <svg width="28" height="28"><use href={`#${done ? 'i-check' : iconId}`} /></svg>
+        </span>
+        <span className="course-lesson__step-text">
+          <span className="ad12-reading-text course-lesson__step-label">{label}</span>
+          <span className="ad12-ui-text course-lesson__step-subtitle">{subtitle}</span>
+        </span>
+        {dots && (
+          <span className="course-exercise__dots" aria-hidden="true">
+            {Array.from({ length: dots.total }, (_, i) => (
+              <span key={i} className={`course-exercise__dot ${i < dots.done ? 'course-exercise__dot--done' : ''}`} />
+            ))}
+          </span>
+        )}
       </button>
     </Plane>
   );

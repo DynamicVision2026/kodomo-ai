@@ -275,8 +275,9 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
 
       {phase.kind === 'miss' && chosen && (
         <>
+          <p className="ad12-ui-text course-exercise__chosen-chip">{chosen.text}</p>
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
-          <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
+          <DialoguePlane className="course-exercise__feedback" speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
           {phaseAudioFailed && (
             <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retry}>{courseUi.audioRetryLabel}</button>
           )}
@@ -289,8 +290,9 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
 
       {phase.kind === 'solved' && chosen && (
         <>
+          <p className="ad12-ui-text course-exercise__chosen-chip">{chosen.text}</p>
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
-          <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
+          <DialoguePlane className="course-exercise__feedback" speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
           {phaseAudioFailed && !phase.exploring && (
             <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retry}>{courseUi.audioRetryLabel}</button>
           )}

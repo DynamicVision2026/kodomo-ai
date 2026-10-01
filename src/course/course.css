@@ -21,30 +21,146 @@
 }
 
 .course-profile-picker {
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
+  padding-top: 3rem;
 }
 
+.course-profile-picker__brand {
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.course-profile-picker__title {
+  margin: 0;
+}
+
+.course-profile-picker__grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.course-profile-picker__tile {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--ad12-paper);
+  border: none;
+  border-radius: 1.4rem;
+  padding: 1.5rem 1rem;
+  box-shadow: 0 22px 44px -22px rgba(40, 46, 120, 0.5);
+}
+
+.course-profile-picker__avatar {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.course-profile-picker__nickname {
+  margin: 0;
+}
+
+.course-profile-picker__add {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 2.5px dashed var(--ad12-field-2);
+  border-radius: 1.4rem;
+  padding: 1.5rem 1rem;
+  color: var(--ad12-ink);
+  opacity: 0.6;
+}
+
+.course-profile-picker__add-mark {
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.course-profile-picker__account {
+  margin-top: 2rem;
+  opacity: 0.6;
+}
+
+/* WO-C6 Push B: a status badge, not an action — caught via a real screenshot sitting alongside
+   this same screen's own course-screen__primary button, both yellow at once. Never the screen's
+   one accent. */
 .course-review-badge {
   align-self: flex-start;
-  background: var(--ad12-accent);
-  color: var(--ad12-ink);
+  background: var(--ad12-ink);
+  color: var(--ad12-paper);
   padding: 0.25rem 0.75rem;
   border-radius: var(--ad12-radius-chip);
   margin: 0.75rem 1.25rem 0;
 }
 
-.course-screen__back {
+/* WO-C6 Push B: `.ad12-ink-button`'s own rule lives in src/ad12/teach-back-panel.css, which the
+   course bundle never loads (course.css only ever imports tokens.css; Plane.tsx's own CSS import
+   is what transitively supplies `.ad12-tappable`/`.ad12-plane`/`.ad12-reading-text`/
+   `.ad12-ui-text` today, but never this class) — every course button was rendering as a bare,
+   unstyled native <button> in production. Scoped to `.course-screen`/`.course-home` so it can
+   never affect any other `.ad12-ink-button` consumer (MissionShell, CompletionRitual, TeachBack
+   Panel) that already has its own working rule. Wrapped in `:where()` (zero extra specificity) so
+   the single-class variants below (back, primary, step-button, audio-retry, play) win by source
+   order rather than losing to this generic rule — a plain `.course-screen .ad12-ink-button`
+   (0,2,0) silently outranked them all and every variant rendered as a full dark 64px bar. */
+:where(.course-screen, .course-home) .ad12-ink-button {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 64px;
+  padding: 0.6rem 1.75rem;
+  border: none;
+  border-radius: 22px;
+  background: var(--ad12-ink);
+  color: var(--ad12-paper);
+  font: inherit;
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.3;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 14px 30px -18px rgba(40, 46, 120, 0.55);
 }
 
+.course-screen__back,
+.course-hometask__skip {
+  align-self: flex-start;
+  height: auto;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  color: var(--ad12-ink);
+  box-shadow: none;
+  font-weight: 700;
+}
+
+/* WO-C6 Push B: the ONE yellow "your turn" action per screen (つぎへ／つぎは／つかえた！★／the
+   locked-garden CTA) — every course screen's own single forward/primary button already shares
+   this one class, so giving it the accent treatment here covers every screen at once rather than
+   per-button. A retry button (after a miss) also legitimately carries this class: by the time
+   it's shown, the picking UI is gone, so it's still the one actionable thing on screen. */
 .course-screen__primary {
   align-self: stretch;
+  background: var(--ad12-accent);
+  color: var(--ad12-ink);
+  box-shadow: 0 0 0 6px rgba(255, 210, 63, 0.32), 0 14px 30px -16px rgba(120, 90, 0, 0.5);
 }
 
 /* WO-C6 A2: a quiet retry on the one line whose clip failed to load — small, muted, inline with
    that line's own text, never styled like the screen's main action. */
 .course-screen__audio-retry {
   display: inline-block;
+  height: auto;
   margin-inline-start: 0.5rem;
   padding: 0.15rem 0.6rem;
   font-size: 0.85em;
@@ -52,13 +168,76 @@
   background: transparent;
   border: 1px solid currentColor;
   border-radius: var(--ad12-radius-chip);
+  box-shadow: none;
   opacity: 0.7;
+}
+
+.course-home__heading-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.course-home__subtitle {
+  opacity: 0.6;
+  margin-top: 0.15rem;
+}
+
+.course-home__percent {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: none;
+}
+
+.course-home__percent-track {
+  width: 90px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--ad12-field-2);
+  overflow: hidden;
+  display: block;
+}
+
+.course-home__percent-fill {
+  display: block;
+  height: 100%;
+  background: #5fb08a;
+  border-radius: 4px;
+}
+
+.course-home__percent-label {
+  font-weight: 900;
 }
 
 .course-home__garden {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+/* WO-C6 Push B §2 — the beginner course's own garden only (stage2's CourseHome.tsx shares the
+   base `.course-home__garden` class above but never this modifier): 7 plants in one row, each
+   with its tool object as a sign tile, per the approved design. */
+.course-home__garden--beginner {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.5rem 0.25rem 1rem;
+}
+
+.course-home__next {
+  word-break: keep-all;
+  align-self: center;
+  margin-top: 0.5rem;
+}
+
+.course-home__complete-note {
+  text-align: center;
+  opacity: 0.6;
 }
 
 .course-home__footer {
@@ -82,10 +261,43 @@
   margin-bottom: 0.35rem;
 }
 
+/* WO-C6 Push B: the choice cards sit in a tray (phone: stacked; tablet: side by side) and are
+   deliberately smaller than the answer above them — the grown-up's answer is the biggest text on
+   the screen, the cards are what you choose between. Cards stay equal in size/weight (F3). */
 .course-exercise__options {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  background: var(--ad12-field-1);
+  border-radius: 26px;
+  box-shadow: 0 22px 44px -22px rgba(40, 46, 120, 0.5);
+}
+
+.course-exercise__options .ad12-move-card {
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+.course-exercise__answer .ad12-reading-text {
+  font-size: clamp(28px, 4vw, 38px);
+}
+
+.course-exercise__chosen-chip {
+  align-self: flex-start;
+  background: var(--ad12-field-2);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-weight: 700;
+}
+
+.course-exercise .course-exercise__feedback,
+.course-audit .course-exercise__feedback {
+  background: var(--ad12-field-1);
+}
+
+.course-exercise__feedback .ad12-reading-text {
+  font-size: clamp(20px, 2.8vw, 26px);
 }
 
 .course-exercise__hint-highlight {
@@ -106,9 +318,17 @@
   gap: 0.4rem;
 }
 
-.course-lesson__tools {
+.course-lesson__tool {
+  align-items: center;
+  text-align: center;
   display: flex;
+  flex-direction: column;
   gap: 0.75rem;
+  padding: 2rem 1.5rem;
+}
+
+.course-lesson__tool-title {
+  margin: 0;
 }
 
 .course-lesson__steps {
@@ -123,12 +343,54 @@
 
 .course-lesson__step-button {
   width: 100%;
+  height: auto;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   background: transparent;
+  color: var(--ad12-ink);
   border: none;
-  padding: 0;
+  box-shadow: none;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.course-lesson__step-badge {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--ad12-field-1);
+  color: var(--ad12-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.course-lesson__step-badge--done {
+  background: var(--ad12-ink);
+  color: var(--ad12-paper);
+}
+
+.course-lesson__step-badge--next {
+  background: var(--ad12-ink);
+  color: var(--ad12-paper);
+}
+
+.course-lesson__step-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.course-lesson__step-subtitle {
+  opacity: 0.6;
+}
+
+.course-lesson__percent {
+  align-self: center;
+  opacity: 0.6;
 }
 
 .course-parent__table {
@@ -172,22 +434,12 @@
 
 .course-listen__scrub {
   position: relative;
-  padding-top: 0.5rem;
+  padding-top: 1.8rem;
 }
 
 .course-listen__scrub-input {
   width: 100%;
   box-sizing: border-box;
-}
-
-.course-listen__scrub-marker {
-  position: absolute;
-  top: 0;
-  width: 3px;
-  height: 100%;
-  background: var(--ad12-accent);
-  transform: translateX(-50%);
-  pointer-events: none;
 }
 
 .course-listen__divider {
@@ -217,19 +469,22 @@
 }
 
 .course-exercise__dot {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: var(--ad12-field-1);
+  background: var(--ad12-field-2);
 }
 
+/* Navy, never the accent: dots appear alongside the screen's own one yellow action. */
 .course-exercise__dot--done {
-  background: var(--ad12-accent);
+  background: var(--ad12-ink);
 }
 
+/* WO-C6 Push B §3 design rule: a looked-up/answer word is marked with a soft blue-grey, never the
+   screen's one yellow — that's reserved for the single forward/primary action. */
 .course-exercise__answer-highlight,
 .course-make__dialogue-highlight {
-  background: var(--ad12-accent);
+  background: #d8dcea;
   border-radius: 0.2rem;
   padding: 0 0.15rem;
 }
@@ -293,6 +548,10 @@
   gap: 0.5rem;
 }
 
+.course-hometask__hints-heading {
+  opacity: 0.7;
+}
+
 .course-hometask__hints {
   display: flex;
   flex-wrap: wrap;
@@ -323,6 +582,13 @@
   justify-content: center;
 }
 
+.course-ending__bloom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
 .course-ending__seal {
   font-size: 2.5rem;
 }
@@ -331,16 +597,74 @@
   font-weight: 700;
 }
 
-/* WO-C5 §4 — the beginner course's own 7-flower garden (per-lesson icon, no depth-tab row). */
+/* WO-C5 §4 — the beginner course's own 7-flower garden (per-lesson icon, no depth-tab row).
+   WO-C6 Push B: restyled as a vertical stack (plant on top, tool-object sign tile, title below)
+   to match each lesson's own plane, instead of the old horizontal icon+text row. */
+.course-beginner-flower {
+  flex: 1 0 120px;
+  box-sizing: border-box;
+  padding: 0.75rem 0.5rem 1rem;
+}
+
 .course-beginner-flower__button {
   width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.4rem;
   background: transparent;
   border: none;
-  padding: 0.5rem;
-  text-align: left;
+  padding: 0;
+  text-align: center;
+}
+
+.course-beginner-flower__sign {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--ad12-paper);
+  box-shadow: 0 10px 22px -14px rgba(40, 46, 120, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.course-beginner-flower__check {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ad12-ink);
+  color: var(--ad12-paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.course-beginner-flower__lock {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ad12-field-2);
+  color: var(--ad12-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.course-beginner-flower__title {
+  font-size: 13px;
+}
+
+.course-beginner-flower--current {
+  outline: 3px solid var(--ad12-ink);
+  outline-offset: 2px;
 }
 
 .course-beginner-flower--locked {
@@ -349,6 +673,98 @@
 
 .course-beginner-flower--done {
   opacity: 0.85;
+}
+
+/* WO-C6 Push B §4 design rule: "Field deep (きく + final page only)" — every きく step (every
+   lesson's ListenScreen) and the whole さいごのページ (all 3 EndingScreen steps share `.course-
+   ending`) sit on the navy deep field instead of the light resting field, never any other screen.
+   Planes stay white per the design's own universal plane rule (no deep variant) — only the text
+   that sits directly on the field (not inside a Plane) needs to flip to paper here; `.ad12-plane`'s
+   own ink-on-white rule is untouched, so a Plane's own contents are unaffected by this override. */
+/* Compound selectors (not just `.course-listen`) so this reliably outranks `.ad12`'s own
+   `color: var(--ad12-ink)` base rule — same (0,1,0) specificity as a bare `.course-listen` would
+   have, which left the deep screens' own text colour at the mercy of import/bundle order (it lost
+   in production, rendering near-invisible navy-on-navy text; caught via a real screenshot, never
+   just the passing e2e suite, which asserts DOM/behaviour, not colour contrast). */
+.course-screen.course-listen,
+.course-screen.course-ending {
+  background: var(--ad12-field-deep);
+  color: var(--ad12-paper);
+}
+
+.course-listen .course-screen__back,
+.course-ending .course-screen__back {
+  color: var(--ad12-paper);
+}
+
+.course-listen__transcript-heading {
+  opacity: 0.7;
+}
+
+/* Phone fold: the ことば tab only exists below 700px; at tablet widths the transcript is simply
+   always open and the tab is hidden. */
+.course-listen__tab {
+  display: none;
+  align-self: flex-start;
+  background: transparent;
+  color: inherit;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  padding: 0.4rem 1.2rem;
+  font: inherit;
+  font-weight: 700;
+}
+
+@media (max-width: 699px) {
+  .course-listen__tab {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .course-listen__transcript:not(.is-open),
+  .course-listen__transcript-heading:not(.is-open) {
+    display: none;
+  }
+}
+
+/* The current line's own chip reuses `--ad12-field-1` (a light grey) everywhere else on the
+   light field; against the deep field that reads as a bright mismatched patch, so it swaps to
+   AD-12's own recess tone instead (tokens.css's own "where slips sit once the lid opens" scale —
+   already the darker-surface counterpart this screen needs). */
+.course-listen .course-listen__line--current,
+.course-ending .course-listen__line--current {
+  background: var(--ad12-recess-1);
+}
+
+/* The recap marker is a timestamp flag, not an action — it must never be the screen's one yellow
+   (course-screen__primary already owns that, and both can be on screen at the same time once
+   reachedRecap). Positioned entirely inside `.course-listen__scrub`'s own top padding — i.e.
+   still inside the white player Plane — rather than below the scrub bar: a position outside the
+   Plane would still inherit the Plane's own ink colour (DOM-structural, not visual, inheritance),
+   reading as low-contrast ink-on-ink wherever it visually landed on the page's OWN field colour
+   (light or, worse, this screen's own deep field). Staying inside the Plane means it only ever
+   needs to read dark-on-white, which `.ad12-plane`'s own ink rule already guarantees. */
+.course-listen__scrub-marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  pointer-events: none;
+}
+
+.course-listen__scrub-marker-dot {
+  width: 3px;
+  height: 10px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.course-listen__scrub-marker-label {
+  opacity: 0.6;
+  white-space: nowrap;
 }
 
 /*
@@ -360,27 +776,29 @@
  * controls) rather than stretching a single narrow column across the whole tablet width.
  */
 @media (min-width: 700px) {
+  .course-home__heading-row {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
   .course-screen,
   .course-home {
     max-width: 900px;
   }
 
-  .course-exercise {
+  /* WO-C6 Push B: the old two-column grid auto-placed the back button, q0 and answer planes into
+     whatever cells were left (its `back` area class never existed on any element). One centred
+     column instead, with the card tray going 3-across below. */
+  .course-exercise__options {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      'back back'
-      'dots dots'
-      'progress progress'
-      'scene conversation'
-      'options conversation';
-    column-gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
-  .course-exercise__back { grid-area: back; }
-  .course-exercise__dots { grid-area: dots; }
-  .course-exercise > .ad12-ui-text:nth-of-type(1) { grid-area: progress; }
-  .course-exercise__scene { grid-area: scene; }
-  .course-exercise__options { grid-area: options; }
+
+  .course-screen .course-screen__primary,
+  .course-home .course-screen__primary {
+    align-self: center;
+    min-width: 320px;
+  }
 
   .course-make {
     display: grid;

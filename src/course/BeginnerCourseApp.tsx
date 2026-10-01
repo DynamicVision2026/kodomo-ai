@@ -15,6 +15,7 @@
  *    second screen, so a family always sees the same garden shape either way.
  */
 import { useEffect, useState } from 'react';
+import presets from '../../shared/presets.json';
 import { fetchMe, getCourseProgress, putCourseProgress, type MeResponse } from './api';
 import { BEGINNER_COURSE_ID } from './beginnerCourseId';
 import { isBeginnerCourseLicensed } from './beginnerLicence';
@@ -96,14 +97,40 @@ export function BeginnerCourseApp() {
     );
   }
   if (!profileId) {
+    // WO-C6 Push B §1: real avatar + preset nickname tiles (never 「プロフィールN」), big enough to
+    // tap from the sofa. A single profile gets the one-yellow ring — with no "last used" state
+    // tracked anywhere today, ringing the single real choice is the one case this can say
+    // "your turn" without inventing new cross-session state (out of this push's own "no flow
+    // change" scope). 「ふやす」 stays a dashed, non-interactive capacity note, matching the design's
+    // own build note ("dashed, not a button") — real profile creation isn't wired here.
     return (
       <main className="ad12 course-loading course-profile-picker">
-        <p className="ad12-ui-text">{courseUi.profilePickTitle}</p>
-        {me.profiles.map((p, i) => (
-          <button key={p.id} type="button" className="ad12-ink-button ad12-tappable" onClick={() => setProfileId(p.id)}>
-            {courseUi.profileLabel} {i + 1}
-          </button>
-        ))}
+        <p className="ad12-ui-text course-profile-picker__brand">{courseUi.siteHeaderBrandLabel}</p>
+        <h1 className="ad12-reading-text course-profile-picker__title">{courseUi.profilePickTitle}</h1>
+        <div className="course-profile-picker__grid">
+          {me.profiles.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className={`course-profile-picker__tile ad12-tappable ${me.profiles.length === 1 ? 'ad12-accent-active' : ''}`}
+              onClick={() => setProfileId(p.id)}
+            >
+              <span className="course-profile-picker__avatar" aria-hidden="true">
+                {presets.avatars.find((a) => a.id === p.avatarId)?.emoji ?? '❔'}
+              </span>
+              <span className="ad12-reading-text course-profile-picker__nickname">
+                {presets.nicknames.find((n) => n.id === p.nicknameId)?.label ?? ''}
+              </span>
+            </button>
+          ))}
+          {me.profiles.length < 3 && (
+            <div className="course-profile-picker__add" aria-hidden="true">
+              <span className="course-profile-picker__add-mark">＋</span>
+              <span className="ad12-ui-text">{courseUi.profileAddLabel}</span>
+            </div>
+          )}
+        </div>
+        <p className="ad12-ui-text course-profile-picker__account">{courseUi.profileAccountCaption}</p>
       </main>
     );
   }
@@ -274,6 +301,7 @@ export function BeginnerCourseApp() {
         stars={lessonProgress?.stars ?? 0}
         onStar={() => addStar(lesson.id)}
         onBack={() => setScreen({ kind: 'lesson', lessonId: lesson.id })}
+        onSkip={() => setScreen({ kind: 'home' })}
       />
     );
   }

@@ -109,7 +109,7 @@ async function assertListenPlaysPastLine2(page: Page) {
 
   // A real, trusted Chromium click — satisfies the browser's autoplay-gesture requirement the
   // same way a real tap does; never a synthetic/mocked play().
-  await page.getByRole('button', { name: 'きく', exact: true }).click();
+  await page.getByRole('button', { name: /^きく/ }).click();
   await expect.poll(() => audio.evaluate((el: HTMLAudioElement) => el.paused), { timeout: 5000 }).toBe(false);
 
   // WO-C6 A3's own exact numbers: wait 15s, assert currentTime > 10, past line 2.
@@ -127,9 +127,9 @@ LESSONS.forEach(({ id, label }, index) => {
   test(`${id} きく: real audio (no mocks) plays past line 2 within 15s`, async ({ page }) => {
     await mockBeginnerBackend(page, progressUpTo(index));
     await page.goto('/course/beginner/');
-    await page.getByRole('button', { name: /プロフィール 1/ }).click();
-    await page.getByText(label).click();
-    await page.getByRole('button', { name: 'きく', exact: true }).click();
+    await page.getByRole('button', { name: /たぬき/ }).click();
+    await page.getByText(label, { exact: true }).click();
+    await page.getByRole('button', { name: /^きく/ }).click();
     await assertListenPlaysPastLine2(page);
   });
 });
@@ -137,7 +137,7 @@ LESSONS.forEach(({ id, label }, index) => {
 test('b-ending さいごのページ: real audio (no mocks) plays past line 2 within 15s', async ({ page }) => {
   await mockBeginnerBackend(page, allDoneBeginnerProgress());
   await page.goto('/course/beginner/');
-  await page.getByRole('button', { name: /プロフィール 1/ }).click();
+  await page.getByRole('button', { name: /たぬき/ }).click();
   await page.getByText('さいごのページ').click();
   await assertListenPlaysPastLine2(page);
 });
@@ -146,9 +146,9 @@ test('れんしゅう b01-e01: tapping a card plays its reply clip through to it
   test.setTimeout(45_000);
   await mockBeginnerBackend(page);
   await page.goto('/course/beginner/');
-  await page.getByRole('button', { name: /プロフィール 1/ }).click();
-  await page.getByText('ふたを あける').click();
-  await page.getByRole('button', { name: 'きく', exact: true }).click();
+  await page.getByRole('button', { name: /たぬき/ }).click();
+  await page.getByText('ふたを あける', { exact: true }).click();
+  await page.getByRole('button', { name: /^きく/ }).click();
   await finishListening(page);
   await page.getByRole('button', { name: /れんしゅう/ }).click();
 
@@ -177,9 +177,9 @@ test('b07-e01: a chain plays each step\'s own distinctly-named audio file', asyn
   test.setTimeout(60_000);
   await mockBeginnerBackend(page, progressUpTo(6));
   await page.goto('/course/beginner/');
-  await page.getByRole('button', { name: /プロフィール 1/ }).click();
-  await page.getByText('もう 一問').click();
-  await page.getByRole('button', { name: 'きく', exact: true }).click();
+  await page.getByRole('button', { name: /たぬき/ }).click();
+  await page.getByText('もう 一問', { exact: true }).click();
+  await page.getByRole('button', { name: /^きく/ }).click();
   await finishListening(page);
   await page.getByRole('button', { name: /れんしゅう/ }).click();
 
@@ -221,9 +221,9 @@ test('チェック b01-k1: tapping a card plays its clip', async ({ page }) => {
   test.setTimeout(45_000);
   await mockBeginnerBackend(page);
   await page.goto('/course/beginner/');
-  await page.getByRole('button', { name: /プロフィール 1/ }).click();
-  await page.getByText('ふたを あける').click();
-  await page.getByRole('button', { name: 'きく', exact: true }).click();
+  await page.getByRole('button', { name: /たぬき/ }).click();
+  await page.getByText('ふたを あける', { exact: true }).click();
+  await page.getByRole('button', { name: /^きく/ }).click();
   await finishListening(page);
   await page.getByRole('button', { name: /れんしゅう/ }).click();
   for (let i = 0; i < 5; i++) {
@@ -265,9 +265,9 @@ test('おうちで b01: the newly-wired home-challenge audio actually plays', as
   test.setTimeout(30_000);
   await mockBeginnerBackend(page);
   await page.goto('/course/beginner/');
-  await page.getByRole('button', { name: /プロフィール 1/ }).click();
-  await page.getByText('ふたを あける').click();
-  await page.getByRole('button', { name: 'きく', exact: true }).click();
+  await page.getByRole('button', { name: /たぬき/ }).click();
+  await page.getByText('ふたを あける', { exact: true }).click();
+  await page.getByRole('button', { name: /^きく/ }).click();
   await finishListening(page);
   await page.getByRole('button', { name: /れんしゅう/ }).click();
   for (let i = 0; i < 5; i++) {
@@ -297,7 +297,7 @@ test('おうちで b01: the newly-wired home-challenge audio actually plays', as
     await nextButton.click();
     if (await nextButton.isVisible({ timeout: 1000 }).catch(() => false)) await nextButton.click();
   }
-  await page.getByRole('button', { name: 'おうちで', exact: true }).click();
+  await page.getByRole('button', { name: /^おうちで/ }).click();
 
   const audio = page.locator('audio[data-shared-audio-player]');
   await expect(audio).toHaveCount(1);

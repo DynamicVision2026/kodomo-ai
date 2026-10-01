@@ -3,10 +3,16 @@
 // lessons' tool icons, including the new `tool-G`, live in the exact same sprite file).
 import { createRoot } from 'react-dom/client';
 import { BeginnerCourseApp } from './BeginnerCourseApp';
-import { courseIconSpriteRaw } from './Icon';
+import { courseIconSpriteRaw, courseUiIconSpriteRaw, gardenPlantSpriteRaw } from './Icon';
 
 function CourseIconSprite() {
-  return <div dangerouslySetInnerHTML={{ __html: courseIconSpriteRaw }} />;
+  return (
+    <>
+      <div dangerouslySetInnerHTML={{ __html: courseIconSpriteRaw }} />
+      <div dangerouslySetInnerHTML={{ __html: courseUiIconSpriteRaw }} />
+      <div dangerouslySetInnerHTML={{ __html: gardenPlantSpriteRaw }} />
+    </>
+  );
 }
 
 createRoot(document.getElementById('root')!).render(

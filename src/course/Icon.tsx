@@ -18,6 +18,18 @@ export function toolAccessibleName(tool: CourseToolId): string {
  *  actually present in the DOM (fetching the .svg as an <img> src would rasterize/isolate it and
  *  break `<use href="#tool-A">`), so this loads it as inline markup via Vite's `?raw` import. */
 export { default as courseIconSpriteRaw } from './assets/icons/tool-icons.sprite.svg?raw';
+/** WO-C6 Push B: lesson-hub step badges (き/れ/チ/お) + the locked garden's own lock mark. */
+export { default as courseUiIconSpriteRaw } from './assets/icons/course-ui-icons.sprite.svg?raw';
+/** WO-C6 Push B: the garden's own growth-stage symbols (たね/め/つぼみ/はな) — see AD-19 stage math
+ *  in progress.ts's `flowerStageForPercent`, which this purely-visual symbol replaces the text
+ *  label for. */
+export { default as gardenPlantSpriteRaw } from './assets/icons/garden-plant.sprite.svg?raw';
+
+/** `flowerStageForPercent`'s own 4 stage ids, in growth order — the one place that string is
+ *  mapped to which `<symbol id="p-...">` to draw. */
+export function plantSymbolIdForStage(stage: 'seed' | 'sprout' | 'bud' | 'flower'): string {
+  return `p-${stage}`;
+}
 
 export interface IconProps {
   tool: CourseToolId;

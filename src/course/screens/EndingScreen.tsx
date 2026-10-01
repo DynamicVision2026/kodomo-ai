@@ -10,6 +10,7 @@
 import { useRef, useState } from 'react';
 import { Plane } from '../../ad12/Plane';
 import { Ruby } from '../../engine/ruby';
+import { plantSymbolIdForStage } from '../Icon';
 import { courseUi } from '../content/courseManifest';
 import type { CourseEndingLesson } from '../content/types';
 
@@ -30,6 +31,9 @@ export function EndingScreen({ lesson, onDone, onBack }: EndingScreenProps) {
   const [reachedEnd, setReachedEnd] = useState(false);
   // WO-C6 A2: same single-track reasoning as ListenScreen.tsx's own `loadFailed`.
   const [loadFailed, setLoadFailed] = useState(false);
+  // Phone only (CSS hides the tab and always shows the transcript at >=700px): the transcript
+  // folds behind a ことば tab so the player stays the whole first screen.
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
 
   function lineTimeSec(index: number): number {
     const real = lesson.transcript[index]?.start;
@@ -86,6 +90,11 @@ export function EndingScreen({ lesson, onDone, onBack }: EndingScreenProps) {
   if (step === 'message') {
     return (
       <main className="ad12 course-screen course-ending course-ending--message">
+        <div className="course-ending__bloom" aria-hidden="true">
+          {Array.from({ length: 7 }, (_, i) => (
+            <svg key={i} width="48" height="53" viewBox="0 0 60 60"><use href={`#${plantSymbolIdForStage('flower')}`} /></svg>
+          ))}
+        </div>
         <p className="ad12-reading-text"><Ruby text={lesson.screenLine} /></p>
         <p className="ad12-ui-text">{lesson.screenSub}</p>
         <button type="button" className="ad12-ink-button ad12-tappable course-screen__primary" onClick={() => setStep('certificate')}>
@@ -159,7 +168,16 @@ export function EndingScreen({ lesson, onDone, onBack }: EndingScreenProps) {
         </div>
       </Plane>
 
-      <section className="course-listen__transcript">
+      <button
+        type="button"
+        className="ad12-tappable course-listen__tab"
+        aria-expanded={transcriptOpen}
+        onClick={() => setTranscriptOpen((o) => !o)}
+      >
+        {courseUi.listenTranscriptTabLabel}
+      </button>
+      <h2 className={`ad12-ui-text course-listen__transcript-heading ${transcriptOpen ? 'is-open' : ''}`}>{courseUi.listenTranscriptHeading}</h2>
+      <section className={`course-listen__transcript ${transcriptOpen ? 'is-open' : ''}`}>
         {lesson.transcript.map((line, i) => (
           <button
             key={i}

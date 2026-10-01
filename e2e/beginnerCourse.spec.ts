@@ -114,10 +114,10 @@ test.describe('WO-C5 — beginner course licence gate', () => {
   test('unlicensed family sees the garden with every lesson locked + the purchase CTA, never a free preview', async ({ page }) => {
     await mockBeginnerBackend(page, { courseAllowed: true, licensed: false });
     await page.goto('/course/beginner/');
-    await page.getByRole('button', { name: /プロフィール 1/ }).click();
+    await page.getByRole('button', { name: /たぬき/ }).click();
     await expect(page.getByRole('heading', { name: '入門コースの にわ' })).toBeVisible();
     await expect(page.getByRole('link', { name: '入門コースで、ひらこう' })).toBeVisible();
-    await page.getByText('ふたを あける').click();
+    await page.getByText('ふたを あける', { exact: true }).click();
     await expect(page.getByText('入門コースで、ひらこう').first()).toBeVisible();
     // Never actually entered a lesson screen.
     await expect(page.getByText('きく', { exact: true })).not.toBeVisible();
@@ -126,8 +126,8 @@ test.describe('WO-C5 — beginner course licence gate', () => {
   test('an existing Module 1 licence (m1 entitlement) unlocks the course — b01 opens', async ({ page }) => {
     await mockBeginnerBackend(page, { courseAllowed: true, licensed: true });
     await page.goto('/course/beginner/');
-    await page.getByRole('button', { name: /プロフィール 1/ }).click();
-    await page.getByText('ふたを あける').click();
+    await page.getByRole('button', { name: /たぬき/ }).click();
+    await page.getByText('ふたを あける', { exact: true }).click();
     await expect(page.getByText('きく', { exact: true })).toBeVisible();
   });
 });
@@ -143,7 +143,7 @@ test.describe('WO-C5 — BEGINNER_LAUNCH off: production behaves exactly as befo
   test('courseAllowed: true (allowlisted staff/family) -> the garden renders even with the flag off', async ({ page }) => {
     await mockBeginnerBackend(page, { courseAllowed: true, licensed: true });
     await page.goto('/course/beginner/');
-    await page.getByRole('button', { name: /プロフィール 1/ }).click();
+    await page.getByRole('button', { name: /たぬき/ }).click();
     await expect(page.getByRole('heading', { name: '入門コースの にわ' })).toBeVisible();
   });
 });
@@ -161,7 +161,7 @@ test.describe('WO-C5 follow-up — the login link sends a parent back to /course
 test('WO-C5 — the final page appears only once all 7 lessons are at 100%, and plays through to the certificate', async ({ page }) => {
   await mockBeginnerBackend(page, { courseAllowed: true, licensed: true, progress: allDoneBeginnerProgress() });
   await page.goto('/course/beginner/');
-  await page.getByRole('button', { name: /プロフィール 1/ }).click();
+  await page.getByRole('button', { name: /たぬき/ }).click();
   await expect(page.getByRole('heading', { name: '入門コースの にわ' })).toBeVisible();
   await page.getByText('さいごのページ').click();
   await expect(page.getByText('お母さんが、スマホのAIに')).toBeVisible();
@@ -192,14 +192,14 @@ for (const viewport of VIEWPORTS) {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await mockBeginnerBackend(page, { courseAllowed: true, licensed: true });
     await page.goto('/course/beginner/');
-    await page.getByRole('button', { name: /プロフィール 1/ }).click();
+    await page.getByRole('button', { name: /たぬき/ }).click();
     await expect(page.getByRole('heading', { name: '入門コースの にわ' })).toBeVisible();
     await page.screenshot({ path: `test-results/wo-c5-${viewport.label}-garden.png`, fullPage: true });
 
-    await page.getByText('ふたを あける').click();
+    await page.getByText('ふたを あける', { exact: true }).click();
     await page.screenshot({ path: `test-results/wo-c5-${viewport.label}-lesson-hub.png`, fullPage: true });
 
-    await page.getByRole('button', { name: 'きく', exact: true }).click();
+    await page.getByRole('button', { name: /^きく/ }).click();
     await page.screenshot({ path: `test-results/wo-c5-${viewport.label}-listen.png`, fullPage: true });
     await finishListening(page);
 
@@ -211,7 +211,7 @@ for (const viewport of VIEWPORTS) {
     await page.screenshot({ path: `test-results/wo-c5-${viewport.label}-audit.png`, fullPage: true });
     for (let i = 0; i < 4; i++) await solveAuditItem(page);
 
-    await page.getByRole('button', { name: 'おうちで', exact: true }).click();
+    await page.getByRole('button', { name: /^おうちで/ }).click();
     await page.screenshot({ path: `test-results/wo-c5-${viewport.label}-hometask.png`, fullPage: true });
     await page.getByRole('button', { name: 'つかえた！★' }).click();
   });

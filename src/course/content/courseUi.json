@@ -106,5 +106,19 @@
   "siteHeaderCourseLabel": "入門コース",
   "siteHeaderAccountLabel": "アカウント",
   "siteHeaderLogoutLabel": "ログアウト",
-  "audioRetryLabel": "もういちど"
+  "audioRetryLabel": "もういちど",
+  "gardenSubtitle": "7つの 入り口を、ひとつずつ。",
+  "gardenCompleteNote": "7つ さいたら、さいごのページが ひらくよ",
+  "nextStepPrefix": "つぎは：",
+  "profileAddLabel": "ふやす",
+  "profileAccountCaption": "おうちの人：アカウント",
+  "lessonStepListenSubtitle": "おはなしを きこう（5分）",
+  "lessonStepExerciseSubtitle": "5つの ばめんで、つかってみよう",
+  "lessonStepAuditSubtitle": "つかえたか、見てみよう",
+  "lessonStepHomeSubtitle": "おうちの人と、1回つかおう",
+  "listenTranscriptHeading": "おはなしの ことば",
+  "listenRecapMarkerLabel": "とちゅうの まとめ",
+  "listenTranscriptTabLabel": "ことば",
+  "homeWordHintsHeading": "こんな ことばを さがしてみよう",
+  "homeSkipNote": "あとでやる → にわに もどる"
 }

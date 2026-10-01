@@ -17,9 +17,11 @@ export interface HomeTaskScreenProps {
   stars: number;
   onStar: () => void;
   onBack: () => void;
+  /** Quiet "later" exit straight to the garden — navigation only, never touches progress. */
+  onSkip: () => void;
 }
 
-export function HomeTaskScreen({ lessonId, home, stars, onStar, onBack }: HomeTaskScreenProps) {
+export function HomeTaskScreen({ lessonId, home, stars, onStar, onBack, onSkip }: HomeTaskScreenProps) {
   // WO-C6 A1: おうちで has real recorded audio (title + one clip per step) that was never wired
   // up — queues through the same shared, already-unlocked element every other screen uses.
   useVoiceQueue(
@@ -50,11 +52,14 @@ export function HomeTaskScreen({ lessonId, home, stars, onStar, onBack }: HomeTa
       </Plane>
 
       {home.wordHints.length > 0 && (
-        <div className="course-hometask__hints">
-          {home.wordHints.map((word, i) => (
-            <span key={i} className="course-hometask__hint-card ad12-ui-text">{word}</span>
-          ))}
-        </div>
+        <>
+          <p className="ad12-ui-text course-hometask__hints-heading">{courseUi.homeWordHintsHeading}</p>
+          <div className="course-hometask__hints">
+            {home.wordHints.map((word, i) => (
+              <span key={i} className="course-hometask__hint-card ad12-ui-text">{word}</span>
+            ))}
+          </div>
+        </>
       )}
 
       <Plane className="course-hometask__parent">
@@ -65,6 +70,8 @@ export function HomeTaskScreen({ lessonId, home, stars, onStar, onBack }: HomeTa
         </button>
         {stars > 0 && <p className="ad12-ui-text course-hometask__stars">★（{stars}）</p>}
       </Plane>
+
+      <button type="button" className="ad12-ink-button ad12-tappable course-hometask__skip" onClick={onSkip}>{courseUi.homeSkipNote}</button>
     </main>
   );
 }

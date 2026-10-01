@@ -51,9 +51,9 @@ test('b01 きく: real audio (no mocks) keeps playing past the first transcript 
 
   await mockBeginnerBackend(page);
   await page.goto('/course/beginner/');
-  await page.getByRole('button', { name: /プロフィール 1/ }).click();
-  await page.getByText('ふたを あける').click();
-  await page.getByRole('button', { name: 'きく', exact: true }).click();
+  await page.getByRole('button', { name: /たぬき/ }).click();
+  await page.getByText('ふたを あける', { exact: true }).click();
+  await page.getByRole('button', { name: /^きく/ }).click();
 
   // WO-C6 A2 follow-up: the lesson-hub tap above already unlocks courseAudioPlayer.ts's own
   // shared singleton (now kept in the DOM, hidden, so e2e can reach it on screens that mount no
@@ -64,7 +64,7 @@ test('b01 きく: real audio (no mocks) keeps playing past the first transcript 
 
   // A real, trusted Chromium click — Playwright's own click() satisfies the browser's
   // autoplay-gesture requirement the same way a real tap does; never a synthetic/mocked play().
-  await page.getByRole('button', { name: 'きく', exact: true }).click();
+  await page.getByRole('button', { name: /^きく/ }).click();
 
   await expect.poll(() => audio.evaluate((el: HTMLAudioElement) => el.paused), { timeout: 5000 }).toBe(false);
 

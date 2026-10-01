@@ -116,7 +116,8 @@ export function AuditScreen({ lessonId, item, position, onItemDone, onNext, onBa
 
       {phase.kind === 'result' && card && (
         <>
-          <DialoguePlane speaker={courseUi.practice.feedbackSpeaker} text={card[2]} />
+          <p className="ad12-ui-text course-exercise__chosen-chip">{card[1]}</p>
+          <DialoguePlane className="course-exercise__feedback" speaker={courseUi.practice.feedbackSpeaker} text={card[2]} />
           {resultAudioFailed && (
             <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retryAudio}>{courseUi.audioRetryLabel}</button>
           )}

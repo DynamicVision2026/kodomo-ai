@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<!-- WO-C6 Push B: the garden's own growth-stage symbols (たね/め/つぼみ/はな), taken verbatim from
+     the Founder-approved course-screens.html design (30 Sep 2026) — replaces the stage LABEL TEXT
+     that used to sit next to each lesson's title (「（たね）」 etc.); progress is shown visually
+     only, never spelled out for the child. Leaf/petal colour lives only here, per B1's own rule. -->
+<symbol id="p-seed" viewBox="0 0 60 60"><ellipse cx="30" cy="52" rx="14" ry="4" fill="#C9CEDF"/><ellipse cx="30" cy="47" rx="5" ry="3.6" fill="#8B92BE"/></symbol>
+<symbol id="p-sprout" viewBox="0 0 60 60"><ellipse cx="30" cy="52" rx="14" ry="4" fill="#C9CEDF"/><path d="M30 51V34" stroke="#3E8E6A" stroke-width="3" stroke-linecap="round"/><path d="M30 38c-7 0-10-4-10-8 5 0 10 2 10 8zM30 36c7 0 10-4 10-8-5 0-10 2-10 8z" fill="#5FB08A"/></symbol>
+<symbol id="p-bud" viewBox="0 0 60 60"><ellipse cx="30" cy="52" rx="14" ry="4" fill="#C9CEDF"/><path d="M30 51V22" stroke="#3E8E6A" stroke-width="3" stroke-linecap="round"/><path d="M30 42c-7 0-10-4-10-8 5 0 10 2 10 8zM30 38c7 0 10-4 10-8-5 0-10 2-10 8z" fill="#5FB08A"/><path d="M30 10c5 4 6 9 0 14-6-5-5-10 0-14z" fill="#F29AAC"/></symbol>
+<symbol id="p-flower" viewBox="0 0 60 60"><ellipse cx="30" cy="52" rx="14" ry="4" fill="#C9CEDF"/><path d="M30 51V24" stroke="#3E8E6A" stroke-width="3" stroke-linecap="round"/><path d="M30 44c-7 0-10-4-10-8 5 0 10 2 10 8zM30 40c7 0 10-4 10-8-5 0-10 2-10 8z" fill="#5FB08A"/><g fill="#F29AAC"><circle cx="30" cy="9" r="6"/><circle cx="39" cy="15" r="6"/><circle cx="36" cy="25" r="6"/><circle cx="24" cy="25" r="6"/><circle cx="21" cy="15" r="6"/></g><circle cx="30" cy="17.5" r="5" fill="#fff"/></symbol>
+</defs>
+</svg>

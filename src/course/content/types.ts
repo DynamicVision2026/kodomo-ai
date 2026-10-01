@@ -522,4 +522,21 @@ export interface CourseUiStrings {
   /** WO-C6 A2: a quiet retry on the one line/card whose clip failed to load — never blocks the
    *  lesson. Distinct from `practice.retryLabel` (which re-picks a wrong answer, not a clip). */
   audioRetryLabel: string;
+  /** WO-C6 Push B — new screen chrome the approved course-screens.html design introduces (none of
+   *  these change any existing lesson content; see courseUi.json's own doc comment for the report
+   *  list). */
+  gardenSubtitle: string;
+  gardenCompleteNote: string;
+  nextStepPrefix: string;
+  profileAddLabel: string;
+  profileAccountCaption: string;
+  lessonStepListenSubtitle: string;
+  lessonStepExerciseSubtitle: string;
+  lessonStepAuditSubtitle: string;
+  lessonStepHomeSubtitle: string;
+  listenTranscriptHeading: string;
+  listenRecapMarkerLabel: string;
+  listenTranscriptTabLabel: string;
+  homeWordHintsHeading: string;
+  homeSkipNote: string;
 }
