@@ -596,6 +596,38 @@ check.
    step that actually proves it against your real store, not just the tests that prove it
    against fakes.
 
+9. **Order confirmation email — check `kodomo-ai-m1`'s own branding, not just the other
+   products' (manual, Shopify Admin).** Found live (1 Oct 2026): a real `kodomo-ai-m1` order's
+   "ご注文内容の確認" email came through using another product's branding (漢字でんしゃ's
+   記念乗車券／わたしのれっしゃ号／でんしゃに乗る！copy), not ナゼホリ's. This confirmation
+   email is Shopify's own **Order confirmation** notification
+   (Admin → **Settings → Notifications → Order confirmation**) — one shared Liquid template for
+   every product in the store; nothing in this repo sends it, builds it, or can scope it
+   (`backend/src/email.ts` only ever sends the LOGIN/activation/claim emails, never the
+   Shopify-native purchase receipt — see its own doc comments). Two ways to fix it, Founder's
+   call: (a) add `{% if line_item.sku == 'kodomo-ai-m1' %}...{% else %}...{% endif %}` (or an
+   equivalent per-product block) to that one shared template so every product's order
+   confirmation shows its own real copy; or (b) if the store intends a single shared template,
+   make sure its default copy is product-neutral rather than any one product's own branding.
+   Either way, re-send a test order confirmation afterward and re-check it — same step 8 above
+   already covers confirming products A-D stay unaffected once this is edited.
+
+10. **Product catalog listing — remove the 準備中 badge before go-live (manual, Shopify
+    Admin).** The `kodomo-ai-m1` card on the store's own multi-product catalog page still shows
+    a "準備中" (not yet available) badge as of 1 Oct 2026 — a real customer who lands there
+    (e.g. from the storefront nav, not a direct product link) sees the product marked not
+    available even though checkout itself works. This is the product's own availability/tag/
+    badge setting in Shopify Admin (Products → kodomo-ai-m1 → check its sales-channel
+    availability, any "準備中"/"coming soon" tag driving the storefront theme's own badge
+    logic, and inventory-policy "track quantity"/"continue selling when out of stock" if the
+    badge is inventory-driven) — outside this repo, same as items 7 and 9 above.
+
+**Items 7, 9 and 10 above are all Shopify storefront/template/catalog configuration this repo
+has no code path to reach — `backend/src/shopify.ts`'s `ShopifyOrderPayload`/webhook handlers
+only ever READ a completed order, never touch the checkout UI, the order-status page, Shopify's
+own notification templates, or product-listing badges. Each needs a Shopify Admin action before
+flip, not a code change; this runbook is where to track them until they're confirmed fixed.**
+
 ---
 
 ## Part 4 — Content pipeline: inject API keys, run Task 1
