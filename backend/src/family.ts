@@ -35,18 +35,39 @@ export async function getFamily(env: Env, familyId: string): Promise<FamilyDoc |
  * state (AD-16 §0/§5: trial starts lazily at the trial unit's own first open, never at account
  * creation).
  */
+/** Consent tied to verification: ONLY passed by `verifyLoginCode` on a SUCCESSFUL verify, carrying
+ *  the click's own original timestamp (from the `loginCodes` doc the click wrote) plus `now` as
+ *  the verify time — see `FamilyDoc`'s own doc comment for why these are two separate fields. */
+export interface ConsentRecord {
+  consentClickedAt: string;
+  consentVerifiedAt: string;
+  consentVersion: string;
+}
+
 export async function getOrCreateFamilyIdInTx(
   tx: { get<T>(path: string): Promise<T | null>; set<T>(path: string, data: T): void },
   email: string,
   now: string,
+  consent?: ConsentRecord,
 ): Promise<{ familyId: string; created: boolean }> {
   const normalized = normalizeEmail(email);
   const emailHash = await sha256Hex(normalized);
   const existing = await tx.get<EmailIndexDoc>(emailIndexPath(emailHash));
-  if (existing) return { familyId: existing.familyId, created: false };
+  if (existing) {
+    // Consent tied to verification: a login that carried a fresh, verified click records it on
+    // the family — unless the family already has a VERIFIED consent for this exact wording (keep
+    // the original clicked/verified times rather than overwriting a real record with itself).
+    if (consent) {
+      const family = await tx.get<FamilyDoc>(familyPath(existing.familyId));
+      if (family && family.consentVersion !== consent.consentVersion) {
+        tx.set(familyPath(existing.familyId), { ...family, ...consent, updatedAt: now } satisfies FamilyDoc);
+      }
+    }
+    return { familyId: existing.familyId, created: false };
+  }
 
   const familyId = randomToken(16);
-  const family: FamilyDoc = { email: normalized, status: 'active', profileCount: 0, createdAt: now, updatedAt: now };
+  const family: FamilyDoc = { email: normalized, status: 'active', profileCount: 0, createdAt: now, updatedAt: now, ...(consent ?? {}) };
   tx.set(familyPath(familyId), family);
   tx.set(emailIndexPath(emailHash), { familyId, createdAt: now } satisfies EmailIndexDoc);
   return { familyId, created: true };

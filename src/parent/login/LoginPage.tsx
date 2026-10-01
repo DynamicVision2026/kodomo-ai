@@ -1,3 +1,8 @@
+import { CONSENT_TEXT_VERSION } from '../../../shared/consent';
+import {
+  CONSENT_BUTTON_LABEL, CONSENT_CONFIRM_NOTE, CONSENT_CONTACT_EMAIL, CONSENT_DECLINE_NOTE, CONSENT_LEAD,
+  CONSENT_LINKS, CONSENT_NO_MARKETING_NOTE, CONSENT_RECORD_NOTE,
+} from '../../legal/consentText';
 import { useEffect, useState, type FormEvent } from 'react';
 import { load, save } from '../../engine/storage';
 import { fetchMe, requestLoginCode, verifyLoginCode, type MeResponse } from '../../family/api';
@@ -74,7 +79,10 @@ export function LoginPage() {
     (async () => {
       const me = await fetchMe();
       if (cancelled) return;
-      if (me) {
+      // `?reconsent=1`: a signed-in family with no recorded consent (e.g. created before consent
+      // existed) is sent here to agree; it must see the form instead of being bounced onward.
+      const needsConsent = new URLSearchParams(window.location.search).get('reconsent') === '1' && !me?.consentRecorded;
+      if (me && !needsConsent) {
         window.location.href = resolveNextPath(me);
         return;
       }
@@ -90,7 +98,7 @@ export function LoginPage() {
     const email = emailInput.trim();
     if (!email) return;
     setStep({ kind: 'email-loading' });
-    const result = await requestLoginCode(email);
+    const result = await requestLoginCode(email, CONSENT_TEXT_VERSION);
     if ('reason' in result && result.reason === 'not_configured') {
       setStep({ kind: 'not-configured' });
       return;
@@ -133,6 +141,17 @@ export function LoginPage() {
           <p className="login__lead">
             メールアドレスを入力してください。ログイン用のコードをお送りします。はじめての方も、このまま登録できます。
           </p>
+          <div className="login__consent" data-consent-version={CONSENT_TEXT_VERSION}>
+            <p className="login__consent-text">{CONSENT_LEAD}</p>
+            <p className="login__consent-text">{CONSENT_CONFIRM_NOTE}</p>
+            <ul className="login__consent-links">
+              {CONSENT_LINKS.map((link) => (
+                <li key={link.href}>
+                  <a href={link.href} target="_blank" rel="noopener noreferrer">{link.label}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
           <form className="login__form" onSubmit={submitEmail}>
             <label className="login__label" htmlFor="email">メールアドレス</label>
             <input
@@ -146,9 +165,15 @@ export function LoginPage() {
               autoComplete="email"
             />
             <button type="submit" className="login__submit" disabled={step.kind === 'email-loading' || !emailInput.trim()}>
-              {step.kind === 'email-loading' ? '送信中…' : 'コードを送る'}
+              {step.kind === 'email-loading' ? '送信中…' : CONSENT_BUTTON_LABEL}
             </button>
           </form>
+          <p className="login__consent-note">{CONSENT_RECORD_NOTE}</p>
+          <p className="login__consent-note">{CONSENT_NO_MARKETING_NOTE}</p>
+          <p className="login__consent-note">
+            {CONSENT_DECLINE_NOTE}
+            <a href={`mailto:${CONSENT_CONTACT_EMAIL}`}>{CONSENT_CONTACT_EMAIL}</a>
+          </p>
         </>
       ) : null}
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   confirmEmailChange,
   deleteAccount,
@@ -6,13 +6,14 @@ import {
   fetchMe,
   listSessions,
   logout,
+  requestDeleteCode,
   requestEmailChange,
-  requestLoginCode,
   type MeResponse,
   type SessionInfo,
 } from '../../family/api';
 import { usePurchaseFlow } from '../../family/usePurchaseFlow';
 import { COMPANY } from '../../legal/company';
+import { NoticeD } from '../../legal/NoticeD';
 import moduleJson from '../../modules/m1/module.json';
 import './account.css';
 
@@ -63,6 +64,23 @@ export function AccountPage() {
     listSessions().then(setSessions);
   }, []);
 
+  // The landing page's buy button sends a parent through /login/ and back here with `?buy=1`:
+  // once signed in WITH recorded consent and not already entitled (a waiting order may just have
+  // been bound at login), go straight on to the Shopify checkout with the purchase token — one
+  // time only, and the flag is stripped from the URL so a refresh never re-opens checkout.
+  const autoBuyHandled = useRef(false);
+  useEffect(() => {
+    if (autoBuyHandled.current || me === 'loading' || !me) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('buy') !== '1') return;
+    autoBuyHandled.current = true;
+    params.delete('buy');
+    const query = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (query ? `?${query}` : ''));
+    const alreadyEntitled = me.entitlements.some((e) => e.moduleId === PURCHASE_MODULE_ID && e.status === 'active');
+    if (!alreadyEntitled && me.consentRecorded) void startPurchase();
+  }, [me, startPurchase]);
+
   // AD-14 decision 7: once the entitlement lands (usePurchaseFlow's own /me polling), refresh
   // this page's own `me` so the purchase section itself updates (alreadyEntitled below) rather
   // than staying stale under the thank-you message forever.
@@ -80,7 +98,16 @@ export function AccountPage() {
     window.location.href = '/login/';
   }
 
+  /** A family from before consent existed can't be emailed at all (backend/src/emailGate.ts), so
+   *  an email-change or deletion code would silently never arrive — send it to agree first. */
+  function sendToConsentIfMissing(): boolean {
+    if (me === 'loading' || !me || me.consentRecorded) return false;
+    window.location.href = '/login/?reconsent=1&next=' + encodeURIComponent('/account/');
+    return true;
+  }
+
   async function submitNewEmail() {
+    if (sendToConsentIfMissing()) return;
     const newEmail = newEmailInput.trim();
     if (!newEmail) return;
     const result = await requestEmailChange(newEmail);
@@ -112,7 +139,8 @@ export function AccountPage() {
 
   async function sendDeleteCode() {
     if (me === 'loading' || !me) return;
-    const result = await requestLoginCode(me.email);
+    if (sendToConsentIfMissing()) return;
+    const result = await requestDeleteCode();
     if ('reason' in result) {
       setDeleteStep({ kind: 'error', message: '送信できませんでした。しばらくしてから、もう一度お試しください。' });
       return;
@@ -161,6 +189,7 @@ export function AccountPage() {
           (purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
             <>
               <p>「{PURCHASE_MODULE_TITLE}」を購入すると、すべてのミッションが使えるようになります。</p>
+              <NoticeD className="account__notice-d" />
               <button
                 type="button"
                 className="account__button"

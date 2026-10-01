@@ -52,12 +52,15 @@ describe('TokushohoPage', () => {
     expect(screen.getAllByText(/入門コース/).length).toBeGreaterThan(0);
     expect(screen.getByText('ナゼホリ（仮）（入門コース）')).toBeInTheDocument();
     expect(screen.queryByText(/モジュール1/)).not.toBeInTheDocument();
-    expect(
-      screen.getByText(
+    const text = (document.body.textContent ?? '').replace(/\s+/g, '');
+    expect(text).toContain(
+      (
         'ご購入から10日以内で、入門コースのレッスンをまだ始めていない場合は、info@domo-ai.com までご連絡いただければ返金いたします。' +
-          'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。',
-      ),
-    ).toBeInTheDocument();
+        'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。'
+      ).replace(/\s+/g, ''),
+    );
+    // Item 10: the login-consent refund guarantee is appended, same wording everywhere it appears.
+    expect(text).toContain('同意いただけない場合は、ログインできないため、ご利用いただけません。'.replace(/\s+/g, ''));
   });
 });
 
@@ -72,23 +75,78 @@ describe('PrivacyPage', () => {
     expect(screen.getByText(/入力する項目は/)).toBeInTheDocument();
   });
 
-  it('names the real third parties involved in checkout and analytics', () => {
+  it('names Shopify and KOMOJU as the checkout/payment platforms (COPY-01 §8 follow-up: KOMOJU stays named, only PayPal is dropped)', () => {
     render(<PrivacyPage />);
     expect(screen.getAllByText(/Shopify/).length).toBeGreaterThan(0);
     expect(screen.getByText(/KOMOJU/)).toBeInTheDocument();
-    expect(screen.getByText(/PayPal/)).toBeInTheDocument();
+    expect(screen.queryByText(/PayPal/)).not.toBeInTheDocument();
   });
 
-  it('AD-13/15: discloses the Family Account server-side data (Firestore), the email processor, and the APPI overseas-transfer note', () => {
+  it('AD-13/15/COPY-01 §8 follow-up, text C v3 4-2: discloses the Family Account server-side data (Firestore), names Postmark alone with its country, and names the /account deletion path', () => {
     render(<PrivacyPage />);
     expect(screen.getByText(/Firestore/)).toBeInTheDocument();
-    expect(screen.getByText(/Postmark/)).toBeInTheDocument();
-    expect(screen.getByText(/外国にある/)).toBeInTheDocument();
+    const text = (document.body.textContent ?? '').replace(/\s+/g, '');
+    expect(text).toContain('アメリカ合衆国に所在するACPM,LLC（サービス名：Postmark）に委託'.replace(/\s+/g, ''));
+    expect(screen.queryByText(/Amazon SES/)).not.toBeInTheDocument();
     expect(screen.getByText(/\/account/)).toBeInTheDocument(); // deletion path is named, not just promised
   });
 
   it('gives a real contact email, not a placeholder', () => {
     render(<PrivacyPage />);
     expect(screen.getByText(COMPANY.email)).toBeInTheDocument();
+  });
+
+  it('COPY-01 §8: shows an updated 改定日', () => {
+    render(<PrivacyPage />);
+    expect(screen.getByText(/改定日/)).toBeInTheDocument();
+  });
+
+  it('text C v3 §6: states plainly that this backend never receives/stores card numbers or security codes', () => {
+    render(<PrivacyPage />);
+    const text = document.body.textContent ?? '';
+    expect(text.replace(/\s+/g, '')).toContain('当社は、完全なクレジットカード番号およびセキュリティコードを取得・保存しません。'.replace(/\s+/g, ''));
+  });
+
+  it('COPY-01 §8: no longer describes a no-account "free trial" mode or a 72-hour account trial — true before and after BEGINNER_LAUNCH, since login has always been required in every real deployment (src/family/api.ts\'s isFamilyApiConfigured() is unconditionally true — Dockerfile.frontend always sets VITE_FAMILY_API_URL)', () => {
+    render(<PrivacyPage />);
+    const text = document.body.textContent ?? '';
+    expect(text).not.toContain('無料でお試しいただける範囲');
+    expect(text).not.toContain('アカウント登録なし');
+    expect(text).not.toContain('72時間');
+    expect(text).not.toContain('お試し期間');
+    expect(screen.getByText(/本サービスは、保護者の方のメールアドレスでログインしてご利用いただきます。/)).toBeInTheDocument();
+  });
+
+  it('COPY-01 §8: section 4 always describes Family Account storage as what happens on login, not conditioned on purchase-or-trial', () => {
+    render(<PrivacyPage />);
+    expect(
+      screen.getByText(/ファミリーアカウントでログインしてご利用いただく場合、以下の情報を当社のサーバー/),
+    ).toBeInTheDocument();
+  });
+
+  it('text C v3: shows 制定日 (first publication, from git history) and 最終改定日 (this release)', () => {
+    render(<PrivacyPage />);
+    expect(screen.getByText('制定日：2026年9月18日／最終改定日：2026年10月1日')).toBeInTheDocument();
+  });
+
+  it('text C v3 §4-1: the overseas-transfer consent record is itself listed as stored data', () => {
+    render(<PrivacyPage />);
+    expect(
+      screen.getByText('外国にある第三者への提供についての同意の記録（同意の日時、同意文の版、確認コードの入力が完了した日時）'),
+    ).toBeInTheDocument();
+  });
+
+  it('text C v3: section 4-2 has the anchor id that text C\'s own link points at (#4-2)', () => {
+    const { container } = render(<PrivacyPage />);
+    const heading = container.querySelector('[id="4-2"]');
+    expect(heading).not.toBeNull();
+    expect(heading?.textContent).toContain('4-2');
+  });
+
+  it('text C v3 §4-2: names Postmark\'s own retention window and sub-processors', () => {
+    render(<PrivacyPage />);
+    const text = (document.body.textContent ?? '').replace(/\s+/g, '');
+    expect(text).toContain('45日間保存されたのち削除されます'.replace(/\s+/g, ''));
+    expect(text).toContain('データセンター事業者（Deft）、AmazonWebServices、Zendeskに再委託しています'.replace(/\s+/g, ''));
   });
 });

@@ -141,7 +141,7 @@ describe('allBeginnerLessonsComplete — final-page gating', () => {
 
 describe('isBeginnerCourseLicensed — WO-C5 §6, existing Module 1 licences count', () => {
   function fakeMe(entitlements: MeResponse['entitlements']): MeResponse {
-    return { familyId: 'f1', email: 'a@b.com', entitlements, profiles: [], trials: [], courseAllowed: false };
+    return { familyId: 'f1', email: 'a@b.com', entitlements, profiles: [], trials: [], courseAllowed: false, consentRecorded: true };
   }
 
   it('is false with no entitlements at all', () => {

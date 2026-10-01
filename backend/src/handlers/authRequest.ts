@@ -17,9 +17,9 @@ function genericOk(): Response {
 export async function handleAuthRequest(request: Request, env: Env): Promise<Response> {
   if (!passesCsrfCheck(request, env)) return new Response('forbidden', { status: 403 });
 
-  let body: { email?: unknown };
+  let body: { email?: unknown; consentTextVersion?: unknown };
   try {
-    body = (await request.json()) as { email?: unknown };
+    body = (await request.json()) as { email?: unknown; consentTextVersion?: unknown };
   } catch {
     return new Response('invalid JSON', { status: 400 });
   }
@@ -29,7 +29,7 @@ export async function handleAuthRequest(request: Request, env: Env): Promise<Res
 
   const ipOk = await checkIpRateLimit(env, clientIp(request));
   if (ipOk) {
-    await requestLoginCode(env, body.email);
+    await requestLoginCode(env, body.email, typeof body.consentTextVersion === 'string' ? body.consentTextVersion : undefined);
   }
   return genericOk();
 }

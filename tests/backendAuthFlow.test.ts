@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import { CONSENT_TEXT_VERSION } from '../shared/consent';
 import { describe, it, expect } from 'vitest';
 import { handleAuthRequest } from '../backend/src/handlers/authRequest';
 import { handleAuthVerify } from '../backend/src/handlers/authVerify';
@@ -33,7 +34,7 @@ async function seedEntitledFamily(env: Env, email: string): Promise<string> {
   const now = new Date();
   const nowIso = now.toISOString();
   await env.db.set(familyPath(familyId), {
-    email, status: 'active', profileCount: 0, createdAt: nowIso, updatedAt: nowIso,
+    email, status: 'active', profileCount: 0, createdAt: nowIso, updatedAt: nowIso, consentClickedAt: nowIso, consentVerifiedAt: nowIso, consentVersion: CONSENT_TEXT_VERSION,
   });
   await env.db.set(`emailIndex/${await emailHashOf(email)}`, { familyId, createdAt: nowIso });
   await env.db.set(entitlementPath(familyId, 'm1'), { status: 'active', shopifyOrderId: 'o1', grantedAt: nowIso, revokedAt: null, revokedReason: null });
@@ -41,7 +42,7 @@ async function seedEntitledFamily(env: Env, email: string): Promise<string> {
 }
 
 async function issuedCode(env: Env, email: string): Promise<string> {
-  await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email }), env);
+  await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email, consentTextVersion: CONSENT_TEXT_VERSION }), env);
   const doc = await env.db.get<LoginCodeDoc>(loginCodePath(await emailHashOf(email)));
   // Recover the plaintext code the only way a test legitimately can: re-derive by trying every
   // digit combination is absurd, so this helper instead reaches past the HMAC by asking the
@@ -93,9 +94,9 @@ describe('AD-13 acceptance 5 — code lifecycle: correct code, 5 wrong attempts,
   it('a resend within 60 seconds is refused (silently, from the caller\'s point of view — always 200)', async () => {
     const env = fakeEnv();
     await seedEntitledFamily(env, 'parent@example.com');
-    await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email: 'parent@example.com' }), env);
+    await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email: 'parent@example.com', consentTextVersion: CONSENT_TEXT_VERSION }), env);
     const firstCount = (env.email as FakeEmailSender).sent.length;
-    await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email: 'parent@example.com' }), env);
+    await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email: 'parent@example.com', consentTextVersion: CONSENT_TEXT_VERSION }), env);
     expect((env.email as FakeEmailSender).sent.length).toBe(firstCount); // no second email sent
   });
 });
@@ -104,8 +105,8 @@ describe('AD-13 acceptance 6 — no enumeration', () => {
   it('an unknown email gets the identical HTTP response as a known one', async () => {
     const env = fakeEnv();
     await seedEntitledFamily(env, 'known@example.com');
-    const knownRes = await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email: 'known@example.com' }), env);
-    const unknownRes = await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email: 'unknown@example.com' }), env);
+    const knownRes = await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email: 'known@example.com', consentTextVersion: CONSENT_TEXT_VERSION }), env);
+    const unknownRes = await handleAuthRequest(jsonRequest('/api/v1/auth/request', { email: 'unknown@example.com', consentTextVersion: CONSENT_TEXT_VERSION }), env);
     expect(knownRes.status).toBe(unknownRes.status);
     expect(await knownRes.json()).toEqual(await unknownRes.json());
   });

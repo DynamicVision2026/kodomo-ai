@@ -13,10 +13,12 @@ describe('COPY-01 — moduleActivatedEmail retcons "モジュール1" -> "入門
     expect(msg.text).toContain('https://example.com/login/');
   });
 
-  it('flag on: retconned to 入門コース, no residual "モジュール1" wording', () => {
+  it('flag on: final activation email (Founder, 1 Oct 2026), no residual "モジュール1" wording', () => {
     const msg = moduleActivatedEmail('parent@example.com', 'https://example.com/login/', true);
-    expect(msg.subject).toBe('ナゼホリ入門コースが使えるようになりました');
-    expect(msg.text).toContain('入門コースが使えるようになりました');
+    expect(msg.subject).toBe('【ナゼホリ】入門コースがご利用いただけるようになりました');
+    expect(msg.text).toContain('入門コースがご利用いただけるようになりました。');
+    expect(msg.text).toContain('ご購入時のメールアドレスでログインしてください。');
+    expect(msg.text).toContain('info@domo-ai.com');
     expect(msg.text).not.toContain('モジュール1');
     expect(msg.text).toContain('https://example.com/login/');
   });

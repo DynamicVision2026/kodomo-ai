@@ -1,3 +1,4 @@
+import { sendEmailWithConsent } from './emailGate.js';
 import type { Env } from './types.js';
 import type {
   ClaimDoc, EntitlementDoc, FamilyDoc, OrderDoc, ProfileDoc, ProgressDoc, SessionDoc, TrialDoc, UsageDoc,
@@ -184,9 +185,9 @@ async function routeFamily(request: Request, env: Env, staff: StaffIdentity, seg
     if (!reason) return new Response('reason is required', { status: 400 });
     const family = await getFamily(env, familyId);
     if (!family) return new Response('not found', { status: 404 });
-    await env.email.send(moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
-    await writeAuditLog(env, { actor: staff.email, action: 'resend_welcome', targetType: 'family', targetId: familyId, before: null, after: null, reason });
-    return new Response(null, { status: 202 });
+    const outcome = await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
+    await writeAuditLog(env, { actor: staff.email, action: 'resend_welcome', targetType: 'family', targetId: familyId, before: null, after: { emailSent: outcome === 'sent' }, reason });
+    return jsonResponse({ emailSent: outcome === 'sent', ...(outcome === 'sent' ? {} : { reason: outcome === 'send_failed' ? 'send_failed' : 'no_consent' }) }, 202);
   }
 
   if (method === 'POST' && segments[2] === 'email') {
@@ -293,7 +294,7 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
     await writeAuditLog(env, { actor: staff.email, action: 'admin_bind', targetType: 'order', targetId: orderId, before: order, after: updated, reason });
     if (updated.entitlementState === 'granted') {
       const family = await getFamily(env, targetFamilyId);
-      if (family) await env.email.send(moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
+      if (family) await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
     }
     return jsonResponse(updated);
   }
@@ -311,9 +312,9 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
       redeemedAt: null, familyId: null,
     };
     await env.db.set(claimPath(claimHash), claim);
-    await env.email.send(claimYourPurchaseEmail(order.purchaserEmail, order.orderName, claimUrl(env, claimToken), env.BEGINNER_LAUNCH === '1'));
-    await writeAuditLog(env, { actor: staff.email, action: 'resend_claim', targetType: 'order', targetId: orderId, before: null, after: null, reason });
-    return new Response(null, { status: 202 });
+    const outcome = await sendEmailWithConsent(env, claimYourPurchaseEmail(order.purchaserEmail, order.orderName, claimUrl(env, claimToken), env.BEGINNER_LAUNCH === '1'));
+    await writeAuditLog(env, { actor: staff.email, action: 'resend_claim', targetType: 'order', targetId: orderId, before: null, after: { emailSent: outcome === 'sent' }, reason });
+    return jsonResponse({ emailSent: outcome === 'sent', ...(outcome === 'sent' ? {} : { reason: outcome === 'send_failed' ? 'send_failed' : 'no_consent' }) }, 202);
   }
 
   if (method === 'POST' && segments[2] === 'refund-request') {

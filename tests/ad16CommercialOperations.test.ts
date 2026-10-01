@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import { CONSENT_TEXT_VERSION } from '../shared/consent';
 import { describe, it, expect } from 'vitest';
 import { handleShopifyOrderWebhook, handleShopifyRefundWebhook } from '../backend/src/handlers/webhook';
 import { handleCreatePurchaseIntent } from '../backend/src/handlers/purchaseIntents';
@@ -8,7 +9,7 @@ import { handleGetProgress, handlePutProgress } from '../backend/src/handlers/pr
 import { handleCreateProfile } from '../backend/src/handlers/profiles';
 import { handleMe } from '../backend/src/handlers/me';
 import type { Env } from '../backend/src/types';
-import type { EntitlementDoc, OrderDoc, PurchaseIntentDoc, TrialDoc, UsageDoc } from '../backend/src/schema';
+import type { ClaimDoc, EntitlementDoc, OrderDoc, PurchaseIntentDoc, TrialDoc, UsageDoc } from '../backend/src/schema';
 import { entitlementPath, familyPath, orderPath, purchaseIntentPath, trialPath, usagePath } from '../backend/src/schema';
 import { createSession, SESSION_COOKIE_NAME } from '../backend/src/session';
 import { getOrCreateFamilyIdInTx, emailHashOf } from '../backend/src/family';
@@ -71,9 +72,19 @@ function baseOrder(overrides: Record<string, unknown> = {}) {
 }
 
 async function loginFamily(env: Env, email: string): Promise<{ familyId: string; token: string }> {
-  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, email, new Date().toISOString()));
+  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, email, new Date().toISOString(), { consentClickedAt: new Date().toISOString(), consentVerifiedAt: new Date().toISOString(), consentVersion: CONSENT_TEXT_VERSION }));
   const { token } = await createSession(env, familyId, 'test-device');
   return { familyId, token };
+}
+
+/** Consent at login blocks the claim email to an unconsented purchaser address, so these tests
+ *  can no longer read the token out of an email: they replace the order's claim with one whose
+ *  token they know (same hash scheme the real flow uses). */
+async function forceClaimToken(env: Env, orderId: number | string, token: string): Promise<void> {
+  const claims = await env.db.query<ClaimDoc>('claims', 'orderId', String(orderId));
+  const original = claims[0]!;
+  await env.db.delete(`claims/${original.id}`);
+  await env.db.set(`claims/${await hmacHex(token, env.AUTH_PEPPER)}`, original.data);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -172,13 +183,14 @@ describe('AD-16 §2 — claim flow: an order nobody could bind by token or email
     const orderDoc = await env.db.get<OrderDoc>(orderPath(order.id));
     expect(orderDoc?.bindingState).toBe('awaiting_claim');
 
-    const emails = (env.email as FakeEmailSender).sent.filter((m) => m.to === 'claimant@example.com');
-    expect(emails).toHaveLength(1);
-    const claimToken = emails[0]!.text.match(/token=([A-Za-z0-9_-]+)/)?.[1];
-    expect(claimToken).toBeTruthy();
+    // No claim email: claimant@example.com has no recorded consent.
+    expect((env.email as FakeEmailSender).sent.filter((m) => m.to === 'claimant@example.com')).toHaveLength(0);
+    const claimToken = 'known-claim-token-1';
+    await forceClaimToken(env, order.id, claimToken);
 
-    // The claimant logs in for the first time (account-first, per AD-15/16).
-    const { familyId, token } = await loginFamily(env, 'claimant@example.com');
+    // The parent logs in under a DIFFERENT email than the checkout email (the case the claim
+    // flow exists for — same-email logins are bound automatically at login).
+    const { familyId, token } = await loginFamily(env, 'parent-account@example.com');
 
     const getRes = await handleGetClaim(authedRequest(`/api/v1/claims/${claimToken}`, token, { method: 'GET' }), env, claimToken!);
     expect(getRes.status).toBe(200);
@@ -200,10 +212,10 @@ describe('AD-16 §2 — claim flow: an order nobody could bind by token or email
     const env = fakeEnv();
     const order = baseOrder({ id: 6201, name: '#6201', email: 'claimant2@example.com' });
     await postOrder(env, order);
-    const claimEmail = (env.email as FakeEmailSender).sent.find((m) => m.to === 'claimant2@example.com')!;
-    const claimToken = claimEmail.text.match(/token=([A-Za-z0-9_-]+)/)![1]!;
+    const claimToken = 'known-claim-token-2';
+    await forceClaimToken(env, order.id, claimToken);
 
-    const { token: tokenA } = await loginFamily(env, 'claimant2@example.com');
+    const { token: tokenA } = await loginFamily(env, 'parent-account2@example.com');
     await handleConfirmClaim(authedRequest(`/api/v1/claims/${claimToken}`, tokenA, { method: 'POST', body: '{}' }), env, claimToken);
 
     const { token: tokenB } = await loginFamily(env, 'someoneelse2@example.com');
@@ -400,6 +412,43 @@ describe('AD-16 §7 — refunds/create revokes the entitlement, never touches pr
     expect(progressBody.missions['m1-s2-1-2'].done).toBe(true);
     const family = await env.db.get(familyPath(familyId));
     expect(family).not.toBeNull();
+  });
+
+  // Item 14c (Founder, 1 Oct 2026): "refunds remove course access ONLY when the ナゼホリ item
+  // itself is refunded, never for other products." The store sells other products in the same
+  // Shopify shop, so a refund can legitimately touch ONLY a line item this integration never
+  // granted anything for — matchRefundedModuleIds (backend/src/shopify.ts) must filter refund
+  // line items through the exact same SKU_TO_MODULE_IDS allowlist orders/paid uses, so such a
+  // refund is a pure no-op here, never an accidental revoke.
+  it('item 14c: refunding a mixed order\'s OTHER-PRODUCT line never revokes the ナゼホリ entitlement', async () => {
+    const env = fakeEnv();
+    const { familyId } = await loginFamily(env, 'mixedrefund@example.com');
+    await env.db.set(entitlementPath(familyId, 'm1'), { status: 'active', shopifyOrderId: '6402', grantedAt: new Date().toISOString(), revokedAt: null, revokedReason: null });
+    await env.db.set(orderPath(6402), {
+      shopifyOrderId: '6402', orderName: '#6402',
+      lines: [{ sku: 'kodomo-ai-m1', variantId: 111, moduleId: 'm1', quantity: 1, lineTotal: 9800 }],
+      currency: 'JPY', financialStatus: 'paid', shopifyCreatedAt: new Date().toISOString(), paidAt: new Date().toISOString(),
+      purchaserEmail: 'mixedrefund@example.com', familyId, bindingMethod: 'email_match', bindingState: 'bound', entitlementState: 'granted',
+      trialConverted: false, refund: { requestedAt: null, requestChannel: null, eligibilitySnapshot: null, decision: null, shopifyRefundIds: [], refundedAt: null, refundedAmount: null, state: 'none' },
+      webhookIds: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    } satisfies OrderDoc);
+
+    // The refund webhook names the SAME Shopify order, but its own refund_line_items are for the
+    // KD-ANNUAL line that was also in the original cart (not recorded in `order.lines` above,
+    // exactly as orders/paid itself never records a non-allowlisted line — see the mixed-cart
+    // test above) — never the kodomo-ai-m1 line.
+    const rawRefund = JSON.stringify({ id: 9002, order_id: 6402, refund_line_items: [{ line_item_id: 2, quantity: 1, line_item: { sku: 'KD-ANNUAL' } }] });
+    const refundRes = await handleShopifyRefundWebhook(
+      new Request('https://backend.example/webhooks/shopify/refunds-create', { method: 'POST', headers: { 'X-Shopify-Hmac-Sha256': await sign(rawRefund) }, body: rawRefund }),
+      env,
+    );
+    expect(refundRes.status).toBe(200);
+
+    const ent = await env.db.get<EntitlementDoc>(entitlementPath(familyId, 'm1'));
+    expect(ent?.status).toBe('active'); // untouched — the refund never matched the allowlisted SKU
+    const order = await env.db.get<OrderDoc>(orderPath(6402));
+    expect(order?.entitlementState).toBe('granted'); // untouched
+    expect(order?.refund.state).toBe('none'); // untouched — no refund was ever recorded for THIS order
   });
 });
 

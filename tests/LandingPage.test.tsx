@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LandingPage } from '../src/lp/LandingPage';
 
@@ -78,7 +78,7 @@ describe('LandingPage', () => {
     expect(screen.getByText('購入する', { selector: 'button' }).tagName).toBe('BUTTON');
 
     await user.click(screen.getByText('購入する ¥4,980（税込）'));
-    await waitFor(() => expect(window.location.href).toBe('/login/?next=/account/'));
+    await waitFor(() => expect(window.location.href).toBe('/login/?next=%2Faccount%2F%3Fbuy%3D1'));
   });
 
   it('a logged-in parent clicking a buy button opens checkout in a new tab and shows the waiting message', async () => {
@@ -87,7 +87,7 @@ describe('LandingPage', () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) {
-        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [] });
+        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', consentRecorded: true, entitlements: [], profiles: [], trials: [] });
       }
       if (url.endsWith('/purchase-intents')) {
         return jsonResponse({ url: 'https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc', expiresAt: '2026-02-01T00:00:00.000Z' }, 201);
@@ -128,7 +128,7 @@ describe('LandingPage', () => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) {
         return jsonResponse({
-          familyId: 'f1', email: 'p***@example.com',
+          familyId: 'f1', email: 'p***@example.com', consentRecorded: true,
           entitlements: entitled ? [{ moduleId: 'm1', status: 'active' }] : [],
           profiles: [], trials: [],
         });
@@ -168,7 +168,7 @@ describe('LandingPage', () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) {
-        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [] });
+        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', consentRecorded: true, entitlements: [], profiles: [], trials: [] });
       }
       if (url.endsWith('/purchase-intents')) {
         return jsonResponse({ url: 'https://kodomo-ai.myshopify.com/cart/111:1?attributes%5Bdomo_pt%5D=abc', expiresAt: '2026-02-01T00:00:00.000Z' }, 201);
@@ -191,7 +191,7 @@ describe('LandingPage', () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);
       if (url.endsWith('/me')) {
-        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [] });
+        return jsonResponse({ familyId: 'f1', email: 'p***@example.com', consentRecorded: true, entitlements: [], profiles: [], trials: [] });
       }
       if (url.endsWith('/purchase-intents')) return jsonResponse({ error: 'server' }, 500);
       return new Response('not found', { status: 404 });
@@ -226,13 +226,15 @@ describe('LandingPage', () => {
   });
 
   it('links to this app\'s own legal pages, built from the company\'s real confirmed data', () => {
-    render(<LandingPage />);
+    const { container } = render(<LandingPage />);
     // WO-21 Phase 8: trailing slash matters — vite's multi-page build serves each page at its
     // own directory path (e.g. /legal/tokushoho/index.html -> /legal/tokushoho/); a link missing
     // the trailing slash fell through to the LP's own index.html instead, a real bug this
     // playwright-verified fix closes (see the WO-21 Phase 8 commit for the reproduction).
-    expect(screen.getByText('特定商取引法に基づく表記').closest('a')).toHaveAttribute('href', '/legal/tokushoho/');
-    expect(screen.getByText('プライバシーポリシー').closest('a')).toHaveAttribute('href', '/legal/privacy/');
+    // Scoped to the footer: Notice D (item 5) also links to /legal/privacy/ with the same label.
+    const footer = within(container.querySelector('.lp__footer')!);
+    expect(footer.getByText('特定商取引法に基づく表記').closest('a')).toHaveAttribute('href', '/legal/tokushoho/');
+    expect(footer.getByText('プライバシーポリシー').closest('a')).toHaveAttribute('href', '/legal/privacy/');
   });
 
   it('AD-15 §4 (Architect decision): the primary CTA routes a new visitor through login first, returning them to /play/ once signed in', () => {

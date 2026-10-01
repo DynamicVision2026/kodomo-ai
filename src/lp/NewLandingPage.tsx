@@ -77,7 +77,12 @@ export function NewLandingPage() {
     track('cta_buy_click');
     const me = await fetchMe();
     if (!me) {
-      window.location.href = '/login/?next=/account/';
+      window.location.href = '/login/?next=' + encodeURIComponent('/account/?buy=1');
+      return;
+    }
+    // Signed in but never consented (an account from before consent existed): agree first.
+    if (!me.consentRecorded) {
+      window.location.href = '/login/?reconsent=1&next=' + encodeURIComponent('/account/?buy=1');
       return;
     }
     await startPurchaseFlow();

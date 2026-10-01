@@ -143,6 +143,19 @@
   margin-top: 0.75rem;
 }
 
+/* Item 9 (Founder, 1 Oct 2026): operator reminder shown above a manual-bind control — a bind
+   moves purchase access to a family account without the usual code-verification step, so it
+   needs a visible warning, not just a tooltip. */
+.admin-notice {
+  width: 100%;
+  margin: 0 0 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff3e0;
+  color: #b0632f;
+  border-radius: 0.4rem;
+  font-size: 0.85rem;
+}
+
 .admin-reason {
   display: flex;
   flex-direction: column;

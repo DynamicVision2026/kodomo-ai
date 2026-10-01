@@ -1,3 +1,4 @@
+import { sendEmailWithConsent } from '../emailGate.js';
 import type { Env } from '../types.js';
 import type { EmailIndexDoc, FamilyDoc, ProfileDoc, ProgressDoc, SessionDoc } from '../schema.js';
 import { emailIndexPath, familyPath, profilePath, profilesCollection, progressCollection, sessionsCollection } from '../schema.js';
@@ -53,7 +54,7 @@ export async function handleAccountEmail(request: Request, env: Env): Promise<Re
   }
 
   if (typeof body.code !== 'string' || !body.code) {
-    await sendVerificationCode(env, newEmail);
+    await sendVerificationCode(env, newEmail, familyId);
     return new Response(null, { status: 202 });
   }
 
@@ -72,17 +73,43 @@ export async function handleAccountEmail(request: Request, env: Env): Promise<Re
     tx.set(familyPath(familyId), { ...family, email: newEmail, updatedAt: now } satisfies FamilyDoc);
   });
 
-  await env.email.send(emailChangedEmail(oldEmail, newEmail));
-  await env.email.send(emailChangedEmail(newEmail, oldEmail));
+  await sendEmailWithConsent(env, emailChangedEmail(oldEmail, newEmail), { kind: 'family', familyId });
+  await sendEmailWithConsent(env, emailChangedEmail(newEmail, oldEmail), { kind: 'family', familyId });
   return jsonResponse({ email: newEmail });
 }
 
 /**
+ * POST /api/v1/account/delete-code — the fresh OTP `DELETE /account` requires. Bug fix (1 Oct
+ * 2026, consent-at-login release): `/me` only ever returns a MASKED email (`maskEmail`, e.g.
+ * `p***@example.com`) — the account page used to pass that straight to the public
+ * `POST /auth/request`, which normalizes and hashes whatever string it's given, so it looked up
+ * (or would have created) a family for the literal masked string, never the real address. The
+ * real code never reached the parent. This route instead resolves the session, reads the
+ * family's own REAL stored email server-side, and sends to exactly that — the client never
+ * needs to know or supply it. Sent via `sendEmailWithConsent` with a `family` basis: this is an
+ * authenticated action by an already-identified family, not a fresh anonymous login, so it needs
+ * no separate consent-version argument (the account page itself sends a family with no recorded
+ * consent to /login/?reconsent=1 first — see src/parent/account/AccountPage.tsx).
+ */
+export async function handleRequestDeleteCode(request: Request, env: Env): Promise<Response> {
+  if (!passesCsrfCheck(request, env)) return new Response('forbidden', { status: 403 });
+  const resolved = await resolveSession(env, request);
+  if (!resolved) return new Response('unauthorized', { status: 401 });
+
+  const familyId = resolved.session.familyId;
+  const family = await getFamily(env, familyId);
+  if (!family) return new Response('not found', { status: 404 });
+
+  await sendVerificationCode(env, family.email, familyId);
+  return new Response(null, { status: 202 });
+}
+
+/**
  * DELETE /api/v1/account — AD-13 §3/§5 step 6/AD-13 acceptance test 14: "requires an OTP
- * verified within the last 10 minutes." The client gets that fresh code the same way any other
- * confirmation code is requested (`POST /auth/request` with the family's own, already-known
- * email) — this route only ever verifies it, never issues one itself, so a stolen session cookie
- * alone can never delete the account without also intercepting a real email.
+ * verified within the last 10 minutes." The client gets that fresh code from
+ * `POST /account/delete-code` above — this route only ever verifies it, never issues one
+ * itself, so a stolen session cookie alone can never delete the account without also
+ * intercepting a real email.
  */
 export async function handleDeleteAccount(request: Request, env: Env): Promise<Response> {
   if (!passesCsrfCheck(request, env)) return new Response('forbidden', { status: 403 });

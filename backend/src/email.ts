@@ -54,8 +54,13 @@ export function moduleActivatedEmail(to: string, loginUrl: string, beginnerLaunc
   if (beginnerLaunch) {
     return {
       to,
-      subject: 'ナゼホリ入門コースが使えるようになりました',
-      text: `ご購入ありがとうございます。入門コースが使えるようになりました。以下のリンクからログインし、メールで届く確認コードを入力してください。\n\n${loginUrl}`,
+      subject: '【ナゼホリ】入門コースがご利用いただけるようになりました',
+      text:
+        `このたびは、ナゼホリをご購入いただき、ありがとうございます。\n\n` +
+        `入門コースがご利用いただけるようになりました。\n` +
+        `以下のリンクからナゼホリを開き、ご購入時のメールアドレスでログインしてください。\n\n` +
+        `${loginUrl}\n\n` +
+        `ご不明な点は、info@domo-ai.com までお問い合わせください。`,
     };
   }
   return {

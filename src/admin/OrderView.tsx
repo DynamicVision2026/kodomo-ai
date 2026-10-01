@@ -96,6 +96,11 @@ export function OrderView({ orderId, me, onNavigate }: { orderId: string; me: Me
         <div className="admin-actions">
           {!order.familyId && (
             <>
+              {/* Item 9 (Founder, 1 Oct 2026):手動紐づけは、購入メールアドレスの持ち主を確認しないまま
+                  アクセス権を他人のアカウントへ渡しかねない操作なので、押す前に必ず読む運用上の注意。 */}
+              <p className="admin-notice">
+                購入時のメールアドレス宛てに、info@ から本人確認のメールを送り、返信を確認してから紐づけてください。
+              </p>
               <input className="admin-input" style={{ maxWidth: '14rem' }} value={bindFamilyId} onChange={(e) => setBindFamilyId(e.target.value)} placeholder="家族ID" />
               <ReasonButton
                 label="この家族に紐付ける"

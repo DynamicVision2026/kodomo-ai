@@ -63,6 +63,19 @@
 
 .account__purchase-status { font-weight: 700; }
 
+/* Notice D (Founder, 1 Oct 2026) — parent text, kept in the 14-15px range like the login
+   screen's own consent notes. */
+.account__notice-d {
+  margin: 0.5rem 0 0.75rem;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 32rem;
+}
+.account__notice-d a {
+  color: #1a4fa0;
+}
+
 .account__message { margin-top: 0.75rem; font-size: 0.85rem; }
 .account__message--error { color: #b0632f; }
 .account__message--success {

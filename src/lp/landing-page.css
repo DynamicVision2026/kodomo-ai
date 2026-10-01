@@ -70,6 +70,24 @@
   font-size: 0.9rem;
   text-align: center;
 }
+/* Notice D (Founder, 1 Oct 2026) — parent text, kept in the 14-15px range like the login screen's
+   own consent notes. */
+.lp__notice-d {
+  margin: 0.75rem 0 0;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 32rem;
+}
+.lp__notice-d a {
+  color: #1a4fa0;
+}
+.lp__price-refund-note {
+  margin: 0.75rem 0 0;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.6;
+}
 .lp__purchase-status {
   margin: 0.5rem 0 0;
   color: #2f6fb0;

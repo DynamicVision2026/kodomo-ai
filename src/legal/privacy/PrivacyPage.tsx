@@ -5,11 +5,39 @@ import '../legal.css';
  * Privacy policy — DRAFT. Describes what this codebase actually does (verified across this
  * repo): no free-text input anywhere in the child flow, no child PII fields ever (gate:no-
  * free-text, src/engine/storage.ts), and — since AD-13's Family Account — a purchasing family's
- * parent email and profile/progress records ARE stored server-side (Firestore, Tokyo region),
- * unlike the fully-local guest/trial-only path. Real content, still pending the founder's own
- * legal review before publishing (same caveat as the 特商法 page) — in particular the exact
- * processor list (email provider — Postmark or SES, per AD-13's own launch blockers) and the
- * APPI overseas-transfer disclosure below need the founder's final sign-off on wording.
+ * parent email and profile/progress records ARE stored server-side (Firestore, Tokyo region).
+ * Real content, still pending the founder's own legal review before publishing (same caveat as
+ * the 特商法 page) — the APPI overseas-transfer disclosure below needs the founder's final
+ * sign-off on wording.
+ *
+ * COPY-01 §8 (Coordinator, prepared 28 Sep 2026): sections 2-4's first paragraphs rewritten —
+ * true both before and after BEGINNER_LAUNCH, so NOT flag-gated (unlike src/legal/tokushoho/
+ * TokushohoPage.tsx's own BEGINNER_LAUNCH-gated rows). Root cause this rewrite fixes: the prior
+ * wording described a no-account "無料でお試しいただける範囲" local-only guest mode and a
+ * 72-hour account trial — neither has been true since AD-13's account-first model shipped
+ * (verified: `src/family/api.ts`'s `isFamilyApiConfigured()` reads `VITE_FAMILY_API_URL`, which
+ * `Dockerfile.frontend` sets unconditionally, so every real deployment already requires a family
+ * login before any mission opens — `src/shell/MissionShell.tsx#enterMission`'s "no session"
+ * branch is a redirect to /login/, never anonymous local play). Section 3 now states plainly that
+ * this backend never receives/stores card numbers or other payment details (confirmed:
+ * `backend/src/shopify.ts`'s `ShopifyOrderPayload` type — the entire shape the webhook payload
+ * handler reads — has no such field at all); KOMOJU stays named (Coordinator decision, 28 Sep
+ * 2026 follow-up) — only PayPal is dropped (Founder decision: not offered). Section 4's Postmark
+ * paragraph is firmed up per the same follow-up: names Postmark alone (the "または Amazon SES"
+ * hedge is dropped — no SES code exists anywhere in this repo, only
+ * `backend/server/postmarkEmail.ts`) and states its country directly, dropping both the old
+ * "we'll announce the specific provider later" sentence AND the APPI overseas-transfer disclosure
+ * sentence that used to accompany it — the Coordinator's own replacement text was exactly one
+ * sentence; flagged back to the Coordinator in case dropping that legal disclosure line was
+ * unintended, since neither instruction explicitly called out removing it.
+ *
+ * Founder decision (1 Oct 2026, "launch today... no further legal round before launch"): sections
+ * 2-3-4 rewritten again on top of the held COPY-01 §8 commit (`eadae62`) — 制定日 is this page's
+ * actual first-publication date (commit `ce0ce8a`, confirmed directly from git history, never
+ * guessed); 最終改定日 is this release's own date. Section 4 is now split into 4-1 (what's stored)
+ * and 4-2 (the Postmark/overseas-transfer disclosure), each its own anchor — text C v3
+ * (src/legal/consentText.ts) links its second bullet straight at `#4-2`, so that heading's `id`
+ * must never change without also updating text C's own link.
  */
 export function PrivacyPage() {
   return (
@@ -18,6 +46,7 @@ export function PrivacyPage() {
         このページは草案です。公開前に必ず内容をご確認ください。
       </p>
       <h1>プライバシーポリシー</h1>
+      <p className="legal__revision-date">制定日：2026年9月18日／最終改定日：2026年10月1日</p>
 
       <section>
         <h2>1. 事業者情報</h2>
@@ -31,10 +60,10 @@ export function PrivacyPage() {
         <h2>2. アプリ本体（お子さまが操作する画面）で取得する情報</h2>
         <p>
           本サービスのアプリ部分に、お名前・ご住所・学校名などを入力する項目はありません。
-          お子さまが選ぶのは、あらかじめ用意されたアバターとニックネームのみです。
-          無料でお試しいただける範囲（アカウント登録なし）では、進行状況はお使いの端末の中だけに
-          保存され、当社のサーバーには送信されません。ご購入後またはお試し期間中にログインされた
-          場合は、下記「4. ファミリーアカウントとして保存する情報」のとおり、サーバー側にも
+          お子さまのプロフィールとして保存するのは、あらかじめ用意されたアバターとニックネーム、
+          および学習の進み具合に関する情報のみです。
+          本サービスは、保護者の方のメールアドレスでログインしてご利用いただきます。
+          進行状況は、下記「4. ファミリーアカウントとして保存する情報」のとおり、当社のサーバーに
           保存されます。
         </p>
       </section>
@@ -42,30 +71,88 @@ export function PrivacyPage() {
       <section>
         <h2>3. ご購入時に取得する情報</h2>
         <p>
-          ご購入手続きは外部の決済プラットフォーム（Shopify）上で行われ、お名前・お支払い情報は
-          Shopify および決済代行会社（KOMOJU、PayPal）が取得します。当社は、ご購入者様の
-          メールアドレスを Shopify から受け取り、ファミリーアカウントの識別・ログインのために
-          使用します。
+          ご購入手続きは、外部ECプラットフォームであるShopify上で行います。決済は、お選びいただいた
+          決済手段に応じて、Shopifyが提供する決済サービス（クレジットカード、Shop Pay、Apple Pay、
+          Google Pay）または株式会社KOMOJUが提供する決済サービス（PayPay、メルペイ）で処理されます。
+          決済に必要な情報は、それぞれの事業者が、各社のプライバシーポリシーに従って取り扱います。
+        </p>
+        <p>当社は、完全なクレジットカード番号およびセキュリティコードを取得・保存しません。</p>
+        <p>
+          当社はShopifyから、注文番号、購入商品、購入金額、購入日時および購入者のメールアドレス等の
+          注文情報を受け取り、購入の確認、ファミリーアカウントの識別・連携、ログイン、問い合わせ対応
+          および会計処理のために利用します。また、当社は、Shopifyの管理画面において、注文時にご入力
+          いただいた情報（お名前、ご連絡先など）、決済手段の種類ならびに決済および返金の状況を確認
+          することができ、これらを購入の確認、返金その他の問い合わせ対応および会計処理のために利用
+          します。
         </p>
       </section>
 
       <section>
         <h2>4. ファミリーアカウントとして保存する情報</h2>
         <p>
-          ご購入いただいた場合、またはお試し期間（アカウント登録から72時間）中にログインされた
-          場合、以下の情報を当社のサーバー（Google Cloud, Firestore、東京リージョン）に保存します。
+          ファミリーアカウントでログインしてご利用いただく場合、以下の情報を当社のサーバー
+          （Google Cloud, Firestore、東京リージョン）に保存します。
         </p>
+
+        <h3 id="4-1">4-1. 保存する情報</h3>
         <ul>
           <li>保護者の方のメールアドレス（ログイン用）</li>
           <li>お子さまのプロフィール（あらかじめ用意されたアバター・ニックネーム・学習段階のみ）</li>
           <li>ミッションの進行状況・学習記録</li>
+          <li>外国にある第三者への提供についての同意の記録（同意の日時、同意文の版、確認コードの入力が完了した日時）</li>
         </ul>
+
+        <h3 id="4-2">4-2. 外国にある第三者への提供（メール配信事業者）</h3>
         <p>
-          ログイン確認コードの送信には、外部のメール配信事業者（Postmark または Amazon SES）を
-          利用します。これらの事業者は日本国外に所在するため、個人情報保護法に基づく外国にある
-          第三者への提供に該当します。具体的な事業者名・所在国は、契約確定後に本ページで
-          ご案内します。
+          当社は、ログイン用の確認コードおよび本サービスに関するお知らせ（ご購入後のご利用開始のお知らせなど）
+          のメールの送信業務を、アメリカ合衆国に所在する AC PM, LLC（サービス名：Postmark）に委託して
+          います。このため、保護者の方のメールアドレスおよび送信するメールの内容が同社に提供されます。
         </p>
+        <p>
+          当社は、この提供について、ログイン画面で確認コードを送信する前に、保護者の方の同意をいただいて
+          います。同意をいただき、確認コードの入力が完了したメールアドレスにのみ、同社を通じてお知らせの
+          メールを送信します。
+        </p>
+        <ul>
+          <li>
+            アメリカ合衆国の個人情報保護制度：個人情報保護委員会の資料をご覧ください。
+            <br />
+            <a href="https://www.ppc.go.jp/enforcement/infoprovision/laws/offshore_report_america/" target="_blank" rel="noopener noreferrer">
+              https://www.ppc.go.jp/enforcement/infoprovision/laws/offshore_report_america/
+            </a>
+          </li>
+          <li>
+            同社が講じる個人情報保護のための措置（同社の公表資料にもとづく要約）：
+            送信するデータは暗号化した通信で同社に送られ、同社のサーバー（米国シカゴ近郊のデータセンター
+            および Amazon Web Services）で取り扱われます。保管中のデータの暗号化、業務に必要な従業員等に
+            限ったアクセス、従業員等の守秘義務、漏えい等が発生した場合の顧客への通知などの措置が講じられて
+            います。同社は、業務の一部を、データセンター事業者（Deft）、Amazon Web Services、Zendesk に
+            再委託しています。お送りしたメールの内容と送信の記録は、同社の設定により45日間保存されたのち
+            削除されます（配信できなかったアドレスの記録などは、同社が引き続き保存します）。
+          </li>
+        </ul>
+        <p>同社の資料：</p>
+        <ul>
+          <li>
+            利用規約：
+            <a href="https://postmarkapp.com/terms-of-service" target="_blank" rel="noopener noreferrer">
+              https://postmarkapp.com/terms-of-service
+            </a>
+          </li>
+          <li>
+            データ処理契約（DPA）：
+            <a href="https://postmarkapp.com/dpa" target="_blank" rel="noopener noreferrer">
+              https://postmarkapp.com/dpa
+            </a>
+          </li>
+          <li>
+            再委託先：
+            <a href="https://postmarkapp.com/eu-privacy#sub-processors" target="_blank" rel="noopener noreferrer">
+              https://postmarkapp.com/eu-privacy#sub-processors
+            </a>
+          </li>
+        </ul>
+
         <p>
           保存されたデータは、アカウント設定画面（/account）からいつでも削除いただけます。
           削除操作を行うと、ご家庭のプロフィール・進行状況・メールアドレスの登録情報は速やかに

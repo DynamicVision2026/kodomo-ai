@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import { CONSENT_TEXT_VERSION } from '../shared/consent';
 import { describe, it, expect, vi } from 'vitest';
 import { handleShopifyOrderWebhook, handleShopifyRefundWebhook } from '../backend/src/handlers/webhook';
 import type { Env } from '../backend/src/types';
@@ -33,7 +34,7 @@ function fakeEnv(): Env {
  *  matched by email. Tests that want a "bound at purchase" scenario must pre-create the family
  *  the same way a real login would. */
 async function loginFirst(env: Env, email: string): Promise<string> {
-  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, email, new Date().toISOString()));
+  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, email, new Date().toISOString(), { consentClickedAt: new Date().toISOString(), consentVerifiedAt: new Date().toISOString(), consentVersion: CONSENT_TEXT_VERSION }));
   return familyId;
 }
 
@@ -93,7 +94,7 @@ describe('AD-16 §1/§2 — orders/paid binds by email_match to an already-exist
 });
 
 describe('AD-16 §2 — an unmatched purchaser email never auto-creates a family', () => {
-  it('leaves the order awaiting_claim, with no family bound, and sends a claim email instead', async () => {
+  it('leaves the order awaiting_claim, with no family bound, and sends NO claim email (no recorded consent for that address)', async () => {
     const env = fakeEnv();
     const res = await postOrder(env, order);
     expect(res.status).toBe(200);
@@ -103,8 +104,11 @@ describe('AD-16 §2 — an unmatched purchaser email never auto-creates a family
     expect(orderDoc?.familyId).toBeNull();
     expect(await env.db.get<FamilyDoc>(familyPath('nonexistent'))).toBeNull();
 
+    // Consent at login: no family has consented under this address, so the claim link is blocked
+    // at the email gate. The order waits; it binds when this address logs in with consent
+    // (see tests/backendConsentAtLogin.test.ts).
     const emails = (env.email as FakeEmailSender).sent;
-    expect(emails.filter((m) => m.to === 'parent@example.com')).toHaveLength(1);
+    expect(emails.filter((m) => m.to === 'parent@example.com')).toHaveLength(0);
   });
 });
 
@@ -216,7 +220,7 @@ describe('Post-launch-check (Founder) — one Cloud-Logging line per processed o
     logSpy.mockRestore();
   });
 
-  it('an unmatched order logs binding=none, family=none, entitlement=awaiting_claim, email_sent=yes (the claim email still goes out)', async () => {
+  it('an unmatched order logs binding=none, family=none, entitlement=awaiting_claim, email_sent=no (no recorded consent for that address, so the claim email is blocked and the log says so)', async () => {
     const env = fakeEnv();
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -226,7 +230,7 @@ describe('Post-launch-check (Founder) — one Cloud-Logging line per processed o
     expect(line).toContain('binding=none');
     expect(line).toContain('family=none');
     expect(line).toContain('entitlement=awaiting_claim');
-    expect(line).toContain('email_sent=yes');
+    expect(line).toContain('email_sent=no');
     expect(line).not.toContain(order.email);
 
     logSpy.mockRestore();

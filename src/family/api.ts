@@ -63,10 +63,19 @@ export interface MeResponse {
   /** WO-C1 §1: true when this family is in `config/course.allowFamilies`. The course tile's own
    *  visibility rule is `import.meta.env.VITE_COURSE_ENABLED === '1' || me.courseAllowed`. */
   courseAllowed: boolean;
+  /** Consent at login: whether this family has recorded consent (no email is ever sent to an
+   *  address without it). */
+  consentRecorded: boolean;
 }
 
-export async function requestLoginCode(email: string): Promise<{ ok: true } | ApiFailure> {
-  const res = await apiFetch('/auth/request', { method: 'POST', body: JSON.stringify({ email }) });
+/** `consentTextVersion`: the version of the consent text the login screen just showed (see
+ *  shared/consent.ts) — sent with the request that the parent confirmed by pressing the consent
+ *  button. Omitted by callers acting for an already-consenting, signed-in family. */
+export async function requestLoginCode(email: string, consentTextVersion?: string): Promise<{ ok: true } | ApiFailure> {
+  const res = await apiFetch('/auth/request', {
+    method: 'POST',
+    body: JSON.stringify(consentTextVersion ? { email, consentTextVersion } : { email }),
+  });
   if (isFailure(res)) return res;
   if (!res.ok) return { ok: false, reason: 'server' };
   return { ok: true };
@@ -165,6 +174,17 @@ export async function confirmEmailChange(newEmail: string, code: string): Promis
     const body = await res.json().catch(() => ({ error: 'server' }));
     return { ok: false, reason: body.error ?? 'server' };
   }
+  return { ok: true };
+}
+
+/** Bug fix (1 Oct 2026): sends the fresh OTP `deleteAccount` needs to the signed-in family's own
+ *  REAL email, server-side — `me.email` is masked (`p***@example.com`), so the account page used
+ *  to pass THAT to the public login-code request, which went to a different, unreachable
+ *  "address" and never reached the parent at all. */
+export async function requestDeleteCode(): Promise<{ ok: true } | ApiFailure> {
+  const res = await apiFetch('/account/delete-code', { method: 'POST', body: '{}' });
+  if (isFailure(res)) return res;
+  if (!res.ok) return { ok: false, reason: 'server' };
   return { ok: true };
 }
 

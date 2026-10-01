@@ -10,7 +10,7 @@ import { handleGetProgress, handlePutProgress } from './handlers/progress.js';
 import { handleGetCourseProgress, handlePutCourseProgress } from './handlers/courseProgress.js';
 import { handleImport } from './handlers/importHandler.js';
 import { handleDeleteSession, handleListSessions } from './handlers/sessions.js';
-import { handleAccountEmail, handleDeleteAccount } from './handlers/account.js';
+import { handleAccountEmail, handleDeleteAccount, handleRequestDeleteCode } from './handlers/account.js';
 import { handleCreatePurchaseIntent } from './handlers/purchaseIntents.js';
 import { handleUnitOpen } from './handlers/units.js';
 import { handleConfirmClaim, handleGetClaim } from './handlers/claims.js';
@@ -84,6 +84,7 @@ async function routeApi(request: Request, env: Env, path: string): Promise<Respo
   }
 
   if (method === 'POST' && path === '/api/v1/account/email') return handleAccountEmail(request, env);
+  if (method === 'POST' && path === '/api/v1/account/delete-code') return handleRequestDeleteCode(request, env);
   if (method === 'DELETE' && path === '/api/v1/account') return handleDeleteAccount(request, env);
 
   if (method === 'POST' && path === '/api/v1/purchase-intents') return handleCreatePurchaseIntent(request, env);
