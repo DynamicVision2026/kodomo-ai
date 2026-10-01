@@ -38,6 +38,15 @@ import '../legal.css';
  * and 4-2 (the Postmark/overseas-transfer disclosure), each its own anchor — text C v3
  * (src/legal/consentText.ts) links its second bullet straight at `#4-2`, so that heading's `id`
  * must never change without also updating text C's own link.
+ *
+ * Founder follow-up (APPI compliance gaps, same day): §1 now names the business address/
+ * representative — reused directly from `COMPANY.address`/`COMPANY.representativeName`, the
+ * same Founder-confirmed values the 特商法 page already publishes (src/legal/company.ts), rather
+ * than the rougher 東京都大田区-only placeholder the request itself offered, since the real,
+ * already-sourced value is strictly better and keeps this page consistent with that one. Two new
+ * sections (開示・訂正・利用停止等 before contact, 安全管理措置 after the third-party/outsourcing
+ * section) and §4-1/§6 rewrites close the remaining APPI gaps the Founder flagged. Sections
+ * renumbered accordingly; nothing before §4 shifts, so text C v3's own `#4-2` link is unaffected.
  */
 export function PrivacyPage() {
   return (
@@ -54,6 +63,16 @@ export function PrivacyPage() {
           {COMPANY.name}（以下「当社」）は、{PRODUCT.workingTitle}（以下「本サービス」）における
           お客様の情報の取り扱いについて、以下のとおりプライバシーポリシーを定めます。
         </p>
+        <dl className="legal__table">
+          <div className="legal__row">
+            <dt>住所</dt>
+            <dd>{COMPANY.address}</dd>
+          </div>
+          <div className="legal__row">
+            <dt>代表者</dt>
+            <dd>{COMPANY.representativeTitle} {COMPANY.representativeName}</dd>
+          </div>
+        </dl>
       </section>
 
       <section>
@@ -89,12 +108,13 @@ export function PrivacyPage() {
 
       <section>
         <h2>4. ファミリーアカウントとして保存する情報</h2>
-        <p>
-          ファミリーアカウントでログインしてご利用いただく場合、以下の情報を当社のサーバー
-          （Google Cloud, Firestore、東京リージョン）に保存します。
-        </p>
 
-        <h3 id="4-1">4-1. 保存する情報</h3>
+        <h3 id="4-1">4-1. 保存する情報と利用目的</h3>
+        <p>
+          ファミリーアカウントでログインしてご利用いただく場合、本サービスの提供、ログイン認証、
+          および学習進捗の保存・表示のために、以下の情報を当社のサーバー（Google Cloud, Firestore、
+          東京リージョン）に保存します。
+        </p>
         <ul>
           <li>保護者の方のメールアドレス（ログイン用）</li>
           <li>お子さまのプロフィール（あらかじめ用意されたアバター・ニックネーム・学習段階のみ）</li>
@@ -169,15 +189,26 @@ export function PrivacyPage() {
       </section>
 
       <section>
-        <h2>6. 第三者提供</h2>
+        <h2>6. 第三者提供・委託について</h2>
         <p>
-          法令に基づく場合を除き、取得した情報を上記（Shopify・決済代行会社・メール配信事業者・
-          Google Cloud）以外の第三者に提供することはありません。
+          当社は、法令に基づく場合を除き、あらかじめご本人の同意を得ることなく、個人情報を第三者に
+          提供することはありません。ただし、本サービスの提供にあたり必要な範囲内で、個人情報の取り
+          扱いの一部を外部（Shopify、決済代行会社、メール配信事業者、Google Cloud等）に委託する場合
+          があります。この場合、当社は委託先において情報の適切な安全管理が図られるよう監督します。
         </p>
       </section>
 
       <section>
-        <h2>7. お子さまの個人情報について</h2>
+        <h2>7. 安全管理措置</h2>
+        <p>
+          当社は、個人情報の漏えい、滅失またはき損の防止その他の個人情報の安全管理のために、必要
+          かつ適切な措置を講じます。また、個人情報の取り扱いを外部（Google Cloudやメール配信事業者
+          等）に委託する場合には、委託先に対して必要かつ適切な監督を行います。
+        </p>
+      </section>
+
+      <section>
+        <h2>8. お子さまの個人情報について</h2>
         <p>
           本サービスは、お子さまから氏名・住所・学校名などの個人情報を一切取得しない設計に
           なっています。この方針は、サービスの安全性の根幹として維持します。ファミリーアカウントに
@@ -187,7 +218,21 @@ export function PrivacyPage() {
       </section>
 
       <section>
-        <h2>8. お問い合わせ</h2>
+        <h2>9. 保有個人データの開示・訂正・利用停止等について</h2>
+        <p>
+          当社は、ご本人（または代理人）から保有個人データの開示、訂正、追加、削除、利用停止等の
+          お求めがあった場合、ご本人確認の上、法令に従い速やかに対応いたします。これらのご請求、
+          または当社の個人情報の取り扱いに関する苦情・ご相談につきましては、下記の「お問い合わせ」
+          窓口までご連絡ください。
+        </p>
+        <p>
+          なお、アカウント設定画面（/account）からアカウントの削除操作を行っていただくことで、
+          登録情報の速やかな削除（利用停止）が可能です。
+        </p>
+      </section>
+
+      <section>
+        <h2>10. お問い合わせ</h2>
         <p>本ポリシーに関するお問い合わせは、下記メールアドレスまでお願いいたします。</p>
         <p>{COMPANY.email}</p>
       </section>

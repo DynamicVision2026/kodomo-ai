@@ -88,7 +88,7 @@ describe('PrivacyPage', () => {
     const text = (document.body.textContent ?? '').replace(/\s+/g, '');
     expect(text).toContain('アメリカ合衆国に所在するACPM,LLC（サービス名：Postmark）に委託'.replace(/\s+/g, ''));
     expect(screen.queryByText(/Amazon SES/)).not.toBeInTheDocument();
-    expect(screen.getByText(/\/account/)).toBeInTheDocument(); // deletion path is named, not just promised
+    expect(screen.getAllByText(/\/account/).length).toBeGreaterThan(0); // deletion path is named, not just promised — now also in §9's own disclosure/opt-out path
   });
 
   it('gives a real contact email, not a placeholder', () => {
@@ -120,7 +120,7 @@ describe('PrivacyPage', () => {
   it('COPY-01 §8: section 4 always describes Family Account storage as what happens on login, not conditioned on purchase-or-trial', () => {
     render(<PrivacyPage />);
     expect(
-      screen.getByText(/ファミリーアカウントでログインしてご利用いただく場合、以下の情報を当社のサーバー/),
+      screen.getByText(/ファミリーアカウントでログインしてご利用いただく場合、本サービスの提供、ログイン認証、/),
     ).toBeInTheDocument();
   });
 
@@ -148,5 +148,48 @@ describe('PrivacyPage', () => {
     const text = (document.body.textContent ?? '').replace(/\s+/g, '');
     expect(text).toContain('45日間保存されたのち削除されます'.replace(/\s+/g, ''));
     expect(text).toContain('データセンター事業者（Deft）、AmazonWebServices、Zendeskに再委託しています'.replace(/\s+/g, ''));
+  });
+
+  describe('APPI compliance follow-up (Founder, 1 Oct 2026)', () => {
+    it('§1: names the business address and representative (the same Founder-confirmed values the 特商法 page publishes)', () => {
+      render(<PrivacyPage />);
+      expect(screen.getByText('住所')).toBeInTheDocument();
+      expect(screen.getByText(COMPANY.address)).toBeInTheDocument();
+      expect(screen.getByText('代表者')).toBeInTheDocument();
+      expect(screen.getByText(`${COMPANY.representativeTitle} ${COMPANY.representativeName}`)).toBeInTheDocument();
+    });
+
+    it('§6: 第三者提供・委託について — no third-party disclosure without consent, outsourcing is supervised', () => {
+      render(<PrivacyPage />);
+      expect(screen.getByText('6. 第三者提供・委託について')).toBeInTheDocument();
+      const text = (document.body.textContent ?? '').replace(/\s+/g, '');
+      expect(text).toContain('あらかじめご本人の同意を得ることなく、個人情報を第三者に提供することはありません'.replace(/\s+/g, ''));
+      expect(text).toContain('委託先において情報の適切な安全管理が図られるよう監督します'.replace(/\s+/g, ''));
+    });
+
+    it('§7: 安全管理措置 — safety management measures section exists', () => {
+      render(<PrivacyPage />);
+      expect(screen.getByText('7. 安全管理措置')).toBeInTheDocument();
+      const text = (document.body.textContent ?? '').replace(/\s+/g, '');
+      expect(text).toContain('個人情報の漏えい、滅失またはき損の防止その他の個人情報の安全管理のために、必要かつ適切な措置を講じます'.replace(/\s+/g, ''));
+    });
+
+    it('§9: 保有個人データの開示・訂正・利用停止等について — appears before §10 お問い合わせ, and names /account as a self-service opt-out', () => {
+      render(<PrivacyPage />);
+      const heading = screen.getByText('9. 保有個人データの開示・訂正・利用停止等について');
+      const contactHeading = screen.getByText('10. お問い合わせ');
+      expect(heading).toBeInTheDocument();
+      expect(heading.compareDocumentPosition(contactHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      const text = (document.body.textContent ?? '').replace(/\s+/g, '');
+      expect(text).toContain('ご本人確認の上、法令に従い速やかに対応いたします'.replace(/\s+/g, ''));
+      expect(text).toContain('アカウント設定画面（/account）からアカウントの削除操作を行っていただくことで'.replace(/\s+/g, ''));
+    });
+
+    it('sections are renumbered consistently 1-10 with no gap or duplicate', () => {
+      render(<PrivacyPage />);
+      for (let n = 1; n <= 10; n++) {
+        expect(screen.getByText(new RegExp(`^${n}\\. `))).toBeInTheDocument();
+      }
+    });
   });
 });
