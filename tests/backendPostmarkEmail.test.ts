@@ -50,4 +50,26 @@ describe('PostmarkEmailSender', () => {
     const sender = new PostmarkEmailSender('token', 'no-reply@domo-ai.com');
     await expect(sender.send({ to: 'parent@example.com', subject: 'S', text: 'T' })).rejects.toThrow(/422/);
   });
+
+  it('email-redesign (Founder, 1 Oct 2026): includes HtmlBody only when the message carries one', async () => {
+    const fetchMock = fakeFetch();
+    vi.stubGlobal('fetch', fetchMock);
+    const sender = new PostmarkEmailSender('token', 'no-reply@domo-ai.com');
+    await sender.send({ to: 'parent@example.com', subject: 'S', text: 'T', html: '<p>hi</p>' });
+
+    const [, init] = fetchMock.mock.calls[0]!;
+    const body = JSON.parse(init!.body as string);
+    expect(body.HtmlBody).toBe('<p>hi</p>');
+  });
+
+  it('never sends HtmlBody when the message has no html field — text-only emails stay text-only', async () => {
+    const fetchMock = fakeFetch();
+    vi.stubGlobal('fetch', fetchMock);
+    const sender = new PostmarkEmailSender('token', 'no-reply@domo-ai.com');
+    await sender.send({ to: 'parent@example.com', subject: 'S', text: 'T' });
+
+    const [, init] = fetchMock.mock.calls[0]!;
+    const body = JSON.parse(init!.body as string);
+    expect(body.HtmlBody).toBeUndefined();
+  });
 });

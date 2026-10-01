@@ -28,9 +28,10 @@ function assertClean(label: string, text: string): void {
 
 describe('item 7 — no email contains a child nickname, avatar, profile, or learning record', () => {
   it('loginCodeEmail: only the code', () => {
-    const msg = loginCodeEmail('parent@example.com', '123456');
+    const msg = loginCodeEmail('parent@example.com', '123456', 'https://app.example.com');
     assertClean('loginCodeEmail subject', msg.subject);
     assertClean('loginCodeEmail text', msg.text);
+    assertClean('loginCodeEmail html', msg.html ?? '');
   });
 
   it('moduleActivatedEmail: only a login URL (both flag states)', () => {
@@ -38,6 +39,7 @@ describe('item 7 — no email contains a child nickname, avatar, profile, or lea
       const msg = moduleActivatedEmail('parent@example.com', 'https://app.example.com/login/', beginnerLaunch);
       assertClean(`moduleActivatedEmail(beginnerLaunch=${beginnerLaunch}) subject`, msg.subject);
       assertClean(`moduleActivatedEmail(beginnerLaunch=${beginnerLaunch}) text`, msg.text);
+      assertClean(`moduleActivatedEmail(beginnerLaunch=${beginnerLaunch}) html`, msg.html ?? '');
     }
   });
 
@@ -46,6 +48,7 @@ describe('item 7 — no email contains a child nickname, avatar, profile, or lea
       const msg = claimYourPurchaseEmail('purchaser@example.com', '#1001', 'https://app.example.com/claim/?t=abc', beginnerLaunch);
       assertClean(`claimYourPurchaseEmail(beginnerLaunch=${beginnerLaunch}) subject`, msg.subject);
       assertClean(`claimYourPurchaseEmail(beginnerLaunch=${beginnerLaunch}) text`, msg.text);
+      assertClean(`claimYourPurchaseEmail(beginnerLaunch=${beginnerLaunch}) html`, msg.html ?? '');
     }
   });
 

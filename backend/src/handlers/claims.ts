@@ -8,7 +8,7 @@ import { hmacHex } from '../util.js';
 import { writeAuditLog } from '../audit.js';
 import { moduleActivatedEmail } from '../email.js';
 import { getFamily } from '../family.js';
-import { loginUrl } from '../links.js';
+import { activationLoginUrl } from '../links.js';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -107,7 +107,7 @@ export async function handleConfirmClaim(request: Request, env: Env, token: stri
 
   if (result.order.entitlementState === 'granted') {
     const family = await getFamily(env, familyId);
-    if (family) await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
+    if (family) await sendEmailWithConsent(env, moduleActivatedEmail(family.email, activationLoginUrl(env, family.email), env.BEGINNER_LAUNCH === '1'));
   }
 
   return jsonResponse({ ok: true, orderName: result.order.orderName });

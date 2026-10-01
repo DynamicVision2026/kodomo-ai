@@ -5,7 +5,7 @@ import { normalizeEmail } from './family.js';
 import { writeAuditLog } from './audit.js';
 import { moduleActivatedEmail } from './email.js';
 import { sendEmailWithConsent } from './emailGate.js';
-import { loginUrl } from './links.js';
+import { activationLoginUrl } from './links.js';
 
 /**
  * Consent at login (PURCHASE-FLOW.md v2): when a family logs in with a VERIFIED email, any paid
@@ -67,7 +67,7 @@ export async function bindUnboundOrdersOnLogin(env: Env, familyId: string, rawEm
   }
 
   if (bound.some((o) => o.entitlementState === 'granted')) {
-    await sendEmailWithConsent(env, moduleActivatedEmail(email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
+    await sendEmailWithConsent(env, moduleActivatedEmail(email, activationLoginUrl(env, email), env.BEGINNER_LAUNCH === '1'));
   }
   return bound;
 }

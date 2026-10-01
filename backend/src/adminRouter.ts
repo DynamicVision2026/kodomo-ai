@@ -14,7 +14,7 @@ import { writeAuditLog, listAuditLogForTarget, listAuditLogForActor } from './au
 import { computeEligibilitySnapshot } from './refund.js';
 import { moduleActivatedEmail, claimYourPurchaseEmail } from './email.js';
 import { randomToken, hmacHex } from './util.js';
-import { loginUrl, claimUrl, shopifyAdminOrderUrl } from './links.js';
+import { activationLoginUrl, claimUrl, shopifyAdminOrderUrl } from './links.js';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -185,7 +185,7 @@ async function routeFamily(request: Request, env: Env, staff: StaffIdentity, seg
     if (!reason) return new Response('reason is required', { status: 400 });
     const family = await getFamily(env, familyId);
     if (!family) return new Response('not found', { status: 404 });
-    const outcome = await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
+    const outcome = await sendEmailWithConsent(env, moduleActivatedEmail(family.email, activationLoginUrl(env, family.email), env.BEGINNER_LAUNCH === '1'));
     await writeAuditLog(env, { actor: staff.email, action: 'resend_welcome', targetType: 'family', targetId: familyId, before: null, after: { emailSent: outcome === 'sent' }, reason });
     return jsonResponse({ emailSent: outcome === 'sent', ...(outcome === 'sent' ? {} : { reason: outcome === 'send_failed' ? 'send_failed' : 'no_consent' }) }, 202);
   }
@@ -294,7 +294,7 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
     await writeAuditLog(env, { actor: staff.email, action: 'admin_bind', targetType: 'order', targetId: orderId, before: order, after: updated, reason });
     if (updated.entitlementState === 'granted') {
       const family = await getFamily(env, targetFamilyId);
-      if (family) await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
+      if (family) await sendEmailWithConsent(env, moduleActivatedEmail(family.email, activationLoginUrl(env, family.email), env.BEGINNER_LAUNCH === '1'));
     }
     return jsonResponse(updated);
   }

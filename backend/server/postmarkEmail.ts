@@ -31,6 +31,7 @@ export class PostmarkEmailSender implements EmailSender {
         To: message.to,
         Subject: message.subject,
         TextBody: message.text,
+        ...(message.html ? { HtmlBody: message.html } : {}),
         MessageStream: 'outbound',
         TrackOpens: false,
         TrackLinks: 'None',

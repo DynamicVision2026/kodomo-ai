@@ -6,7 +6,7 @@ import { timingSafeEqual } from '../util.js';
 import { emailHashOf, findFamilyIdByEmail, getFamily, normalizeEmail } from '../family.js';
 import { moduleActivatedEmail } from '../email.js';
 import { listActiveSessions, revokeSession } from '../session.js';
-import { loginUrl } from '../links.js';
+import { activationLoginUrl } from '../links.js';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -111,7 +111,7 @@ export async function handleAdmin(request: Request, env: Env, url: URL): Promise
     const familyId = segments[1]!;
     const family = await getFamily(env, familyId);
     if (!family) return new Response('not found', { status: 404 });
-    const outcome = await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
+    const outcome = await sendEmailWithConsent(env, moduleActivatedEmail(family.email, activationLoginUrl(env, family.email), env.BEGINNER_LAUNCH === '1'));
     return jsonResponse({ emailSent: outcome === 'sent', ...(outcome === 'sent' ? {} : { reason: outcome === 'send_failed' ? 'send_failed' : 'no_consent' }) }, 202);
   }
 
