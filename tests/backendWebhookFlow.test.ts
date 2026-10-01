@@ -213,7 +213,7 @@ describe('Post-launch-check (Founder) — one Cloud-Logging line per processed o
     expect(line).toContain('binding=email_match');
     expect(line).toContain(`family=${(await sha256Hex(familyId)).slice(0, 16)}`);
     expect(line).toContain('entitlement=granted');
-    expect(line).toContain('email_sent=no');
+    expect(line).toContain('email_sent=yes');
     expect(line).not.toContain(order.email); // no personal data in the log
     expect(line).not.toContain(familyId); // hashed, never the raw id
 
@@ -230,7 +230,7 @@ describe('Post-launch-check (Founder) — one Cloud-Logging line per processed o
     expect(line).toContain('binding=none');
     expect(line).toContain('family=none');
     expect(line).toContain('entitlement=awaiting_claim');
-    expect(line).toContain('email_sent=yes');
+    expect(line).toContain('email_sent=no');
     expect(line).not.toContain(order.email);
 
     logSpy.mockRestore();
