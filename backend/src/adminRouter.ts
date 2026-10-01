@@ -187,7 +187,7 @@ async function routeFamily(request: Request, env: Env, staff: StaffIdentity, seg
     if (!family) return new Response('not found', { status: 404 });
     const outcome = await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
     await writeAuditLog(env, { actor: staff.email, action: 'resend_welcome', targetType: 'family', targetId: familyId, before: null, after: { emailSent: outcome === 'sent' }, reason });
-    return jsonResponse({ emailSent: outcome === 'sent', ...(outcome === 'sent' ? {} : { reason: 'no_consent' }) }, 202);
+    return jsonResponse({ emailSent: outcome === 'sent', ...(outcome === 'sent' ? {} : { reason: outcome === 'send_failed' ? 'send_failed' : 'no_consent' }) }, 202);
   }
 
   if (method === 'POST' && segments[2] === 'email') {
@@ -314,7 +314,7 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
     await env.db.set(claimPath(claimHash), claim);
     const outcome = await sendEmailWithConsent(env, claimYourPurchaseEmail(order.purchaserEmail, order.orderName, claimUrl(env, claimToken), env.BEGINNER_LAUNCH === '1'));
     await writeAuditLog(env, { actor: staff.email, action: 'resend_claim', targetType: 'order', targetId: orderId, before: null, after: { emailSent: outcome === 'sent' }, reason });
-    return jsonResponse({ emailSent: outcome === 'sent', ...(outcome === 'sent' ? {} : { reason: 'no_consent' }) }, 202);
+    return jsonResponse({ emailSent: outcome === 'sent', ...(outcome === 'sent' ? {} : { reason: outcome === 'send_failed' ? 'send_failed' : 'no_consent' }) }, 202);
   }
 
   if (method === 'POST' && segments[2] === 'refund-request') {

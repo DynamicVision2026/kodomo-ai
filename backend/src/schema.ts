@@ -22,11 +22,16 @@ export interface FamilyDoc {
   profileCount: number;
   createdAt: string;
   updatedAt: string;
-  /** Consent at login: when the family agreed to the consent text on the login screen, and which
-   *  wording (shared/consent.ts `CONSENT_TEXT_VERSION`). Absent = no recorded consent, and then
-   *  no email of any kind is sent to this address (backend/src/emailGate.ts). */
-  consentAt?: string;
-  consentTextVersion?: string;
+  /** Consent tied to verification (Founder decision, 1 Oct 2026): `consentClickedAt` is when the
+   *  parent pressed 「同意して、コードを送る」 — on its own this allows only the login-code email
+   *  for that one request, nothing else. `consentVerifiedAt` is set once that SAME login actually
+   *  completes (the code is verified) — only its presence allows any non-login email (activation,
+   *  claim link, operator resends; backend/src/emailGate.ts). `consentVersion` (shared/consent.ts
+   *  `CONSENT_TEXT_VERSION`) names which wording was shown at the click. All three are absent for
+   *  a family that has never completed a consenting login. */
+  consentClickedAt?: string;
+  consentVerifiedAt?: string;
+  consentVersion?: string;
 }
 
 export interface EmailIndexDoc {
@@ -283,9 +288,10 @@ export interface LoginCodeDoc {
   /** Backs the 60-second resend cooldown (AD-13 §4) — separate from `windowStart`, which tracks
    *  the 1-hour/5-send window instead. */
   lastSentAt: string;
-  /** Consent given on the login screen WITH this request (carried to the family at verify). */
-  consentAt?: string;
-  consentTextVersion?: string;
+  /** The click that happened WITH this one request (consent tied to verification — see
+   *  `FamilyDoc`'s own doc comment). Carried to the family only once/if THIS code is verified. */
+  consentClickedAt?: string;
+  consentVersion?: string;
 }
 
 export interface RateLimitDoc {

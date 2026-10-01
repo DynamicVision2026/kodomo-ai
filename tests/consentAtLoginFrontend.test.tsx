@@ -10,7 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { CONSENT_TEXT_VERSION } from '../shared/consent';
 import {
   CONSENT_BUTTON_LABEL, CONSENT_CONTACT_EMAIL, CONSENT_DECLINE_NOTE, CONSENT_LEAD, CONSENT_LINKS,
-  CONSENT_RECORD_NOTE,
+  CONSENT_NO_MARKETING_NOTE, CONSENT_RECORD_NOTE,
 } from '../src/legal/consentText';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -53,16 +53,18 @@ describe('/login — consent text before the code is sent', () => {
       expect(anchor).toHaveAttribute('target', '_blank');
       expect(anchor.getAttribute('rel')).toContain('noopener');
     }
-    // Both notes sit UNDER the button — the record note first, then the decline note with the
-    // contact address — per the Founder's addendum (1 Oct 2026).
+    // Three notes sit UNDER the button — record note, then no-marketing note, then the decline
+    // note with the contact address — per text C v3 (Founder decision, 1 Oct 2026).
     const button = screen.getByRole('button', { name: '同意して、コードを送る' });
     const notes = screen.getAllByText((_, el) => el?.className === 'login__consent-note');
-    expect(notes).toHaveLength(2);
-    const [recordNote, declineNote] = notes;
+    expect(notes).toHaveLength(3);
+    const [recordNote, noMarketingNote, declineNote] = notes;
     expect(recordNote!.textContent).toBe(CONSENT_RECORD_NOTE);
+    expect(noMarketingNote!.textContent).toBe(CONSENT_NO_MARKETING_NOTE);
     expect(declineNote!.textContent).toBe(CONSENT_DECLINE_NOTE + CONSENT_CONTACT_EMAIL);
     expect(button.compareDocumentPosition(recordNote!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(recordNote!.compareDocumentPosition(declineNote!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(recordNote!.compareDocumentPosition(noMarketingNote!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(noMarketingNote!.compareDocumentPosition(declineNote!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole('link', { name: CONSENT_CONTACT_EMAIL })).toHaveAttribute('href', `mailto:${CONSENT_CONTACT_EMAIL}`);
     expect(CONSENT_BUTTON_LABEL).toBe('同意して、コードを送る');
     expect(screen.getByRole('button', { name: '同意して、コードを送る' })).toBeInTheDocument();
@@ -150,6 +152,25 @@ describe('landing buy button — login first, then Shopify with the purchase tok
     await clickLandingBuy(jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [], consentRecorded: false }));
     await waitFor(() => expect(window.location.href).toBe('/login/?reconsent=1&next=%2Faccount%2F%3Fbuy%3D1'));
   });
+
+  it('Notice D (item 5): shown above both buy buttons, linking to the privacy page, with the refund-for-declined-consent promise', async () => {
+    vi.resetModules();
+    stubLocation();
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    vi.stubGlobal('fetch', vi.fn(async () => NOT_SIGNED_IN()));
+    const { LandingPage } = await import('../src/lp/LandingPage');
+    render(<LandingPage />);
+
+    const notices = document.querySelectorAll('.lp__notice-d');
+    expect(notices.length).toBeGreaterThanOrEqual(2); // hero CTA + price-section CTA
+    for (const notice of Array.from(notices)) {
+      expect(notice.textContent).toContain('保護者の方のメールアドレスでのログインが必要です');
+      expect(notice.textContent).toContain('全額返金いたします');
+      const link = notice.querySelector('a');
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute('href')).toBe('/legal/privacy/');
+    }
+  });
 });
 
 describe('/account/?buy=1 — straight on to Shopify with the purchase token, once', () => {
@@ -203,6 +224,17 @@ describe('/account/?buy=1 — straight on to Shopify with the purchase token, on
     await waitFor(() => expect(calls.some((u) => u.endsWith('/me'))).toBe(true));
     await new Promise((r) => setTimeout(r, 50));
     expect(calls.filter((u) => u.endsWith('/purchase-intents'))).toHaveLength(0);
+  });
+
+  it('Notice D (item 5): shown above 「購入手続きへ進む」, linking to the privacy page', async () => {
+    await openAccount({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [], consentRecorded: false });
+    const button = await screen.findByRole('button', { name: '購入手続きへ進む' });
+    const notice = document.querySelector('.account__notice-d');
+    expect(notice).not.toBeNull();
+    expect(notice?.textContent).toContain('保護者の方のメールアドレスでのログインが必要です');
+    expect(notice?.textContent).toContain('全額返金いたします');
+    expect(notice?.querySelector('a')?.getAttribute('href')).toBe('/legal/privacy/');
+    expect(notice!.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
 

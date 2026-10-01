@@ -13,6 +13,7 @@ import {
 } from '../../family/api';
 import { usePurchaseFlow } from '../../family/usePurchaseFlow';
 import { COMPANY } from '../../legal/company';
+import { NoticeD } from '../../legal/NoticeD';
 import moduleJson from '../../modules/m1/module.json';
 import './account.css';
 
@@ -188,6 +189,7 @@ export function AccountPage() {
           (purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
             <>
               <p>「{PURCHASE_MODULE_TITLE}」を購入すると、すべてのミッションが使えるようになります。</p>
+              <NoticeD className="account__notice-d" />
               <button
                 type="button"
                 className="account__button"

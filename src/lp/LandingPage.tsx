@@ -3,6 +3,8 @@ import { load, save } from '../engine/storage';
 import { track, setVariant } from '../engine/analytics';
 import { fetchMe } from '../family/api';
 import { usePurchaseFlow } from '../family/usePurchaseFlow';
+import { CONSENT_DECLINE_REFUND_NOTE } from '../legal/consentText';
+import { NoticeD } from '../legal/NoticeD';
 import moduleJson from '../modules/m1/module.json';
 import './landing-page.css';
 
@@ -165,6 +167,7 @@ export function LandingPage() {
             購入する ¥4,980（税込）
           </button>
         </div>
+        <NoticeD className="lp__notice-d" />
       </section>
 
       <section className="lp__trust" aria-label="登録とデータの取り扱い">
@@ -288,6 +291,10 @@ export function LandingPage() {
               the founder/legal review this whole section still needs regardless. */}
           <li>創設ファミリー特典（冬休みスペシャルシート 全9枚 を含む）</li>
         </ul>
+        {/* Item 10 (Founder, 1 Oct 2026): the same refund-for-declined-consent promise as Notice D
+            above, the FAQ, and the 特商法 page — kept to one source of wording
+            (CONSENT_DECLINE_REFUND_NOTE, src/legal/consentText.ts). */}
+        <p className="lp__price-refund-note">{CONSENT_DECLINE_REFUND_NOTE}</p>
         {/* Same startPurchase() as the hero CTA above — a real, always-clickable button (never a
             dead href="#"), routing through /login/ when logged out and straight to
             usePurchaseFlow's real purchase-intent flow when logged in. Its own not_configured
@@ -295,9 +302,12 @@ export function LandingPage() {
             createPurchaseIntent) surfaces as the same honest error message this button's own
             purchaseState shows. */}
         {(purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
-          <button type="button" className="lp__cta lp__cta--primary" onClick={startPurchase} disabled={purchaseState.kind === 'loading'}>
-            購入する
-          </button>
+          <>
+            <NoticeD className="lp__notice-d" />
+            <button type="button" className="lp__cta lp__cta--primary" onClick={startPurchase} disabled={purchaseState.kind === 'loading'}>
+              購入する
+            </button>
+          </>
         )}
         {purchaseState.kind === 'error' && (
           <p className="lp__cta-error">{PURCHASE_ERROR_MESSAGE[purchaseState.reason]}</p>
@@ -330,10 +340,12 @@ export function LandingPage() {
             ログインコードは no-reply@domo-ai.com から届きます。届かない場合は、迷惑メールフォルダをご確認いただくか、このアドレスからの受信を許可してください。
           </dd>
           <dt>返金はできますか？</dt>
-          {/* AD-15: old 30-day guarantee copy retired; the new policy (10-day voluntary window,
-              contingent on actual paid-content use) isn't finalized yet — see the price
-              section's own note. */}
-          <dd>返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。</dd>
+          {/* AD-15: the general 10-day voluntary refund window isn't finalized yet — see the
+              price section's own note. Item 10 (Founder, 1 Oct 2026): the login-consent refund
+              guarantee below IS final and applies regardless of that pending policy. */}
+          <dd>
+            返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。{CONSENT_DECLINE_REFUND_NOTE}
+          </dd>
           <dt>兄弟姉妹で使えますか？</dt>
           <dd>
             世帯ライセンスのため、ご家庭のお子さま・保護者の方すべてでお使いいただけます。一緒に参加するご家族の人数に制限はありません。学習の記録はお子さま3人まで（3プロフィール）／5台の端末です。

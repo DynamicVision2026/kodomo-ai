@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { COMPANY, PRODUCT } from '../company';
+import { CONSENT_DECLINE_REFUND_NOTE } from '../consentText';
 import '../legal.css';
 
 // COPY-01 (28 Sep 2026, 酒井先生-reviewed; refund wording legally approved): same "go live at the
@@ -41,7 +42,14 @@ const ROWS: [string, ReactNode][] = [
     '返品・キャンセルについて',
     // AD-15: the old "30-day guarantee" copy was retired with no replacement yet. COPY-01 §7
     // supplies the real, legally-approved wording — shown only once BEGINNER_LAUNCH is on.
-    BEGINNER_LAUNCH ? REFUND_SENTENCE : '返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。',
+    // Item 10 (Founder, 1 Oct 2026): the login-consent refund guarantee is final NOW, independent
+    // of that pending general policy, so it's appended either way — same wording as Notice D, the
+    // FAQ, and the landing page's price section (CONSENT_DECLINE_REFUND_NOTE, one source of truth).
+    <>
+      {BEGINNER_LAUNCH ? REFUND_SENTENCE : '返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。'}
+      {' '}
+      {CONSENT_DECLINE_REFUND_NOTE}
+    </>,
   ],
 ];
 

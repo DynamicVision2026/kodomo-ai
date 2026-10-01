@@ -34,7 +34,7 @@ function fakeEnv(): Env {
  *  matched by email. Tests that want a "bound at purchase" scenario must pre-create the family
  *  the same way a real login would. */
 async function loginFirst(env: Env, email: string): Promise<string> {
-  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, email, new Date().toISOString(), { consentAt: new Date().toISOString(), consentTextVersion: CONSENT_TEXT_VERSION }));
+  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, email, new Date().toISOString(), { consentClickedAt: new Date().toISOString(), consentVerifiedAt: new Date().toISOString(), consentVersion: CONSENT_TEXT_VERSION }));
   return familyId;
 }
 

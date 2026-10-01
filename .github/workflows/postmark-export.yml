@@ -1,0 +1,62 @@
+name: Export Postmark message history (manual, evidence before the 45-day window closes)
+
+# Founder decision (1 Oct 2026), item 1 "EVIDENCE FIRST": Postmark deletes outbound-message
+# history after 45 days, so every message sent so far needs to be exported and saved OUTSIDE
+# Postmark now. Manual, workflow_dispatch only — never wired to push/pull_request, never touches
+# production traffic. Reuses ci.yml's existing Workload Identity Federation auth (same secrets)
+# to read the real `email-api-key` secret from Secret Manager — the one piece this sandbox-run
+# script can't do on its own, since that token only exists there.
+#
+# The result is uploaded as a workflow ARTIFACT (downloadable from this run's own Actions page),
+# deliberately never committed to git: it's one row per message with the real recipient address,
+# and git history is permanent — baking customer email addresses into it is worse than Postmark's
+# own 45-day retention, not better. "Save it outside Postmark" is satisfied by the artifact itself
+# (a file the Founder can download and store wherever the business already keeps records like
+# this); docs/legal/ stays for non-PII legal text (consent versions, policy copies).
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write   # Workload Identity Federation — no long-lived key ever touches this repo
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: kodomo-ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Read the Postmark server token from Secret Manager
+        id: secret
+        run: |
+          TOKEN=$(gcloud secrets versions access latest --secret=email-api-key)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Export every sent message (recipient, date, subject, status)
+        env:
+          EMAIL_API_KEY: ${{ steps.secret.outputs.token }}
+        run: npx tsx scripts/export-postmark-history.ts --out=postmark-export.csv
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: postmark-export
+          path: postmark-export.csv
+          retention-days: 90

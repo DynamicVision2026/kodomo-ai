@@ -47,7 +47,7 @@ async function seedStaff(env: Env, email: string, role: 'viewer' | 'operator'): 
 
 async function seedFamily(env: Env, familyId: string, email: string): Promise<void> {
   const now = new Date().toISOString();
-  await env.db.set(familyPath(familyId), { email, status: 'active', profileCount: 0, createdAt: now, updatedAt: now, consentAt: now, consentTextVersion: CONSENT_TEXT_VERSION } satisfies FamilyDoc);
+  await env.db.set(familyPath(familyId), { email, status: 'active', profileCount: 0, createdAt: now, updatedAt: now, consentClickedAt: now, consentVerifiedAt: now, consentVersion: CONSENT_TEXT_VERSION } satisfies FamilyDoc);
 }
 
 describe('AD-16 §8 — admin authentication: IAP JWT + staff/ allowlist, never another scheme', () => {

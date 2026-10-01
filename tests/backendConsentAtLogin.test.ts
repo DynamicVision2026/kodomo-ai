@@ -99,8 +99,21 @@ describe('consent at login — the login code', () => {
     const { res } = await login(env, 'new@example.com');
     expect(res.status).toBe(200);
     const family = await familyByEmail(env, 'new@example.com');
-    expect(family?.doc.consentTextVersion).toBe(CONSENT_TEXT_VERSION);
-    expect(new Date(family!.doc.consentAt!).getTime()).toBeGreaterThanOrEqual(before - 1000);
+    expect(family?.doc.consentVersion).toBe(CONSENT_TEXT_VERSION);
+    expect(new Date(family!.doc.consentVerifiedAt!).getTime()).toBeGreaterThanOrEqual(before - 1000);
+  });
+
+  it('item 11 scenario 6: a CLICK alone (code requested, not yet verified) never allows a non-login email — only completed verification does', async () => {
+    const env = fakeEnv();
+    await requestCode(env, 'clickonly@example.com', CONSENT_TEXT_VERSION); // click only — code sent, never verified
+    expect(sent(env)).toHaveLength(1); // the login code itself, nothing else
+
+    // No family exists yet (a click never creates one — only a verified login does), so the
+    // activation email this address would eventually get is blocked exactly like any other
+    // unconsented address.
+    expect(await familyByEmail(env, 'clickonly@example.com')).toBeNull();
+    const outcome = await sendEmailWithConsent(env, moduleActivatedEmail('clickonly@example.com', 'https://app.example.com/login/', false));
+    expect(outcome).toBe('blocked_no_consent');
   });
 
   it('a family with recorded consent can request a new code without re-sending consent (e.g. the account-deletion re-auth)', async () => {
@@ -123,7 +136,7 @@ describe('consent at login — the login code', () => {
     expect(sent(env)).toHaveLength(0);
 
     const { cookie } = await login(env, 'legacy@example.com');
-    expect((await env.db.get<FamilyDoc>(familyPath('legacy')))?.consentTextVersion).toBe(CONSENT_TEXT_VERSION);
+    expect((await env.db.get<FamilyDoc>(familyPath('legacy')))?.consentVersion).toBe(CONSENT_TEXT_VERSION);
     const me = await handleMe(new Request('https://backend.example/api/v1/me', { headers: { cookie } }), env);
     expect((await me.json()).consentRecorded).toBe(true);
   });
@@ -214,11 +227,16 @@ describe('consent at login — bind unbound paid orders on login when the email 
     expect(claims.every((c) => c.data.redeemedAt && c.data.familyId === family!.id)).toBe(true);
   });
 
-  it('a login under a DIFFERENT email never binds someone else\'s waiting order', async () => {
+  it('a login under a DIFFERENT email never binds someone else\'s waiting order, and never emails that other family about it', async () => {
     const env = fakeEnv();
     await postOrder(env, 'buyer@example.com');
+    const beforeLogin = sent(env).length; // the claim email buyer@example.com already got
     await login(env, 'someoneelse@example.com');
     expect((await env.db.get<OrderDoc>(orderPath(7001)))?.bindingState).toBe('awaiting_claim');
+    // Only the new login code goes out to someoneelse@example.com — nothing about buyer's order.
+    const afterLogin = sent(env).slice(beforeLogin);
+    expect(afterLogin.every((m) => m.to === 'someoneelse@example.com')).toBe(true);
+    expect(afterLogin.some((m) => /#7001|buyer@example\.com/.test(m.text))).toBe(false);
   });
 
   it('logging in again does not re-bind or re-email (idempotent)', async () => {

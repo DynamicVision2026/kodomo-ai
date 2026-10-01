@@ -1,7 +1,7 @@
 import { CONSENT_TEXT_VERSION } from '../../../shared/consent';
 import {
-  CONSENT_BUTTON_LABEL, CONSENT_CONTACT_EMAIL, CONSENT_DECLINE_NOTE, CONSENT_LEAD, CONSENT_LINKS,
-  CONSENT_RECORD_NOTE,
+  CONSENT_BUTTON_LABEL, CONSENT_CONFIRM_NOTE, CONSENT_CONTACT_EMAIL, CONSENT_DECLINE_NOTE, CONSENT_LEAD,
+  CONSENT_LINKS, CONSENT_NO_MARKETING_NOTE, CONSENT_RECORD_NOTE,
 } from '../../legal/consentText';
 import { useEffect, useState, type FormEvent } from 'react';
 import { load, save } from '../../engine/storage';
@@ -143,6 +143,7 @@ export function LoginPage() {
           </p>
           <div className="login__consent" data-consent-version={CONSENT_TEXT_VERSION}>
             <p className="login__consent-text">{CONSENT_LEAD}</p>
+            <p className="login__consent-text">{CONSENT_CONFIRM_NOTE}</p>
             <ul className="login__consent-links">
               {CONSENT_LINKS.map((link) => (
                 <li key={link.href}>
@@ -168,6 +169,7 @@ export function LoginPage() {
             </button>
           </form>
           <p className="login__consent-note">{CONSENT_RECORD_NOTE}</p>
+          <p className="login__consent-note">{CONSENT_NO_MARKETING_NOTE}</p>
           <p className="login__consent-note">
             {CONSENT_DECLINE_NOTE}
             <a href={`mailto:${CONSENT_CONTACT_EMAIL}`}>{CONSENT_CONTACT_EMAIL}</a>

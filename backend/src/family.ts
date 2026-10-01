@@ -35,9 +35,13 @@ export async function getFamily(env: Env, familyId: string): Promise<FamilyDoc |
  * state (AD-16 §0/§5: trial starts lazily at the trial unit's own first open, never at account
  * creation).
  */
+/** Consent tied to verification: ONLY passed by `verifyLoginCode` on a SUCCESSFUL verify, carrying
+ *  the click's own original timestamp (from the `loginCodes` doc the click wrote) plus `now` as
+ *  the verify time — see `FamilyDoc`'s own doc comment for why these are two separate fields. */
 export interface ConsentRecord {
-  consentAt: string;
-  consentTextVersion: string;
+  consentClickedAt: string;
+  consentVerifiedAt: string;
+  consentVersion: string;
 }
 
 export async function getOrCreateFamilyIdInTx(
@@ -50,11 +54,12 @@ export async function getOrCreateFamilyIdInTx(
   const emailHash = await sha256Hex(normalized);
   const existing = await tx.get<EmailIndexDoc>(emailIndexPath(emailHash));
   if (existing) {
-    // Consent at login: a login that carried consent records it on the family — unless the
-    // family already agreed to this exact wording (keep the original agreement time).
+    // Consent tied to verification: a login that carried a fresh, verified click records it on
+    // the family — unless the family already has a VERIFIED consent for this exact wording (keep
+    // the original clicked/verified times rather than overwriting a real record with itself).
     if (consent) {
       const family = await tx.get<FamilyDoc>(familyPath(existing.familyId));
-      if (family && family.consentTextVersion !== consent.consentTextVersion) {
+      if (family && family.consentVersion !== consent.consentVersion) {
         tx.set(familyPath(existing.familyId), { ...family, ...consent, updatedAt: now } satisfies FamilyDoc);
       }
     }

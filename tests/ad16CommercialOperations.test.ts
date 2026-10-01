@@ -72,7 +72,7 @@ function baseOrder(overrides: Record<string, unknown> = {}) {
 }
 
 async function loginFamily(env: Env, email: string): Promise<{ familyId: string; token: string }> {
-  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, email, new Date().toISOString(), { consentAt: new Date().toISOString(), consentTextVersion: CONSENT_TEXT_VERSION }));
+  const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, email, new Date().toISOString(), { consentClickedAt: new Date().toISOString(), consentVerifiedAt: new Date().toISOString(), consentVersion: CONSENT_TEXT_VERSION }));
   const { token } = await createSession(env, familyId, 'test-device');
   return { familyId, token };
 }
@@ -412,6 +412,43 @@ describe('AD-16 §7 — refunds/create revokes the entitlement, never touches pr
     expect(progressBody.missions['m1-s2-1-2'].done).toBe(true);
     const family = await env.db.get(familyPath(familyId));
     expect(family).not.toBeNull();
+  });
+
+  // Item 14c (Founder, 1 Oct 2026): "refunds remove course access ONLY when the ナゼホリ item
+  // itself is refunded, never for other products." The store sells other products in the same
+  // Shopify shop, so a refund can legitimately touch ONLY a line item this integration never
+  // granted anything for — matchRefundedModuleIds (backend/src/shopify.ts) must filter refund
+  // line items through the exact same SKU_TO_MODULE_IDS allowlist orders/paid uses, so such a
+  // refund is a pure no-op here, never an accidental revoke.
+  it('item 14c: refunding a mixed order\'s OTHER-PRODUCT line never revokes the ナゼホリ entitlement', async () => {
+    const env = fakeEnv();
+    const { familyId } = await loginFamily(env, 'mixedrefund@example.com');
+    await env.db.set(entitlementPath(familyId, 'm1'), { status: 'active', shopifyOrderId: '6402', grantedAt: new Date().toISOString(), revokedAt: null, revokedReason: null });
+    await env.db.set(orderPath(6402), {
+      shopifyOrderId: '6402', orderName: '#6402',
+      lines: [{ sku: 'kodomo-ai-m1', variantId: 111, moduleId: 'm1', quantity: 1, lineTotal: 9800 }],
+      currency: 'JPY', financialStatus: 'paid', shopifyCreatedAt: new Date().toISOString(), paidAt: new Date().toISOString(),
+      purchaserEmail: 'mixedrefund@example.com', familyId, bindingMethod: 'email_match', bindingState: 'bound', entitlementState: 'granted',
+      trialConverted: false, refund: { requestedAt: null, requestChannel: null, eligibilitySnapshot: null, decision: null, shopifyRefundIds: [], refundedAt: null, refundedAmount: null, state: 'none' },
+      webhookIds: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    } satisfies OrderDoc);
+
+    // The refund webhook names the SAME Shopify order, but its own refund_line_items are for the
+    // KD-ANNUAL line that was also in the original cart (not recorded in `order.lines` above,
+    // exactly as orders/paid itself never records a non-allowlisted line — see the mixed-cart
+    // test above) — never the kodomo-ai-m1 line.
+    const rawRefund = JSON.stringify({ id: 9002, order_id: 6402, refund_line_items: [{ line_item_id: 2, quantity: 1, line_item: { sku: 'KD-ANNUAL' } }] });
+    const refundRes = await handleShopifyRefundWebhook(
+      new Request('https://backend.example/webhooks/shopify/refunds-create', { method: 'POST', headers: { 'X-Shopify-Hmac-Sha256': await sign(rawRefund) }, body: rawRefund }),
+      env,
+    );
+    expect(refundRes.status).toBe(200);
+
+    const ent = await env.db.get<EntitlementDoc>(entitlementPath(familyId, 'm1'));
+    expect(ent?.status).toBe('active'); // untouched — the refund never matched the allowlisted SKU
+    const order = await env.db.get<OrderDoc>(orderPath(6402));
+    expect(order?.entitlementState).toBe('granted'); // untouched
+    expect(order?.refund.state).toBe('none'); // untouched — no refund was ever recorded for THIS order
   });
 });
 

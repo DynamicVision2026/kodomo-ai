@@ -34,7 +34,7 @@ async function seedEntitledFamily(env: Env, email: string): Promise<string> {
   const now = new Date();
   const nowIso = now.toISOString();
   await env.db.set(familyPath(familyId), {
-    email, status: 'active', profileCount: 0, createdAt: nowIso, updatedAt: nowIso, consentAt: nowIso, consentTextVersion: CONSENT_TEXT_VERSION,
+    email, status: 'active', profileCount: 0, createdAt: nowIso, updatedAt: nowIso, consentClickedAt: nowIso, consentVerifiedAt: nowIso, consentVersion: CONSENT_TEXT_VERSION,
   });
   await env.db.set(`emailIndex/${await emailHashOf(email)}`, { familyId, createdAt: nowIso });
   await env.db.set(entitlementPath(familyId, 'm1'), { status: 'active', shopifyOrderId: 'o1', grantedAt: nowIso, revokedAt: null, revokedReason: null });

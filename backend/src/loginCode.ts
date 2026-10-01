@@ -31,11 +31,13 @@ export async function requestLoginCode(
   const emailHash = await emailHashOf(email);
   const now = new Date();
 
-  // Consent at login: the login screen shows the consent text BEFORE the code is requested, and
-  // the request carries the version it showed. No consent in this request and none on record for
-  // this address = no code (and so no email) at all.
-  const consentGivenNow = consentTextVersion === CONSENT_TEXT_VERSION;
-  if (!consentGivenNow && !(await addressHasConsent(env, email))) return 'consent_required';
+  // Consent tied to verification: the login screen shows the consent text BEFORE the code is
+  // requested, and the request carries the version it showed — this CLICK is what's being
+  // checked here, and on its own it only ever allows the one login-code email below (never a
+  // non-login email; see emailGate.ts). No click in this request and no prior VERIFIED consent
+  // on record for this address = no code (and so no email) at all.
+  const consentClickedNow = consentTextVersion === CONSENT_TEXT_VERSION;
+  if (!consentClickedNow && !(await addressHasConsent(env, email))) return 'consent_required';
 
   const path = loginCodePath(emailHash);
   const existing = await env.db.get<LoginCodeDoc>(path);
@@ -56,9 +58,9 @@ export async function requestLoginCode(
     sendsInWindow,
     windowStart,
     lastSentAt: now.toISOString(),
-    ...(consentGivenNow ? { consentAt: now.toISOString(), consentTextVersion: CONSENT_TEXT_VERSION } : {}),
+    ...(consentClickedNow ? { consentClickedAt: now.toISOString(), consentVersion: CONSENT_TEXT_VERSION } : {}),
   } satisfies LoginCodeDoc);
-  await sendEmailWithConsent(env, loginCodeEmail(email, code), consentGivenNow ? { kind: 'login-request' } : undefined);
+  await sendEmailWithConsent(env, loginCodeEmail(email, code), consentClickedNow ? { kind: 'login-request' } : undefined);
   return 'code_sent';
 }
 
@@ -121,8 +123,8 @@ export async function verifyLoginCode(env: Env, rawEmail: string, rawCode: strin
   if (outcome !== 'ok') return { outcome };
 
   const now = new Date();
-  const consent = doc?.consentAt && doc.consentTextVersion
-    ? { consentAt: doc.consentAt, consentTextVersion: doc.consentTextVersion }
+  const consent = doc?.consentClickedAt && doc.consentVersion
+    ? { consentClickedAt: doc.consentClickedAt, consentVerifiedAt: now.toISOString(), consentVersion: doc.consentVersion }
     : undefined;
   const { familyId } = await env.db.runTransaction((tx) => getOrCreateFamilyIdInTx(tx, rawEmail, now.toISOString(), consent));
   return { outcome: 'ok', familyId };

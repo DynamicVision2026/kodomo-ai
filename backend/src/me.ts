@@ -56,7 +56,7 @@ export async function buildMeResponse(env: Env, familyId: string): Promise<MeRes
       .map((p) => ({ id: p.id, avatarId: p.data.avatarId, nicknameId: p.data.nicknameId, stage: p.data.stage })),
     trials: trialDocs.map((t) => ({ moduleId: t.id, state: trialState(t.data), endsAt: t.data.endsAt })),
     courseAllowed,
-    consentRecorded: !!family.consentAt && !!family.consentTextVersion,
+    consentRecorded: !!family.consentVerifiedAt && !!family.consentVersion,
   };
 }
 
