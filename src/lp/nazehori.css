@@ -260,12 +260,6 @@
 .nz-notice-d a {
   color: var(--nz-slate);
 }
-.nz-refund-note {
-  margin: 1rem 0 0;
-  color: var(--nz-muted);
-  font-size: 0.85rem;
-  text-align: left;
-}
 .nz-purchase-status {
   margin: 0.75rem 0 0;
   color: var(--nz-ink);

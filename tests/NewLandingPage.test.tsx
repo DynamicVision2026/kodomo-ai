@@ -68,10 +68,11 @@ describe('NewLandingPage (COPY-01)', () => {
     }
   });
 
-  it('renders all 15 FAQ questions, with the refund answer starred, using the exact legally-approved sentence plus the A6 gap-fill consent-decline bullet', () => {
+  it('renders all 14 FAQ questions (age question removed, flip-prep 1 Oct 2026), with the refund answer starred, using the exact legally-approved sentence plus the A6 gap-fill consent-decline bullet', () => {
     render(<NewLandingPage />);
     const dts = document.querySelectorAll('.nz-faq-card dt');
-    expect(dts).toHaveLength(15);
+    expect(dts).toHaveLength(14);
+    expect(Array.from(dts).some((dt) => dt.textContent?.includes('何歳'))).toBe(false);
     const refundDt = Array.from(dts).find((dt) => dt.textContent?.includes('返金はできますか？'));
     expect(refundDt?.textContent).toBe('★ 返金はできますか？');
     const refundDd = refundDt?.nextElementSibling;
@@ -87,7 +88,7 @@ describe('NewLandingPage (COPY-01)', () => {
     expect(text).toContain('ログイン時の同意をいただけないためにご利用になれない場合は'.replace(/\s+/g, ''));
   });
 
-  it('the price section shows the ¥4,980 amount, household-licence facts, the ★ refund note, and the prior-Module-1-buyer line', () => {
+  it('the price section shows the ¥4,980 amount, household-licence facts, and the prior-Module-1-buyer line', () => {
     render(<NewLandingPage />);
     const price = document.querySelector('.nz-price-card')!;
     expect(price.textContent).toContain('¥4,980');
@@ -95,7 +96,15 @@ describe('NewLandingPage (COPY-01)', () => {
     expect(price.textContent).toContain('子どものプロフィール3人まで・端末5台まで');
     expect(price.textContent).toContain('プレイグラウンドは無料です');
     expect(price.textContent).toContain('以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。');
-    expect(price.querySelector('.nz-refund-note')?.textContent).toContain('ご購入から10日以内で');
+  });
+
+  it('final report follow-up (1 Oct 2026): the price section shows the consent-refund sentence exactly once (inside Notice D), with no separate duplicate paragraph', () => {
+    render(<NewLandingPage />);
+    const price = document.querySelector('.nz-price-card')!;
+    expect(price.querySelector('.nz-refund-note')).toBeNull();
+    expect(price.querySelectorAll('.nz-notice-d')).toHaveLength(1);
+    const matches = (price.textContent ?? '').match(/同意いただけない場合は、ログインできないため/g) ?? [];
+    expect(matches).toHaveLength(1);
   });
 
   it('A6 gap-fill (Founder, flip-prep 1 Oct 2026): Notice D (the login-consent disclosure, item 5) appears above the buy button, same as every other buy-button surface', () => {
@@ -104,6 +113,15 @@ describe('NewLandingPage (COPY-01)', () => {
     expect(notice).not.toBeNull();
     expect(notice?.textContent).toContain('保護者の方のメールアドレスでのログインが必要です');
     expect(notice?.querySelector('a')).toHaveAttribute('href', '/legal/privacy/');
+  });
+
+  it('Founder follow-up (1 Oct 2026): no age/grade reference anywhere — family-only positioning', () => {
+    render(<NewLandingPage />);
+    expect(screen.getByText('家族みんなで。')).toBeInTheDocument();
+    const text = document.body.textContent ?? '';
+    for (const banned of ['歳', '年生', '学年']) {
+      expect(text).not.toContain(banned);
+    }
   });
 
   it('never uses retired naming ("お試し", "体験期間", "トライアル") anywhere', () => {
