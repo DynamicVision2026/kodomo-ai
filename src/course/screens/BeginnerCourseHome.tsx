@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { Icon, plantSymbolIdForStage } from '../Icon';
 import { Plane } from '../../ad12/Plane';
 import { SiteHeader } from '../../ad12/SiteHeader';
+import { pontaStandingUrl } from '../characterArt';
 import { courseUi } from '../content/courseManifest';
 import type { CourseBeginnerLesson, CourseBeginnerManifest } from '../content/types';
 import {
@@ -75,6 +76,7 @@ export function BeginnerCourseHome({
         homeHref="/course/beginner/"
       />
       <div className="course-home__heading-row">
+        <img src={pontaStandingUrl} alt="" className="course-home__character" aria-hidden="true" />
         <div>
           <h1 className="ad12-reading-text course-home__title">{courseUi.beginnerGardenTitle}</h1>
           <p className="ad12-ui-text course-home__subtitle">{courseUi.gardenSubtitle}</p>

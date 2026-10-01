@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { MoveCard } from '../../ad12/MoveCard';
 import { Plane } from '../../ad12/Plane';
 import { DialoguePlane } from '../DialoguePlane';
+import { hatenaQuestionUrl } from '../characterArt';
 import { useVoiceQueue } from '../useVoiceQueue';
 import { useAudioError } from '../useAudioError';
 import { Ruby } from '../../engine/ruby';
@@ -117,7 +118,7 @@ export function AuditScreen({ lessonId, item, position, onItemDone, onNext, onBa
       {phase.kind === 'result' && card && (
         <>
           <p className="ad12-ui-text course-exercise__chosen-chip">{card[1]}</p>
-          <DialoguePlane className="course-exercise__feedback" speaker={courseUi.practice.feedbackSpeaker} text={card[2]} />
+          <DialoguePlane className="course-exercise__feedback" speaker={courseUi.practice.feedbackSpeaker} text={card[2]} iconUrl={hatenaQuestionUrl} />
           {resultAudioFailed && (
             <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retryAudio}>{courseUi.audioRetryLabel}</button>
           )}

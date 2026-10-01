@@ -13,12 +13,22 @@ export interface DialoguePlaneProps {
   speaker: string;
   text: string;
   className?: string;
+  /** Course redesign (Founder, 1 Oct 2026): real character art next to the speaker label — only
+   *  ever passed where `speaker` genuinely names that character (e.g. the practice/audit feedback
+   *  panels, whose `speaker` is literally courseUi's own「ハテナ」) so the art never contradicts
+   *  the text next to it. Omitted (as before) for every dialogue line whose speaker is some other
+   *  open-ended cast member (a parent, a teacher, ...). Decorative only (`speaker` itself already
+   *  carries the name for assistive tech) — `alt=""`, `aria-hidden`, no separate alt text needed. */
+  iconUrl?: string;
 }
 
-export function DialoguePlane({ speaker, text, className }: DialoguePlaneProps) {
+export function DialoguePlane({ speaker, text, className, iconUrl }: DialoguePlaneProps) {
   return (
     <Plane className={className}>
-      <p className="ad12-ui-text course-dialogue__speaker">{speaker}</p>
+      <p className="ad12-ui-text course-dialogue__speaker">
+        {iconUrl && <img src={iconUrl} alt="" className="course-dialogue__speaker-icon" aria-hidden="true" />}
+        {speaker}
+      </p>
       <p className="ad12-reading-text"><Ruby text={text} /></p>
     </Plane>
   );
