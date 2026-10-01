@@ -1,0 +1,319 @@
+/**
+ * Marketing design-pack redesign (Founder, 1 Oct 2026) — "nazehori-tokens.css (colors, Zen Kaku
+ * Gothic New font, radii, shadows) and the SVGs in svg/ as the source of truth. They replace the
+ * '？' mascot and flower icons." This file imports that token sheet verbatim (src/lp/assets/
+ * nazehori-tokens.css) and defines the component classes the redesigned LandingPage.tsx/
+ * NewLandingPage.tsx use — shared by both pages, same as landing-page.css already is.
+ *
+ * Design rule carried through every class below: "only one yellow (--nz-sun) element per
+ * screen" (Founder's own instruction #1) — the yellow only ever appears on the one primary buy
+ * button and the one `.nz-mark` headline highlight, never on both at once in the same viewport
+ * section, and never as a second competing accent anywhere else.
+ */
+@import './assets/nazehori-tokens.css';
+
+.nz-page {
+  background: var(--nz-bg);
+  color: var(--nz-ink);
+}
+
+/* 2. Header: ナゼホリ left, ログイン right. */
+.nz-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  max-width: 42rem;
+  margin: 0 auto;
+}
+.nz-logo {
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: var(--nz-ink);
+}
+.nz-header-login {
+  color: var(--nz-ink);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--nz-r-pill);
+  background: var(--nz-surface);
+  box-shadow: var(--nz-shadow);
+}
+
+/* 3. Hero. */
+.nz-hero {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 2.5rem;
+  text-align: center;
+}
+.nz-door {
+  display: inline-block;
+  padding: 0.3rem 1rem;
+  border-radius: var(--nz-r-pill);
+  background: var(--nz-surface);
+  color: var(--nz-slate);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+.nz-hero h1 {
+  font-size: 1.7rem;
+  line-height: 1.6;
+  font-weight: 900;
+  margin: 0 0 1rem;
+}
+.nz-hero .nz-mark {
+  padding: 0 0.1em;
+}
+.nz-hero-art {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.nz-hero-art img {
+  display: block;
+}
+/* ポン太 is the large, readable-on-a-phone figure; ハテナ is the smaller companion beside it. */
+.nz-hero-ponta {
+  width: 160px;
+  height: auto;
+}
+.nz-hero-hatena {
+  width: 88px;
+  height: auto;
+  margin-bottom: 0.5rem;
+}
+.nz-subhead {
+  color: var(--nz-muted);
+  margin-bottom: 1.5rem;
+}
+.nz-family-note {
+  color: var(--nz-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.nz-cta-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+.nz-cta {
+  display: inline-block;
+  padding: 0.85rem 1.8rem;
+  border-radius: var(--nz-r-pill);
+  border: none;
+  text-decoration: none;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  max-width: 22rem;
+  box-sizing: border-box;
+}
+.nz-cta:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+/* Main buy button — the one accent yellow in the hero, bottom-edge shadow stands in for a
+   pressed/3-D edge rather than the page's own soft ambient shadow. */
+.nz-cta--buy {
+  background: var(--nz-sun);
+  color: var(--nz-ink);
+  box-shadow: 0 4px 0 var(--nz-sun-press);
+}
+.nz-cta--trial {
+  background: var(--nz-surface);
+  color: var(--nz-ink);
+  border: var(--nz-outline) solid var(--nz-ink);
+}
+.nz-cta-error {
+  margin: 0.5rem 0 0;
+  color: #b0342f;
+  font-size: 0.9rem;
+  text-align: center;
+}
+.nz-login-link {
+  display: inline-block;
+  margin-top: 0.25rem;
+  color: var(--nz-slate);
+  font-size: 0.85rem;
+}
+
+/* 4. Full-width navy band. */
+.nz-band-navy {
+  background: var(--nz-navy);
+  color: #fff;
+  padding: 2.5rem 1.25rem;
+}
+.nz-band-navy .nz-band-inner {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+.nz-band-navy h2 {
+  color: #fff;
+  margin: 0 0 1rem;
+}
+.nz-band-navy p {
+  color: #fff;
+  opacity: 0.92;
+}
+
+/* generic white card, used for sections/price/FAQ. */
+.nz-section {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+.nz-card {
+  background: var(--nz-surface);
+  border-radius: var(--nz-r-card);
+  box-shadow: var(--nz-shadow);
+  padding: 1.5rem 1.25rem;
+}
+.nz-skill-flow {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--nz-ink);
+}
+
+/* 5. The 7 lessons grid. */
+.nz-lessons-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+  margin-top: 1.25rem;
+}
+@media (min-width: 700px) {
+  .nz-lessons-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.nz-lesson-card {
+  background: var(--nz-surface);
+  border-radius: var(--nz-r-chip);
+  box-shadow: var(--nz-shadow);
+  padding: 1rem 0.85rem;
+  text-align: center;
+}
+.nz-lesson-card img {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 0.5rem;
+  display: block;
+}
+.nz-lesson-card-step {
+  font-size: 0.75rem;
+  color: var(--nz-muted);
+  margin: 0 0 0.25rem;
+}
+.nz-lesson-card-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin: 0;
+}
+.nz-lesson-card-label {
+  font-size: 0.8rem;
+  color: var(--nz-muted);
+  margin: 0.2rem 0 0;
+}
+
+/* 6. Price card — one yellow buy button, Notice D appears once above it. */
+.nz-price-card {
+  text-align: center;
+}
+.nz-price-anchor {
+  color: var(--nz-muted);
+  margin: 0 0 0.5rem;
+}
+.nz-price-amount {
+  font-size: 1.9rem;
+  font-weight: 900;
+  margin: 0.25rem 0 1rem;
+}
+.nz-price-card ul {
+  text-align: left;
+  display: inline-block;
+  margin: 0 0 1.25rem;
+  padding-left: 1.2rem;
+  color: var(--nz-ink);
+}
+.nz-price-card ul li {
+  margin-bottom: 0.4rem;
+}
+.nz-notice-d {
+  margin: 0 0 1rem;
+  color: var(--nz-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 32rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+.nz-notice-d a {
+  color: var(--nz-slate);
+}
+.nz-refund-note {
+  margin: 1rem 0 0;
+  color: var(--nz-muted);
+  font-size: 0.85rem;
+  text-align: left;
+}
+.nz-purchase-status {
+  margin: 0.75rem 0 0;
+  color: var(--nz-ink);
+}
+.nz-purchase-status--paid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* 7. FAQ cards + footer. */
+.nz-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+.nz-faq-card dt {
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+}
+.nz-faq-card dd {
+  margin: 0;
+  color: var(--nz-ink);
+}
+.nz-faq-refund-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.nz-faq-refund-list li {
+  margin-bottom: 0.4rem;
+}
+
+.nz-footer {
+  background: var(--nz-navy);
+  color: #fff;
+  padding: 2rem 1.25rem;
+}
+.nz-footer-inner {
+  max-width: 42rem;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem 1.5rem;
+  font-size: 0.85rem;
+}
+.nz-footer a {
+  color: #fff;
+}

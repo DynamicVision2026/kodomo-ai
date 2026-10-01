@@ -1,0 +1,33 @@
+/* ナゼホリ design tokens — matches the launch videos and story shorts (v1, 2026-10-01) */
+@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap');
+:root{
+  /* field */
+  --nz-bg:#EEF0F4;        /* soft blue-grey page ground: "doing" */
+  --nz-bg-2:#E3E6F0;      /* recessed panels, table heads */
+  --nz-surface:#FFFFFF;   /* every readable card */
+  --nz-navy:#232849;      /* deep navy sections: "listening", statements, end card */
+  --nz-ink:#1B1F3A;       /* all text and all illustration outlines */
+  --nz-muted:#5E6180;     /* labels, captions, secondary text */
+  --nz-line:#D3D5E0;      /* hairlines */
+  --nz-slate:#5B628F;     /* quiet accents, URLs */
+  /* the one accent */
+  --nz-sun:#FFD23F;       /* "your turn" / the key phrase. One yellow thing per view. */
+  --nz-sun-press:#D9A900; /* button bottom edge */
+  /* progress only (garden) */
+  --nz-leaf:#5FB08A; --nz-petal:#F29AAC;
+  /* characters */
+  --nz-hatena-1:#9DB8F5; --nz-hatena-2:#6F7FE0; --nz-apricot:#F3A55E;
+  --nz-oat:#F2E6CF; --nz-toast:#A8744A; --nz-tee:#6BAA6B; --nz-cardigan:#F6B98A; --nz-blush:#F7A9A0;
+  /* type */
+  --nz-font:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  /* shape */
+  --nz-r-card:28px; --nz-r-chip:24px; --nz-r-pill:999px; --nz-outline:4px;
+  --nz-shadow:0 16px 32px -22px rgba(40,46,120,.55);
+  --nz-shadow-lg:0 22px 44px -26px rgba(40,46,120,.55);
+  /* motion */
+  --nz-ease-pop:cubic-bezier(.34,1.56,.64,1); --nz-ease-out:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--nz-bg);color:var(--nz-ink);font-family:var(--nz-font);word-break:keep-all;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased}
+/* the yellow marker under a key phrase */
+.nz-mark{background:linear-gradient(transparent 70%,var(--nz-sun) 70%);background-repeat:no-repeat}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

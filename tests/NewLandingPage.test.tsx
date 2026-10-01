@@ -39,14 +39,14 @@ describe('NewLandingPage (COPY-01)', () => {
 
   it('shows the COPY-01 hero headline and both CTAs', () => {
     render(<NewLandingPage />);
-    expect(screen.getByText('AIが答えたら、もう一問。')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('AIが答えたら、もう一問。');
     expect(screen.getByText('無料のプレイグラウンドで、あそんでみる').closest('a')).toHaveAttribute('href', '/login/?next=/play/');
     expect(screen.getByText('入門コースを見る（¥4,980 税込・買い切り）').closest('a')).toHaveAttribute('href', '#price');
   });
 
   it('renders all 7 entrance cards in order, each with its tool, situation and example question', () => {
     render(<NewLandingPage />);
-    const cards = document.querySelectorAll('.lp__entrance');
+    const cards = document.querySelectorAll('.nz-lesson-card');
     expect(cards).toHaveLength(7);
     expect(cards[0]!.textContent).toContain('おべんとうばこ');
     expect(cards[0]!.textContent).toContain('ふたを あける');
@@ -70,7 +70,7 @@ describe('NewLandingPage (COPY-01)', () => {
 
   it('renders all 15 FAQ questions, with the refund answer starred, using the exact legally-approved sentence plus the A6 gap-fill consent-decline bullet', () => {
     render(<NewLandingPage />);
-    const dts = document.querySelectorAll('.lp__faq dt');
+    const dts = document.querySelectorAll('.nz-faq-card dt');
     expect(dts).toHaveLength(15);
     const refundDt = Array.from(dts).find((dt) => dt.textContent?.includes('返金はできますか？'));
     expect(refundDt?.textContent).toBe('★ 返金はできますか？');
@@ -89,18 +89,18 @@ describe('NewLandingPage (COPY-01)', () => {
 
   it('the price section shows the ¥4,980 amount, household-licence facts, the ★ refund note, and the prior-Module-1-buyer line', () => {
     render(<NewLandingPage />);
-    const price = document.querySelector('.lp__price')!;
+    const price = document.querySelector('.nz-price-card')!;
     expect(price.textContent).toContain('¥4,980');
     expect(price.textContent).toContain('買い切り・月額料金なし');
     expect(price.textContent).toContain('子どものプロフィール3人まで・端末5台まで');
     expect(price.textContent).toContain('プレイグラウンドは無料です');
     expect(price.textContent).toContain('以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。');
-    expect(price.querySelector('.lp__refund-note')?.textContent).toContain('ご購入から10日以内で');
+    expect(price.querySelector('.nz-refund-note')?.textContent).toContain('ご購入から10日以内で');
   });
 
   it('A6 gap-fill (Founder, flip-prep 1 Oct 2026): Notice D (the login-consent disclosure, item 5) appears above the buy button, same as every other buy-button surface', () => {
     render(<NewLandingPage />);
-    const notice = document.querySelector('.lp__price .lp__notice-d');
+    const notice = document.querySelector('.nz-price-card .nz-notice-d');
     expect(notice).not.toBeNull();
     expect(notice?.textContent).toContain('保護者の方のメールアドレスでのログインが必要です');
     expect(notice?.querySelector('a')).toHaveAttribute('href', '/legal/privacy/');
@@ -116,10 +116,10 @@ describe('NewLandingPage (COPY-01)', () => {
 
   it('"72時間"/"無料体験" appear exactly once — the FAQ question that explicitly says the trial is gone — never as a live offer elsewhere', () => {
     render(<NewLandingPage />);
-    const dts = Array.from(document.querySelectorAll('.lp__faq dt'));
+    const dts = Array.from(document.querySelectorAll('.nz-faq-card dt'));
     const trialFaqIndex = dts.findIndex((dt) => dt.textContent?.includes('72時間の無料体験は、なくなったのですか？'));
     expect(trialFaqIndex).toBeGreaterThanOrEqual(0);
-    const dds = document.querySelectorAll('.lp__faq dd');
+    const dds = document.querySelectorAll('.nz-faq-card dd');
     expect(dds[trialFaqIndex]!.textContent).toContain('終了いたしました');
 
     const text = document.body.textContent ?? '';

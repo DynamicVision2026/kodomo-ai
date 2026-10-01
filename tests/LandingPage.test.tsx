@@ -223,7 +223,7 @@ describe('LandingPage', () => {
     // the trailing slash fell through to the LP's own index.html instead, a real bug this
     // playwright-verified fix closes (see the WO-21 Phase 8 commit for the reproduction).
     // Scoped to the footer: Notice D (item 5) also links to /legal/privacy/ with the same label.
-    const footer = within(container.querySelector('.lp__footer')!);
+    const footer = within(container.querySelector('.nz-footer')!);
     expect(footer.getByText('特定商取引法に基づく表記').closest('a')).toHaveAttribute('href', '/legal/tokushoho/');
     expect(footer.getByText('プライバシーポリシー').closest('a')).toHaveAttribute('href', '/legal/privacy/');
   });
@@ -242,10 +242,10 @@ describe('LandingPage', () => {
     expect(screen.getByText('お子さまのお名前や生年月日は登録しません')).toBeInTheDocument();
     expect(screen.getByText('学習の記録はアカウントに保存され、機種を変えても続きから遊べます')).toBeInTheDocument();
 
-    const main = document.querySelector('main.lp')!;
+    const main = document.querySelector('main.nz-page')!;
     const children = Array.from(main.children);
-    const heroIndex = children.findIndex((el) => el.classList.contains('lp__hero'));
-    const trustIndex = children.findIndex((el) => el.classList.contains('lp__trust'));
+    const heroIndex = children.findIndex((el) => el.classList.contains('nz-hero'));
+    const trustIndex = children.findIndex((el) => el.classList.contains('nz-trust'));
     expect(trustIndex).toBe(heroIndex + 1);
   });
 
@@ -279,7 +279,7 @@ describe('LandingPage', () => {
     // WO-31: 冬休みスペシャルシート no longer appears in the unconditional 届くもの list — it's
     // gated to 創設ファミリー特典 only (in the price section, asserted above), never promised to
     // every buyer.
-    expect(document.querySelector('.lp__price')?.textContent).toContain('冬休みスペシャルシート');
+    expect(document.querySelector('.nz-price-card')?.textContent).toContain('冬休みスペシャルシート');
   });
 
   it('Founder positioning decision: markets as a whole-family experience, with no grade/age reference anywhere (item A3, flip-prep 1 Oct 2026)', () => {
@@ -301,7 +301,7 @@ describe('LandingPage', () => {
 
   it('item A4 (flip-prep): a visible ログイン link sits in the header and near both buy buttons', () => {
     render(<LandingPage />);
-    expect(screen.getByText('ログイン', { selector: '.lp__header-login' })).toHaveAttribute('href', '/login/');
+    expect(screen.getByText('ログイン', { selector: '.nz-header-login' })).toHaveAttribute('href', '/login/');
     const loginLinks = screen.getAllByText('すでにご購入の方はこちら（ログイン）');
     expect(loginLinks.length).toBeGreaterThanOrEqual(2);
     for (const link of loginLinks) {
@@ -311,9 +311,8 @@ describe('LandingPage', () => {
 
   it('final report follow-up (1 Oct 2026): the price section shows the login-consent refund promise exactly once (Notice D), not duplicated in a separate paragraph', () => {
     render(<LandingPage />);
-    const price = document.querySelector('.lp__price')!;
-    expect(price.querySelectorAll('.lp__notice-d')).toHaveLength(1);
-    expect(price.querySelector('.lp__price-refund-note')).toBeNull();
+    const price = document.querySelector('.nz-price-card')!;
+    expect(price.querySelectorAll('.nz-notice-d')).toHaveLength(1);
     const matches = (price.textContent ?? '').match(/同意いただけない場合は、ログインできないため/g) ?? [];
     expect(matches).toHaveLength(1);
   });
