@@ -29,8 +29,11 @@ import './nazehori.css';
  * public name changes (入門コース, never "モジュール1" — COPY-01 §1's naming table).
  *
  * Two things this file deliberately leaves out of COPY-01's own section list:
- * - The old grade-picker (1・2年/3・4年/5・6年) — COPY-01's §2 section list doesn't include it;
- *   the new copy positions the product as "8歳ごろから" for the whole family instead (§⑥).
+ * - The old grade-picker (1・2年/3・4年/5・6年) — COPY-01's §2 section list doesn't include it.
+ *   COPY-01 itself originally positioned the product as "8歳ごろから" for the whole family (§⑥);
+ *   the Founder's later flip-prep decision (1 Oct 2026, same one `LandingPage.tsx` documents)
+ *   removed every age/grade reference from both landing pages entirely — family-only positioning
+ *   now, no age anywhere, including this file's FAQ and 「だれのため？」 section below.
  * - A/B headline testing — COPY-01 gives one headline, not two variants.
  * Both are flagged in this work order's own report for the Coordinator to confirm.
  *
@@ -84,7 +87,6 @@ const [REFUND_SENTENCE, CONSENT_REFUND_SENTENCE] = FAQ_REFUND_BULLETS as readonl
 const FAQ_ITEMS: Array<{ q: string; a: string; extra?: string }> = [
   { q: '無料で、どこまで使えますか？', a: 'プレイグラウンドは、家族のアカウントを作れば無料で使えます。入門コースは有料（¥4,980 税込・買い切り）です。まずはプレイグラウンドで、ナゼホリの雰囲気をたしかめてみてください。' },
   { q: '72時間の無料体験は、なくなったのですか？', a: 'はい。入門コースの公開にともない終了いたしました。かわりに、プレイグラウンドを無料でお使いいただけます。' },
-  { q: '何歳から使えますか？', a: '8歳ごろからが目安です。音声とことばは、小学3年生が一度聞いて分かるように作っています。年上のお子さんや大人も、いっしょに楽しめます。' },
   { q: '親がAIにくわしくなくても大丈夫ですか？', a: '大丈夫です。おうちの方に、正しい答えは求めていません。答えに困ったら「分からないね。いっしょに調べてみよう」と言ってください。それも、このコースのゴールの一つです。' },
   { q: 'アプリの中で、AIと話すのですか？', a: 'いいえ。アプリの中で、AIにはつながりません。ご家庭でAIを使うかどうかは、おうちの方がお決めください。' },
   { q: '質問の上手・下手を、判定しますか？', a: 'しません。点数や順位もありません。入り口を1回つかえたら、それで成功です。' },
@@ -159,7 +161,7 @@ export function NewLandingPage() {
             無料のプレイグラウンドで、あそんでみる
           </a>
         </div>
-        <p className="nz-family-note">8歳ごろから。家族みんなで。</p>
+        <p className="nz-family-note">家族みんなで。</p>
         <a className="nz-login-link" href="/login/">すでにご購入の方はこちら（ログイン）</a>
       </section>
 
@@ -227,7 +229,7 @@ export function NewLandingPage() {
           <h2>だれのため？</h2>
           <p>問う力に、年齢はありません。</p>
           <p>
-            8歳ごろから使えます。音声とことばは、小学3年生が一度聞いて分かるように作りました。
+            音声とことばは、お子さんが一人で聞いても分かるように作りました。
             きょうだいも、おうちの方も、おじいちゃん・おばあちゃんも、いっしょにどうぞ。
           </p>
         </div>
@@ -296,7 +298,6 @@ export function NewLandingPage() {
               <a className="nz-cta nz-cta--buy" href="/course/beginner/">入門コースをひらく</a>
             </div>
           )}
-          <p className="nz-refund-note">★ {REFUND_SENTENCE}</p>
         </div>
       </section>
 
