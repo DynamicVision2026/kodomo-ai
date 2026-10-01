@@ -28,6 +28,10 @@ export const CONSENT_LINKS: readonly ConsentLink[] = [
 
 export const CONSENT_BUTTON_LABEL = '同意して、コードを送る';
 
+/** Added 1 Oct 2026 (Founder addendum to text C) — shown under the button, above
+ *  `CONSENT_DECLINE_NOTE`. */
+export const CONSENT_RECORD_NOTE = '・ボタンを押した日時を、同意の記録として保存します。';
+
 export const CONSENT_DECLINE_NOTE =
   '同意しない場合は、コードを送れないため、ログインできません。お問い合わせ：';
 export const CONSENT_CONTACT_EMAIL = COMPANY.email;

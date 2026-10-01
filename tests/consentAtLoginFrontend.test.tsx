@@ -8,7 +8,10 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CONSENT_TEXT_VERSION } from '../shared/consent';
-import { CONSENT_BUTTON_LABEL, CONSENT_CONTACT_EMAIL, CONSENT_DECLINE_NOTE, CONSENT_LEAD, CONSENT_LINKS } from '../src/legal/consentText';
+import {
+  CONSENT_BUTTON_LABEL, CONSENT_CONTACT_EMAIL, CONSENT_DECLINE_NOTE, CONSENT_LEAD, CONSENT_LINKS,
+  CONSENT_RECORD_NOTE,
+} from '../src/legal/consentText';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -50,11 +53,16 @@ describe('/login — consent text before the code is sent', () => {
       expect(anchor).toHaveAttribute('target', '_blank');
       expect(anchor.getAttribute('rel')).toContain('noopener');
     }
-    // The decline note sits UNDER the button, with the contact address.
+    // Both notes sit UNDER the button — the record note first, then the decline note with the
+    // contact address — per the Founder's addendum (1 Oct 2026).
     const button = screen.getByRole('button', { name: '同意して、コードを送る' });
-    const note = screen.getByText((_, el) => el?.className === 'login__consent-note');
-    expect(note.textContent).toBe(CONSENT_DECLINE_NOTE + CONSENT_CONTACT_EMAIL);
-    expect(button.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const notes = screen.getAllByText((_, el) => el?.className === 'login__consent-note');
+    expect(notes).toHaveLength(2);
+    const [recordNote, declineNote] = notes;
+    expect(recordNote!.textContent).toBe(CONSENT_RECORD_NOTE);
+    expect(declineNote!.textContent).toBe(CONSENT_DECLINE_NOTE + CONSENT_CONTACT_EMAIL);
+    expect(button.compareDocumentPosition(recordNote!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(recordNote!.compareDocumentPosition(declineNote!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole('link', { name: CONSENT_CONTACT_EMAIL })).toHaveAttribute('href', `mailto:${CONSENT_CONTACT_EMAIL}`);
     expect(CONSENT_BUTTON_LABEL).toBe('同意して、コードを送る');
     expect(screen.getByRole('button', { name: '同意して、コードを送る' })).toBeInTheDocument();
