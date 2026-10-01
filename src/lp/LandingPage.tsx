@@ -3,9 +3,12 @@ import { load, save } from '../engine/storage';
 import { track, setVariant } from '../engine/analytics';
 import { fetchMe } from '../family/api';
 import { usePurchaseFlow } from '../family/usePurchaseFlow';
-import { CONSENT_DECLINE_REFUND_NOTE } from '../legal/consentText';
+import { CONSENT_DECLINE_REFUND_NOTE, FAQ_REFUND_BULLETS } from '../legal/consentText';
 import { NoticeD } from '../legal/NoticeD';
+import { Mascot } from '../shell/Mascot';
 import moduleJson from '../modules/m1/module.json';
+import gardenPlantSpriteRaw from '../course/assets/icons/garden-plant.sprite.svg?raw';
+import '../ad12/tokens.css';
 import './landing-page.css';
 
 /** AD-16 §1: the one module this storefront sells today — same source module.json already
@@ -19,18 +22,14 @@ const PURCHASE_MODULE_ID = moduleJson.id;
  * "Parent surfaces say 'thinking-training course'").
  *
  * Content status, read before editing:
- * - Sections 1, 2, 4, 5, 6, 7, 8, 9 (headline text, kit list, safety claims, roadmap, price
- *   anchor) use wording given verbatim in the spec, or restate features this repo has actually
- *   built and this session verified (no LLM at runtime, no free-text input, no PII in storage,
- *   no ad code, household-licence entitlement model).
- * - Section 3 (現状) deliberately does NOT cite survey statistics. Spec v0.5 §10 asks for that,
- *   but real citations are the founder's research to supply — inventing numbers here would be
- *   worse than an honest values-framed placeholder.
- * - Section 7A's four "Allowed" sentences are copied verbatim from spec v0.5 §1A, which marks
- *   them "draft, pending native and legal check" — that check has not happened. Do not treat
- *   this section as cleared for public launch; its source links are placeholders pending a
- *   confirmed, stable MEXT URL (this session would not guess one).
- * - Section 11's legal links point to this app's own /legal/tokushoho and /legal/privacy pages
+ * - The headline, trust banner, kit list, safety claims, and roadmap use wording given verbatim
+ *   in the spec, or restate features this repo has actually built and this session verified (no
+ *   LLM at runtime, no free-text input, no PII in storage, no ad code, household-licence
+ *   entitlement model).
+ * - The 「いま、家庭で起きていること」section deliberately does NOT cite survey statistics. Spec
+ *   v0.5 §10 asks for that, but real citations are the founder's research to supply — inventing
+ *   numbers here would be worse than an honest values-framed placeholder.
+ * - The footer's legal links point to this app's own /legal/tokushoho and /legal/privacy pages
  *   (src/legal), built from real company data the founder confirmed from soul-id.jp — still
  *   drafts pending the founder's own legal review, not a substitute for one.
  * - AD-13 correction (post-launch-check work order): the trust banner used to claim
@@ -40,57 +39,47 @@ const PURCHASE_MODULE_ID = moduleJson.id;
  *   AD-13-era claims instead: email-only sign-up (no password), no child name/birthdate ever
  *   collected, and progress synced to the account (not to "the cloud" in the vague sense the old
  *   slogan implied avoiding).
- * - Founder positioning decision (post-launch-check, wording only — no logic change): lessons
- *   stay designed for Grades 3-4 (the grade picker is unchanged), but the product is marketed as
- *   a whole-family experience — hero badge, a family-note line under the subhead, and a line in
- *   親子で遊びかた framing the child as the one who teaches the family back. The profile/device
- *   caps (3 profiles / 5 devices, AD-15) are now framed as a per-child record limit, paired with
- *   an explicit "no limit on how many family members join in" statement. All of this copy is
- *   pending 酒井先生's review, same as every other section marked so above.
+ * - Founder decision (flip-prep, 1 Oct 2026): every grade/age reference removed — lessons still
+ *   stay designed for Grades 3-4 internally (unchanged in the course itself), but the landing
+ *   page never surfaces a grade picker or a grade range in copy; positioned as family-only
+ *   instead (「親子で、家族みんなで」). The 「学びの方向性との対応」section (MEXT-alignment table)
+ *   is removed for the same flip-prep pass — its wording was explicitly marked pre-legal-review
+ *   draft and its source links were all literal `#` placeholders; never shown to a real visitor.
+ * - Item A5 (Founder, flip-prep 1 Oct 2026) visual pass: uses the course's real Push B design
+ *   tokens (src/ad12/tokens.css — the ink/paper/field/accent custom properties) and two
+ *   kinds of EXISTING art only: `<Mascot state="curious">` (src/shell/Mascot.tsx — the generic
+ *   「？」-curl blob already used across the course shell) and the growth-flower sprite
+ *   (src/course/assets/icons/garden-plant.sprite.svg, the garden's real たね/め/つぼみ/はな icons).
+ *   The request named three characters by name — ハテナ、アオイ、ポン太 — but only ポン太 has any
+ *   asset in this repo at all (voice lines, no art); ハテナ and アオイ are speaker-name strings
+ *   with no visual art anywhere in the codebase. Rather than invent new character art (explicitly
+ *   against this same instruction — "existing assets only; no new art"), this page uses the real
+ *   assets that DO exist and visually fit the brief (the same "？" mascot and flower-growth motif
+ *   the rest of the product already shows a parent during the course) and flags the gap here for
+ *   the Founder rather than silently drawing something new.
  */
+
+/** A5: one `<use>` against the growth-flower sprite, mounted once near the end of <main> — the
+ *  same real icons the course's own garden screen shows (src/course/Icon.tsx's own pattern). */
+function GrowthIcon({ stage, className }: { stage: 'seed' | 'sprout' | 'bud' | 'flower'; className?: string }) {
+  return (
+    <svg viewBox="0 0 60 60" className={className} aria-hidden="true">
+      <use href={`#p-${stage}`} />
+    </svg>
+  );
+}
 
 const HEADLINES: Record<'A' | 'B', string> = {
   A: '「AIの答えで終わる子」から、「もう一問、深掘りできる子」へ。',
   B: '親子で、同じスタートラインから。AI時代の「深掘り力」を育てる。',
 };
 const SUBHEAD =
-  '3・4年生の「なぜ？」が深くなる時期に。保護者も一緒に学べる思考トレーニング。' +
-  '子どもにとっては、ただ楽しいゲームです。';
+  '保護者も一緒に学べる思考トレーニング。子どもにとっては、ただ楽しいゲームです。';
 
 const TRUST_POINTS = [
   'メールアドレスだけで、かんたん登録（パスワード不要）',
   'お子さまのお名前や生年月日は登録しません',
   '学習の記録はアカウントに保存され、機種を変えても続きから遊べます',
-];
-
-const GRADE_BANDS = ['1・2年', '3・4年', '5・6年'] as const;
-type GradeBand = (typeof GRADE_BANDS)[number];
-
-const ALIGNMENT_ROWS = [
-  {
-    direction: '学習指導要領がめざす「思考力・判断力・表現力」',
-    text: '学習指導要領がめざす『思考力・判断力・表現力』の育成に沿って設計しています。',
-    sourceHref: '#', // TODO(founder/legal): confirm stable MEXT source URL before launch.
-    sourceLabel: '文部科学省 学習指導要領（出典リンクは公開前に確定）',
-  },
-  {
-    direction: '文部科学省 生成AIガイドライン Ver.2.0',
-    text: '文部科学省の生成AIガイドライン（Ver.2.0）の考え方 —— AIの答えは参考のひとつ、最後に判断するのは人 —— を、あそびにしました。',
-    sourceHref: '#',
-    sourceLabel: '文部科学省 生成AIガイドライン（出典リンクは公開前に確定）',
-  },
-  {
-    direction: '3年生から始まる探究的な学習',
-    text: '3年生から始まる『探究的な学習』の最初の一歩、『問いを立てる』『調べて深める』を家庭で。',
-    sourceHref: '#',
-    sourceLabel: '文部科学省 総合的な学習の時間（出典リンクは公開前に確定）',
-  },
-  {
-    direction: '次期学習指導要領（検討中）',
-    text: '次の学習指導要領では、3年生からの情報教育の充実が検討されています。',
-    sourceHref: '#',
-    sourceLabel: '中央教育審議会 資料（出典リンクは公開前に確定）',
-  },
 ];
 
 const KIT_ITEMS = [
@@ -111,7 +100,6 @@ const PURCHASE_ERROR_MESSAGE: Record<'not_configured' | 'other', string> = {
 
 export function LandingPage() {
   const [variant, setLocalVariant] = useState<'A' | 'B'>('A');
-  const [gradePick, setGradePick] = useState<GradeBand | null>(null);
   const { state: purchaseState, startPurchase: startPurchaseFlow } = usePurchaseFlow(PURCHASE_MODULE_ID);
 
   useEffect(() => {
@@ -121,11 +109,6 @@ export function LandingPage() {
     save(state); // persists the variant on first-ever load, when `empty()` just rolled it
     track('lp_view');
   }, []);
-
-  function pickGrade(band: GradeBand) {
-    setGradePick(band);
-    track('grade_pick', { band });
-  }
 
   /** A logged-out visitor is sent to /login/ first — no purchase-intent is ever created for an
    *  anonymous session — and lands back on /account/, where the exact same purchase flow this
@@ -149,8 +132,23 @@ export function LandingPage() {
 
   return (
     <main className="lp">
+      {/* A5: the growth-flower sprite mounted once, referenced by every <GrowthIcon> below via
+          `<use href="#p-...">` — same technique as src/course/main.tsx's own sprite mount. */}
+      <div aria-hidden="true" dangerouslySetInnerHTML={{ __html: gardenPlantSpriteRaw }} />
+
+      <header className="lp__header">
+        <span className="lp__logo">ナゼホリ</span>
+        {/* Item A4 (Founder, flip-prep 1 Oct 2026): a visible ログイン link, not just the buy
+            flow's own implicit redirect — a returning parent shouldn't have to click "購入する"
+            just to reach /login/. */}
+        <a className="lp__header-login" href="/login/">ログイン</a>
+      </header>
+
       <section className="lp__hero">
-        <p className="lp__door">小学3・4年生から、家族みんなで</p>
+        <div className="lp__hero-mascot">
+          <Mascot state="curious" />
+        </div>
+        <p className="lp__door">親子で、家族みんなで</p>
         <h1>{HEADLINES[variant]}</h1>
         <p className="lp__subhead">{SUBHEAD}</p>
         <p className="lp__family-note">問う力に、年齢はありません。お子さまを中心に、家族みんなで「もう一問」。</p>
@@ -167,6 +165,7 @@ export function LandingPage() {
             購入する ¥4,980（税込）
           </button>
         </div>
+        <a className="lp__login-link" href="/login/">すでにご購入の方はこちら（ログイン）</a>
         <NoticeD className="lp__notice-d" />
       </section>
 
@@ -176,29 +175,6 @@ export function LandingPage() {
             <li key={point}>{point}</li>
           ))}
         </ul>
-      </section>
-
-      <section className="lp__section lp__grade-pick">
-        <h2>どの学年で使いますか？</h2>
-        <div className="lp__grade-row">
-          {GRADE_BANDS.map((band) => (
-            <button
-              key={band}
-              type="button"
-              className={gradePick === band ? 'is-selected' : ''}
-              onClick={() => pickGrade(band)}
-            >
-              {band}
-            </button>
-          ))}
-        </div>
-        {gradePick && (
-          <p className="lp__grade-note">
-            {gradePick === '3・4年'
-              ? '今すぐ 3・4年生向けの内容でお楽しみいただけます。'
-              : 'まずは 3・4年生向けとして提供しています。他の学年向けは今後追加予定です。どなたでも体験いただけます。'}
-          </p>
-        )}
       </section>
 
       <section className="lp__section">
@@ -212,6 +188,14 @@ export function LandingPage() {
 
       <section className="lp__section lp__skill">
         <h2>身につく力</h2>
+        {/* A5: the same seed→sprout→bud→flower growth icons the course garden shows after every
+            lesson — here as a purely decorative echo of the 問う→…→ねっこ progression text. */}
+        <div className="lp__growth-row" aria-hidden="true">
+          <GrowthIcon stage="seed" className="lp__growth-icon" />
+          <GrowthIcon stage="sprout" className="lp__growth-icon" />
+          <GrowthIcon stage="bud" className="lp__growth-icon" />
+          <GrowthIcon stage="flower" className="lp__growth-icon" />
+        </div>
         <p className="lp__skill-flow">問う → 浅い答え → もう一問 → ねっこ</p>
         <p>最初の答えで止まらず、もう一問。これを繰り返す力を育てます。</p>
       </section>
@@ -246,25 +230,6 @@ export function LandingPage() {
         </ul>
       </section>
 
-      <section className="lp__section lp__alignment" id="alignment">
-        <h2>学びの方向性との対応</h2>
-        <p className="lp__alignment-caveat">
-          {/* Draft wording, spec v0.5 §1A — pending native-speaker and legal review before launch. */}
-          （このセクションの文言は法務チェック前の草案です）
-        </p>
-        <div className="lp__alignment-rows">
-          {ALIGNMENT_ROWS.map((row) => (
-            <div key={row.direction} className="lp__alignment-row">
-              <p className="lp__alignment-direction">{row.direction}</p>
-              <p className="lp__alignment-text">{row.text}</p>
-              <a className="lp__alignment-source" href={row.sourceHref}>
-                {row.sourceLabel}
-              </a>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <section className="lp__section">
         <h2>これから</h2>
         <ul>
@@ -275,6 +240,7 @@ export function LandingPage() {
       </section>
 
       <section className="lp__section lp__price" id="price">
+        <GrowthIcon stage="flower" className="lp__price-icon" />
         <h2>価格</h2>
         {/* Price display + wording needs the legal check per spec v0.5 §14 before launch. */}
         <p className="lp__price-anchor">AIスクール1か月分より安く、家族みんなで、買い切り。</p>
@@ -307,6 +273,7 @@ export function LandingPage() {
             <button type="button" className="lp__cta lp__cta--primary" onClick={startPurchase} disabled={purchaseState.kind === 'loading'}>
               購入する
             </button>
+            <a className="lp__login-link" href="/login/">すでにご購入の方はこちら（ログイン）</a>
           </>
         )}
         {purchaseState.kind === 'error' && (
@@ -340,11 +307,14 @@ export function LandingPage() {
             ログインコードは no-reply@domo-ai.com から届きます。届かない場合は、迷惑メールフォルダをご確認いただくか、このアドレスからの受信を許可してください。
           </dd>
           <dt>返金はできますか？</dt>
-          {/* AD-15: the general 10-day voluntary refund window isn't finalized yet — see the
-              price section's own note. Item 10 (Founder, 1 Oct 2026): the login-consent refund
-              guarantee below IS final and applies regardless of that pending policy. */}
+          {/* Item A2 (Founder, flip-prep 1 Oct 2026): the final refund policy, replacing the old
+              "近日公開予定" placeholder. */}
           <dd>
-            返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。{CONSENT_DECLINE_REFUND_NOTE}
+            <ul className="lp__faq-refund-list">
+              {FAQ_REFUND_BULLETS.map((bullet) => (
+                <li key={bullet}>{bullet}</li>
+              ))}
+            </ul>
           </dd>
           <dt>兄弟姉妹で使えますか？</dt>
           <dd>

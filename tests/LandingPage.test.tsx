@@ -51,13 +51,6 @@ describe('LandingPage', () => {
     expect(screen.getByText(/親子で、同じスタートラインから/)).toBeInTheDocument();
   });
 
-  it('tracks grade_pick with the chosen band', async () => {
-    const user = userEvent.setup();
-    render(<LandingPage />);
-    await user.click(screen.getByText('5・6年'));
-    expect(plausible).toHaveBeenCalledWith('grade_pick', { props: expect.objectContaining({ band: '5・6年' }) });
-  });
-
   it('tracks cta_play_click and cta_buy_click', async () => {
     const user = userEvent.setup();
     render(<LandingPage />);
@@ -204,13 +197,11 @@ describe('LandingPage', () => {
     await waitFor(() => expect(screen.getByText(/購入手続きを開始できませんでした/)).toBeInTheDocument());
   });
 
-  it('renders all four section 1A alignment rows, each with its own source link', () => {
+  it('A1 (flip-prep): the pre-legal-review 学びの方向性との対応 section is gone entirely', () => {
     render(<LandingPage />);
-    const rows = document.querySelectorAll('.lp__alignment-row');
-    expect(rows).toHaveLength(4);
-    for (const row of rows) {
-      expect(row.querySelector('.lp__alignment-source')).toBeTruthy();
-    }
+    expect(document.querySelector('.lp__alignment-row')).toBeNull();
+    expect(screen.queryByText('学びの方向性との対応')).not.toBeInTheDocument();
+    expect(screen.queryByText(/法務チェック前の草案/)).not.toBeInTheDocument();
   });
 
   it('never claims an endorsement that does not exist (spec v0.5 §1A "Never" list)', () => {
@@ -291,16 +282,38 @@ describe('LandingPage', () => {
     expect(document.querySelector('.lp__price')?.textContent).toContain('冬休みスペシャルシート');
   });
 
-  it('Founder positioning decision: markets as a whole-family experience while lessons stay Grades 3-4', () => {
+  it('Founder positioning decision: markets as a whole-family experience, with no grade/age reference anywhere (item A3, flip-prep 1 Oct 2026)', () => {
     render(<LandingPage />);
-    expect(screen.getByText('小学3・4年生から、家族みんなで')).toBeInTheDocument();
+    expect(screen.getByText('親子で、家族みんなで')).toBeInTheDocument();
     expect(screen.getByText('問う力に、年齢はありません。お子さまを中心に、家族みんなで「もう一問」。')).toBeInTheDocument();
     expect(
       screen.getByText('いちばん早く上達するのは、きっとお子さま。覚えたことを家族に「おしえてあげる」のも、学びの一部です。'),
     ).toBeInTheDocument();
-    // The grade picker itself (1・2年 / 3・4年 / 5・6年) is unchanged by this decision.
-    expect(screen.getByText('1・2年')).toBeInTheDocument();
-    expect(screen.getByText('3・4年')).toBeInTheDocument();
-    expect(screen.getByText('5・6年')).toBeInTheDocument();
+    // The grade picker (1・2年 / 3・4年 / 5・6年) and every grade/age string are gone entirely.
+    expect(screen.queryByText('1・2年')).not.toBeInTheDocument();
+    expect(screen.queryByText('3・4年')).not.toBeInTheDocument();
+    expect(screen.queryByText('5・6年')).not.toBeInTheDocument();
+    expect(screen.queryByText('どの学年で使いますか？')).not.toBeInTheDocument();
+    const text = document.body.textContent ?? '';
+    expect(text).not.toContain('小学3・4年生から');
+    expect(text).not.toContain('年生の「なぜ？」が深くなる時期に');
+  });
+
+  it('item A4 (flip-prep): a visible ログイン link sits in the header and near both buy buttons', () => {
+    render(<LandingPage />);
+    expect(screen.getByText('ログイン', { selector: '.lp__header-login' })).toHaveAttribute('href', '/login/');
+    const loginLinks = screen.getAllByText('すでにご購入の方はこちら（ログイン）');
+    expect(loginLinks.length).toBeGreaterThanOrEqual(2);
+    for (const link of loginLinks) {
+      expect(link.closest('a')).toHaveAttribute('href', '/login/');
+    }
+  });
+
+  it('item A2 (flip-prep): the FAQ refund answer is the Founder\'s final two bullets, not the old placeholder', () => {
+    render(<LandingPage />);
+    expect(screen.queryByText(/返金ポリシーは近日公開予定です/)).not.toBeInTheDocument();
+    const text = document.body.textContent ?? '';
+    expect(text).toContain('プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。');
+    expect(text).toContain('ログイン時の同意をいただけないためにご利用になれない場合は');
   });
 });

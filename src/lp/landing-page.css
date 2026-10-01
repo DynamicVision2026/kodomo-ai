@@ -1,22 +1,58 @@
+/* A5 (Founder, flip-prep 1 Oct 2026): the page used to be plain text on white ("reads like a
+   payment page"). This pass pulls in the course's real Push B tokens (src/ad12/tokens.css) for
+   colour — ink/paper/field tones + the single accent yellow — instead of the old one-off blue
+   (#2f6fb0), so the storefront reads as the same product the course itself now looks like. */
 .lp {
   max-width: 42rem;
   margin: 0 auto;
   padding: 0 1.25rem 3rem;
-  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  font-family: var(--ad12-font, system-ui), "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
   line-height: 1.8;
-  color: #1c1c1c;
+  color: var(--ad12-ink, #1c1c1c);
+  background: var(--ad12-paper, #fff);
+}
+
+.lp__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+}
+.lp__logo {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--ad12-ink, #1c1c1c);
+}
+.lp__header-login {
+  color: var(--ad12-ink, #1c1c1c);
+  font-size: 0.9rem;
+  text-decoration: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--ad12-field-2, #d8dcea);
+}
+.lp__header-login:hover {
+  background: var(--ad12-field-0, #eef0f4);
 }
 
 .lp__hero {
   text-align: center;
-  padding: 3rem 0 2rem;
+  padding: 1.5rem 0 2rem;
+  border-radius: var(--ad12-radius-plane, 1.1rem);
+  background: linear-gradient(180deg, var(--ad12-field-0, #eef0f4) 0%, var(--ad12-paper, #fff) 100%);
+}
+.lp__hero-mascot {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.25rem;
 }
 .lp__door {
   display: inline-block;
   padding: 0.3rem 1rem;
   border-radius: 999px;
-  background: #eaf2fa;
-  color: #2f6fb0;
+  background: var(--ad12-paper, #eaf2fa);
+  color: var(--ad12-ink, #2f6fb0);
+  border: 1px solid var(--ad12-field-2, transparent);
   font-size: 0.85rem;
   margin-bottom: 1rem;
 }
@@ -56,19 +92,25 @@
   opacity: 0.7;
 }
 .lp__cta--primary {
-  background: #2f6fb0;
-  color: #fff;
+  background: var(--ad12-ink, #2f6fb0);
+  color: var(--ad12-paper, #fff);
 }
 .lp__cta--secondary {
-  background: #fff;
-  color: #2f6fb0;
-  border: 1px solid #2f6fb0;
+  background: var(--ad12-paper, #fff);
+  color: var(--ad12-ink, #2f6fb0);
+  border: 1px solid var(--ad12-ink, #2f6fb0);
 }
 .lp__cta-error {
   margin: 0.5rem 0 0;
   color: #b0342f;
   font-size: 0.9rem;
   text-align: center;
+}
+.lp__login-link {
+  display: inline-block;
+  margin-top: 0.25rem;
+  color: var(--ad12-ink, #2f6fb0);
+  font-size: 0.85rem;
 }
 /* Notice D (Founder, 1 Oct 2026) — parent text, kept in the 14-15px range like the login screen's
    own consent notes. */
@@ -108,9 +150,9 @@
 .lp__trust {
   margin: 0 0 1rem;
   padding: 1.25rem 1.25rem 1.5rem;
-  border-radius: 0.9rem;
-  background: #f0f7f2;
-  border: 1px solid #d9ead9;
+  border-radius: var(--ad12-radius-plane, 0.9rem);
+  background: var(--ad12-field-0, #f0f7f2);
+  border: 1px solid var(--ad12-field-1, #d9ead9);
 }
 .lp__trust-list {
   padding-left: 1.2rem;
@@ -124,7 +166,7 @@
 
 .lp__section {
   padding: 2.5rem 0;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--ad12-field-1, #eee);
 }
 .lp__section h2 {
   font-size: 1.2rem;
@@ -137,54 +179,35 @@
   margin-bottom: 0.4rem;
 }
 
-.lp__grade-row {
+.lp__growth-row {
   display: flex;
-  gap: 0.6rem;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
-.lp__grade-row button {
-  flex: 1;
-  padding: 0.6rem;
-  border-radius: 0.6rem;
-  border: 1px solid #ccc;
-  background: #fff;
-  cursor: pointer;
-}
-.lp__grade-row button.is-selected {
-  border-color: #2f6fb0;
-  background: #eaf2fa;
-}
-.lp__grade-note {
-  margin-top: 0.75rem;
-  color: #555;
-  font-size: 0.9rem;
+.lp__growth-icon {
+  width: 36px;
+  height: 36px;
 }
 
 .lp__skill-flow {
   font-size: 1.1rem;
   font-weight: 700;
   text-align: center;
-  color: #2f6fb0;
-}
-
-.lp__alignment-caveat {
-  font-size: 0.8rem;
-  color: #b0632f;
-  margin-bottom: 1rem;
-}
-.lp__alignment-row {
-  padding: 0.9rem 0;
-  border-bottom: 1px dashed #ddd;
-}
-.lp__alignment-direction {
-  font-size: 0.85rem;
-  color: #888;
-}
-.lp__alignment-source {
-  font-size: 0.8rem;
+  color: var(--ad12-ink, #2f6fb0);
 }
 
 .lp__price {
   text-align: center;
+  padding: 2.5rem 1.5rem;
+  border-radius: var(--ad12-radius-plane, 1.1rem);
+  background: var(--ad12-field-0, #f7f7f7);
+}
+.lp__price-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 0.5rem;
+  display: block;
 }
 .lp__price-anchor {
   color: #555;
@@ -206,6 +229,13 @@
 .lp__faq dd {
   margin: 0.3rem 0 0;
   color: #444;
+}
+.lp__faq-refund-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.lp__faq-refund-list li {
+  margin-bottom: 0.5rem;
 }
 
 .lp__entrances {

@@ -2,7 +2,10 @@ import { useEffect } from 'react';
 import { track } from '../engine/analytics';
 import { fetchMe } from '../family/api';
 import { usePurchaseFlow } from '../family/usePurchaseFlow';
+import { FAQ_REFUND_BULLETS } from '../legal/consentText';
+import { NoticeD } from '../legal/NoticeD';
 import moduleJson from '../modules/m1/module.json';
+import '../ad12/tokens.css';
 import './landing-page.css';
 
 /**
@@ -22,6 +25,11 @@ import './landing-page.css';
  *   the new copy positions the product as "8歳ごろから" for the whole family instead (§⑥).
  * - A/B headline testing — COPY-01 gives one headline, not two variants.
  * Both are flagged in this work order's own report for the Coordinator to confirm.
+ *
+ * A6 gap-fill (Founder, flip-prep 1 Oct 2026): this file was missing two things the old
+ * LandingPage.tsx already had and that item 5/10 of the "consent at login" spec made a legal
+ * requirement of every buy-button surface — Notice D (the login-consent disclosure) and the
+ * consent-decline refund bullet — found during this pass and added below, not previously flagged.
  */
 
 const ENTRANCES = [
@@ -36,12 +44,12 @@ const ENTRANCES = [
 
 /** COPY-01 §3 (identical to §2 ⑩). The ★ refund answer's sentence is exact, legally-approved
  *  wording — never paraphrased, and identical everywhere it appears (landing page, FAQ, Shopify
- *  description, 特定商取引法に基づく表記, Shopify refund policy). */
-const REFUND_SENTENCE =
-  'ご購入から10日以内で、入門コースのレッスンをまだ始めていない場合は、info@domo-ai.com までご連絡いただければ返金いたします。' +
-  'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。';
+ *  description, 特定商取引法に基づく表記, Shopify refund policy). Sourced from
+ *  src/legal/consentText.ts's `FAQ_REFUND_BULLETS[0]` — the same verbatim sentence the old
+ *  LandingPage.tsx's FAQ now shows (item A2, flip-prep 1 Oct 2026) — so the two pages never drift. */
+const [REFUND_SENTENCE, CONSENT_REFUND_SENTENCE] = FAQ_REFUND_BULLETS as readonly [string, string];
 
-const FAQ_ITEMS: Array<{ q: string; a: string }> = [
+const FAQ_ITEMS: Array<{ q: string; a: string; extra?: string }> = [
   { q: '無料で、どこまで使えますか？', a: 'プレイグラウンドは、家族のアカウントを作れば無料で使えます。入門コースは有料（¥4,980 税込・買い切り）です。まずはプレイグラウンドで、ナゼホリの雰囲気をたしかめてみてください。' },
   { q: '72時間の無料体験は、なくなったのですか？', a: 'はい。入門コースの公開にともない終了いたしました。かわりに、プレイグラウンドを無料でお使いいただけます。' },
   { q: '何歳から使えますか？', a: '8歳ごろからが目安です。音声とことばは、小学3年生が一度聞いて分かるように作っています。年上のお子さんや大人も、いっしょに楽しめます。' },
@@ -56,7 +64,7 @@ const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   { q: 'コードのメールが届きません。', a: '迷惑メールフォルダをご確認ください。no-reply@domo-ai.com からのメールを受け取れるように設定してください。それでも届かないときは、info@domo-ai.com までご連絡ください。' },
   { q: '以前「モジュール1」を買いました。', a: '追加料金なしで、入門コースをお使いいただけます。これまでと同じメールアドレスでログインしてください。これまでのカードのレッスンは「プレイグラウンド」として、そのまま使えます。' },
   { q: '支払い方法は？', a: 'クレジットカード（Visa・Mastercard・American Express・JCB）、Shop Pay、Apple Pay、Google Pay、PayPay、メルペイがお使いいただけます。Apple Pay と Google Pay は、対応する端末でのみ表示されます。' },
-  { q: '返金はできますか？', a: REFUND_SENTENCE },
+  { q: '返金はできますか？', a: REFUND_SENTENCE, extra: CONSENT_REFUND_SENTENCE },
 ];
 
 const PURCHASE_MODULE_ID = moduleJson.id;
@@ -196,9 +204,14 @@ export function NewLandingPage() {
           <li>以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。</li>
         </ul>
         {(purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
-          <button type="button" className="lp__cta lp__cta--primary" onClick={startPurchase} disabled={purchaseState.kind === 'loading'}>
-            入門コースを買う
-          </button>
+          <>
+            {/* A6 gap-fill (Founder, flip-prep 1 Oct 2026): this surface was missing Notice D —
+                the same login-consent disclosure every other buy button already shows (item 5). */}
+            <NoticeD className="lp__notice-d" />
+            <button type="button" className="lp__cta lp__cta--primary" onClick={startPurchase} disabled={purchaseState.kind === 'loading'}>
+              入門コースを買う
+            </button>
+          </>
         )}
         {purchaseState.kind === 'error' && (
           <p className="lp__cta-error">{PURCHASE_ERROR_MESSAGE[purchaseState.reason]}</p>
@@ -223,7 +236,10 @@ export function NewLandingPage() {
           {FAQ_ITEMS.map((item) => (
             <div key={item.q}>
               <dt>{item.q.startsWith('返金') ? '★ ' : ''}{item.q}</dt>
-              <dd>{item.a}</dd>
+              <dd>
+                {item.a}
+                {item.extra && <> {item.extra}</>}
+              </dd>
             </div>
           ))}
         </dl>
