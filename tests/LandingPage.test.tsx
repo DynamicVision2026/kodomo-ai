@@ -309,6 +309,15 @@ describe('LandingPage', () => {
     }
   });
 
+  it('final report follow-up (1 Oct 2026): the price section shows the login-consent refund promise exactly once (Notice D), not duplicated in a separate paragraph', () => {
+    render(<LandingPage />);
+    const price = document.querySelector('.lp__price')!;
+    expect(price.querySelectorAll('.lp__notice-d')).toHaveLength(1);
+    expect(price.querySelector('.lp__price-refund-note')).toBeNull();
+    const matches = (price.textContent ?? '').match(/同意いただけない場合は、ログインできないため/g) ?? [];
+    expect(matches).toHaveLength(1);
+  });
+
   it('item A2 (flip-prep): the FAQ refund answer is the Founder\'s final two bullets, not the old placeholder', () => {
     render(<LandingPage />);
     expect(screen.queryByText(/返金ポリシーは近日公開予定です/)).not.toBeInTheDocument();
