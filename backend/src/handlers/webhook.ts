@@ -19,7 +19,7 @@ import { emailHashOf, getFamily, normalizeEmail } from '../family.js';
 import { claimYourPurchaseEmail, moduleActivatedEmail } from '../email.js';
 import { writeAuditLog } from '../audit.js';
 import { hmacHex, randomToken, sha256Hex } from '../util.js';
-import { loginUrl, claimUrl } from '../links.js';
+import { activationLoginUrl, claimUrl } from '../links.js';
 
 const CLAIM_TTL_MS = 30 * 24 * 60 * 60 * 1000; // AD-16 §2: "valid 30 days"
 
@@ -228,7 +228,7 @@ export async function handleShopifyOrderWebhook(request: Request, env: Env): Pro
   if (result.doc.bindingState === 'bound' && result.doc.entitlementState === 'granted' && result.doc.familyId) {
     const family = await getFamily(env, result.doc.familyId);
     if (family) {
-      emailSent = (await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'))) === 'sent';
+      emailSent = (await sendEmailWithConsent(env, moduleActivatedEmail(family.email, activationLoginUrl(env, family.email), env.BEGINNER_LAUNCH === '1'))) === 'sent';
     }
   } else if (result.claim && email) {
     emailSent = (await sendEmailWithConsent(env, claimYourPurchaseEmail(email, result.doc.orderName, claimUrl(env, result.claim.token), env.BEGINNER_LAUNCH === '1'))) === 'sent';

@@ -103,6 +103,21 @@ describe('LoginPage', () => {
     await waitFor(() => expect(window.location.href).toBe('/course/beginner/'));
   });
 
+  it('email-redesign (Founder, 1 Oct 2026), item 6: `?email=` pre-fills the field for a not-logged-in parent, without auto-submitting — a code is still required every time', async () => {
+    vi.resetModules();
+    stubLocation('?email=parent%40example.com&next=/course/beginner/');
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    const fetchMock = vi.fn(async () => jsonResponse({ error: 'not_authenticated' }, 401));
+    vi.stubGlobal('fetch', fetchMock);
+    const { LoginPage } = await import('../src/parent/login/LoginPage');
+
+    render(<LoginPage />);
+
+    await waitFor(() => expect(screen.getByLabelText('メールアドレス')).toHaveValue('parent@example.com'));
+    // Only the one /me check fired — no login-code request went out on its own.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('an explicit `?next=/account/` still wins even when the course is visible to this family — never silently overridden', async () => {
     vi.resetModules();
     stubLocation('?next=/account/');

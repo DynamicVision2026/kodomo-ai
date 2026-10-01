@@ -6,6 +6,7 @@ import { loginCodeEmail } from './email.js';
 import { addressHasConsent, sendEmailWithConsent } from './emailGate.js';
 import { CONSENT_TEXT_VERSION } from '../../shared/consent.js';
 import { hmacHex, randomOtp, timingSafeEqual } from './util.js';
+import { appBaseUrl } from './links.js';
 
 const CODE_TTL_MS = 10 * 60 * 1000; // AD-13 §4: "valid for 10 minutes"
 const RESEND_COOLDOWN_MS = 60 * 1000; // "re-send cooldown 60 seconds"
@@ -60,7 +61,7 @@ export async function requestLoginCode(
     lastSentAt: now.toISOString(),
     ...(consentClickedNow ? { consentClickedAt: now.toISOString(), consentVersion: CONSENT_TEXT_VERSION } : {}),
   } satisfies LoginCodeDoc);
-  await sendEmailWithConsent(env, loginCodeEmail(email, code), consentClickedNow ? { kind: 'login-request' } : undefined);
+  await sendEmailWithConsent(env, loginCodeEmail(email, code, appBaseUrl(env)), consentClickedNow ? { kind: 'login-request' } : undefined);
   return 'code_sent';
 }
 
@@ -148,5 +149,5 @@ export async function sendVerificationCode(env: Env, rawEmail: string, familyId:
     windowStart: now.toISOString(),
     lastSentAt: now.toISOString(),
   });
-  await sendEmailWithConsent(env, loginCodeEmail(email, code), { kind: 'family', familyId });
+  await sendEmailWithConsent(env, loginCodeEmail(email, code, appBaseUrl(env)), { kind: 'family', familyId });
 }

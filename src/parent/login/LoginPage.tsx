@@ -67,7 +67,11 @@ function resolveNextPath(me: MeResponse): string {
  */
 export function LoginPage() {
   const [step, setStep] = useState<Step>({ kind: 'checking' });
-  const [emailInput, setEmailInput] = useState('');
+  // Email-redesign (Founder, 1 Oct 2026), item 6: the activation email's button links here with
+  // `?email=` set to the recipient's own address (backend/src/links.ts's `activationLoginUrl`) so
+  // a not-yet-logged-in parent lands with the field already filled — never auto-submitted, since
+  // "no magic link" (item 6) means a code is still required every time.
+  const [emailInput, setEmailInput] = useState(() => new URLSearchParams(window.location.search).get('email') ?? '');
   const [codeInput, setCodeInput] = useState('');
 
   // Post-launch-check fix: a parent whose session cookie is still valid must never see the login
