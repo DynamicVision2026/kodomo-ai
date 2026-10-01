@@ -16,6 +16,7 @@
 import { useRef, useState } from 'react';
 import { Plane } from '../../ad12/Plane';
 import { Ruby } from '../../engine/ruby';
+import { pontaStandingUrl } from '../characterArt';
 import { courseUi } from '../content/courseManifest';
 import type { CourseListenBlock } from '../content/types';
 
@@ -180,7 +181,12 @@ export function ListenScreen({ lessonTitle, block, onDone, onBack }: ListenScree
                 className={`course-listen__line ${i === currentLineIndex ? 'course-listen__line--current' : ''}`}
                 onClick={() => seekTo(lineTimeSec(i))}
               >
-                <span className="ad12-ui-text course-dialogue__speaker">{line.speaker}</span>
+                <span className="ad12-ui-text course-dialogue__speaker">
+                  {line.speaker === courseUi.pontaSpeakerName && (
+                    <img src={pontaStandingUrl} alt="" className="course-dialogue__speaker-icon" aria-hidden="true" />
+                  )}
+                  {line.speaker}
+                </span>
                 <span className="ad12-reading-text"><Ruby text={line.text} /></span>
               </button>
             </div>

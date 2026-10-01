@@ -9,18 +9,35 @@
  * BankSelect, etc.). Every AD-12 component in src/ad12/ imports ONLY this file, never
  * src/styles/tokens.css, so the two systems can coexist without either leaking into the other
  * until a dedicated cutover ticket wires src/ad12/ components into the live screens.
+ *
+ * Course redesign (Founder, 1 Oct 2026): "make nazehori-tokens.css the single source of colors,
+ * font, radii and shadows for both the landing pages and every course screen." Every `--ad12-*`
+ * name below that has a `--nz-*` counterpart is now defined AS that variable (never a second,
+ * separately-maintained hex/px literal) — the `--ad12-*` names themselves stay, since every
+ * course/AD-12 component already reads them and changing the names would be a far wider,
+ * purely-mechanical diff for no visual benefit. Values that differed from nazehori-tokens.css
+ * before this pass (card/chip radius, the missing muted-text/outline-width tokens, the shadow)
+ * are called out inline below — this file previously carried its own hand-copied values that had
+ * drifted from the design pack. Names with no `--nz-*` equivalent (field-2, recess-1/2, ponta,
+ * the reading/ui type scale, timing, tap-min) are AD-12-specific extensions, unaffected.
  */
+@import '../lp/assets/nazehori-tokens.css';
+
 :root {
   /* Field ramp — one family, one step deeper per breakthrough (Progress Fill). Never used for
      anything but the dig's own progress; F0 is the resting/shallow tone, Deep is root/listening. */
-  --ad12-field-0: #eef0f4;
-  --ad12-field-1: #e3e6f0;
-  --ad12-field-2: #d8dcea;
-  --ad12-field-deep: #232849;
+  --ad12-field-0: var(--nz-bg);
+  --ad12-field-1: var(--nz-bg-2);
+  --ad12-field-2: #d8dcea; /* no nz equivalent — AD-12's own 3rd ramp step, between bg-2 and navy. */
+  --ad12-field-deep: var(--nz-navy);
 
   /* Paper / ink — the reading object and its text. */
-  --ad12-paper: #ffffff;
-  --ad12-ink: #1b1f3a;
+  --ad12-paper: var(--nz-surface);
+  --ad12-ink: var(--nz-ink);
+  /* Course redesign: this token didn't exist before — course.css:167 already referenced
+     `var(--ad12-ink-muted, var(--ad12-ink))` and silently fell back to full ink every time. */
+  --ad12-ink-muted: var(--nz-muted);
+  --ad12-line: var(--nz-line);
 
   /* Recess — where slips/gap-naming choices sit once the lid opens. */
   --ad12-recess-1: #454c7e;
@@ -28,16 +45,19 @@
 
   /* Accent — the child's OWN action only (the one active yellow per screen, F7). Never a card-
      kind identity color, never used for more than one thing on screen at once. */
-  --ad12-accent: #ffd23f;
+  --ad12-accent: var(--nz-sun);
+  /* Course redesign: nazehori-tokens.css's own button-bottom-edge shade — no AD-12 counterpart
+     existed before this pass. */
+  --ad12-accent-press: var(--nz-sun-press);
 
   /* ポン太 — warm tan, deliberately NOT accent-yellow (AD-12 §1 confirmation #4/F7: with the
-     refrain slots on screen, ポン太-as-yellow would make two yellows). */
+     refrain slots on screen, ポン太-as-yellow would make two yellows). Playground-only (VoicePlane);
+     the course's own ポン太 is now real character art, not a color swatch — see src/course/. */
   --ad12-ponta: #d9b98c;
 
   /* Type — Zen Kaku Gothic New, not the existing --font-child (Zen Maru Gothic); a different,
      more geometric family is part of what AD-12 supersedes. Reading vs UI weight/size per §3. */
-  --ad12-font: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', system-ui,
-    sans-serif;
+  --ad12-font: var(--nz-font);
   --ad12-reading-size: 26px;
   --ad12-reading-size-max: 31px;
   --ad12-reading-weight: 700;
@@ -54,13 +74,17 @@
   --ad12-t-stagger: 70ms;
   --ad12-t-reduced: 180ms; /* F8: prefers-reduced-motion crossfade window (150-200ms). */
 
-  /* Spacing/radius/elevation — AD-12 doesn't redefine a full scale, so these borrow the existing
-     product-wide primitives (src/styles/tokens.css) rather than inventing parallel ones; spacing/
-     radius/shadow are layout mechanics, not part of what AD-12 §0 says it supersedes (colour,
-     type, motion). */
-  --ad12-radius-plane: 1.1rem;
-  --ad12-radius-chip: 0.85rem;
+  /* Course redesign: card/chip radius now trace to the design pack's own 28px/24px (previously
+     1.1rem/0.85rem ≈ 17.6px/13.6px — a drift from the pack, not an intentional AD-12 difference). */
+  --ad12-radius-plane: var(--nz-r-card);
+  --ad12-radius-chip: var(--nz-r-chip);
   --ad12-tap-min: 48px;
+
+  /* Course redesign: the design pack's own ambient card shadow and focus-outline width — neither
+     had an AD-12 token before (course.css hand-rolled its own shadow literal, and its one focus
+     outline was hardcoded at 2px instead of the pack's 4px). */
+  --ad12-shadow: var(--nz-shadow-lg);
+  --ad12-outline-width: var(--nz-outline);
 }
 
 @media (prefers-color-scheme: dark) {

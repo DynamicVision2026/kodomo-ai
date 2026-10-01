@@ -2,7 +2,9 @@
  * Marketing design-pack redesign (Founder, 1 Oct 2026) — "nazehori-tokens.css (colors, Zen Kaku
  * Gothic New font, radii, shadows) and the SVGs in svg/ as the source of truth. They replace the
  * '？' mascot and flower icons." This file imports that token sheet verbatim (src/lp/assets/
- * nazehori-tokens.css) and defines the component classes the redesigned LandingPage.tsx/
+ * nazehori-tokens.css, now split from its own former page-wide body/.nz-mark/reduced-motion
+ * rules — see that file's own header comment — those live in nazehori-base.css, imported right
+ * after it here) and defines the component classes the redesigned LandingPage.tsx/
  * NewLandingPage.tsx use — shared by both pages, same as landing-page.css already is.
  *
  * Design rule carried through every class below: "only one yellow (--nz-sun) element per
@@ -11,6 +13,7 @@
  * section, and never as a second competing accent anywhere else.
  */
 @import './assets/nazehori-tokens.css';
+@import './assets/nazehori-base.css';
 
 .nz-page {
   background: var(--nz-bg);

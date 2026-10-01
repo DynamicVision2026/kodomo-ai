@@ -1,4 +1,15 @@
-/* ナゼホリ design tokens — matches the launch videos and story shorts (v1, 2026-10-01) */
+/**
+ * ナゼホリ design tokens — matches the launch videos and story shorts (v1, 2026-10-01).
+ *
+ * Course redesign (Founder, 1 Oct 2026): the single source of colors/font/radii/shadows for BOTH
+ * the landing pages and every course screen (src/ad12/tokens.css imports this file directly and
+ * maps its own --ad12-* names onto these --nz-* values, rather than keeping two hand-maintained
+ * copies of the same palette). Custom properties ONLY — the global `body`/`.nz-mark`/
+ * reduced-motion rules this file used to also carry now live in ./nazehori-base.css instead, so
+ * importing this file can never leak page-wide style onto a consumer (like the course) that only
+ * wants the variables. src/lp/nazehori.css imports both (tokens here, then nazehori-base.css) —
+ * same combined effect as before this split, just two files instead of one.
+ */
 @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap');
 :root{
   /* field */
@@ -27,7 +38,3 @@
   /* motion */
   --nz-ease-pop:cubic-bezier(.34,1.56,.64,1); --nz-ease-out:cubic-bezier(.22,1,.36,1);
 }
-body{background:var(--nz-bg);color:var(--nz-ink);font-family:var(--nz-font);word-break:keep-all;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased}
-/* the yellow marker under a key phrase */
-.nz-mark{background:linear-gradient(transparent 70%,var(--nz-sun) 70%);background-repeat:no-repeat}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

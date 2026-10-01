@@ -11,6 +11,7 @@ import { useRef, useState } from 'react';
 import { Plane } from '../../ad12/Plane';
 import { Ruby } from '../../engine/ruby';
 import { plantSymbolIdForStage } from '../Icon';
+import { hatenaDiscoveryUrl, pontaStandingUrl } from '../characterArt';
 import { courseUi } from '../content/courseManifest';
 import type { CourseEndingLesson } from '../content/types';
 
@@ -90,6 +91,10 @@ export function EndingScreen({ lesson, onDone, onBack }: EndingScreenProps) {
   if (step === 'message') {
     return (
       <main className="ad12 course-screen course-ending course-ending--message">
+        <div className="course-ending__cast" aria-hidden="true">
+          <img src={hatenaDiscoveryUrl} alt="" className="course-ending__character" />
+          <img src={pontaStandingUrl} alt="" className="course-ending__character" />
+        </div>
         <div className="course-ending__bloom" aria-hidden="true">
           {Array.from({ length: 7 }, (_, i) => (
             <svg key={i} width="48" height="53" viewBox="0 0 60 60"><use href={`#${plantSymbolIdForStage('flower')}`} /></svg>

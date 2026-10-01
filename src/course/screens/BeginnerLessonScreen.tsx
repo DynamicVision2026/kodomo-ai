@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { Icon } from '../Icon';
 import { Plane } from '../../ad12/Plane';
+import { hatenaDiscoveryUrl } from '../characterArt';
 import { courseUi } from '../content/courseManifest';
 import { unlock as unlockCourseAudio } from '../courseAudioPlayer';
 import type { CourseBeginnerLesson } from '../content/types';
@@ -50,6 +51,7 @@ export function BeginnerLessonScreen({
     <main className="ad12 course-screen course-lesson">
       <button type="button" className="ad12-ink-button ad12-tappable course-screen__back" onClick={onBack}>{courseUi.back}</button>
       <Plane className="course-lesson__tool">
+        <img src={hatenaDiscoveryUrl} alt="" className="course-lesson__tool-character" aria-hidden="true" />
         <Icon tool={lesson.tool} size={96} className="course-lesson__tool-icon" />
         <h1 className="ad12-reading-text course-lesson__tool-title">{lesson.title}</h1>
       </Plane>

@@ -539,4 +539,9 @@ export interface CourseUiStrings {
   listenTranscriptTabLabel: string;
   homeWordHintsHeading: string;
   homeSkipNote: string;
+  /** Course redesign (Founder, 1 Oct 2026): real character art for ポン太 next to his own lines in
+   *  きく's transcript — his name is already content (every b0N.lesson.json's own `listen.
+   *  transcript[].speaker` field), this is only that same name sourced here too so the screen
+   *  component can compare against it without a hardcoded literal (gate:no-hardcoded-copy). */
+  pontaSpeakerName: string;
 }

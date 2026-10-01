@@ -1,0 +1,11 @@
+/**
+ * Course redesign (Founder, 1 Oct 2026): split out of nazehori-tokens.css so that file can stay
+ * variables-only (safe for src/ad12/tokens.css to @import without also pushing a page-wide `body`
+ * rule onto every AD-12 consumer, including ones this redesign never touches — e.g. the
+ * Playground). Only src/lp/nazehori.css imports this file; the landing pages' own rendered output
+ * is unchanged by the split (same two rule sets, now in two files instead of one).
+ */
+body{background:var(--nz-bg);color:var(--nz-ink);font-family:var(--nz-font);word-break:keep-all;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased}
+/* the yellow marker under a key phrase */
+.nz-mark{background:linear-gradient(transparent 70%,var(--nz-sun) 70%);background-repeat:no-repeat}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

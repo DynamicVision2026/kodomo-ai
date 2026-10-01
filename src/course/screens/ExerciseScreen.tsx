@@ -15,6 +15,7 @@ import { useState } from 'react';
 import { MoveCard } from '../../ad12/MoveCard';
 import { Plane } from '../../ad12/Plane';
 import { DialoguePlane } from '../DialoguePlane';
+import { hatenaQuestionUrl } from '../characterArt';
 import { useVoiceQueue } from '../useVoiceQueue';
 import { useAudioError } from '../useAudioError';
 import { Ruby } from '../../engine/ruby';
@@ -261,13 +262,17 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
           </div>
           {showH2 && <p className="ad12-ui-text course-exercise__only-one">{courseUi.practice.onlyOneLeftPrompt}</p>}
           {!hintShown && !showH1 && (
-            <button type="button" className="ad12-ink-button ad12-tappable" onClick={() => setHintShown(true)}>
+            <button type="button" className="ad12-ink-button ad12-tappable course-exercise__hint-button" onClick={() => setHintShown(true)}>
+              <img src={hatenaQuestionUrl} alt="" className="course-dialogue__speaker-icon" aria-hidden="true" />
               {courseUi.practice.hintLabel}
             </button>
           )}
           {showH1 && (
             <Plane className="course-exercise__hint">
-              <p className="ad12-ui-text">{exerciseStep.hint.h1}</p>
+              <p className="ad12-ui-text">
+                <img src={hatenaQuestionUrl} alt="" className="course-dialogue__speaker-icon" aria-hidden="true" />
+                {exerciseStep.hint.h1}
+              </p>
             </Plane>
           )}
         </>
@@ -277,7 +282,7 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
         <>
           <p className="ad12-ui-text course-exercise__chosen-chip">{chosen.text}</p>
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
-          <DialoguePlane className="course-exercise__feedback" speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
+          <DialoguePlane className="course-exercise__feedback" speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} iconUrl={hatenaQuestionUrl} />
           {phaseAudioFailed && (
             <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retry}>{courseUi.audioRetryLabel}</button>
           )}
@@ -292,7 +297,7 @@ export function ExerciseScreen({ exercise, position, onItemDone, onNext, onBack 
         <>
           <p className="ad12-ui-text course-exercise__chosen-chip">{chosen.text}</p>
           <DialoguePlane speaker={chosen.reply.speaker} text={chosen.reply.text} />
-          <DialoguePlane className="course-exercise__feedback" speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} />
+          <DialoguePlane className="course-exercise__feedback" speaker={courseUi.practice.feedbackSpeaker} text={chosen.feedback} iconUrl={hatenaQuestionUrl} />
           {phaseAudioFailed && !phase.exploring && (
             <button type="button" className="ad12-ink-button ad12-tappable course-screen__audio-retry" onClick={retry}>{courseUi.audioRetryLabel}</button>
           )}
