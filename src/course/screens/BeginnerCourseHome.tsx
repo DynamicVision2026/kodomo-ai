@@ -143,7 +143,7 @@ export function BeginnerCourseHome({
       {licensed && !courseComplete && <p className="ad12-ui-text course-home__complete-note">{courseUi.gardenCompleteNote}</p>}
 
       {!licensed && (
-        <a className="ad12-ink-button ad12-tappable course-screen__primary" href="/account/">
+        <a className="ad12-ink-button ad12-tappable course-screen__primary" href="/account/?buy=1">
           {courseUi.beginnerLockedCta}
         </a>
       )}

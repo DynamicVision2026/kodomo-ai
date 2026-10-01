@@ -6,8 +6,8 @@ import {
   fetchMe,
   listSessions,
   logout,
+  requestDeleteCode,
   requestEmailChange,
-  requestLoginCode,
   type MeResponse,
   type SessionInfo,
 } from '../../family/api';
@@ -139,7 +139,7 @@ export function AccountPage() {
   async function sendDeleteCode() {
     if (me === 'loading' || !me) return;
     if (sendToConsentIfMissing()) return;
-    const result = await requestLoginCode(me.email);
+    const result = await requestDeleteCode();
     if ('reason' in result) {
       setDeleteStep({ kind: 'error', message: '送信できませんでした。しばらくしてから、もう一度お試しください。' });
       return;

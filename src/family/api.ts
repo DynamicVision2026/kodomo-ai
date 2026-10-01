@@ -177,6 +177,17 @@ export async function confirmEmailChange(newEmail: string, code: string): Promis
   return { ok: true };
 }
 
+/** Bug fix (1 Oct 2026): sends the fresh OTP `deleteAccount` needs to the signed-in family's own
+ *  REAL email, server-side — `me.email` is masked (`p***@example.com`), so the account page used
+ *  to pass THAT to the public login-code request, which went to a different, unreachable
+ *  "address" and never reached the parent at all. */
+export async function requestDeleteCode(): Promise<{ ok: true } | ApiFailure> {
+  const res = await apiFetch('/account/delete-code', { method: 'POST', body: '{}' });
+  if (isFailure(res)) return res;
+  if (!res.ok) return { ok: false, reason: 'server' };
+  return { ok: true };
+}
+
 export async function deleteAccount(code: string): Promise<{ ok: true } | ApiFailure> {
   const res = await apiFetch('/account', { method: 'DELETE', body: JSON.stringify({ code }) });
   if (isFailure(res)) return res;

@@ -1,8 +1,7 @@
 /** @vitest-environment node */
 import { CONSENT_TEXT_VERSION } from '../shared/consent';
 import { describe, it, expect } from 'vitest';
-import { handleAccountEmail, handleDeleteAccount } from '../backend/src/handlers/account';
-import { handleAuthRequest } from '../backend/src/handlers/authRequest';
+import { handleAccountEmail, handleDeleteAccount, handleRequestDeleteCode } from '../backend/src/handlers/account';
 import type { Env } from '../backend/src/types';
 import { emailIndexPath, entitlementPath, familyPath } from '../backend/src/schema';
 import { createSession, SESSION_COOKIE_NAME } from '../backend/src/session';
@@ -110,13 +109,8 @@ describe('AD-13 acceptance 14 — account deletion requires a fresh OTP', () => 
   it('deletes the family, email index, and every session once a valid code is presented', async () => {
     const env = fakeEnv();
     const { familyId, token } = await seedFamily(env, 'parent@example.com');
-    await handleAuthRequest(
-      new Request('https://backend.example/api/v1/auth/request', {
-        method: 'POST', headers: { 'content-type': 'application/json', origin: 'https://app.example.com' },
-        body: JSON.stringify({ email: 'parent@example.com' }),
-      }),
-      env,
-    );
+    const codeRes = await handleRequestDeleteCode(authedRequest('/api/v1/account/delete-code', token, {}), env);
+    expect(codeRes.status).toBe(202);
     const code = await extractCode(env, 'parent@example.com');
 
     const res = await handleDeleteAccount(authedRequest('/api/v1/account', token, { code }), env);
@@ -131,5 +125,33 @@ describe('AD-13 acceptance 14 — account deletion requires a fresh OTP', () => 
     const res = await handleDeleteAccount(authedRequest('/api/v1/account', token, { code: '000000' }), env);
     expect(res.status).toBe(401);
     expect(await env.db.get(familyPath(familyId))).not.toBeNull();
+  });
+
+  describe('delete-code bug fix (1 Oct 2026): sends to the family\'s own REAL stored email, never a client-supplied one', () => {
+    it('requires an authenticated session', async () => {
+      const env = fakeEnv();
+      await seedFamily(env, 'parent@example.com');
+      const res = await handleRequestDeleteCode(
+        new Request('https://backend.example/api/v1/account/delete-code', {
+          method: 'POST', headers: { 'content-type': 'application/json', origin: 'https://app.example.com' }, body: '{}',
+        }),
+        env,
+      );
+      expect(res.status).toBe(401);
+      expect((env.email as FakeEmailSender).sent).toHaveLength(0);
+    });
+
+    it('ignores anything the client sends in the body — the real address comes only from the session\'s own family record', async () => {
+      const env = fakeEnv();
+      const { token } = await seedFamily(env, 'parent@example.com');
+      const res = await handleRequestDeleteCode(
+        authedRequest('/api/v1/account/delete-code', token, { email: 'attacker@example.com' }),
+        env,
+      );
+      expect(res.status).toBe(202);
+      const sent = (env.email as FakeEmailSender).sent;
+      expect(sent).toHaveLength(1);
+      expect(sent[0]!.to).toBe('parent@example.com'); // never the masked string the client would have, never attacker-supplied
+    });
   });
 });

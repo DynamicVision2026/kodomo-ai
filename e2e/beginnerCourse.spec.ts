@@ -116,7 +116,9 @@ test.describe('WO-C5 — beginner course licence gate', () => {
     await page.goto('/course/beginner/');
     await page.getByRole('button', { name: /たぬき/ }).click();
     await expect(page.getByRole('heading', { name: '入門コースの にわ' })).toBeVisible();
-    await expect(page.getByRole('link', { name: '入門コースで、ひらこう' })).toBeVisible();
+    // Consent at login, decision 1 (1 Oct 2026): straight to the one-tap auto-buy entry point,
+    // never the bare /account/ a parent would need a second tap from.
+    await expect(page.getByRole('link', { name: '入門コースで、ひらこう' })).toHaveAttribute('href', '/account/?buy=1');
     await page.getByText('ふたを あける', { exact: true }).click();
     await expect(page.getByText('入門コースで、ひらこう').first()).toBeVisible();
     // Never actually entered a lesson screen.

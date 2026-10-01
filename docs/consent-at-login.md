@@ -47,19 +47,32 @@ activation email; email match binds at once, email only if the address has conse
 untouched (no email); m1 unlocks the beginner course; staff tools exist (bind, resend-claim,
 entitlement on/off).
 
-Differences / things to know:
+Differences / things to know (Founder decisions, 1 Oct 2026):
 1. Resend claim link: the doc says "use only for addresses with consent". The build ENFORCES it
    (blocked at the gate) and the operator is told: the endpoint answers 202 with
-   `{emailSent:false, reason:"no_consent"}`; the audit entry records `emailSent`.
-2. In-app buy: the locked garden's 「入門コースで、ひらこう」 button goes to /account/, where
-   「購入手続きへ進む」 starts the Shopify checkout (token attached) — one extra tap versus the doc's
-   wording. `/account/?buy=1` now exists, so pointing the button there would make it one tap;
-   not changed (flow change, your call).
+   `{emailSent:false, reason:"no_consent"}`; the audit entry records `emailSent`. (kept as built)
+2. In-app buy: the locked garden's 「入門コースで、ひらこう」 button now goes straight to
+   `/account/?buy=1` — one tap, matching the doc's own flow. (FIXED, decision 1)
 3. "Logged in, so consent is already given" is not true for sessions that began before this
    release: those families have no consent record until their next fresh login (or a landing buy,
    or an email-change/deletion request, which now send them to the consent screen first). Until
-   then they get no email (activation, device notices); the course itself works.
+   then they get no email (activation, device notices); the course itself works. (accepted as is,
+   decision 3 — no extra screen)
 4. The Shopify product description ("log in with the purchase email") is on the Shopify side, not
-   in this repo.
+   in this repo. (Founder handles on launch day, decision 4)
 5. Orders whose email matches no consenting family keep their (now never-emailed) claim record;
    they bind on login. A claim link can still be used if staff hand one over another way.
+
+## Fixed during the consent-at-login build: account-deletion OTP bug (decision 2, 1 Oct 2026)
+`/me` only ever returns a MASKED email (`p***@example.com`). The account page's deletion-code
+button used to pass that string straight to the public `POST /auth/request` — the real address
+never got the code (it either hashed to no family, or — pre-consent-at-login — tried to send to a
+literal "p***@example.com"). Fixed with a new authenticated endpoint,
+`POST /api/v1/account/delete-code` (`backend/src/handlers/account.ts`
+`handleRequestDeleteCode`): it resolves the session, reads the family's own REAL stored email
+server-side, and sends there via `sendEmailWithConsent` with a `family` consent basis — the
+client never supplies or sees the real address. `src/family/api.ts` exports `requestDeleteCode()`;
+`AccountPage.tsx`'s `sendDeleteCode` now calls it instead of `requestLoginCode(me.email)`. Tests:
+`tests/backendAccountSecurity.test.ts` (requires a session; ignores anything the client sends in
+the body) and `tests/consentAtLoginFrontend.test.tsx` (the button calls the new endpoint, never
+`/auth/request`, with no email in the request body).

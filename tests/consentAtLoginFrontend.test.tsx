@@ -221,3 +221,33 @@ describe('/account — a family without recorded consent is sent to agree before
     expect(calls.some((u) => u.endsWith('/auth/request'))).toBe(false);
   });
 });
+
+describe('account deletion code — bug fix (1 Oct 2026): never sends the MASKED /me email to the public login-code endpoint', () => {
+  it('a consenting family tapping 「削除用のコードを送る」 calls the dedicated /account/delete-code endpoint, never /auth/request', async () => {
+    vi.resetModules();
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', { value: { ...originalLocation, href: '', search: '', pathname: '/account/' }, writable: true });
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    const calls: { url: string; body: unknown }[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input instanceof Request ? input.url : input);
+      calls.push({ url, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      if (url.endsWith('/me')) return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [], consentRecorded: true });
+      if (url.endsWith('/sessions')) return jsonResponse([]);
+      if (url.endsWith('/account/delete-code')) return jsonResponse({});
+      return new Response('not found', { status: 404 });
+    }));
+    const { AccountPage } = await import('../src/parent/account/AccountPage');
+    const user = userEvent.setup();
+    render(<AccountPage />);
+    const button = await screen.findByRole('button', { name: '削除用のコードを送る' });
+    await user.click(button);
+
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/account/delete-code'))).toBe(true));
+    expect(calls.some((c) => c.url.endsWith('/auth/request'))).toBe(false);
+    // Nothing identifying the family travels in this call — the backend reads it from the session.
+    const deleteCodeCall = calls.find((c) => c.url.endsWith('/account/delete-code'))!;
+    expect(deleteCodeCall.body).not.toEqual(expect.objectContaining({ email: expect.anything() }));
+    expect(await screen.findByPlaceholderText('123456')).toBeInTheDocument(); // the confirm-code step opened
+  });
+});
