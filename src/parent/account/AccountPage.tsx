@@ -97,7 +97,16 @@ export function AccountPage() {
     window.location.href = '/login/';
   }
 
+  /** A family from before consent existed can't be emailed at all (backend/src/emailGate.ts), so
+   *  an email-change or deletion code would silently never arrive — send it to agree first. */
+  function sendToConsentIfMissing(): boolean {
+    if (me === 'loading' || !me || me.consentRecorded) return false;
+    window.location.href = '/login/?reconsent=1&next=' + encodeURIComponent('/account/');
+    return true;
+  }
+
   async function submitNewEmail() {
+    if (sendToConsentIfMissing()) return;
     const newEmail = newEmailInput.trim();
     if (!newEmail) return;
     const result = await requestEmailChange(newEmail);
@@ -129,6 +138,7 @@ export function AccountPage() {
 
   async function sendDeleteCode() {
     if (me === 'loading' || !me) return;
+    if (sendToConsentIfMissing()) return;
     const result = await requestLoginCode(me.email);
     if ('reason' in result) {
       setDeleteStep({ kind: 'error', message: '送信できませんでした。しばらくしてから、もう一度お試しください。' });

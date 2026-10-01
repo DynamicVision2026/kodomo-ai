@@ -1,17 +1,33 @@
 /**
- * Consent at login (PURCHASE-FLOW.md v2) — the text shown on /login BEFORE a code is sent, and the
- * label of the one button that sends it.
+ * Consent at login (PURCHASE-FLOW.md v2) — consent text C, exactly as sent to legal on 1 Oct 2026,
+ * shown on /login BEFORE a code is requested.
  *
- * !! PLACEHOLDER — the legally approved "consent text C" has not been supplied yet. Do NOT ship
- * this: replace `CONSENT_TEXT_PARAGRAPHS` with the approved wording, and in the SAME change bump
- * `CONSENT_TEXT_VERSION` in shared/consent.ts so every stored consent names the exact text that
- * was agreed to. tests/consentTextPlaceholder.test.ts fails loudly while the placeholder remains
- * and RELEASE=1 is set, so it cannot reach a release build unnoticed.
+ * ANY change to the wording, links or button label REQUIRES bumping `CONSENT_TEXT_VERSION` in
+ * shared/consent.ts in the same change, so every stored consent names the text that was agreed to.
+ * tests/consentTextVersion.test.ts pins a hash of this text to that version to enforce it.
  */
-export const CONSENT_TEXT_PLACEHOLDER_MARKER = '【仮】';
+import { COMPANY } from './company';
 
-export const CONSENT_TEXT_PARAGRAPHS: readonly string[] = [
-  `${CONSENT_TEXT_PLACEHOLDER_MARKER}同意文Cは、法務の確認後に差し替えます。`,
+export interface ConsentLink {
+  label: string;
+  href: string;
+}
+
+export const CONSENT_LEAD =
+  'ログイン用の確認コードなどのメールは、アメリカ合衆国に所在するメール配信事業者 AC PM LLC（サービス名：Postmark）を通じてお送りします。このため、入力されたメールアドレスと、お送りするメールの内容が同社に提供されます。';
+
+/** Every link opens in a new tab (the screen never navigates away from the consent step). */
+export const CONSENT_LINKS: readonly ConsentLink[] = [
+  {
+    label: 'アメリカ合衆国の個人情報保護制度（個人情報保護委員会の資料）',
+    href: 'https://www.ppc.go.jp/enforcement/infoprovision/laws/offshore_report_america/',
+  },
+  { label: '同社の個人情報保護のための措置', href: 'https://postmarkapp.com/dpa' },
+  { label: 'プライバシーポリシー', href: '/legal/privacy/' },
 ];
 
 export const CONSENT_BUTTON_LABEL = '同意して、コードを送る';
+
+export const CONSENT_DECLINE_NOTE =
+  '同意しない場合は、コードを送れないため、ログインできません。お問い合わせ：';
+export const CONSENT_CONTACT_EMAIL = COMPANY.email;

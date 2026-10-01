@@ -241,6 +241,7 @@ describe('Work order — every one of the five operator actions requires a writt
     });
     const res = await handleAdminApi(request, env, url);
     expect(res.status).toBe(202);
+    expect(await res.json()).toEqual({ emailSent: false, reason: 'no_consent' }); // the operator is told
     // Consent at login: purchaser9@example.com has no family with recorded consent, so even an
     // operator-triggered claim email is blocked at the gate — never sent.
     expect((env.email as FakeEmailSender).sent).toHaveLength(0);

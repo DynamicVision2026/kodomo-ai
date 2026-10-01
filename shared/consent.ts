@@ -5,4 +5,4 @@
  * record always says which text was agreed to. The backend only accepts a request that carries
  * the CURRENT version.
  */
-export const CONSENT_TEXT_VERSION = 'v2-C-PROVISIONAL';
+export const CONSENT_TEXT_VERSION = 'v2-C-2026-10-01';

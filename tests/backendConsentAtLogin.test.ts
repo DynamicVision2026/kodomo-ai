@@ -159,6 +159,19 @@ describe('consent at login — no email to any address without recorded consent'
     expect(sent(env)).toHaveLength(codesSent + 1);
   });
 
+  it('PURCHASE-FLOW step 5: a buyer email matching an existing family WITHOUT consent binds at once, but no email is sent (the family sees the course at its next login)', async () => {
+    const env = fakeEnv();
+    const now = new Date().toISOString();
+    await env.db.set(familyPath('old'), { email: 'old@example.com', status: 'active', profileCount: 0, createdAt: now, updatedAt: now } satisfies FamilyDoc);
+    await env.db.set(`emailIndex/${await emailHashOf('old@example.com')}`, { familyId: 'old', createdAt: now });
+    await postOrder(env, 'old@example.com');
+    const order = await env.db.get<OrderDoc>(orderPath(7001));
+    expect(order?.bindingState).toBe('bound');
+    expect(order?.familyId).toBe('old');
+    expect((await env.db.get<EntitlementDoc>(entitlementPath('old', 'm1')))?.status).toBe('active');
+    expect(sent(env)).toHaveLength(0);
+  });
+
   it('NO file under backend/ calls env.email.send directly — every send goes through sendEmailWithConsent', () => {
     const offenders: string[] = [];
     const walk = (dir: string) => {

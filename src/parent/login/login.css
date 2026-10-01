@@ -29,12 +29,31 @@
 .login__consent-text {
   margin: 0;
   color: #333;
-  font-size: 0.9rem;
+  font-size: 15px;
   line-height: 1.7;
 }
 
-.login__consent-text + .login__consent-text {
-  margin-top: 0.6rem;
+.login__consent-links {
+  margin: 0.75rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.login__consent-links a {
+  color: #1a4fa0;
+}
+
+/* Small text under the button — parent text, kept in the 14-15px range. */
+.login__consent-note {
+  margin: 0.9rem 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #444;
+}
+
+.login__consent-note a {
+  color: #1a4fa0;
 }
 
 .login__form {

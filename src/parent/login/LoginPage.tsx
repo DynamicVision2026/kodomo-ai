@@ -1,5 +1,7 @@
 import { CONSENT_TEXT_VERSION } from '../../../shared/consent';
-import { CONSENT_BUTTON_LABEL, CONSENT_TEXT_PARAGRAPHS } from '../../legal/consentText';
+import {
+  CONSENT_BUTTON_LABEL, CONSENT_CONTACT_EMAIL, CONSENT_DECLINE_NOTE, CONSENT_LEAD, CONSENT_LINKS,
+} from '../../legal/consentText';
 import { useEffect, useState, type FormEvent } from 'react';
 import { load, save } from '../../engine/storage';
 import { fetchMe, requestLoginCode, verifyLoginCode, type MeResponse } from '../../family/api';
@@ -139,9 +141,14 @@ export function LoginPage() {
             メールアドレスを入力してください。ログイン用のコードをお送りします。はじめての方も、このまま登録できます。
           </p>
           <div className="login__consent" data-consent-version={CONSENT_TEXT_VERSION}>
-            {CONSENT_TEXT_PARAGRAPHS.map((paragraph) => (
-              <p key={paragraph} className="login__consent-text">{paragraph}</p>
-            ))}
+            <p className="login__consent-text">{CONSENT_LEAD}</p>
+            <ul className="login__consent-links">
+              {CONSENT_LINKS.map((link) => (
+                <li key={link.href}>
+                  <a href={link.href} target="_blank" rel="noopener noreferrer">{link.label}</a>
+                </li>
+              ))}
+            </ul>
           </div>
           <form className="login__form" onSubmit={submitEmail}>
             <label className="login__label" htmlFor="email">メールアドレス</label>
@@ -159,6 +166,10 @@ export function LoginPage() {
               {step.kind === 'email-loading' ? '送信中…' : CONSENT_BUTTON_LABEL}
             </button>
           </form>
+          <p className="login__consent-note">
+            {CONSENT_DECLINE_NOTE}
+            <a href={`mailto:${CONSENT_CONTACT_EMAIL}`}>{CONSENT_CONTACT_EMAIL}</a>
+          </p>
         </>
       ) : null}
 

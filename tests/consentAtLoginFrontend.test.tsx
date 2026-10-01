@@ -8,7 +8,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CONSENT_TEXT_VERSION } from '../shared/consent';
-import { CONSENT_BUTTON_LABEL, CONSENT_TEXT_PARAGRAPHS } from '../src/legal/consentText';
+import { CONSENT_BUTTON_LABEL, CONSENT_CONTACT_EMAIL, CONSENT_DECLINE_NOTE, CONSENT_LEAD, CONSENT_LINKS } from '../src/legal/consentText';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -42,7 +42,20 @@ describe('/login — consent text before the code is sent', () => {
     render(<LoginPage />);
 
     await waitFor(() => expect(screen.getByLabelText('メールアドレス')).toBeInTheDocument());
-    for (const paragraph of CONSENT_TEXT_PARAGRAPHS) expect(screen.getByText(paragraph)).toBeInTheDocument();
+    expect(screen.getByText(CONSENT_LEAD)).toBeInTheDocument();
+    // Every consent link opens in a new tab (never navigating away from the consent step).
+    for (const link of CONSENT_LINKS) {
+      const anchor = screen.getByRole('link', { name: link.label });
+      expect(anchor).toHaveAttribute('href', link.href);
+      expect(anchor).toHaveAttribute('target', '_blank');
+      expect(anchor.getAttribute('rel')).toContain('noopener');
+    }
+    // The decline note sits UNDER the button, with the contact address.
+    const button = screen.getByRole('button', { name: '同意して、コードを送る' });
+    const note = screen.getByText((_, el) => el?.className === 'login__consent-note');
+    expect(note.textContent).toBe(CONSENT_DECLINE_NOTE + CONSENT_CONTACT_EMAIL);
+    expect(button.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('link', { name: CONSENT_CONTACT_EMAIL })).toHaveAttribute('href', `mailto:${CONSENT_CONTACT_EMAIL}`);
     expect(CONSENT_BUTTON_LABEL).toBe('同意して、コードを送る');
     expect(screen.getByRole('button', { name: '同意して、コードを送る' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'コードを送る' })).not.toBeInTheDocument();
@@ -182,5 +195,29 @@ describe('/account/?buy=1 — straight on to Shopify with the purchase token, on
     await waitFor(() => expect(calls.some((u) => u.endsWith('/me'))).toBe(true));
     await new Promise((r) => setTimeout(r, 50));
     expect(calls.filter((u) => u.endsWith('/purchase-intents'))).toHaveLength(0);
+  });
+});
+
+describe('/account — a family without recorded consent is sent to agree before a code is requested', () => {
+  it('requesting the account-deletion code sends them to /login/?reconsent=1 and requests nothing', async () => {
+    vi.resetModules();
+    originalLocation = window.location;
+    Object.defineProperty(window, 'location', { value: { ...originalLocation, href: '', search: '', pathname: '/account/' }, writable: true });
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    const calls: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      calls.push(url);
+      if (url.endsWith('/me')) return jsonResponse({ familyId: 'f1', email: 'p***@example.com', entitlements: [], profiles: [], trials: [], consentRecorded: false });
+      if (url.endsWith('/sessions')) return jsonResponse([]);
+      return new Response('not found', { status: 404 });
+    }));
+    const { AccountPage } = await import('../src/parent/account/AccountPage');
+    const user = userEvent.setup();
+    render(<AccountPage />);
+    const button = await screen.findByRole('button', { name: '削除用のコードを送る' });
+    await user.click(button);
+    await waitFor(() => expect(window.location.href).toBe('/login/?reconsent=1&next=%2Faccount%2F'));
+    expect(calls.some((u) => u.endsWith('/auth/request'))).toBe(false);
   });
 });

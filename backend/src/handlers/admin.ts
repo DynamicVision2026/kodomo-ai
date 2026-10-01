@@ -111,8 +111,8 @@ export async function handleAdmin(request: Request, env: Env, url: URL): Promise
     const familyId = segments[1]!;
     const family = await getFamily(env, familyId);
     if (!family) return new Response('not found', { status: 404 });
-    await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
-    return new Response(null, { status: 202 });
+    const outcome = await sendEmailWithConsent(env, moduleActivatedEmail(family.email, loginUrl(env), env.BEGINNER_LAUNCH === '1'));
+    return jsonResponse({ emailSent: outcome === 'sent', ...(outcome === 'sent' ? {} : { reason: 'no_consent' }) }, 202);
   }
 
   return new Response('not found', { status: 404 });
