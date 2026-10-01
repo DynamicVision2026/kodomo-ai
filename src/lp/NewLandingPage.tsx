@@ -5,8 +5,16 @@ import { usePurchaseFlow } from '../family/usePurchaseFlow';
 import { FAQ_REFUND_BULLETS } from '../legal/consentText';
 import { NoticeD } from '../legal/NoticeD';
 import moduleJson from '../modules/m1/module.json';
-import '../ad12/tokens.css';
-import './landing-page.css';
+import hatenaQuestionUrl from './assets/svg/hatena_question.svg';
+import pontaTabletUrl from './assets/svg/ponta_tablet.svg';
+import tool1Url from './assets/svg/tool_1_futa-wo-akeru.svg';
+import tool2Url from './assets/svg/tool_2_mae-no-riyuu.svg';
+import tool3Url from './assets/svg/tool_3_hamidashi.svg';
+import tool4Url from './assets/svg/tool_4_hitotsu-keshite.svg';
+import tool5Url from './assets/svg/tool_5_fumidai.svg';
+import tool6Url from './assets/svg/tool_6_mukou-ni-suwaru.svg';
+import tool7Url from './assets/svg/tool_7_mou-ichimon.svg';
+import './nazehori.css';
 
 /**
  * COPY-01 (Coordinator, 28 Sep 2026) — the post-launch landing page. Reviewed by 酒井先生 (28 Sep);
@@ -30,6 +38,20 @@ import './landing-page.css';
  * LandingPage.tsx already had and that item 5/10 of the "consent at login" spec made a legal
  * requirement of every buy-button surface — Notice D (the login-consent disclosure) and the
  * consent-decline refund bullet — found during this pass and added below, not previously flagged.
+ *
+ * Marketing design-pack redesign (Founder, 1 Oct 2026): colors/type/shape now come from
+ * `nazehori-tokens.css` (imported via ./nazehori.css) and the character/tool SVGs the Founder
+ * supplied, replacing the earlier AD-12 token pass + generic Mascot/growth-flower placeholders —
+ * this file no longer imports `../ad12/tokens.css` or `./landing-page.css` at all, since every
+ * class it uses now comes from `nazehori.css`'s own `.nz-*` set.
+ *
+ * The 7 lesson cards below are ordered b01→b07 (the real course sequence), each paired with its
+ * OWN tool's icon — `tool_1`..`tool_7` in the design pack are numbered by that same b01..b07
+ * lesson order (confirmed against src/course/content/lessons/beginner.course.json's own
+ * id→tool-letter map and courseUi.json's toolLabels), not by the tool letters' A-Z order, which
+ * is why `ENTRANCES` below (already in lesson order from the original COPY-01 pass) lines up
+ * directly with `TOOL_ICONS` position-for-position — not a re-sort, just confirmed as already
+ * correct and documented here so a future edit doesn't "fix" it into the wrong order.
  */
 
 const ENTRANCES = [
@@ -42,11 +64,21 @@ const ENTRANCES = [
   { tool: '虫とりあみ', label: 'もう 一問', when: '答えを聞いたあと、いつでも', example: 'なんで？ゲーム：ことばを一つつかまえて「なんで？」' },
 ] as const;
 
+const TOOL_ICONS = [tool1Url, tool2Url, tool3Url, tool4Url, tool5Url, tool6Url, tool7Url] as const;
+
+const LESSONS = ENTRANCES.map((entrance, i) => ({
+  ...entrance,
+  lessonId: `b0${i + 1}`,
+  icon: TOOL_ICONS[i],
+}));
+
 /** COPY-01 §3 (identical to §2 ⑩). The ★ refund answer's sentence is exact, legally-approved
  *  wording — never paraphrased, and identical everywhere it appears (landing page, FAQ, Shopify
- *  description, 特定商取引法に基づく表記, Shopify refund policy). Sourced from
- *  src/legal/consentText.ts's `FAQ_REFUND_BULLETS[0]` — the same verbatim sentence the old
- *  LandingPage.tsx's FAQ now shows (item A2, flip-prep 1 Oct 2026) — so the two pages never drift. */
+ *  description, 特定商取引法に基づく表記, Shopify refund policy). Both sourced from
+ *  src/legal/consentText.ts's `FAQ_REFUND_BULLETS` — the same two bullets the old LandingPage.tsx's
+ *  FAQ now shows (item A2, flip-prep 1 Oct 2026) — so the two pages never drift. The second bullet
+ *  (declined-login-consent refund) is an A6 gap-fill: item 10's spec requires it on every
+ *  buy-button surface, and it was previously missing from this file's FAQ/price section. */
 const [REFUND_SENTENCE, CONSENT_REFUND_SENTENCE] = FAQ_REFUND_BULLETS as readonly [string, string];
 
 const FAQ_ITEMS: Array<{ q: string; a: string; extra?: string }> = [
@@ -97,144 +129,182 @@ export function NewLandingPage() {
   }
 
   return (
-    <main className="lp">
-      <section className="lp__hero">
-        <h1>AIが答えたら、もう一問。</h1>
-        <p className="lp__subhead">ふしぎは、きみのもの。</p>
+    <main className="nz-page">
+      <header className="nz-header">
+        <span className="nz-logo">ナゼホリ</span>
+        <a className="nz-header-login" href="/login/">ログイン</a>
+      </header>
+
+      <section className="nz-hero">
+        <div className="nz-hero-art">
+          <img className="nz-hero-hatena" src={hatenaQuestionUrl} alt="" aria-hidden="true" />
+          <img className="nz-hero-ponta" src={pontaTabletUrl} alt="" aria-hidden="true" />
+        </div>
+        <h1>
+          AIが答えたら、<span className="nz-mark">もう一問</span>。
+        </h1>
+        <p className="nz-subhead">ふしぎは、きみのもの。</p>
         <p>
           AIは、なんでもすぐに答えてくれます。でも、答えをもらったら、そこでおしまいでしょうか。
           ナゼホリは、答えのあとに「もう一問」たずねる力を、親子で育てるアプリです。
         </p>
-        <div className="lp__cta-row">
-          <a className="lp__cta lp__cta--primary" href="/login/?next=/play/" onClick={() => track('cta_play_click')}>
-            無料のプレイグラウンドで、あそんでみる
-          </a>
-          <a className="lp__cta lp__cta--secondary" href="#price">
+        <div className="nz-cta-row">
+          {/* Item 3 (Founder, 1 Oct 2026): the paid path is now the primary (yellow) button, the
+              free Playground is the secondary (white/outline) one — the design pack's own buy/
+              free-trial button treatment. */}
+          <a className="nz-cta nz-cta--buy" href="#price">
             入門コースを見る（¥4,980 税込・買い切り）
           </a>
+          <a className="nz-cta nz-cta--trial" href="/login/?next=/play/" onClick={() => track('cta_play_click')}>
+            無料のプレイグラウンドで、あそんでみる
+          </a>
         </div>
-        <p className="lp__family-note">8歳ごろから。家族みんなで。</p>
+        <p className="nz-family-note">8歳ごろから。家族みんなで。</p>
+        <a className="nz-login-link" href="/login/">すでにご購入の方はこちら（ログイン）</a>
       </section>
 
-      <section className="lp__section">
-        <h2>答えは、みじかい。</h2>
-        <p>
-          答えの中には、まだ分からないことが、かくれています。中身の見えないことば。とばされた理由。
-          「みんな」「いつも」のような大きなことば。だれも言っていない前提。ほかの人から見ると、ちがって見えること。
-        </p>
-        <p>AIは、聞かれたことに答えます。何を知りたいか、分かっているのは、聞く人だけです。</p>
-        <p>だから、答えのあとの「もう一問」は、子ども自身のものです。</p>
-        <p className="lp__family-note">すごくなくていい。「なんで？」一つで、つぎのドアがひらく。</p>
+      {/* Item 4 (Founder, 1 Oct 2026) names 「いま、家庭で起きていること」 — a section that only
+          exists on the OLD LandingPage.tsx (`/`). This page's own closest equivalent (the
+          problem-framing section right after the hero) gets the same full-width navy band
+          treatment here; the literal section is handled in LandingPage.tsx itself. */}
+      <section className="nz-band-navy">
+        <div className="nz-band-inner">
+          <h2>答えは、みじかい。</h2>
+          <p>
+            答えの中には、まだ分からないことが、かくれています。中身の見えないことば。とばされた理由。
+            「みんな」「いつも」のような大きなことば。だれも言っていない前提。ほかの人から見ると、ちがって見えること。
+          </p>
+          <p>AIは、聞かれたことに答えます。何を知りたいか、分かっているのは、聞く人だけです。</p>
+          <p>だから、答えのあとの「もう一問」は、子ども自身のものです。</p>
+          <p className="nz-family-note" style={{ color: '#fff' }}>すごくなくていい。「なんで？」一つで、つぎのドアがひらく。</p>
+        </div>
       </section>
 
-      <section className="lp__section">
-        <h2>ナゼホリの進みかた</h2>
-        <ol>
-          <li><strong>プレイグラウンド（無料）</strong>：カードをえらんで、「なんで？」をためしてみる場所。家族のアカウントを作れば、無料で遊べます。</li>
-          <li><strong>入門コース（¥4,980 税込・買い切り）</strong>：答えのあとの「もう一問」の入り口を7つ、1回に1つずつ身につけるコースです。</li>
-          <li><strong>その先</strong>：もっと深く考えるステージを、準備しています。内容と時期は、決まりしだいお知らせします。</li>
-        </ol>
+      <section className="nz-section">
+        <div className="nz-card">
+          <h2>ナゼホリの進みかた</h2>
+          <ol>
+            <li><strong>プレイグラウンド（無料）</strong>：カードをえらんで、「なんで？」をためしてみる場所。家族のアカウントを作れば、無料で遊べます。</li>
+            <li><strong>入門コース（¥4,980 税込・買い切り）</strong>：答えのあとの「もう一問」の入り口を7つ、1回に1つずつ身につけるコースです。</li>
+            <li><strong>その先</strong>：もっと深く考えるステージを、準備しています。内容と時期は、決まりしだいお知らせします。</li>
+          </ol>
+        </div>
       </section>
 
-      <section className="lp__section">
+      {/* Item 5 (Founder, 1 Oct 2026): a grid of seven white cards, each with its own lesson's
+          tool icon and name — two columns on a phone, more on wider screens (nazehori.css). */}
+      <section className="nz-section">
         <h2>入門コース：7つの入り口</h2>
         <p>答えを聞いたら、どこから「もう一問」を始めればいい？　入門コースでは、その入り口を7つ、1回に1つずつ練習します。</p>
-        <ol className="lp__entrances">
-          {ENTRANCES.map((entrance, i) => (
-            <li key={entrance.tool} className="lp__entrance">
-              <p className="lp__entrance-heading">
-                {i + 1}. {entrance.tool} — {entrance.label}
-              </p>
-              <p className="lp__entrance-when">{entrance.when}</p>
-              <p className="lp__entrance-example">{entrance.example}</p>
-            </li>
+        <div className="nz-lessons-grid">
+          {LESSONS.map((lesson, i) => (
+            <div key={lesson.lessonId} className="nz-lesson-card">
+              <img src={lesson.icon} alt="" aria-hidden="true" />
+              <p className="nz-lesson-card-step">{i + 1}日目</p>
+              <p className="nz-lesson-card-name">{lesson.tool}</p>
+              <p className="nz-lesson-card-label">{lesson.label}</p>
+            </div>
           ))}
-        </ol>
+        </div>
       </section>
 
-      <section className="lp__section">
-        <h2>1回のレッスン</h2>
-        <ul>
-          <li><strong>きく</strong>：家族の会話を、音声ドラマで聞きます（4〜6分）。</li>
-          <li><strong>れんしゅう</strong>：5つの場面で、その日の入り口をつかってみます。</li>
-          <li><strong>チェック</strong>：入り口をつかえたか、ふりかえります。</li>
-          <li><strong>おうちで</strong>：家族の会話で、1回つかってみます。つかえたら、おうちの方が「つかえた！★」をおします。</li>
-        </ul>
-        <p className="lp__family-note">注：点数や順位はありません。質問の上手・下手も判定しません。</p>
-        <p>7つの花がさいたら、さいごのページへ。親子の認定証（印刷用）をお届けします。</p>
+      <section className="nz-section">
+        <div className="nz-card">
+          <h2>1回のレッスン</h2>
+          <ul>
+            <li><strong>きく</strong>：家族の会話を、音声ドラマで聞きます（4〜6分）。</li>
+            <li><strong>れんしゅう</strong>：5つの場面で、その日の入り口をつかってみます。</li>
+            <li><strong>チェック</strong>：入り口をつかえたか、ふりかえります。</li>
+            <li><strong>おうちで</strong>：家族の会話で、1回つかってみます。つかえたら、おうちの方が「つかえた！★」をおします。</li>
+          </ul>
+          <p className="nz-family-note">注：点数や順位はありません。質問の上手・下手も判定しません。</p>
+          <p>7つの花がさいたら、さいごのページへ。親子の認定証（印刷用）をお届けします。</p>
+        </div>
       </section>
 
-      <section className="lp__section">
-        <h2>だれのため？</h2>
-        <p className="lp__skill-flow">問う力に、年齢はありません。</p>
-        <p>
-          8歳ごろから使えます。音声とことばは、小学3年生が一度聞いて分かるように作りました。
-          きょうだいも、おうちの方も、おじいちゃん・おばあちゃんも、いっしょにどうぞ。
-        </p>
-      </section>
-
-      <section className="lp__section">
-        <h2>おうちの方へ</h2>
-        <p className="lp__skill-flow">答えを知らなくて、大丈夫です。</p>
-        <p>
-          お子さんの「なんで？」に、うまく答えられなくてもかまいません。「分からないね。いっしょに調べてみよう」
-          ――それも、このコースのゴールの一つです。レッスンごとに、おうちの方へのひとことメモがついています。
-        </p>
-      </section>
-
-      <section className="lp__section lp__trust" aria-label="安心のために">
-        <h2>安心のために</h2>
-        <ul className="lp__trust-list">
-          <li>アプリの中で、AIにはつながりません。</li>
-          <li>お子さんが文字を入力する場面はありません。</li>
-          <li>お子さんの名前や学校名などの個人情報は、入力しません。</li>
-          <li>広告はありません。</li>
-          <li>点数やランキング（順位）はありません。</li>
-          <li>ログインは、おうちの方のメールアドレスと6けたのコードだけ。パスワードはいりません。</li>
-        </ul>
-      </section>
-
-      <section className="lp__section lp__price" id="price">
-        <h2>料金</h2>
-        <p className="lp__price-amount">入門コース ¥4,980（税込）</p>
-        <ul>
-          <li>買い切り・月額料金なし</li>
-          <li>家族ライセンス：1回のお支払いで、家族みんなで使えます（子どものプロフィール3人まで・端末5台まで）</li>
-          <li>プレイグラウンドは無料です</li>
-          <li>以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。</li>
-        </ul>
-        {(purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
-          <>
-            {/* A6 gap-fill (Founder, flip-prep 1 Oct 2026): this surface was missing Notice D —
-                the same login-consent disclosure every other buy button already shows (item 5). */}
-            <NoticeD className="lp__notice-d" />
-            <button type="button" className="lp__cta lp__cta--primary" onClick={startPurchase} disabled={purchaseState.kind === 'loading'}>
-              入門コースを買う
-            </button>
-          </>
-        )}
-        {purchaseState.kind === 'error' && (
-          <p className="lp__cta-error">{PURCHASE_ERROR_MESSAGE[purchaseState.reason]}</p>
-        )}
-        {purchaseState.kind === 'awaiting-payment' && (
-          <p className="lp__purchase-status">
-            お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。
+      <section className="nz-section">
+        <div className="nz-card">
+          <h2>だれのため？</h2>
+          <p>問う力に、年齢はありません。</p>
+          <p>
+            8歳ごろから使えます。音声とことばは、小学3年生が一度聞いて分かるように作りました。
+            きょうだいも、おうちの方も、おじいちゃん・おばあちゃんも、いっしょにどうぞ。
           </p>
-        )}
-        {purchaseState.kind === 'paid' && (
-          <div className="lp__purchase-status lp__purchase-status--paid">
-            <p>ご購入ありがとうございます！</p>
-            <a className="lp__cta lp__cta--primary" href="/course/beginner/">入門コースをひらく</a>
-          </div>
-        )}
-        <p className="lp__family-note lp__refund-note">★ {REFUND_SENTENCE}</p>
+        </div>
       </section>
 
-      <section className="lp__section lp__faq">
+      <section className="nz-section">
+        <div className="nz-card">
+          <h2>おうちの方へ</h2>
+          <p>答えを知らなくて、大丈夫です。</p>
+          <p>
+            お子さんの「なんで？」に、うまく答えられなくてもかまいません。「分からないね。いっしょに調べてみよう」
+            ――それも、このコースのゴールの一つです。レッスンごとに、おうちの方へのひとことメモがついています。
+          </p>
+        </div>
+      </section>
+
+      <section className="nz-section">
+        <div className="nz-card" aria-label="安心のために">
+          <h2>安心のために</h2>
+          <ul>
+            <li>アプリの中で、AIにはつながりません。</li>
+            <li>お子さんが文字を入力する場面はありません。</li>
+            <li>お子さんの名前や学校名などの個人情報は、入力しません。</li>
+            <li>広告はありません。</li>
+            <li>点数やランキング（順位）はありません。</li>
+            <li>ログインは、おうちの方のメールアドレスと6けたのコードだけ。パスワードはいりません。</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Item 6 (Founder, 1 Oct 2026): one white card, the big price, Notice D once above the
+          one yellow buy button. */}
+      <section className="nz-section" id="price">
+        <div className="nz-card nz-price-card">
+          <h2>料金</h2>
+          <p className="nz-price-amount">入門コース ¥4,980（税込）</p>
+          <ul>
+            <li>買い切り・月額料金なし</li>
+            <li>家族ライセンス：1回のお支払いで、家族みんなで使えます（子どものプロフィール3人まで・端末5台まで）</li>
+            <li>プレイグラウンドは無料です</li>
+            <li>以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。</li>
+          </ul>
+          {(purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
+            <>
+              {/* A6 gap-fill (Founder, flip-prep 1 Oct 2026): this surface was missing Notice D —
+                  the same login-consent disclosure every other buy button already shows (item 5
+                  of the consent spec). Shown once, above the button, per the Founder's own item 6
+                  of this redesign pass. */}
+              <NoticeD className="nz-notice-d" />
+              <button type="button" className="nz-cta nz-cta--buy" onClick={startPurchase} disabled={purchaseState.kind === 'loading'}>
+                入門コースを買う
+              </button>
+            </>
+          )}
+          {purchaseState.kind === 'error' && (
+            <p className="nz-cta-error">{PURCHASE_ERROR_MESSAGE[purchaseState.reason]}</p>
+          )}
+          {purchaseState.kind === 'awaiting-payment' && (
+            <p className="nz-purchase-status">
+              お支払い画面を別のタブで開きました。お支払いが終わったら、このページに戻ってください。
+            </p>
+          )}
+          {purchaseState.kind === 'paid' && (
+            <div className="nz-purchase-status nz-purchase-status--paid">
+              <p>ご購入ありがとうございます！</p>
+              <a className="nz-cta nz-cta--buy" href="/course/beginner/">入門コースをひらく</a>
+            </div>
+          )}
+          <p className="nz-refund-note">★ {REFUND_SENTENCE}</p>
+        </div>
+      </section>
+
+      <section className="nz-section">
         <h2>よくある質問</h2>
-        <dl>
+        <dl className="nz-faq-list">
           {FAQ_ITEMS.map((item) => (
-            <div key={item.q}>
+            <div key={item.q} className="nz-card nz-faq-card">
               <dt>{item.q.startsWith('返金') ? '★ ' : ''}{item.q}</dt>
               <dd>
                 {item.a}
@@ -245,11 +315,13 @@ export function NewLandingPage() {
         </dl>
       </section>
 
-      <footer className="lp__footer">
-        <a href="/legal/tokushoho/">特定商取引法に基づく表記</a>
-        <a href="/legal/privacy/">プライバシーポリシー</a>
-        <span>お問い合わせ：info@domo-ai.com</span>
-        <span>運営：Beyond Culture 獨歩文化株式会社</span>
+      <footer className="nz-footer">
+        <div className="nz-footer-inner">
+          <a href="/legal/tokushoho/">特定商取引法に基づく表記</a>
+          <a href="/legal/privacy/">プライバシーポリシー</a>
+          <span>お問い合わせ：info@domo-ai.com</span>
+          <span>運営：Beyond Culture 獨歩文化株式会社</span>
+        </div>
       </footer>
     </main>
   );

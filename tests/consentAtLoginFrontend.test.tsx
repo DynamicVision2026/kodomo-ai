@@ -161,7 +161,7 @@ describe('landing buy button — login first, then Shopify with the purchase tok
     const { LandingPage } = await import('../src/lp/LandingPage');
     render(<LandingPage />);
 
-    const notices = document.querySelectorAll('.lp__notice-d');
+    const notices = document.querySelectorAll('.nz-notice-d');
     expect(notices.length).toBeGreaterThanOrEqual(2); // hero CTA + price-section CTA
     for (const notice of Array.from(notices)) {
       expect(notice.textContent).toContain('保護者の方のメールアドレスでのログインが必要です');
