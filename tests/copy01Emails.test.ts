@@ -13,13 +13,17 @@ describe('COPY-01 — moduleActivatedEmail retcons "モジュール1" -> "入門
     expect(msg.text).toContain('https://example.com/login/');
   });
 
-  it('flag on: final activation email (Founder, 1 Oct 2026), no residual "モジュール1" wording', () => {
+  it('flag on: final activation email (Founder, 1 Oct 2026), "モジュール1" appears only in the returning-buyer reassurance line (COPY-02, 2 Oct 2026)', () => {
     const msg = moduleActivatedEmail('parent@example.com', 'https://example.com/login/', true);
     expect(msg.subject).toBe('【ナゼホリ】入門コースがご利用いただけるようになりました');
     expect(msg.text).toContain('入門コースがご利用いただけるようになりました。');
     expect(msg.text).toContain('ご購入時のメールアドレスでログインしてください。');
     expect(msg.text).toContain('info@domo-ai.com');
-    expect(msg.text).not.toContain('モジュール1');
+    // COPY-02: past "Module 1" progress is hidden, never deleted — same reassurance as the
+    // landing page's own FAQ answer to "以前「モジュール1」を買いました。" (an explicitly allowed
+    // use of the retired name, naming past buyers specifically, not the current product).
+    expect(msg.text).toContain('以前「モジュール1」をご利用の方へ');
+    expect(msg.text).toContain('これまでの記録は、保存されています。');
     expect(msg.text).toContain('https://example.com/login/');
   });
 });

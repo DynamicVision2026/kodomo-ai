@@ -152,7 +152,7 @@ export function BeginnerCourseApp() {
   if (progress === 'loading') return <main className="ad12 course-loading"><p className="ad12-ui-text">{courseUi.loading}</p></main>;
 
   const licensed = isBeginnerCourseLicensed(me);
-  const freeLessonIds = freeSampleLessonIds();
+  const freeLessonIds = freeSampleLessonIds(me);
 
   function markListenDone(lessonId: string) {
     updateProgress((prev) => {

@@ -31,16 +31,32 @@ export function isBeginnerCourseLicensed(me: MeResponse): boolean {
 const PLAYGROUND_HIDDEN = import.meta.env.VITE_PLAYGROUND_HIDDEN === '1';
 export const FREE_SAMPLE_LESSON_ID = 'b01';
 
-/** Whether `lessonId` is openable for this family right now — Lesson 1 under the new flag,
- *  independent of licence; every other lesson (and the ending) still requires the licence. */
+/**
+ * Founder, 2 Oct 2026 (pre-flip preview request): "test the whole new flow before the flip, using
+ * only the two test addresses." `VITE_PLAYGROUND_HIDDEN` is build-time and uniform for every
+ * visitor — it can't be true for just two accounts — so Lesson 1's free-sample behavior reuses
+ * `me.courseAllowed` as an ADDITIONAL trigger, the exact same server-side allowlist
+ * (`COURSE_PREVIEW_EMAILS`/`config/course.allowFamilies`) that already lets those two addresses
+ * see the beginner course at all before `BEGINNER_LAUNCH` is on (`BeginnerCourseApp.tsx`'s own
+ * gate). Everyone else's `courseAllowed` stays false, so this is a no-op for every real family
+ * until the flag actually flips — "everyone else must stay unchanged" holds by construction.
+ */
+function freeSampleActive(me: MeResponse): boolean {
+  return PLAYGROUND_HIDDEN || me.courseAllowed;
+}
+
+/** Whether `lessonId` is openable for this family right now — Lesson 1 under the new flag (or the
+ *  course-preview allowlist, pre-flip), independent of licence; every other lesson (and the
+ *  ending) still requires the licence. */
 export function isLessonAccessible(me: MeResponse, lessonId: string): boolean {
-  if (PLAYGROUND_HIDDEN && lessonId === FREE_SAMPLE_LESSON_ID) return true;
+  if (freeSampleActive(me) && lessonId === FREE_SAMPLE_LESSON_ID) return true;
   return isBeginnerCourseLicensed(me);
 }
 
-/** The lesson ids open to every family regardless of licence, right now — `['b01']` once the
- *  flag is on, `[]` otherwise. Passed down to `BeginnerCourseHome` so its per-flower unlock/stage/
- *  lock-icon logic can stay keyed on `licensed` for everything except this explicit exception. */
-export function freeSampleLessonIds(): string[] {
-  return PLAYGROUND_HIDDEN ? [FREE_SAMPLE_LESSON_ID] : [];
+/** The lesson ids open to this family regardless of licence, right now — `['b01']` once the flag
+ *  (or the preview allowlist) is active for them, `[]` otherwise. Passed down to
+ *  `BeginnerCourseHome` so its per-flower unlock/stage/lock-icon logic can stay keyed on
+ *  `licensed` for everything except this explicit exception. */
+export function freeSampleLessonIds(me: MeResponse): string[] {
+  return freeSampleActive(me) ? [FREE_SAMPLE_LESSON_ID] : [];
 }

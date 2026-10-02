@@ -33,9 +33,16 @@ export async function computeEligibilitySnapshot(
 
   let firstPaidUseAt: string | null = null;
   if (order.familyId) {
+    const paidAtMs = new Date(order.paidAt).getTime();
     for (const line of order.lines) {
       const usage = await env.db.get<UsageDoc>(usagePath(order.familyId, line.moduleId));
-      if (usage && (!firstPaidUseAt || usage.firstPaidUseAt < firstPaidUseAt)) firstPaidUseAt = usage.firstPaidUseAt;
+      if (!usage) continue;
+      // Founder, 2 Oct 2026: a usage record from BEFORE this purchase (e.g. a prior entitlement
+      // period for the same moduleId — refunded/revoked, then repurchased) must never count
+      // against THIS purchase's own refund window. Only a paid lesson opened after `order.paidAt`
+      // is evidence THIS purchase's paid content was used.
+      if (new Date(usage.firstPaidUseAt).getTime() < paidAtMs) continue;
+      if (!firstPaidUseAt || usage.firstPaidUseAt < firstPaidUseAt) firstPaidUseAt = usage.firstPaidUseAt;
     }
   }
   const paidContentUsed = !!firstPaidUseAt && new Date(firstPaidUseAt).getTime() < requestedAt.getTime();

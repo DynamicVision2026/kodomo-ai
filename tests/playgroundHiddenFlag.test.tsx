@@ -47,7 +47,7 @@ describe('beginnerLicence.ts — isLessonAccessible / freeSampleLessonIds', () =
     expect(isLessonAccessible(fakeMe(false), 'b01')).toBe(false);
     expect(isLessonAccessible(fakeMe(true), 'b01')).toBe(true);
     expect(isLessonAccessible(fakeMe(false), 'b02')).toBe(false);
-    expect(freeSampleLessonIds()).toEqual([]);
+    expect(freeSampleLessonIds(fakeMe(false))).toEqual([]);
   });
 
   it('flag on: b01 opens for an unlicensed family; every other lesson stays locked', async () => {
@@ -57,7 +57,18 @@ describe('beginnerLicence.ts — isLessonAccessible / freeSampleLessonIds', () =
     expect(isLessonAccessible(fakeMe(false), 'b01')).toBe(true);
     expect(isLessonAccessible(fakeMe(false), 'b02')).toBe(false);
     expect(isLessonAccessible(fakeMe(false), 'ending')).toBe(false);
-    expect(freeSampleLessonIds()).toEqual(['b01']);
+    expect(freeSampleLessonIds(fakeMe(false))).toEqual(['b01']);
+  });
+
+  it('flag OFF, but courseAllowed (pre-flip preview, Founder 2 Oct 2026): b01 still opens for an unlicensed family — same preview allowlist that already shows the course early, never a live family', async () => {
+    vi.resetModules();
+    const { isLessonAccessible, freeSampleLessonIds } = await import('../src/course/beginnerLicence');
+    const previewUnlicensed: MeResponse = { ...fakeMe(false), courseAllowed: true };
+    expect(isLessonAccessible(previewUnlicensed, 'b01')).toBe(true);
+    expect(isLessonAccessible(previewUnlicensed, 'b02')).toBe(false);
+    expect(freeSampleLessonIds(previewUnlicensed)).toEqual(['b01']);
+    // A real family (courseAllowed false, flag off) is completely unaffected — this is additive.
+    expect(isLessonAccessible(fakeMe(false), 'b01')).toBe(false);
   });
 
   it('flag on, a refund (entitlement revoked / absent): b01 still opens — a refund never locks Lesson 1', async () => {

@@ -106,10 +106,14 @@ describe('Beginner-course refund tracking (Founder, 2 Oct 2026) — COPY-02 §9 
     expect(usage?.firstPaidUnitId).toBe('b02');
     expect(usage?.firstPaidProfileId).toBe(profileId);
 
-    // `requestedAt` must be strictly after `firstPaidUseAt` for `paidContentUsed` to be true
-    // (backend/src/refund.ts) — a plain `new Date()` here could tie with the write above at the
-    // same millisecond, so this is pinned a second later rather than left to the system clock.
-    const snapshot = await computeEligibilitySnapshot(env, orderFor(familyId, new Date()), new Date(Date.now() + 1000));
+    // The order's own `paidAt` must be BEFORE the lesson-open above (purchase, then usage) for
+    // this to mean what it says — `orderFor(familyId, new Date())` here would otherwise capture a
+    // `paidAt` AFTER the write, which backend/src/refund.ts's own "a usage record from before this
+    // purchase never counts" guard would then (correctly, for THAT timing) treat as pre-purchase.
+    // `requestedAt` also must be strictly after `firstPaidUseAt` for `paidContentUsed` to be true.
+    const snapshot = await computeEligibilitySnapshot(
+      env, orderFor(familyId, new Date(Date.now() - 60 * 60 * 1000)), new Date(Date.now() + 1000),
+    );
     expect(snapshot.paidContentUsed).toBe(true);
     expect(snapshot.objectivelyEligible).toBe(false);
   });
@@ -190,5 +194,46 @@ describe('Beginner-course refund tracking (Founder, 2 Oct 2026) — COPY-02 §9 
     const usageAfter = await env.db.get<UsageDoc>(usagePath(familyId, 'm1'));
     expect(usageAfter?.firstPaidUnitId).toBe('b02');
     expect(usageAfter?.firstPaidUseAt).toBe(firstUsage?.firstPaidUseAt);
+  });
+
+  it('a usage record from BEFORE this purchase (a prior entitlement period, refunded and repurchased) never counts against the NEW purchase\'s own window', async () => {
+    const env = fakeEnv();
+    const familyId = 'f-repurchase';
+    // A stale usage doc from a PAST entitlement period for the same moduleId — e.g. the family
+    // bought, opened a paid lesson, was refunded, and is now buying again.
+    const staleUseAt = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
+    await env.db.set(usagePath(familyId, 'm1'), {
+      firstPaidUseAt: staleUseAt.toISOString(), firstPaidUnitId: 'b02', firstPaidProfileId: 'p-old',
+    });
+
+    // The NEW purchase happened AFTER that stale usage record, and nothing has been opened since.
+    const newPaidAt = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
+    const order: Pick<OrderDoc, 'paidAt' | 'lines' | 'familyId'> = {
+      paidAt: newPaidAt.toISOString(),
+      lines: [{ sku: 'kodomo-ai-m1', variantId: 1, moduleId: 'm1', quantity: 1, lineTotal: 4980 }],
+      familyId,
+    };
+    const snapshot = await computeEligibilitySnapshot(env, order, new Date());
+    expect(snapshot.paidContentUsed).toBe(false);
+    expect(snapshot.firstPaidUseAt).toBeNull();
+    expect(snapshot.objectivelyEligible).toBe(true);
+  });
+
+  it('a usage record written AFTER this purchase still correctly counts against it', async () => {
+    const env = fakeEnv();
+    const familyId = 'f-genuine-use';
+    const paidAt = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
+    const usedAt = new Date(Date.now() - 12 * 60 * 60 * 1000); // 12 hours ago — after paidAt
+    await env.db.set(usagePath(familyId, 'm1'), {
+      firstPaidUseAt: usedAt.toISOString(), firstPaidUnitId: 'b02', firstPaidProfileId: 'p1',
+    });
+    const order: Pick<OrderDoc, 'paidAt' | 'lines' | 'familyId'> = {
+      paidAt: paidAt.toISOString(),
+      lines: [{ sku: 'kodomo-ai-m1', variantId: 1, moduleId: 'm1', quantity: 1, lineTotal: 4980 }],
+      familyId,
+    };
+    const snapshot = await computeEligibilitySnapshot(env, order, new Date());
+    expect(snapshot.paidContentUsed).toBe(true);
+    expect(snapshot.objectivelyEligible).toBe(false);
   });
 });

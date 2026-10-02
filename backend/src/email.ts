@@ -160,10 +160,15 @@ export function loginCodeEmail(to: string, code: string, appBaseUrl = ''): Email
  *  in this work order's own report for the Coordinator to confirm or replace with fuller copy. */
 export function moduleActivatedEmail(to: string, loginUrl: string, beginnerLaunch: boolean): EmailMessage {
   if (beginnerLaunch) {
+    // Founder, 2 Oct 2026: past "Module 1" (Playground) progress is hidden by the new course
+    // structure, never deleted — confirmed via backend/src/access.ts/handlers/progress.ts (no
+    // code path ever deletes a `progress/{moduleId}` doc). Same reassurance as the landing page's
+    // own FAQ answer to "以前「モジュール1」を買いました。".
     const bodyHtml =
       `<p style="margin:0 0 16px;">このたびは、ナゼホリをご購入いただき、ありがとうございます。</p>` +
       `<p style="margin:0 0 4px;">入門コースがご利用いただけるようになりました。<br>以下のボタンからナゼホリを開き、ご購入時のメールアドレスでログインしてください。</p>` +
       emailButtonHtml(loginUrl, '学習を始める') +
+      `<p style="margin:16px 0 0;font-size:13px;color:#5E6180;">以前「モジュール1」をご利用の方へ：これまでのカードのレッスンは、新しいコース構成では表示されませんが、これまでの記録は、保存されています。</p>` +
       `<p style="margin:16px 0 0;font-size:13px;color:#5E6180;">ご不明な点は、info@domo-ai.com までお問い合わせください。</p>`;
     return {
       to,
@@ -173,6 +178,7 @@ export function moduleActivatedEmail(to: string, loginUrl: string, beginnerLaunc
         `入門コースがご利用いただけるようになりました。\n` +
         `以下のリンクからナゼホリを開き、ご購入時のメールアドレスでログインしてください。\n\n` +
         `${loginUrl}\n\n` +
+        `以前「モジュール1」をご利用の方へ：これまでのカードのレッスンは、新しいコース構成では表示されませんが、これまでの記録は、保存されています。\n\n` +
         `ご不明な点は、info@domo-ai.com までお問い合わせください。`,
       html: renderEmailHtml(emailOrigin(loginUrl), bodyHtml),
     };
