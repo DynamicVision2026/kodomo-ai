@@ -16,9 +16,9 @@
  */
 import { useEffect, useState } from 'react';
 import presets from '../../shared/presets.json';
-import { fetchMe, getCourseProgress, putCourseProgress, type MeResponse } from './api';
+import { fetchMe, getCourseProgress, putCourseProgress, recordCourseLessonOpen, type MeResponse } from './api';
 import { BEGINNER_COURSE_ID } from './beginnerCourseId';
-import { isBeginnerCourseLicensed, isLessonAccessible, freeSampleLessonIds } from './beginnerLicence';
+import { isBeginnerCourseLicensed, isLessonAccessible, freeSampleLessonIds, FREE_SAMPLE_LESSON_ID } from './beginnerLicence';
 import { beginnerManifest, beginnerEndingLesson, getBeginnerLesson } from './content/beginnerManifest';
 import { courseUi } from './content/courseManifest';
 import { emptyCourseProgress, emptyLessonProgress, type CourseProgressState } from './progress';
@@ -152,7 +152,7 @@ export function BeginnerCourseApp() {
   if (progress === 'loading') return <main className="ad12 course-loading"><p className="ad12-ui-text">{courseUi.loading}</p></main>;
 
   const licensed = isBeginnerCourseLicensed(me);
-  const freeLessonIds = freeSampleLessonIds();
+  const freeLessonIds = freeSampleLessonIds(me);
 
   function markListenDone(lessonId: string) {
     updateProgress((prev) => {
@@ -210,7 +210,15 @@ export function BeginnerCourseApp() {
         licensed={licensed}
         freeLessonIds={freeLessonIds}
         getLesson={getBeginnerLesson}
-        onOpenLesson={(lessonId) => { track('course_lesson_start', { lessonId, courseId: BEGINNER_COURSE_ID }); setScreen({ kind: 'lesson', lessonId }); }}
+        onOpenLesson={(lessonId) => {
+          track('course_lesson_start', { lessonId, courseId: BEGINNER_COURSE_ID });
+          // Refund-tracking (Founder, 2 Oct 2026): only Lessons 2-7 ever count as "started" — the
+          // free sample (Lesson 1) must not, and the backend itself re-checks both the lessonId
+          // and the licence (handlers/courseLessonOpen.ts), so this is a defense-in-depth skip,
+          // not the only thing standing between Lesson 1 and a recorded open.
+          if (profileId && lessonId !== FREE_SAMPLE_LESSON_ID) void recordCourseLessonOpen(profileId, lessonId);
+          setScreen({ kind: 'lesson', lessonId });
+        }}
         onOpenEnding={() => setScreen({ kind: 'ending' })}
         onOpenParent={() => setScreen({ kind: 'parent', focusLessonId: null })}
       />

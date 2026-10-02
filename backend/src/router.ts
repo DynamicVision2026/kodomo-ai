@@ -13,6 +13,7 @@ import { handleDeleteSession, handleListSessions } from './handlers/sessions.js'
 import { handleAccountEmail, handleDeleteAccount, handleRequestDeleteCode } from './handlers/account.js';
 import { handleCreatePurchaseIntent } from './handlers/purchaseIntents.js';
 import { handleUnitOpen } from './handlers/units.js';
+import { handleCourseLessonOpen } from './handlers/courseLessonOpen.js';
 import { handleConfirmClaim, handleGetClaim } from './handlers/claims.js';
 
 /**
@@ -91,6 +92,13 @@ async function routeApi(request: Request, env: Env, path: string): Promise<Respo
 
   if (method === 'POST' && segments[0] === 'units' && segments[2] === 'open' && segments.length === 3) {
     return handleUnitOpen(request, env, segments[1]!);
+  }
+
+  // Founder, 2 Oct 2026: refund-tracking for the beginner course's own Lessons 2-7 — see
+  // handlers/courseLessonOpen.ts's own header comment for why this is a separate endpoint from
+  // `/units/{unitId}/open` above rather than a reuse of it.
+  if (method === 'POST' && segments[0] === 'course-lessons' && segments[2] === 'open' && segments.length === 3) {
+    return handleCourseLessonOpen(request, env, segments[1]!);
   }
 
   if (segments[0] === 'claims' && segments.length === 2) {

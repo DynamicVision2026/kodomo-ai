@@ -44,7 +44,7 @@ describe('TokushohoPage', () => {
     expect(screen.getByText(/返金ポリシーは近日公開予定です/)).toBeInTheDocument();
   });
 
-  it('COPY-01: once BEGINNER_LAUNCH is on, 商品名 says 入門コース and the refund row carries the exact legally-approved sentence', async () => {
+  it('COPY-02: once BEGINNER_LAUNCH is on, 商品名 says 入門コース and the refund row carries the exact approved COPY-02 section', async () => {
     vi.resetModules();
     vi.stubEnv('VITE_BEGINNER_LAUNCH', '1');
     const { TokushohoPage: LaunchedTokushohoPage } = await import('../src/legal/tokushoho/TokushohoPage');
@@ -55,12 +55,14 @@ describe('TokushohoPage', () => {
     const text = (document.body.textContent ?? '').replace(/\s+/g, '');
     expect(text).toContain(
       (
-        'ご購入から10日以内で、入門コースのレッスンをまだ始めていない場合は、info@domo-ai.com までご連絡いただければ返金いたします。' +
-        'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。'
+        '次の場合は、返金いたします。' +
+        '・ご購入後3日以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合。' +
+        '無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。'
       ).replace(/\s+/g, ''),
     );
-    // Item 10: the login-consent refund guarantee is appended, same wording everywhere it appears.
-    expect(text).toContain('同意いただけない場合は、ログインできないため、ご利用いただけません。'.replace(/\s+/g, ''));
+    // The login-consent refund guarantee is this section's own second bullet (COPY-02).
+    expect(text).toContain('ログイン時の同意をいただけないためにご利用になれない場合で'.replace(/\s+/g, ''));
+    expect(text).toContain('返金をご希望の場合は、info@domo-ai.com までご連絡ください。'.replace(/\s+/g, ''));
   });
 });
 

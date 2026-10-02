@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { COMPANY, PRODUCT } from '../company';
-import { CONSENT_DECLINE_REFUND_NOTE } from '../consentText';
+import { COPY02_TOKUSHOHO_REFUND_SECTION } from '../consentText';
 import '../legal.css';
 
 // COPY-01 (28 Sep 2026, 酒井先生-reviewed; refund wording legally approved): same "go live at the
@@ -9,11 +9,10 @@ import '../legal.css';
 // own VITE_BEGINNER_LAUNCH check.
 const BEGINNER_LAUNCH = import.meta.env.VITE_BEGINNER_LAUNCH === '1';
 
-// COPY-01 §7's exact, legally-approved sentence — identical everywhere it appears (landing page,
-// FAQ, Shopify description, this page, and the Shopify refund policy itself).
-const REFUND_SENTENCE =
-  'ご購入から10日以内で、入門コースのレッスンをまだ始めていない場合は、info@domo-ai.com までご連絡いただければ返金いたします。' +
-  'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。';
+// COPY-02 (Founder, 2 Oct 2026, approved) supersedes COPY-01's §7 sentence above now that the
+// product is Lesson 1 free-sample / Lessons 2-7 paid, not the Playground — imported from
+// src/legal/consentText.ts so this page and the landing page never hold their own separate copy
+// of the same policy (Founder's own instruction: "import the same refund constant").
 
 const ROWS: [string, ReactNode][] = [
   ['販売業者', COMPANY.name],
@@ -40,16 +39,11 @@ const ROWS: [string, ReactNode][] = [
   ],
   [
     '返品・キャンセルについて',
-    // AD-15: the old "30-day guarantee" copy was retired with no replacement yet. COPY-01 §7
-    // supplies the real, legally-approved wording — shown only once BEGINNER_LAUNCH is on.
-    // Item 10 (Founder, 1 Oct 2026): the login-consent refund guarantee is final NOW, independent
-    // of that pending general policy, so it's appended either way — same wording as Notice D, the
-    // FAQ, and the landing page's price section (CONSENT_DECLINE_REFUND_NOTE, one source of truth).
-    <>
-      {BEGINNER_LAUNCH ? REFUND_SENTENCE : '返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。'}
-      {' '}
-      {CONSENT_DECLINE_REFUND_NOTE}
-    </>,
+    // AD-15: the old "30-day guarantee" copy was retired with no replacement yet. COPY-02
+    // (Founder, 2 Oct 2026, approved) supplies the real, legally-approved wording — including its
+    // own login-consent refund condition as the section's second bullet — shown only once
+    // BEGINNER_LAUNCH is on; real visitors keep seeing the pre-launch placeholder until then.
+    BEGINNER_LAUNCH ? COPY02_TOKUSHOHO_REFUND_SECTION : '返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。',
   ],
 ];
 

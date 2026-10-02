@@ -348,7 +348,7 @@ describe('AD-16 §7 — refund eligibility snapshot is frozen at request time, n
   it('a snapshot computed before paid use shows paidContentUsed=false even after paid use happens later', async () => {
     const env = fakeEnv();
     const familyId = 'f-refund';
-    const paidAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
+    const paidAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // 2 days ago — still within the 3-day window (COPY-02)
     const order: Pick<OrderDoc, 'paidAt' | 'lines' | 'familyId'> = {
       paidAt: paidAt.toISOString(),
       lines: [{ sku: 'kodomo-ai-m1', variantId: 1, moduleId: 'm1', quantity: 1, lineTotal: 9800 }],
@@ -365,7 +365,7 @@ describe('AD-16 §7 — refund eligibility snapshot is frozen at request time, n
     expect(snapshot.paidContentUsed).toBe(false); // frozen object, unaffected by the write above
   });
 
-  it('a purchase outside the 10-day window is not objectively eligible, regardless of usage', async () => {
+  it('a purchase outside the 3-day window (COPY-02) is not objectively eligible, regardless of usage', async () => {
     const env = fakeEnv();
     const order: Pick<OrderDoc, 'paidAt' | 'lines' | 'familyId'> = {
       paidAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),

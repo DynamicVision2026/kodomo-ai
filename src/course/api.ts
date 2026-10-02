@@ -29,3 +29,10 @@ export async function putCourseProgress(
   if (isFailure(res) || !res.ok) return null;
   return (await res.json()) as CourseProgressState;
 }
+
+/** Founder, 2 Oct 2026: refund-tracking signal only — fire-and-forget, never blocks navigation.
+ *  The backend (`backend/src/handlers/courseLessonOpen.ts`) decides whether this lessonId/licence
+ *  combination actually records anything; the caller doesn't need to know. */
+export async function recordCourseLessonOpen(profileId: string, lessonId: string): Promise<void> {
+  await apiFetch(`/course-lessons/${lessonId}/open`, { method: 'POST', body: JSON.stringify({ profileId }) });
+}

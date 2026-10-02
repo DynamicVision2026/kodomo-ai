@@ -2,10 +2,14 @@ import type { Env } from './types.js';
 import type { OrderDoc, RefundEligibilitySnapshot, RefundPolicyDoc, UsageDoc } from './schema.js';
 import { refundPolicyPath, usagePath } from './schema.js';
 
-/** AD-16 §7: `config/refundPolicy` — until staff actually configure it in Firestore, this is the
- *  policy AD-16 itself specifies (10 days, usage-contingent). The legal TEXT of the policy lives
- *  elsewhere (AD-16 §12); this is only the numbers a snapshot computation needs. */
-const DEFAULT_POLICY: RefundPolicyDoc = { windowDays: 10, requiresNoPaidUse: true, version: 'ad16-default' };
+/** COPY-02 (Founder, 2 Oct 2026): "The normal refund window is now 3 days after payment, not 10."
+ *  Supersedes AD-16 §7's original 10-day placeholder (never finalized — see this doc's own prior
+ *  comment history) now that the Lesson 1-free-sample/Lessons 2-7 model has a real, approved
+ *  refund policy. Until staff configure `config/refundPolicy` in Firestore, this is the default
+ *  every `computeEligibilitySnapshot` call (including the admin dashboard's "refund eligible"
+ *  field) uses. The legal TEXT of the policy lives in src/legal/consentText.ts's own COPY-02
+ *  exports; this is only the numbers a snapshot computation needs. */
+const DEFAULT_POLICY: RefundPolicyDoc = { windowDays: 3, requiresNoPaidUse: true, version: 'copy-02' };
 
 export async function getRefundPolicy(env: Env): Promise<RefundPolicyDoc> {
   return (await env.db.get<RefundPolicyDoc>(refundPolicyPath())) ?? DEFAULT_POLICY;
@@ -29,9 +33,16 @@ export async function computeEligibilitySnapshot(
 
   let firstPaidUseAt: string | null = null;
   if (order.familyId) {
+    const paidAtMs = new Date(order.paidAt).getTime();
     for (const line of order.lines) {
       const usage = await env.db.get<UsageDoc>(usagePath(order.familyId, line.moduleId));
-      if (usage && (!firstPaidUseAt || usage.firstPaidUseAt < firstPaidUseAt)) firstPaidUseAt = usage.firstPaidUseAt;
+      if (!usage) continue;
+      // Founder, 2 Oct 2026: a usage record from BEFORE this purchase (e.g. a prior entitlement
+      // period for the same moduleId — refunded/revoked, then repurchased) must never count
+      // against THIS purchase's own refund window. Only a paid lesson opened after `order.paidAt`
+      // is evidence THIS purchase's paid content was used.
+      if (new Date(usage.firstPaidUseAt).getTime() < paidAtMs) continue;
+      if (!firstPaidUseAt || usage.firstPaidUseAt < firstPaidUseAt) firstPaidUseAt = usage.firstPaidUseAt;
     }
   }
   const paidContentUsed = !!firstPaidUseAt && new Date(firstPaidUseAt).getTime() < requestedAt.getTime();
