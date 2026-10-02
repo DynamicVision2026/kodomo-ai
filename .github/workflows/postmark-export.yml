@@ -4,8 +4,15 @@ name: Export Postmark message history (manual, evidence before the 45-day window
 # history after 45 days, so every message sent so far needs to be exported and saved OUTSIDE
 # Postmark now. Manual, workflow_dispatch only — never wired to push/pull_request, never touches
 # production traffic. Reuses ci.yml's existing Workload Identity Federation auth (same secrets)
-# to read the real `email-api-key` secret from Secret Manager — the one piece this sandbox-run
-# script can't do on its own, since that token only exists there.
+# to read the real `EMAIL_API_KEY` secret from Secret Manager — the one piece this sandbox-run
+# script can't do on its own, since that token only exists there. Secret Manager resource ID is
+# `EMAIL_API_KEY` (uppercase, matching the env var name) — the same convention `ci.yml`'s own
+# proven-working `deploy-backend`/`deploy-admin` jobs already use for all four secrets
+# (ADMIN_TOKEN/AUTH_PEPPER/SHOPIFY_WEBHOOK_SECRET/EMAIL_API_KEY); `docs/launch-runbook.md`'s own
+# "Part 1" bootstrap commands document an older lowercase-hyphenated convention
+# (`email-api-key`) that this workflow used to follow too — if the real secrets were ever
+# recreated under the uppercase names without that doc being updated, this is the one that
+# actually matches what's live.
 #
 # The result is uploaded as a workflow ARTIFACT (downloadable from this run's own Actions page),
 # deliberately never committed to git: it's one row per message with the real recipient address,
@@ -46,7 +53,7 @@ jobs:
       - name: Read the Postmark server token from Secret Manager
         id: secret
         run: |
-          TOKEN=$(gcloud secrets versions access latest --secret=email-api-key)
+          TOKEN=$(gcloud secrets versions access latest --secret=EMAIL_API_KEY)
           echo "::add-mask::$TOKEN"
           echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 

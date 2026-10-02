@@ -4,11 +4,13 @@ name: Send BEGINNER_LAUNCH preview emails (manual, real Postmark send)
 # can see them on my iPhone" — BEFORE flipping BEGINNER_LAUNCH anywhere live. Manual,
 # workflow_dispatch only — never wired to push/pull_request, never touches production traffic or
 # any live flag. Reuses ci.yml's/postmark-export.yml's existing Workload Identity Federation auth
-# (same secrets) to read the real `email-api-key` secret from Secret Manager — the one piece this
+# (same secrets) to read the real `EMAIL_API_KEY` secret from Secret Manager — the one piece this
 # sandbox-run script can't do on its own, since that token only exists there. The actual email
 # content comes straight from backend/src/email.ts's own template functions, called directly with
 # beginnerLaunch: true — this never calls the live backend's /api/v1/auth/request endpoint (which
-# would only exercise today's still-flag-off code path).
+# would only exercise today's still-flag-off code path). Secret Manager resource ID is
+# `EMAIL_API_KEY` (uppercase) — see postmark-export.yml's own doc comment for why this matches
+# ci.yml's proven-working convention rather than docs/launch-runbook.md's older lowercase one.
 
 on:
   workflow_dispatch:
@@ -47,7 +49,7 @@ jobs:
       - name: Read the Postmark server token from Secret Manager
         id: secret
         run: |
-          TOKEN=$(gcloud secrets versions access latest --secret=email-api-key)
+          TOKEN=$(gcloud secrets versions access latest --secret=EMAIL_API_KEY)
           echo "::add-mask::$TOKEN"
           echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 

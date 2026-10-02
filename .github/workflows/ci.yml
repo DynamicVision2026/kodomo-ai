@@ -126,7 +126,7 @@ jobs:
       # login email — BEGINNER_LAUNCH itself stays off; this is a narrower, per-email allowlist
       # (backend/src/course.ts's own `isCourseAllowedForFamily`), not a general-availability flag.
       # Our own mailbox, not a secret — plain env var, never a `VITE_*`/frontend build arg.
-      COURSE_PREVIEW_EMAILS: info@domo-ai.com,brian.lanshengmed+nzh1@gmail.com,brian.lanshengmed+nzh2@gmail.com
+      COURSE_PREVIEW_EMAILS: info@domo-ai.com,brianfu4u+nzh1@gmail.com,brianfu4u+nzh2@gmail.com,brianfu4u+nzh3@gmail.com
       # COPY-01/WO-C5 launch decision (Founder's own call, not this session's): sourced from the
       # `vars.BEGINNER_LAUNCH` repo variable, same mechanism as the frontend's own
       # `vars.VITE_BEGINNER_LAUNCH` (deploy-frontend, below) — unset today, so this stays a no-op
