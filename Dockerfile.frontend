@@ -72,6 +72,14 @@ ENV VITE_SHOPIFY_PRODUCT_URL=$VITE_SHOPIFY_PRODUCT_URL
 # decision sets it — /lp-new/ (unconditional, noindexed) is unaffected either way.
 ARG VITE_BEGINNER_LAUNCH
 ENV VITE_BEGINNER_LAUNCH=$VITE_BEGINNER_LAUNCH
+# "Playground hidden; Lesson 1 is the free sample" (Founder, 2 Oct 2026) — src/main.tsx,
+# src/ad12/SiteHeader.tsx, src/course/beginnerLicence.ts and src/parent/login/LoginPage.tsx all
+# read this at build time (import.meta.env.VITE_PLAYGROUND_HIDDEN === '1'). Without this ARG/ENV
+# pair, the variable would never reach `vite build` inside this container no matter what repo
+# variable CI passes in — same requirement, same reasoning, as VITE_BEGINNER_LAUNCH immediately
+# above. Absent (the default) is a no-op, same as every deploy to date.
+ARG VITE_PLAYGROUND_HIDDEN
+ENV VITE_PLAYGROUND_HIDDEN=$VITE_PLAYGROUND_HIDDEN
 RUN npm run build
 
 # ---- 2. compile backend/server/frontendIndex.ts -> dist-server/**/*.js (same as Dockerfile's
