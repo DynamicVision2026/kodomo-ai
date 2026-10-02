@@ -1,21 +1,39 @@
+/**
+ * WO-C6 B2 #12 (Founder, 2 Oct 2026): same design-pack tokens as login.css (src/lp/assets/
+ * nazehori-tokens.css). `.account` itself becomes the white card (zero DOM change), floating on
+ * the pack's own grey field carried by `body`. The purchase/email-change/delete-account sections
+ * can all render an `.account__button` at once, so that class is never the page's one yellow —
+ * it's navy, matching the "navy, or yellow only if it's the only yellow on the screen" rule.
+ * Styling only: every selector below, every layout/content line unchanged.
+ */
+@import '../../lp/assets/nazehori-tokens.css';
+
+body {
+  margin: 0;
+  background: var(--nz-bg);
+}
+
 .account {
   max-width: 32rem;
-  margin: 0 auto;
-  padding: 3rem 1.25rem 4rem;
-  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  margin: 2rem auto;
+  padding: 2rem 1.5rem 2.5rem;
+  font-family: var(--nz-font);
   line-height: 1.8;
-  color: #1c1c1c;
+  color: var(--nz-ink);
+  background: var(--nz-surface);
+  border-radius: var(--nz-r-card);
+  box-shadow: var(--nz-shadow-lg);
 }
 
 .account h1 { font-size: 1.3rem; margin-bottom: 0.75rem; }
 .account h2 { font-size: 1rem; margin-bottom: 0.5rem; }
 
-.account__lead { color: #555; font-size: 0.9rem; }
+.account__lead { color: var(--nz-muted); font-size: 0.9rem; }
 
 .account__section {
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--nz-line);
 }
 
 .account__device-list { list-style: none; padding: 0; margin: 0; }
@@ -27,13 +45,18 @@
   font-size: 0.9rem;
 }
 
+/* Shared base: an outlined, ink-colored button (not blue link text) — サインアウト/ログアウト keep
+   this as-is; the two overrides below give .account__button/.account__button--danger their own
+   fill on top of it. */
 .account__device-signout, .account__button, .account__logout {
   padding: 0.5rem 1rem;
-  border-radius: 999px;
-  border: 1px solid #ccc;
-  background: #fff;
+  border-radius: var(--nz-r-pill);
+  border: 1px solid var(--nz-ink);
+  background: var(--nz-surface);
+  color: var(--nz-ink);
   cursor: pointer;
   font-size: 0.85rem;
+  font-family: inherit;
 }
 
 .account__form {
@@ -45,21 +68,34 @@
 
 .account__input {
   padding: 0.6rem 0.8rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--nz-line);
   border-radius: 0.5rem;
   font-size: 1rem;
+  font-family: inherit;
+  color: var(--nz-ink);
+  background: var(--nz-surface);
 }
 
+/* Multiple of these can render on screen at once (purchase CTA, email-change, delete-account all
+   use this class), so it's never eligible to be the page's one yellow accent — navy instead. */
 .account__button {
-  background: #2f6fb0;
+  background: var(--nz-navy);
   color: #fff;
   border: none;
   font-weight: 700;
   text-decoration: none;
   display: inline-block;
 }
-.account__button:disabled { background: #a9c3dc; cursor: not-allowed; }
-.account__button--danger { background: #b0322f; }
+.account__button:disabled { background: var(--nz-line); color: var(--nz-muted); cursor: not-allowed; }
+
+/* Quiet outlined button, not filled red — the destructive action stays the least visually loud
+   control on the page rather than the most alarming. */
+.account__button--danger {
+  background: var(--nz-surface);
+  color: var(--nz-muted);
+  border: 1px solid var(--nz-line);
+  font-weight: 700;
+}
 
 .account__purchase-status { font-weight: 700; }
 
@@ -67,17 +103,19 @@
    screen's own consent notes. */
 .account__notice-d {
   margin: 0.5rem 0 0.75rem;
-  color: #555;
+  color: var(--nz-muted);
   font-size: 14px;
   line-height: 1.6;
   max-width: 32rem;
 }
 .account__notice-d a {
-  color: #1a4fa0;
+  color: var(--nz-slate);
 }
 
 .account__message { margin-top: 0.75rem; font-size: 0.85rem; }
-.account__message--error { color: #b0632f; }
+/* No error-red token exists in the pack — matches nazehori.css's own .nz-cta-error, which is
+   hardcoded for the same reason. */
+.account__message--error { color: #b0342f; }
 .account__message--success {
   display: flex;
   flex-direction: column;
@@ -91,4 +129,4 @@
   margin-top: 2.5rem;
 }
 
-.account__link { color: #2f6fb0; }
+.account__link { color: var(--nz-slate); }

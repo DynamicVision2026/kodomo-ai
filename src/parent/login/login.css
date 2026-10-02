@@ -1,10 +1,27 @@
+/**
+ * WO-C6 B2 #12 (Founder, 2 Oct 2026): the design-pack tokens as the single source for this page
+ * too (src/lp/assets/nazehori-tokens.css — same file src/ad12/tokens.css and the landing pages
+ * already import). `.login` itself becomes the white card (zero DOM change — no new wrapper),
+ * floating on the pack's own grey field; `body` carries that field so the card has somewhere to
+ * float on. Styling only: every selector below, every layout/content line unchanged.
+ */
+@import '../../lp/assets/nazehori-tokens.css';
+
+body {
+  margin: 0;
+  background: var(--nz-bg);
+}
+
 .login {
   max-width: 28rem;
-  margin: 0 auto;
-  padding: 3rem 1.25rem 4rem;
-  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  margin: 2rem auto;
+  padding: 2rem 1.5rem 2.5rem;
+  font-family: var(--nz-font);
   line-height: 1.8;
-  color: #1c1c1c;
+  color: var(--nz-ink);
+  background: var(--nz-surface);
+  border-radius: var(--nz-r-card);
+  box-shadow: var(--nz-shadow-lg);
 }
 
 .login h1 {
@@ -13,22 +30,22 @@
 }
 
 .login__lead {
-  color: #555;
+  color: var(--nz-muted);
   font-size: 0.9rem;
   margin-bottom: 1.75rem;
 }
 
 .login__consent {
-  border: 1px solid #ccd;
+  border: 1px solid var(--nz-line);
   border-radius: 8px;
   padding: 0.9rem 1rem;
   margin-bottom: 1.25rem;
-  background: #f7f8fb;
+  background: var(--nz-bg);
 }
 
 .login__consent-text {
   margin: 0;
-  color: #333;
+  color: var(--nz-ink);
   font-size: 15px;
   line-height: 1.7;
 }
@@ -41,7 +58,7 @@
 }
 
 .login__consent-links a {
-  color: #1a4fa0;
+  color: var(--nz-slate);
 }
 
 /* Small text under the button — parent text, kept in the 14-15px range. */
@@ -49,11 +66,11 @@
   margin: 0.9rem 0 0;
   font-size: 14px;
   line-height: 1.6;
-  color: #444;
+  color: var(--nz-muted);
 }
 
 .login__consent-note a {
-  color: #1a4fa0;
+  color: var(--nz-slate);
 }
 
 .login__form {
@@ -64,28 +81,37 @@
 
 .login__label {
   font-size: 0.85rem;
-  color: #555;
+  color: var(--nz-muted);
 }
 
 .login__input {
   padding: 0.7rem 0.9rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--nz-line);
   border-radius: 0.5rem;
   font-size: 1.1rem;
   letter-spacing: 0.05em;
+  font-family: inherit;
+  color: var(--nz-ink);
+  background: var(--nz-surface);
 }
 
+/* The one primary action on this screen at any one time (email step or code step, never both) —
+   the design pack's own single accent yellow, same treatment as the landing pages' buy button. */
 .login__submit {
-  padding: 0.75rem 1.2rem;
-  border-radius: 999px;
+  padding: 0.85rem 1.2rem;
+  border-radius: var(--nz-r-pill);
   border: none;
-  background: #2f6fb0;
-  color: #fff;
+  background: var(--nz-sun);
+  color: var(--nz-ink);
   font-weight: 700;
+  font-family: inherit;
   cursor: pointer;
+  box-shadow: 0 4px 0 var(--nz-sun-press);
 }
 .login__submit:disabled {
-  background: #a9c3dc;
+  background: var(--nz-line);
+  color: var(--nz-muted);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -96,24 +122,25 @@
   font-size: 0.9rem;
 }
 .login__message--success {
-  background: #f0f7f2;
-  color: #2f6f4f;
-  border: 1px solid #d9ead9;
+  background: var(--nz-bg);
+  color: var(--nz-ink);
+  border: 1px solid var(--nz-leaf);
 }
 .login__message--error {
-  background: #fff3e0;
-  color: #b0632f;
-  border: 1px solid #f0d9c0;
+  background: var(--nz-bg);
+  color: var(--nz-ink);
+  border: 1px solid var(--nz-petal);
 }
 
 .login__cta {
   display: block;
   text-align: center;
   margin-top: 1.25rem;
-  padding: 0.75rem 1.2rem;
-  border-radius: 999px;
-  background: #2f6fb0;
-  color: #fff;
+  padding: 0.85rem 1.2rem;
+  border-radius: var(--nz-r-pill);
+  background: var(--nz-sun);
+  color: var(--nz-ink);
   font-weight: 700;
   text-decoration: none;
+  box-shadow: 0 4px 0 var(--nz-sun-press);
 }
