@@ -634,6 +634,7 @@ jobs:
           docker build -f Dockerfile.frontend \
             --build-arg VITE_SHOPIFY_PRODUCT_URL="${{ vars.VITE_SHOPIFY_PRODUCT_URL }}" \
             --build-arg VITE_BEGINNER_LAUNCH="${{ vars.VITE_BEGINNER_LAUNCH }}" \
+            --build-arg VITE_PLAYGROUND_HIDDEN="${{ vars.VITE_PLAYGROUND_HIDDEN }}" \
             -t "$IMAGE:${{ github.sha }}" \
             -t "$IMAGE:latest" \
             .
