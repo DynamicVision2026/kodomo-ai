@@ -20,6 +20,11 @@ export interface SiteHeaderProps {
 }
 
 const BEGINNER_LAUNCH_BUILD_FLAG = import.meta.env.VITE_BEGINNER_LAUNCH === '1';
+/** "Playground hidden; Lesson 1 is the free sample" — /play/ itself redirects away once this is
+ *  on (src/main.tsx), so the switch's プレイグラウンド half would only ever bounce through a
+ *  redirect; hidden here too rather than left as a working-but-pointless extra hop. Off by
+ *  default, same flag src/course/beginnerLicence.ts/src/main.tsx/LoginPage.tsx check. */
+const PLAYGROUND_HIDDEN_BUILD_FLAG = import.meta.env.VITE_PLAYGROUND_HIDDEN === '1';
 
 /**
  * Post-launch-check (Founder, domo-ai.com): a small header on Course Home / the beginner course
@@ -69,17 +74,21 @@ export function SiteHeader({ ui, current, homeHref }: SiteHeaderProps) {
       <a className="site-header__brand" href={homeHref}>
         {ui.brandLabel}
       </a>
-      <nav className="site-header__switch" aria-label={`${ui.playgroundLabel} / ${ui.courseLabel}`}>
-        {current === 'playground' ? (
-          <span className="site-header__switch-current">{ui.playgroundLabel}</span>
-        ) : (
-          <a className="site-header__switch-link" href="/play/">
-            {ui.playgroundLabel}
-          </a>
+      <nav className="site-header__switch" aria-label={courseVisible && !PLAYGROUND_HIDDEN_BUILD_FLAG ? `${ui.playgroundLabel} / ${ui.courseLabel}` : ui.courseLabel}>
+        {!PLAYGROUND_HIDDEN_BUILD_FLAG && (
+          <>
+            {current === 'playground' ? (
+              <span className="site-header__switch-current">{ui.playgroundLabel}</span>
+            ) : (
+              <a className="site-header__switch-link" href="/play/">
+                {ui.playgroundLabel}
+              </a>
+            )}
+          </>
         )}
         {courseVisible && (
           <>
-            <span aria-hidden="true" className="site-header__switch-divider">/</span>
+            {!PLAYGROUND_HIDDEN_BUILD_FLAG && <span aria-hidden="true" className="site-header__switch-divider">/</span>}
             {current === 'course' ? (
               <span className="site-header__switch-current">{ui.courseLabel}</span>
             ) : (

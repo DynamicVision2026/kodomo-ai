@@ -115,17 +115,33 @@ const continuousStageMissionIds = new Set<string>([
   ...bankMissions.map((m) => m.id),
 ]);
 
-createRoot(document.getElementById('root')!).render(
-  <MissionShell
-    moduleId={moduleJson.id}
-    freeMissionIds={moduleJson.freeMissionIds}
-    mission={chantoMission}
-    missionLibrary={{ missionOrder: moduleJson.missionOrder, missions }}
-    bankLibrary={{ bankOrder: bankMissions.map((m) => m.id), missions: bankMissionsById }}
-    ui={ui}
-    followMoves={moduleJson.followMoves}
-    cardTypes={moduleJson.cardTypes}
-    familyTestMode={familyTestMode}
-    continuousStageMissionIds={continuousStageMissionIds}
-  />,
-);
+// "Playground hidden; Lesson 1 is the free sample" (Founder, 2 Oct 2026) — a single, reversible
+// build flag, off by default (every deploy to date ships with it unset, so this branch has never
+// actually run in production — see tests/beginnerLesson1FreeSample.test.tsx's own flag-off
+// regression case). Every old entry point that used to land here — a direct /play/ visit, the
+// (now-hidden) header switch link, both landing pages' own CTAs (`/login/?next=/play/`, the
+// post-purchase `/play/` link), and a plain login's own fallback (LoginPage.tsx's
+// `resolveNextPath`) — all funnel through this one file, so redirecting here is the single place
+// that keeps every one of them pointed at Lesson 1 instead of a dead or hidden page. Nothing
+// below this is deleted: unsetting the var again is the entire rollback, same build, same
+// Playground, unchanged.
+const PLAYGROUND_HIDDEN = import.meta.env.VITE_PLAYGROUND_HIDDEN === '1';
+
+if (PLAYGROUND_HIDDEN) {
+  window.location.replace('/course/beginner/');
+} else {
+  createRoot(document.getElementById('root')!).render(
+    <MissionShell
+      moduleId={moduleJson.id}
+      freeMissionIds={moduleJson.freeMissionIds}
+      mission={chantoMission}
+      missionLibrary={{ missionOrder: moduleJson.missionOrder, missions }}
+      bankLibrary={{ bankOrder: bankMissions.map((m) => m.id), missions: bankMissionsById }}
+      ui={ui}
+      followMoves={moduleJson.followMoves}
+      cardTypes={moduleJson.cardTypes}
+      familyTestMode={familyTestMode}
+      continuousStageMissionIds={continuousStageMissionIds}
+    />,
+  );
+}

@@ -20,6 +20,27 @@ function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 }
 
+/** Work order (2 Oct 2026), admin item: "on each order, show 'logged in since payment: yes or
+ *  no, date'." Computed at read time from data that already exists — `SessionDoc.createdAt` is
+ *  set exactly once per completed login (`createSession`, called from `handlers/authVerify.ts`
+ *  right after a login code verifies), so the earliest session created after `order.paidAt` for
+ *  this order's own family IS the first login since payment. Queries ALL of that family's
+ *  sessions (not `listActiveSessions`'s active-only subset — a login since revoked/expired still
+ *  answered "yes, they logged in"), same `query(sessionsCollection(), 'familyId', ...)` primitive
+ *  `listActiveSessions` itself uses. An order with no bound family (`familyId: null`) has nothing
+ *  to check — "no" either way, since nobody has ever logged in FOR this order specifically. */
+async function loggedInSincePayment(env: Env, order: OrderDoc): Promise<{ loggedInSincePayment: boolean; firstLoginSincePaymentAt: string | null }> {
+  if (!order.familyId) return { loggedInSincePayment: false, firstLoginSincePaymentAt: null };
+  const sessions = await env.db.query<SessionDoc>(sessionsCollection(), 'familyId', order.familyId);
+  const paidAtMs = new Date(order.paidAt).getTime();
+  const sinceLogins = sessions
+    .map((s) => s.data.createdAt)
+    .filter((createdAt) => new Date(createdAt).getTime() > paidAtMs)
+    .sort();
+  const firstLoginSincePaymentAt = sinceLogins[0] ?? null;
+  return { loggedInSincePayment: firstLoginSincePaymentAt !== null, firstLoginSincePaymentAt };
+}
+
 function maskEmail(email: string): string {
   const [local, domain] = email.split('@');
   if (!domain || !local) return email;
@@ -253,7 +274,8 @@ async function routeOrder(request: Request, env: Env, staff: StaffIdentity, segm
     // link to the order in Shopify admin" — both computed here so OrderView.tsx never needs to
     // know the shop domain or re-sum lines itself.
     const amountTotal = order.lines.reduce((sum, l) => sum + l.lineTotal, 0);
-    return jsonResponse({ ...order, amountTotal, shopifyAdminUrl: shopifyAdminOrderUrl(env, order.shopifyOrderId) });
+    const loginStatus = await loggedInSincePayment(env, order);
+    return jsonResponse({ ...order, amountTotal, shopifyAdminUrl: shopifyAdminOrderUrl(env, order.shopifyOrderId), ...loginStatus });
   }
 
   if (!canWrite(staff)) return new Response('forbidden', { status: 403 });

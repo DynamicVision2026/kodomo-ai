@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react';
 import presets from '../../shared/presets.json';
 import { fetchMe, getCourseProgress, putCourseProgress, type MeResponse } from './api';
 import { BEGINNER_COURSE_ID } from './beginnerCourseId';
-import { isBeginnerCourseLicensed } from './beginnerLicence';
+import { isBeginnerCourseLicensed, isLessonAccessible, freeSampleLessonIds } from './beginnerLicence';
 import { beginnerManifest, beginnerEndingLesson, getBeginnerLesson } from './content/beginnerManifest';
 import { courseUi } from './content/courseManifest';
 import { emptyCourseProgress, emptyLessonProgress, type CourseProgressState } from './progress';
@@ -34,6 +34,11 @@ import { EndingScreen } from './screens/EndingScreen';
 import './course.css';
 
 const BEGINNER_LAUNCH_BUILD_FLAG = import.meta.env.VITE_BEGINNER_LAUNCH === '1';
+/** "Playground hidden; Lesson 1 is the free sample" — see beginnerLicence.ts's own doc comment.
+ *  Bypasses gate 1 below (the course is reachable to every logged-in, consented family once this
+ *  is on, not just BEGINNER_LAUNCH/courseAllowed families) — gate 2 (the licence) is unaffected;
+ *  `isLessonAccessible` is what actually makes Lesson 1 openable without it. */
+const PLAYGROUND_HIDDEN_BUILD_FLAG = import.meta.env.VITE_PLAYGROUND_HIDDEN === '1';
 
 type Screen =
   | { kind: 'home' }
@@ -89,7 +94,17 @@ export function BeginnerCourseApp() {
       </main>
     );
   }
-  if (!BEGINNER_LAUNCH_BUILD_FLAG && !me.courseAllowed) {
+  // Item 3 ("Lesson 1 requires login and consent"): login is already required above (`me ===
+  // null`); a logged-in family with no recorded consent (a legacy pre-consent-system account —
+  // every new login already requires agreeing, per LoginPage.tsx's own consent block) is sent to
+  // agree before seeing any course content, same redirect AccountPage.tsx's own
+  // `sendToConsentIfMissing` already uses.
+  if (!me.consentRecorded) {
+    const next = `${window.location.pathname}${window.location.search}`;
+    window.location.href = `/login/?reconsent=1&next=${encodeURIComponent(next)}`;
+    return <main className="ad12 course-loading"><p className="ad12-ui-text">{courseUi.loading}</p></main>;
+  }
+  if (!BEGINNER_LAUNCH_BUILD_FLAG && !me.courseAllowed && !PLAYGROUND_HIDDEN_BUILD_FLAG) {
     return (
       <main className="ad12 course-loading">
         <p className="ad12-ui-text">{courseUi.comingSoon}</p>
@@ -137,6 +152,7 @@ export function BeginnerCourseApp() {
   if (progress === 'loading') return <main className="ad12 course-loading"><p className="ad12-ui-text">{courseUi.loading}</p></main>;
 
   const licensed = isBeginnerCourseLicensed(me);
+  const freeLessonIds = freeSampleLessonIds();
 
   function markListenDone(lessonId: string) {
     updateProgress((prev) => {
@@ -192,6 +208,7 @@ export function BeginnerCourseApp() {
         manifest={beginnerManifest}
         progress={progress}
         licensed={licensed}
+        freeLessonIds={freeLessonIds}
         getLesson={getBeginnerLesson}
         onOpenLesson={(lessonId) => { track('course_lesson_start', { lessonId, courseId: BEGINNER_COURSE_ID }); setScreen({ kind: 'lesson', lessonId }); }}
         onOpenEnding={() => setScreen({ kind: 'ending' })}
@@ -223,7 +240,11 @@ export function BeginnerCourseApp() {
     );
   }
 
-  if (!licensed) { setScreen({ kind: 'home' }); return null; } // unreachable in practice: BeginnerCourseHome only ever opens a lesson when licensed
+  // Not "unreachable in practice" any more: BeginnerCourseHome now also opens Lesson 1 for an
+  // unlicensed family once PLAYGROUND_HIDDEN_BUILD_FLAG is on — isLessonAccessible is the same
+  // per-lesson check it uses to decide that, so this stays the one real enforcement point for
+  // lesson/listen/exercise/audit/home-task screens either way.
+  if (!isLessonAccessible(me, screen.lessonId)) { setScreen({ kind: 'home' }); return null; }
 
   const lesson = getBeginnerLesson(screen.lessonId);
   if (!lesson) return null; // unreachable in practice: every transition below only ever targets a resolvable lessonId

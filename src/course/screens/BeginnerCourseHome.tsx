@@ -8,7 +8,10 @@
  *
  * WO-C5 §6: when `licensed` is false, every lesson plane is forced locked regardless of progress,
  * and tapping one shows the purchase CTA instead of the ordinary "not yet unlocked" note — no free
- * preview of any lesson content.
+ * preview of any lesson content. "Playground hidden; Lesson 1 is the free sample" (Founder, 2 Oct
+ * 2026) adds exactly one exception, via `freeLessonIds`/`accessible[i]` below: Lesson 1 (b01)
+ * behaves like a normal open lesson for an unlicensed family too, once that flag is on — every
+ * other lesson's own "no free preview" rule is completely unchanged.
  */
 import { useState } from 'react';
 import { Icon, plantSymbolIdForStage } from '../Icon';
@@ -41,6 +44,12 @@ export interface BeginnerCourseHomeProps {
   manifest: CourseBeginnerManifest;
   progress: CourseProgressState;
   licensed: boolean;
+  /** "Playground hidden; Lesson 1 is the free sample" — lesson ids open regardless of `licensed`
+   *  (just `['b01']` once the flag is on, `[]` otherwise — see beginnerLicence.ts). Everything
+   *  below that used to key purely off `licensed` now keys off `accessible[i]` (`licensed ||`
+   *  this list), so a free Lesson 1 looks and behaves like any other open lesson — real growth,
+   *  no lock icon, tappable — while every other lesson is completely unaffected. */
+  freeLessonIds?: string[];
   getLesson: (lessonId: string) => CourseBeginnerLesson | undefined;
   onOpenLesson: (lessonId: string) => void;
   onOpenEnding: () => void;
@@ -48,7 +57,7 @@ export interface BeginnerCourseHomeProps {
 }
 
 export function BeginnerCourseHome({
-  manifest, progress, licensed, getLesson, onOpenLesson, onOpenEnding, onOpenParent,
+  manifest, progress, licensed, freeLessonIds = [], getLesson, onOpenLesson, onOpenEnding, onOpenParent,
 }: BeginnerCourseHomeProps) {
   const [note, setNote] = useState<string | null>(null);
   const lessonParts = manifest.parts.filter((part) => part.kind === 'lesson');
@@ -56,9 +65,9 @@ export function BeginnerCourseHome({
 
   const percents = lessonParts.map((part) => computeBeginnerLessonPercent(getLesson(part.id)!, progress.lessons[part.id]));
   const courseComplete = allBeginnerLessonsComplete(percents);
-  const currentIndex = licensed
-    ? percents.findIndex((p, i) => p < 100 && isPartUnlocked(i, lessonParts, percents, progress.earlyUnlockedParts))
-    : -1;
+  const accessible = lessonParts.map((part) => licensed || freeLessonIds.includes(part.id));
+  const hasAnyAccess = licensed || accessible.some(Boolean);
+  const currentIndex = percents.findIndex((p, i) => p < 100 && accessible[i] && isPartUnlocked(i, lessonParts, percents, progress.earlyUnlockedParts));
   const coursePercent = percents.length > 0 ? Math.round(percents.reduce((sum, p) => sum + p, 0) / percents.length) : 0;
   const currentLesson = currentIndex !== -1 ? getLesson(lessonParts[currentIndex]!.id) : undefined;
 
@@ -93,9 +102,10 @@ export function BeginnerCourseHome({
         {lessonParts.map((part, i) => {
           const lesson = getLesson(part.id);
           const percent = percents[i]!;
-          const unlocked = licensed && isPartUnlocked(i, lessonParts, percents, progress.earlyUnlockedParts);
+          const isAccessible = accessible[i]!;
+          const unlocked = isAccessible && isPartUnlocked(i, lessonParts, percents, progress.earlyUnlockedParts);
           const done = percent >= 100;
-          const stage = flowerStageForPercent(licensed ? percent : 0);
+          const stage = flowerStageForPercent(isAccessible ? percent : 0);
           const stageLabel = courseUi.flowerStageLabel[stage];
           return (
             <Plane
@@ -105,7 +115,7 @@ export function BeginnerCourseHome({
               <button
                 type="button"
                 className="ad12-tappable course-beginner-flower__button"
-                onClick={unlocked ? () => onOpenLesson(part.id) : () => setNote(licensed ? courseUi.lessonLockedNote : courseUi.beginnerLockedCta)}
+                onClick={unlocked ? () => onOpenLesson(part.id) : () => setNote(isAccessible ? courseUi.lessonLockedNote : courseUi.beginnerLockedCta)}
               >
                 <svg width="60" height="66" viewBox="0 0 60 60" className="course-beginner-flower__plant" role="img" aria-label={stageLabel}>
                   <use href={`#${plantSymbolIdForStage(stage)}`} />
@@ -117,7 +127,7 @@ export function BeginnerCourseHome({
                       <svg width="14" height="14"><use href="#i-check" /></svg>
                     </span>
                   )}
-                  {!licensed && (
+                  {!isAccessible && (
                     <span className="course-beginner-flower__lock" aria-hidden="true">
                       <svg width="14" height="14"><use href="#i-lock" /></svg>
                     </span>
@@ -137,12 +147,12 @@ export function BeginnerCourseHome({
         )}
       </div>
 
-      {licensed && currentLesson && (
+      {hasAnyAccess && currentLesson && (
         <button type="button" className="ad12-ink-button ad12-tappable course-screen__primary course-home__next" onClick={() => onOpenLesson(currentLesson.id)}>
           {nextStepLabelFor(currentLesson, progress)}
         </button>
       )}
-      {licensed && !courseComplete && <p className="ad12-ui-text course-home__complete-note">{courseUi.gardenCompleteNote}</p>}
+      {hasAnyAccess && !courseComplete && <p className="ad12-ui-text course-home__complete-note">{courseUi.gardenCompleteNote}</p>}
 
       {!licensed && (
         <a className="ad12-ink-button ad12-tappable course-screen__primary" href="/account/?buy=1">
