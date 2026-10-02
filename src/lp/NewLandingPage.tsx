@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { track } from '../engine/analytics';
 import { fetchMe } from '../family/api';
 import { usePurchaseFlow } from '../family/usePurchaseFlow';
-import { FAQ_REFUND_BULLETS } from '../legal/consentText';
+import { COPY02_FAQ_REFUND_BULLETS, COPY02_SHORT_REFUND_NOTE } from '../legal/consentText';
 import { NoticeD } from '../legal/NoticeD';
 import moduleJson from '../modules/m1/module.json';
 import hatenaQuestionUrl from './assets/svg/hatena_question.svg';
@@ -17,10 +17,12 @@ import tool7Url from './assets/svg/tool_7_mou-ichimon.svg';
 import './nazehori.css';
 
 /**
- * COPY-01 (Coordinator, 28 Sep 2026) — the post-launch landing page. Reviewed by 酒井先生 (28 Sep);
- * the ★ refund sentence is legally approved. This copy describes the product as it will be once
- * `BEGINNER_LAUNCH` is on: the Playground is free, the paid product is the 入門コース (¥4,980),
- * and the 72-hour trial no longer exists. It must never be shown to a real visitor before that —
+ * COPY-01 (Coordinator, 28 Sep 2026), superseded by COPY-02 (Founder, 2 Oct 2026, approved) — the
+ * post-launch landing page. This copy describes the product as it will be once `BEGINNER_LAUNCH`
+ * is on: Lesson 1 is the free sample, Lessons 2-7 and the ending page are the paid 入門コース
+ * (¥4,980), and the 72-hour trial no longer exists (the Playground itself is also retired —
+ * COPY-02 replaces every COPY-01 reference to it with the Lesson 1 free-sample framing). It must
+ * never be shown to a real visitor before that —
  * `src/lp/main.tsx` renders this component only when `import.meta.env.VITE_BEGINNER_LAUNCH === '1'`,
  * `LandingPage.tsx` (unchanged) otherwise. `/lp-new/` (this same component, noindexed, `newMain.tsx`)
  * always renders it regardless of the flag, so the Founder can review it before launch.
@@ -82,11 +84,16 @@ const LESSONS = ENTRANCES.map((entrance, i) => ({
  *  FAQ now shows (item A2, flip-prep 1 Oct 2026) — so the two pages never drift. The second bullet
  *  (declined-login-consent refund) is an A6 gap-fill: item 10's spec requires it on every
  *  buy-button surface, and it was previously missing from this file's FAQ/price section. */
-const [REFUND_SENTENCE, CONSENT_REFUND_SENTENCE] = FAQ_REFUND_BULLETS as readonly [string, string];
+const [REFUND_SENTENCE, CONSENT_REFUND_SENTENCE] = COPY02_FAQ_REFUND_BULLETS;
 
+// COPY-02 (Founder, 2 Oct 2026, approved): the Lesson 1 free-sample / Lessons 2-7 paid FAQ set,
+// replacing COPY-01's Playground-era questions. The returning-Module-1-buyer answer is a
+// deliberate open question (not yet confirmed whether past Playground progress stays saved under
+// the new course structure, or is simply not surfaced any more) — see this session's own report.
 const FAQ_ITEMS: Array<{ q: string; a: string; extra?: string }> = [
-  { q: '無料で、どこまで使えますか？', a: 'プレイグラウンドは、家族のアカウントを作れば無料で使えます。入門コースは有料（¥4,980 税込・買い切り）です。まずはプレイグラウンドで、ナゼホリの雰囲気をたしかめてみてください。' },
-  { q: '72時間の無料体験は、なくなったのですか？', a: 'はい。入門コースの公開にともない終了いたしました。かわりに、プレイグラウンドを無料でお使いいただけます。' },
+  { q: '無料で、どこまで？', a: 'レッスン1は、家族のアカウントを作れば無料で使えます。レッスン2〜7とさいごのページは、入門コース（¥4,980 税込・買い切り）を購入するとひらきます。まずはレッスン1で、ナゼホリの雰囲気をたしかめてみてください。' },
+  { q: '72時間の無料体験は？', a: 'はい、終了いたしました。かわりに、レッスン1を無料でお使いいただけます。' },
+  { q: 'どんな人が使えますか？', a: '家族みんなで使えます。音声とことばは、一度聞いて分かるように、やさしく作っています。きょうだいも、おうちの方も、おじいちゃん・おばあちゃんも、いっしょに楽しめます。' },
   { q: '親がAIにくわしくなくても大丈夫ですか？', a: '大丈夫です。おうちの方に、正しい答えは求めていません。答えに困ったら「分からないね。いっしょに調べてみよう」と言ってください。それも、このコースのゴールの一つです。' },
   { q: 'アプリの中で、AIと話すのですか？', a: 'いいえ。アプリの中で、AIにはつながりません。ご家庭でAIを使うかどうかは、おうちの方がお決めください。' },
   { q: '質問の上手・下手を、判定しますか？', a: 'しません。点数や順位もありません。入り口を1回つかえたら、それで成功です。' },
@@ -96,9 +103,11 @@ const FAQ_ITEMS: Array<{ q: string; a: string; extra?: string }> = [
   { q: '端末をかえたら、進みぐあいはどうなりますか？', a: '同じメールアドレスでログインすれば、そのまま続きから使えます。' },
   { q: 'ログインのしかたは？', a: 'おうちの方のメールアドレスを入れると、6けたのコードがメールで届きます。そのコードを入れるだけです。パスワードはありません。' },
   { q: 'コードのメールが届きません。', a: '迷惑メールフォルダをご確認ください。no-reply@domo-ai.com からのメールを受け取れるように設定してください。それでも届かないときは、info@domo-ai.com までご連絡ください。' },
-  { q: '以前「モジュール1」を買いました。', a: '追加料金なしで、入門コースをお使いいただけます。これまでと同じメールアドレスでログインしてください。これまでのカードのレッスンは「プレイグラウンド」として、そのまま使えます。' },
+  { q: '以前「モジュール1」を買いました。', a: '追加料金なしで、入門コースをお使いいただけます。これまでと同じメールアドレスでログインしてください。これまでのカードのレッスンは、新しいコース構成では表示されません。' },
   { q: '支払い方法は？', a: 'クレジットカード（Visa・Mastercard・American Express・JCB）、Shop Pay、Apple Pay、Google Pay、PayPay、メルペイがお使いいただけます。Apple Pay と Google Pay は、対応する端末でのみ表示されます。' },
   { q: '返金はできますか？', a: REFUND_SENTENCE, extra: CONSENT_REFUND_SENTENCE },
+  { q: '無料のレッスン1を使ってから購入しても、返金してもらえますか？', a: 'はい。無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。ご購入後3日以内で、有料レッスン（レッスン2〜7）を一度も開いていなければ、返金いたします。' },
+  { q: '購入後の3日間は、コース全部をためせる期間ですか？', a: 'いいえ。3日以内でも、有料レッスン（レッスン2〜7）を一度でも開いた場合は、原則として返金対象外となります。購入したけれど、まだ有料レッスンを開いていない方のための期間です。' },
 ];
 
 const PURCHASE_MODULE_ID = moduleJson.id;
@@ -157,8 +166,10 @@ export function NewLandingPage() {
           <a className="nz-cta nz-cta--buy" href="#price">
             入門コースを見る（¥4,980 税込・買い切り）
           </a>
-          <a className="nz-cta nz-cta--trial" href="/login/?next=/play/" onClick={() => track('cta_play_click')}>
-            無料のプレイグラウンドで、あそんでみる
+          {/* COPY-02 (Founder, 2 Oct 2026): Lesson 1 is the free sample now, not the Playground —
+              Button 2 (above) is unchanged. */}
+          <a className="nz-cta nz-cta--trial" href="/login/?next=/course/beginner/" onClick={() => track('cta_play_click')}>
+            レッスン1を無料で試してみる
           </a>
         </div>
         <p className="nz-family-note">家族みんなで。</p>
@@ -186,8 +197,8 @@ export function NewLandingPage() {
         <div className="nz-card">
           <h2>ナゼホリの進みかた</h2>
           <ol>
-            <li><strong>プレイグラウンド（無料）</strong>：カードをえらんで、「なんで？」をためしてみる場所。家族のアカウントを作れば、無料で遊べます。</li>
-            <li><strong>入門コース（¥4,980 税込・買い切り）</strong>：答えのあとの「もう一問」の入り口を7つ、1回に1つずつ身につけるコースです。</li>
+            <li><strong>無料のレッスン1</strong>：入門コースの最初の1回を、無料でお使いいただけます。家族のアカウントを作れば、すぐに始められます。</li>
+            <li><strong>入門コース（¥4,980 税込・買い切り）</strong>：答えのあとの「もう一問」の入り口を7つ、1回に1つずつ身につけるコースです。レッスン2〜7とさいごのページは、購入するとひらきます。</li>
             <li><strong>その先</strong>：もっと深く考えるステージを、準備しています。内容と時期は、決まりしだいお知らせします。</li>
           </ol>
         </div>
@@ -208,6 +219,7 @@ export function NewLandingPage() {
             </div>
           ))}
         </div>
+        <p className="nz-family-note">レッスン1は無料です。</p>
       </section>
 
       <section className="nz-section">
@@ -228,10 +240,7 @@ export function NewLandingPage() {
         <div className="nz-card">
           <h2>だれのため？</h2>
           <p>問う力に、年齢はありません。</p>
-          <p>
-            音声とことばは、お子さんが一人で聞いても分かるように作りました。
-            きょうだいも、おうちの方も、おじいちゃん・おばあちゃんも、いっしょにどうぞ。
-          </p>
+          <p>音声とことばは、一度聞いて分かるように、やさしく作りました。きょうだいも、おうちの方も、おじいちゃん・おばあちゃんも、いっしょにどうぞ。</p>
         </div>
       </section>
 
@@ -269,7 +278,7 @@ export function NewLandingPage() {
           <ul>
             <li>買い切り・月額料金なし</li>
             <li>家族ライセンス：1回のお支払いで、家族みんなで使えます（子どものプロフィール3人まで・端末5台まで）</li>
-            <li>プレイグラウンドは無料です</li>
+            <li>レッスン1は無料でご利用いただけます。レッスン2〜7とさいごのページは、購入するとひらきます。</li>
             <li>以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。</li>
           </ul>
           {(purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
@@ -279,6 +288,9 @@ export function NewLandingPage() {
                   of the consent spec). Shown once, above the button, per the Founder's own item 6
                   of this redesign pass. */}
               <NoticeD className="nz-notice-d" />
+              {/* COPY-02 (Founder, 2 Oct 2026): the short refund note, its own paragraph under
+                  Notice D — never a replacement for Notice D's own consent disclosure. */}
+              <p className="nz-family-note">{COPY02_SHORT_REFUND_NOTE}</p>
               <button type="button" className="nz-cta nz-cta--buy" onClick={startPurchase} disabled={purchaseState.kind === 'loading'}>
                 入門コースを買う
               </button>

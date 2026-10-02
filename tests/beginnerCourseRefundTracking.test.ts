@@ -15,14 +15,15 @@ import { FakeEmailSender } from '../backend/src/email';
 // Founder, 2 Oct 2026: "Build the refund tracking now. Record the first opening of Lessons 2 to 7
 // in the backend, and only when the family has the licence. Reuse the existing usage record so the
 // admin 'refund eligible' field picks it up. Opening Lesson 1, the course home or the account page
-// must not count." — plus the 5 scenarios given verbatim as "Tests as in COPY-02 section 9" (no
-// COPY-02 document exists anywhere in this repo; these scenarios are taken directly from that
-// instruction's own plain-English wording, not from a document this suite had access to).
+// must not count." — plus the 5 scenarios given verbatim as "Tests as in COPY-02 section 9", later
+// corrected (COPY-02, 2 Oct 2026) to a 3-day window (not the 10-day figure this suite originally
+// assumed): "Lesson 1 only is eligible, Lesson 2 opened is not, 4 days with nothing opened is NOT
+// eligible [corrected], login only is still eligible, and a refund keeps Lesson 1 open."
 //
 // handlers/courseLessonOpen.ts is the new endpoint under test; computeEligibilitySnapshot
-// (backend/src/refund.ts) is the EXISTING, unmodified admin refund-eligibility computation this
-// feature deliberately reuses by writing to the exact same `usage/{moduleId}` doc `/units/open`
-// already writes to — see that handler's own header comment.
+// (backend/src/refund.ts) is the admin refund-eligibility computation this feature deliberately
+// reuses by writing to the exact same `usage/{moduleId}` doc `/units/open` already writes to — see
+// that handler's own header comment. Its own `DEFAULT_POLICY.windowDays` is 3 (COPY-02).
 
 function fakeEnv(): Env {
   return {
@@ -113,16 +114,16 @@ describe('Beginner-course refund tracking (Founder, 2 Oct 2026) — COPY-02 §9 
     expect(snapshot.objectivelyEligible).toBe(false);
   });
 
-  it('4 days with nothing opened: idle time alone never disqualifies a family still inside the window', async () => {
+  it('4 days with nothing opened is NOT eligible: the window is 3 days (COPY-02 correction), so elapsed time alone can still disqualify', async () => {
     const env = fakeEnv();
     const { familyId } = await seedLicensedFamilyWithProfile(env, 'fourdaysidle@example.com');
     expect(await env.db.get<UsageDoc>(usagePath(familyId, 'm1'))).toBeNull();
 
     const paidAt = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000);
     const snapshot = await computeEligibilitySnapshot(env, orderFor(familyId, paidAt), new Date());
-    expect(snapshot.withinWindow).toBe(true);
+    expect(snapshot.withinWindow).toBe(false);
     expect(snapshot.paidContentUsed).toBe(false);
-    expect(snapshot.objectivelyEligible).toBe(true);
+    expect(snapshot.objectivelyEligible).toBe(false);
   });
 
   it('login only is still eligible: a session with no lesson ever opened records no usage', async () => {

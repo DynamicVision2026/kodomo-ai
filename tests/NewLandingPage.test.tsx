@@ -40,7 +40,8 @@ describe('NewLandingPage (COPY-01)', () => {
   it('shows the COPY-01 hero headline and both CTAs', () => {
     render(<NewLandingPage />);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('AIが答えたら、もう一問。');
-    expect(screen.getByText('無料のプレイグラウンドで、あそんでみる').closest('a')).toHaveAttribute('href', '/login/?next=/play/');
+    // COPY-02 (Founder, 2 Oct 2026): Lesson 1 is the free sample now, not the Playground.
+    expect(screen.getByText('レッスン1を無料で試してみる').closest('a')).toHaveAttribute('href', '/login/?next=/course/beginner/');
     expect(screen.getByText('入門コースを見る（¥4,980 税込・買い切り）').closest('a')).toHaveAttribute('href', '#price');
   });
 
@@ -68,10 +69,10 @@ describe('NewLandingPage (COPY-01)', () => {
     }
   });
 
-  it('renders all 14 FAQ questions (age question removed, flip-prep 1 Oct 2026), with the refund answer starred, using the exact legally-approved sentence plus the A6 gap-fill consent-decline bullet', () => {
+  it('renders all 17 FAQ questions (COPY-02, 2 Oct 2026), with the refund answer starred, using the exact approved COPY-02 sentence plus the consent-decline bullet', () => {
     render(<NewLandingPage />);
     const dts = document.querySelectorAll('.nz-faq-card dt');
-    expect(dts).toHaveLength(14);
+    expect(dts).toHaveLength(17);
     expect(Array.from(dts).some((dt) => dt.textContent?.includes('何歳'))).toBe(false);
     const refundDt = Array.from(dts).find((dt) => dt.textContent?.includes('返金はできますか？'));
     expect(refundDt?.textContent).toBe('★ 返金はできますか？');
@@ -79,13 +80,14 @@ describe('NewLandingPage (COPY-01)', () => {
     const text = (refundDd?.textContent ?? '').replace(/\s+/g, '');
     expect(text).toContain(
       (
-        'ご購入から10日以内で、入門コースのレッスンをまだ始めていない場合は、info@domo-ai.com までご連絡いただければ返金いたします。' +
-        'プレイグラウンドを使ったことや、ログインしたことは「始めた」に含みません。'
+        'ご購入後3日以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合に限り、info@domo-ai.com までご連絡いただければ、購入代金を返金いたします。' +
+        '無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。'
       ).replace(/\s+/g, ''),
     );
-    // A6 gap-fill (Founder, flip-prep 1 Oct 2026): the declined-login-consent refund bullet, same
-    // wording item A2 put in the old LandingPage.tsx's FAQ — previously missing from this file.
+    // COPY-02's own updated consent-decline refund bullet (ties the promise to "paid content",
+    // now that Lesson 1 is an explicit free/unpaid surface).
     expect(text).toContain('ログイン時の同意をいただけないためにご利用になれない場合は'.replace(/\s+/g, ''));
+    expect(text).toContain('有料コンテンツの利用開始前であれば'.replace(/\s+/g, ''));
   });
 
   it('the price section shows the ¥4,980 amount, household-licence facts, and the prior-Module-1-buyer line', () => {
@@ -94,8 +96,15 @@ describe('NewLandingPage (COPY-01)', () => {
     expect(price.textContent).toContain('¥4,980');
     expect(price.textContent).toContain('買い切り・月額料金なし');
     expect(price.textContent).toContain('子どものプロフィール3人まで・端末5台まで');
-    expect(price.textContent).toContain('プレイグラウンドは無料です');
+    expect(price.textContent).toContain('レッスン1は無料でご利用いただけます。レッスン2〜7とさいごのページは、購入するとひらきます。');
     expect(price.textContent).toContain('以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。');
+  });
+
+  it('COPY-02 (2 Oct 2026): the price section shows the short refund note as its own paragraph under Notice D', () => {
+    render(<NewLandingPage />);
+    const price = document.querySelector('.nz-price-card')!;
+    expect(price.textContent).toContain('ご購入後、レッスン2〜7が利用できるようになります。');
+    expect(price.textContent).toContain('ご購入後3日以内で、かつ、有料レッスンを一度も開いていない場合に限り、返金を承ります。');
   });
 
   it('final report follow-up (1 Oct 2026): the price section shows the consent-refund sentence exactly once (inside Notice D), with no separate duplicate paragraph', () => {
@@ -135,7 +144,7 @@ describe('NewLandingPage (COPY-01)', () => {
   it('"72時間"/"無料体験" appear exactly once — the FAQ question that explicitly says the trial is gone — never as a live offer elsewhere', () => {
     render(<NewLandingPage />);
     const dts = Array.from(document.querySelectorAll('.nz-faq-card dt'));
-    const trialFaqIndex = dts.findIndex((dt) => dt.textContent?.includes('72時間の無料体験は、なくなったのですか？'));
+    const trialFaqIndex = dts.findIndex((dt) => dt.textContent?.includes('72時間の無料体験は？'));
     expect(trialFaqIndex).toBeGreaterThanOrEqual(0);
     const dds = document.querySelectorAll('.nz-faq-card dd');
     expect(dds[trialFaqIndex]!.textContent).toContain('終了いたしました');
