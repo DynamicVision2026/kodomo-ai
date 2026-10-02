@@ -18,10 +18,12 @@ const ME_ENTITLED: unknown = {
   profiles: [], trials: [],
 };
 
-function stubFetchEntitled() {
+const ME_ENTITLED_PREVIEW: unknown = { ...(ME_ENTITLED as object), courseAllowed: true };
+
+function stubFetchEntitled(me: unknown = ME_ENTITLED) {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input instanceof Request ? input.url : input);
-    if (url.endsWith('/me')) return jsonResponse(ME_ENTITLED);
+    if (url.endsWith('/me')) return jsonResponse(me);
     if (url.endsWith('/sessions')) return jsonResponse([]);
     return new Response('not found', { status: 404 });
   }));
@@ -50,6 +52,17 @@ describe('AccountPage purchase-status label (COPY-01)', () => {
     vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
     vi.stubEnv('VITE_BEGINNER_LAUNCH', '1');
     stubFetchEntitled();
+    const { AccountPage } = await import('../src/parent/account/AccountPage');
+    render(<AccountPage />);
+    await waitFor(() => expect(screen.getByText(/ご購入済み/)).toBeInTheDocument());
+    expect(screen.getByText(/ナゼホリ 入門コース/)).toBeInTheDocument();
+    expect(screen.queryByText(/Module 1/)).not.toBeInTheDocument();
+  });
+
+  it('global flag off, but me.courseAllowed (a COURSE_PREVIEW_EMAILS family): still reads 「ナゼホリ 入門コース」', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    stubFetchEntitled(ME_ENTITLED_PREVIEW);
     const { AccountPage } = await import('../src/parent/account/AccountPage');
     render(<AccountPage />);
     await waitFor(() => expect(screen.getByText(/ご購入済み/)).toBeInTheDocument());
