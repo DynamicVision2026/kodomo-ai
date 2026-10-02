@@ -2,8 +2,8 @@
 import { CONSENT_TEXT_VERSION } from '../shared/consent';
 import { describe, it, expect, vi } from 'vitest';
 import type { Env } from '../backend/src/types';
-import type { EntitlementDoc, FamilyDoc, OrderDoc, StaffDoc } from '../backend/src/schema';
-import { auditLogCollection, emptyRefundInfo, entitlementPath, familyPath, orderPath, staffPath } from '../backend/src/schema';
+import type { EntitlementDoc, FamilyDoc, OrderDoc, SessionDoc, StaffDoc } from '../backend/src/schema';
+import { auditLogCollection, emptyRefundInfo, entitlementPath, familyPath, orderPath, sessionPath, staffPath } from '../backend/src/schema';
 import { MemoryDb } from '../backend/server/memoryDb';
 import { FakeEmailSender } from '../backend/src/email';
 
@@ -326,6 +326,84 @@ describe('Work order — order page: amount total and a direct Shopify admin lin
     const body = await res.json();
 
     expect(body.shopifyAdminUrl).toBeNull();
+  });
+});
+
+describe('Work order (2 Oct 2026) — order page: "logged in since payment: yes or no, date"', () => {
+  async function seedOrder(env: Env, shopifyOrderId: string, familyId: string | null, paidAt: string): Promise<void> {
+    const now = new Date().toISOString();
+    await env.db.set(orderPath(shopifyOrderId), {
+      shopifyOrderId, orderName: `#${shopifyOrderId}`,
+      lines: [{ sku: 'kodomo-ai-m1', variantId: 1, moduleId: 'm1', quantity: 1, lineTotal: 4980 }],
+      currency: 'JPY', financialStatus: 'paid', shopifyCreatedAt: paidAt, paidAt, purchaserEmail: 'p@example.com',
+      familyId, bindingMethod: familyId ? 'token' : null, bindingState: familyId ? 'bound' : 'needs_review',
+      entitlementState: familyId ? 'granted' : 'none', trialConverted: false,
+      refund: emptyRefundInfo(), webhookIds: [], createdAt: now, updatedAt: now,
+    } satisfies OrderDoc);
+  }
+
+  async function seedSession(env: Env, id: string, familyId: string, createdAt: string): Promise<void> {
+    await env.db.set(sessionPath(id), {
+      familyId, label: 'device', createdAt, lastSeenAt: createdAt,
+      expiresAt: new Date(Date.now() + 86400_000).toISOString(), revokedAt: null,
+    } satisfies SessionDoc);
+  }
+
+  it('a family that logged in again after paidAt: yes, with the earliest such login\'s own timestamp', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'viewer@example.com', 'viewer');
+    await seedOrder(env, 'order-20', 'fam-20', '2026-09-01T00:00:00.000Z');
+    // A login BEFORE payment (e.g. an earlier browse) must not count; the earliest login AFTER
+    // payment is the one reported, even when a later login also exists.
+    await seedSession(env, 's-before', 'fam-20', '2026-08-01T00:00:00.000Z');
+    await seedSession(env, 's-after-later', 'fam-20', '2026-09-05T00:00:00.000Z');
+    await seedSession(env, 's-after-earliest', 'fam-20', '2026-09-02T00:00:00.000Z');
+
+    const { request, url } = adminRequest('/admin-api/orders/order-20', 'valid-jwt-for-viewer@example.com', { method: 'GET' });
+    const body = await (await handleAdminApi(request, env, url)).json();
+
+    expect(body.loggedInSincePayment).toBe(true);
+    expect(body.firstLoginSincePaymentAt).toBe('2026-09-02T00:00:00.000Z');
+  });
+
+  it('a family that has never logged in since paidAt (only a before-payment session, or none at all): no, with a null date', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'viewer@example.com', 'viewer');
+    await seedOrder(env, 'order-21', 'fam-21', '2026-09-01T00:00:00.000Z');
+    await seedSession(env, 's-only-before', 'fam-21', '2026-08-01T00:00:00.000Z');
+
+    const { request, url } = adminRequest('/admin-api/orders/order-21', 'valid-jwt-for-viewer@example.com', { method: 'GET' });
+    const body = await (await handleAdminApi(request, env, url)).json();
+
+    expect(body.loggedInSincePayment).toBe(false);
+    expect(body.firstLoginSincePaymentAt).toBeNull();
+  });
+
+  it('a revoked/expired session still counts as "yes, they logged in" — this is never an active-sessions-only check', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'viewer@example.com', 'viewer');
+    await seedOrder(env, 'order-22', 'fam-22', '2026-09-01T00:00:00.000Z');
+    await env.db.set(sessionPath('s-revoked'), {
+      familyId: 'fam-22', label: 'device', createdAt: '2026-09-03T00:00:00.000Z', lastSeenAt: '2026-09-03T00:00:00.000Z',
+      expiresAt: new Date(Date.now() + 86400_000).toISOString(), revokedAt: '2026-09-04T00:00:00.000Z',
+    } satisfies SessionDoc);
+
+    const { request, url } = adminRequest('/admin-api/orders/order-22', 'valid-jwt-for-viewer@example.com', { method: 'GET' });
+    const body = await (await handleAdminApi(request, env, url)).json();
+
+    expect(body.loggedInSincePayment).toBe(true);
+  });
+
+  it('an order with no bound family at all: no, with a null date — there is no family to check', async () => {
+    const env = fakeEnv();
+    await seedStaff(env, 'viewer@example.com', 'viewer');
+    await seedOrder(env, 'order-23', null, '2026-09-01T00:00:00.000Z');
+
+    const { request, url } = adminRequest('/admin-api/orders/order-23', 'valid-jwt-for-viewer@example.com', { method: 'GET' });
+    const body = await (await handleAdminApi(request, env, url)).json();
+
+    expect(body.loggedInSincePayment).toBe(false);
+    expect(body.firstLoginSincePaymentAt).toBeNull();
   });
 });
 

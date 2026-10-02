@@ -8,7 +8,15 @@
  * explanation instead of entering" idea `BankPlane` already established for a locked Bank Dig —
  * not the same component, since HomePlane has no such prop, but the same UX language) rather than
  * disabled, so a curious tap is never a dead end.
- */
+ *
+ * "Playground hidden; Lesson 1 is the free sample" (Founder, 2 Oct 2026), item 4: once
+ * `VITE_PLAYGROUND_HIDDEN=1`, this stage2 garden is the one status screen outside `/play/` itself
+ * that still shows "Playground progress" (the flower-1 percent, driven by Playground mission
+ * completion) and still offers a way back into the Playground (`onOpenPlayground`) — unlike
+ * `/play/`'s own entry point, nothing here is caught by `src/main.tsx`'s single redirect, since this
+ * is a wholly separate Vite entry (`course/index.html`/`src/course/main.tsx`). So the Playground
+ * flower is simply dropped from the garden under the flag, same as every other reversible change
+ * this flag makes: unset the var and this flower (and its link) are back exactly as before. */
 import { useState } from 'react';
 import { HomePlane } from '../../ad12/HomePlane';
 import { Plane } from '../../ad12/Plane';
@@ -36,26 +44,30 @@ export interface CourseHomeProps {
   onOpenDemo: () => void;
 }
 
+const PLAYGROUND_HIDDEN_BUILD_FLAG = import.meta.env.VITE_PLAYGROUND_HIDDEN === '1';
+
 export function CourseHome({
   manifest, progress, getLesson, playgroundStoryIds, playgroundMissionDone,
   onOpenPlayground, onOpenLesson, onOpenParent, onOpenDemo,
 }: CourseHomeProps) {
   const [note, setNote] = useState<string | null>(null);
 
-  const percents = manifest.parts.map((part) =>
+  const parts = PLAYGROUND_HIDDEN_BUILD_FLAG ? manifest.parts.filter((part) => part.kind !== 'playground') : manifest.parts;
+
+  const percents = parts.map((part) =>
     part.kind === 'playground'
       ? playgroundFlowerPercent(playgroundStoryIds, playgroundMissionDone)
       : computeLessonPercent(getLesson(part.id) ?? emptyLessonForUnauthored, progress.lessons[part.id]),
   );
 
-  const currentIndex = percents.findIndex((p, i) => p < 100 && isPartUnlocked(i, manifest.parts, percents, progress.earlyUnlockedParts));
+  const currentIndex = percents.findIndex((p, i) => p < 100 && isPartUnlocked(i, parts, percents, progress.earlyUnlockedParts));
 
   return (
     <main className="ad12 course-home">
       <h1 className="ad12-reading-text course-home__title">{courseUi.gardenTitle}</h1>
       {note && <Plane className="course-home__note"><p className="ad12-ui-text">{note}</p></Plane>}
       <div className="course-home__garden">
-        {manifest.parts.map((part, i) => {
+        {parts.map((part, i) => {
           const unlocked = isPartUnlocked(i, manifest.parts, percents, progress.earlyUnlockedParts);
           const percent = percents[i]!;
           const done = percent >= 100;

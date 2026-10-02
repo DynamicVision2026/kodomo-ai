@@ -107,12 +107,16 @@ export async function revokeAllSessions(familyId: string, reason: string): Promi
   }));
 }
 
-/** GET /orders/{id} returns the raw `OrderDoc` plus two server-computed fields OrderView.tsx
- *  itself never derives: the line-item total, and a direct link to the order in Shopify admin
- *  (null when SHOPIFY_SHOP_DOMAIN isn't configured — see backend/src/links.ts). */
+/** GET /orders/{id} returns the raw `OrderDoc` plus server-computed fields OrderView.tsx itself
+ *  never derives: the line-item total, a direct link to the order in Shopify admin (null when
+ *  SHOPIFY_SHOP_DOMAIN isn't configured — see backend/src/links.ts), and whether/when this
+ *  order's own family logged in again after payment (`adminRouter.ts`'s own
+ *  `loggedInSincePayment`, computed from existing session records — never a new tracked field). */
 export interface AdminOrderDetail extends OrderDoc {
   amountTotal: number;
   shopifyAdminUrl: string | null;
+  loggedInSincePayment: boolean;
+  firstLoginSincePaymentAt: string | null;
 }
 
 export async function fetchOrder(orderId: string): Promise<ApiResult<AdminOrderDetail>> {

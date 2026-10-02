@@ -43,6 +43,12 @@ function courseVisible(me: MeResponse): boolean {
   return import.meta.env.VITE_BEGINNER_LAUNCH === '1' || me.courseAllowed;
 }
 
+/** "Playground hidden; Lesson 1 is the free sample" — once this is on, `/play/` itself only ever
+ *  redirects straight back to the course (src/main.tsx), so sending a family there first is a
+ *  pointless extra hop; this sends them directly instead. Same flag src/main.tsx/SiteHeader.tsx/
+ *  src/course/beginnerLicence.ts check, off by default. */
+const PLAYGROUND_HIDDEN = import.meta.env.VITE_PLAYGROUND_HIDDEN === '1';
+
 /** AD-16 §2: the claim flow (and any other future flow) sends a parent here with
  *  `?next=/some/path` so a successful login returns them to where they came from instead of the
  *  default below. Only ever a same-origin absolute path — never an open redirect to an arbitrary
@@ -57,7 +63,7 @@ function courseVisible(me: MeResponse): boolean {
 function resolveNextPath(me: MeResponse): string {
   const next = new URLSearchParams(window.location.search).get('next');
   if (next && next.startsWith('/') && !next.startsWith('//')) return next;
-  return courseVisible(me) ? '/course/beginner/' : '/play/';
+  return (courseVisible(me) || PLAYGROUND_HIDDEN) ? '/course/beginner/' : '/play/';
 }
 
 /**

@@ -59,6 +59,8 @@ export function OrderView({ orderId, me, onNavigate }: { orderId: string; me: Me
         <dt>支払い状況</dt><dd>{order.financialStatus}</dd>
         <dt>支払日</dt><dd>{order.paidAt}</dd>
         <dt>金額</dt><dd>¥{order.amountTotal.toLocaleString()}</dd>
+        <dt>支払い後のログイン</dt>
+        <dd>{order.loggedInSincePayment ? `はい（${order.firstLoginSincePaymentAt}）` : 'いいえ'}</dd>
       </dl>
 
       <h3>商品明細</h3>
