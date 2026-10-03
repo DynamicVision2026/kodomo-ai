@@ -28,10 +28,15 @@ dist-server
 .git
 .github
 
-# Content pipeline + one-off scripts — CLI-only, never imported by app or build code.
+# Content pipeline — CLI-only, never imported by app or build code.
 pipeline
 data
-scripts
+
+# scripts/ is NOT CLI-only any more: scripts/prerender-legal.ts runs as the last step of
+# `npm run build` (package.json), so it must reach the build context. Left unexcluded here (not
+# negated) because most of scripts/ imports from pipeline/ (excluded above) and would fail `tsc -b`
+# if actually copied into an image — Dockerfile.frontend's own COPY instruction takes only that one
+# file, never `COPY scripts ./scripts`; this entry only controls what reaches the build context.
 
 tests
 e2e
