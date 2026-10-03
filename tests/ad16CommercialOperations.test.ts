@@ -376,6 +376,21 @@ describe('AD-16 §7 — refund eligibility snapshot is frozen at request time, n
     expect(snapshot.withinWindow).toBe(false);
     expect(snapshot.objectivelyEligible).toBe(false);
   });
+
+  it('WO-C7 item 8: the window is a strict 72 hours from paidAt, not a floor\'d calendar-day count — eligible at exactly 72h, not a moment after', async () => {
+    const env = fakeEnv();
+    const paidAt = new Date('2026-10-01T15:00:00.000Z');
+    const order: Pick<OrderDoc, 'paidAt' | 'lines' | 'familyId'> = {
+      paidAt: paidAt.toISOString(),
+      lines: [{ sku: 'kodomo-ai-m1', variantId: 1, moduleId: 'm1', quantity: 1, lineTotal: 4980 }],
+      familyId: null,
+    };
+    const exactly72h = new Date(paidAt.getTime() + 72 * 60 * 60 * 1000);
+    const oneMsLater = new Date(exactly72h.getTime() + 1);
+
+    expect((await computeEligibilitySnapshot(env, order, exactly72h)).withinWindow).toBe(true);
+    expect((await computeEligibilitySnapshot(env, order, oneMsLater)).withinWindow).toBe(false);
+  });
 });
 
 describe('AD-16 §7 — refunds/create revokes the entitlement, never touches progress or the account', () => {

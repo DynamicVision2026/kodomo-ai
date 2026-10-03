@@ -9,4 +9,11 @@ import { NewLandingPage } from './NewLandingPage';
 // dead code in production, same as every other BEGINNER_LAUNCH-gated frontend entry in this repo.
 const BEGINNER_LAUNCH = import.meta.env.VITE_BEGINNER_LAUNCH === '1';
 
+// WO-C7 item 1 (Founder, 3 Oct 2026): index.html's own static <title> can't be flag-gated (it's
+// baked at build time, same for every deploy regardless of VITE_BEGINNER_LAUNCH) — this sets the
+// real post-launch title the moment the new page itself goes live, never a moment before.
+if (BEGINNER_LAUNCH) {
+  document.title = 'ナゼホリ 入門コース — 家族で育てる「もう一問」の力';
+}
+
 createRoot(document.getElementById('root')!).render(BEGINNER_LAUNCH ? <NewLandingPage /> : <LandingPage />);

@@ -29,7 +29,10 @@ export async function computeEligibilitySnapshot(
   const policy = await getRefundPolicy(env);
   const purchaseAgeMs = requestedAt.getTime() - new Date(order.paidAt).getTime();
   const purchaseAgeDays = Math.floor(purchaseAgeMs / (24 * 60 * 60 * 1000));
-  const withinWindow = purchaseAgeDays <= policy.windowDays;
+  // Founder, 3 Oct 2026: strictly `windowDays * 24h` from `paidAt`, not a floor'd calendar-day
+  // count — a purchase at day 0 15:00 is eligible up to day 3 15:00 (72h for the 3-day policy),
+  // never into day 4 the way `purchaseAgeDays <= policy.windowDays` used to allow.
+  const withinWindow = purchaseAgeMs <= policy.windowDays * 24 * 60 * 60 * 1000;
 
   let firstPaidUseAt: string | null = null;
   if (order.familyId) {

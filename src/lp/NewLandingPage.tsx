@@ -1,8 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { track } from '../engine/analytics';
 import { fetchMe } from '../family/api';
 import { usePurchaseFlow } from '../family/usePurchaseFlow';
-import { COPY02_FAQ_REFUND_BULLETS, COPY02_SHORT_REFUND_NOTE } from '../legal/consentText';
+import { PAYMENT_METHODS_LIST, PRODUCT } from '../legal/company';
+import {
+  COPY02_BUY_NOTICE_LEAD, COPY02_FAQ_REFUND_BULLETS, COPY02_FAQ_REFUND_SHORT_SENTENCE,
+  TOKUSHOHO_LINK_HREF, TOKUSHOHO_LINK_LABEL,
+} from '../legal/consentText';
 import { NoticeD } from '../legal/NoticeD';
 import moduleJson from '../modules/m1/module.json';
 import hatenaQuestionUrl from './assets/svg/hatena_question.svg';
@@ -77,22 +81,19 @@ const LESSONS = ENTRANCES.map((entrance, i) => ({
   icon: TOOL_ICONS[i],
 }));
 
-/** COPY-01 §3 (identical to §2 ⑩). The refund answer's sentence is exact, legally-approved
- *  wording — never paraphrased, and identical everywhere it appears (landing page, FAQ, Shopify
- *  description, 特定商取引法に基づく表記, Shopify refund policy). Founder, 3 Oct 2026: the ★ marker
- *  that used to prefix this FAQ question was an internal "legally approved" annotation only —
- *  never meant to show to customers, so it's removed from the rendered `<dt>`. Both sourced from
- *  src/legal/consentText.ts's `FAQ_REFUND_BULLETS` — the same two bullets the old LandingPage.tsx's
- *  FAQ now shows (item A2, flip-prep 1 Oct 2026) — so the two pages never drift. The second bullet
- *  (declined-login-consent refund) is an A6 gap-fill: item 10's spec requires it on every
- *  buy-button surface, and it was previously missing from this file's FAQ/price section. */
-const [REFUND_SENTENCE, CONSENT_REFUND_SENTENCE] = COPY02_FAQ_REFUND_BULLETS;
+/** WO-C7 item 5(a) (Founder, 3 Oct 2026): the 「返金はできますか？」 answer no longer repeats the
+ *  full legal text — a short sentence, then a link to the 特商法 page. The second bullet
+ *  (declined-login-consent refund) is unchanged (A6 gap-fill, item 10's spec), still sourced from
+ *  src/legal/consentText.ts's `COPY02_FAQ_REFUND_BULLETS` second element. Founder, 3 Oct 2026: the
+ *  ★ marker that used to prefix this FAQ question was an internal "legally approved" annotation
+ *  only — never meant to show to customers, so it's removed from the rendered `<dt>`. */
+const [, CONSENT_REFUND_SENTENCE] = COPY02_FAQ_REFUND_BULLETS;
 
 // COPY-02 (Founder, 2 Oct 2026, approved): the Lesson 1 free-sample / Lessons 2-7 paid FAQ set,
 // replacing COPY-01's Playground-era questions. The returning-Module-1-buyer answer is a
 // deliberate open question (not yet confirmed whether past Playground progress stays saved under
 // the new course structure, or is simply not surfaced any more) — see this session's own report.
-const FAQ_ITEMS: Array<{ q: string; a: string; extra?: string }> = [
+const FAQ_ITEMS: Array<{ q: string; a: ReactNode; extra?: ReactNode }> = [
   { q: '無料で、どこまで？', a: 'レッスン1は、家族のアカウントを作れば無料で使えます。レッスン2〜7とさいごのページは、入門コース（¥4,980 税込・買い切り）を購入するとひらきます。まずはレッスン1で、ナゼホリの雰囲気をたしかめてみてください。' },
   { q: '72時間の無料体験は？', a: 'はい、終了いたしました。かわりに、レッスン1を無料でお使いいただけます。' },
   { q: 'どんな人が使えますか？', a: '家族みんなで使えます。音声とことばは、一度聞いて分かるように、やさしく作っています。きょうだいも、おうちの方も、おじいちゃん・おばあちゃんも、いっしょに楽しめます。' },
@@ -106,10 +107,19 @@ const FAQ_ITEMS: Array<{ q: string; a: string; extra?: string }> = [
   { q: 'ログインのしかたは？', a: 'おうちの方のメールアドレスを入れると、6けたのコードがメールで届きます。そのコードを入れるだけです。パスワードはありません。' },
   { q: 'コードのメールが届きません。', a: '迷惑メールフォルダをご確認ください。no-reply@domo-ai.com からのメールを受け取れるように設定してください。それでも届かないときは、info@domo-ai.com までご連絡ください。' },
   { q: '以前「モジュール1」を買いました。', a: '追加料金なしで、入門コースをお使いいただけます。これまでと同じメールアドレスでログインしてください。これまでのカードのレッスンは、新しいコース構成では表示されませんが、これまでの記録は、保存されています。' },
-  { q: '支払い方法は？', a: 'クレジットカード（Visa・Mastercard・American Express・JCB）、Shop Pay、Apple Pay、Google Pay、PayPay、メルペイがお使いいただけます。Apple Pay と Google Pay は、対応する端末でのみ表示されます。' },
-  { q: '返金はできますか？', a: REFUND_SENTENCE, extra: CONSENT_REFUND_SENTENCE },
+  { q: '支払い方法は？', a: `${PAYMENT_METHODS_LIST}がお使いいただけます。Apple Pay と Google Pay は、対応する端末でのみ表示されます。` },
+  {
+    q: '返金はできますか？',
+    a: (
+      <>
+        {COPY02_FAQ_REFUND_SHORT_SENTENCE}
+        詳しい条件は「<a href={TOKUSHOHO_LINK_HREF}>{TOKUSHOHO_LINK_LABEL}</a>」をご覧ください。
+      </>
+    ),
+    extra: CONSENT_REFUND_SENTENCE,
+  },
   { q: '無料のレッスン1を使ってから購入しても、返金してもらえますか？', a: 'はい。無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。ご購入後3日以内で、有料レッスン（レッスン2〜7）を一度も開いていなければ、返金いたします。' },
-  { q: '購入後の3日間は、コース全部をためせる期間ですか？', a: 'いいえ。3日以内でも、有料レッスン（レッスン2〜7）を一度でも開いた場合は、原則として返金対象外となります。購入したけれど、まだ有料レッスンを開いていない方のための期間です。' },
+  { q: '購入後の3日間は、コース全部をためせる期間ですか？', a: 'いいえ。3日以内でも、有料レッスン（レッスン2〜7）を一度でも開いた場合（お子さまが誤って開いた場合を含みます）は、原則として返金対象外となります。購入したけれど、まだ有料レッスンを開いていない方のための期間です。' },
 ];
 
 const PURCHASE_MODULE_ID = moduleJson.id;
@@ -281,7 +291,6 @@ export function NewLandingPage() {
             <li>買い切り・月額料金なし</li>
             <li>家族ライセンス：1回のお支払いで、家族みんなで使えます（子どものプロフィール3人まで・端末5台まで）</li>
             <li>レッスン1は無料でご利用いただけます。レッスン2〜7とさいごのページは、購入するとひらきます。</li>
-            <li>以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。</li>
           </ul>
           {(purchaseState.kind === 'idle' || purchaseState.kind === 'loading' || purchaseState.kind === 'error') && (
             <>
@@ -290,9 +299,13 @@ export function NewLandingPage() {
                   of the consent spec). Shown once, above the button, per the Founder's own item 6
                   of this redesign pass. */}
               <NoticeD className="nz-notice-d" />
-              {/* COPY-02 (Founder, 2 Oct 2026): the short refund note, its own paragraph under
-                  Notice D — never a replacement for Notice D's own consent disclosure. */}
-              <p className="nz-family-note">{COPY02_SHORT_REFUND_NOTE}</p>
+              {/* WO-C7 item 4 (Founder, 3 Oct 2026, v3): the buy-button notice, its own paragraph
+                  under Notice D — never a replacement for Notice D's own consent disclosure. Ends
+                  with a link to the 特商法 page instead of repeating its full text. */}
+              <p className="nz-family-note">
+                {COPY02_BUY_NOTICE_LEAD}
+                詳しくは「<a href={TOKUSHOHO_LINK_HREF}>{TOKUSHOHO_LINK_LABEL}</a>」をご覧ください。
+              </p>
               <button type="button" className="nz-cta nz-cta--buy" onClick={startPurchase} disabled={purchaseState.kind === 'loading'}>
                 入門コースを買う
               </button>
@@ -330,14 +343,10 @@ export function NewLandingPage() {
         </dl>
       </section>
 
-      <footer className="nz-footer">
-        <div className="nz-footer-inner">
-          <a href="/legal/tokushoho/">特定商取引法に基づく表記</a>
-          <a href="/legal/privacy/">プライバシーポリシー</a>
-          <span>お問い合わせ：info@domo-ai.com</span>
-          <span>運営：Beyond Culture 獨歩文化株式会社</span>
-        </div>
-      </footer>
+      {/* WO-C7 item 2 (Founder, 3 Oct 2026): the legal footer moved to static HTML in this
+          route's own index.html (outside the React root), so it reads as plain HTML before any
+          JS runs — every page needs it, not just this component. Removed here to avoid showing
+          it twice. */}
     </main>
   );
 }

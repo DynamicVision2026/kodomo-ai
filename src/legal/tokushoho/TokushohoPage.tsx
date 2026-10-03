@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { COMPANY, PRODUCT } from '../company';
+import { COMPANY, PAYMENT_METHODS_LIST, PRODUCT } from '../company';
 import { COPY02_TOKUSHOHO_REFUND_SECTION } from '../consentText';
 import '../legal.css';
 
@@ -9,12 +9,7 @@ import '../legal.css';
 // own VITE_BEGINNER_LAUNCH check.
 const BEGINNER_LAUNCH = import.meta.env.VITE_BEGINNER_LAUNCH === '1';
 
-// COPY-02 (Founder, 2 Oct 2026, approved) supersedes COPY-01's §7 sentence above now that the
-// product is Lesson 1 free-sample / Lessons 2-7 paid, not the Playground — imported from
-// src/legal/consentText.ts so this page and the landing page never hold their own separate copy
-// of the same policy (Founder's own instruction: "import the same refund constant").
-
-const ROWS: [string, ReactNode][] = [
+const LEGACY_ROWS: [string, ReactNode][] = [
   ['販売業者', COMPANY.name],
   ['運営統括責任者', `${COMPANY.representativeTitle} ${COMPANY.representativeName}`],
   ['所在地', COMPANY.address],
@@ -25,7 +20,7 @@ const ROWS: [string, ReactNode][] = [
   ],
   ['メールアドレス', COMPANY.email],
   // COPY-01 §1 naming table: "モジュール1" is retired as a public name once BEGINNER_LAUNCH is on.
-  ['商品名', `${PRODUCT.workingTitle}（${BEGINNER_LAUNCH ? '入門コース' : 'モジュール1'}）`],
+  ['商品名', `${PRODUCT.brand}（モジュール1）`],
   ['販売価格', `${PRODUCT.price}（買い切り、世帯ライセンス — ご家庭内の全員でご利用いただけます）`],
   ['商品代金以外に必要な費用', 'ございません（インターネット接続料金等はお客様のご負担となります）'],
   // Founder-confirmed against Shopify Settings → Payments, 28 Sep 2026 (same confirmation as
@@ -37,29 +32,54 @@ const ROWS: [string, ReactNode][] = [
     '商品の引き渡し時期',
     'ご注文確定後、ログイン用のご案内メールをお送りします。メールに記載のリンクからログインし、メールで届く確認コードを入力してご利用いただけます。具体的な配信日は販売ページの表示をご確認ください。',
   ],
-  [
-    '返品・キャンセルについて',
-    // AD-15: the old "30-day guarantee" copy was retired with no replacement yet. COPY-02
-    // (Founder, 2 Oct 2026, approved) supplies the real, legally-approved wording — including its
-    // own login-consent refund condition as the section's second bullet — shown only once
-    // BEGINNER_LAUNCH is on; real visitors keep seeing the pre-launch placeholder until then.
-    BEGINNER_LAUNCH ? COPY02_TOKUSHOHO_REFUND_SECTION : '返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。',
-  ],
+  ['返品・キャンセルについて', '返金ポリシーは近日公開予定です。詳細が決まり次第、このページでご案内します。'],
 ];
 
-/**
- * 特定商取引法に基づく表記 — DRAFT. Real company data (see src/legal/company.ts), but this
- * session is not a substitute for the founder's own legal review before publishing.
- */
-export function TokushohoPage() {
+/** WO-C7 item 3 (Founder, 3 Oct 2026) — the full final replacement text, verbatim. Live only once
+ *  BEGINNER_LAUNCH is on — until then this is only visible through the reviewer-only preview
+ *  route (item 9), never to a real visitor (same rule `LEGACY_ROWS` above documents). */
+const V3_ROWS: [string, ReactNode][] = [
+  [
+    '販売業者',
+    <>
+      {COMPANY.name}（コーポレートサイト：
+      <a href={COMPANY.corporateSiteUrl} target="_blank" rel="noopener noreferrer">{COMPANY.corporateSiteUrl}</a>
+      ）
+    </>,
+  ],
+  ['運営責任者', `${COMPANY.representativeTitle} ${COMPANY.representativeName}`],
+  ['所在地', COMPANY.address],
+  ['電話番号', `${COMPANY.phone}（${COMPANY.phoneHours}）`],
+  ['メールアドレス', COMPANY.email],
+  [
+    '販売価格',
+    `${PRODUCT.fullName}4,980円（税込、月額料金なし）。家族ライセンス：子どものプロフィール3人まで・端末5台まで`,
+  ],
+  ['商品代金以外の必要料金', 'インターネット接続に必要な通信費はお客様のご負担となります。'],
+  ['お支払方法', `${PAYMENT_METHODS_LIST}（Shopify経由）`],
+  ['お支払時期', 'ご注文確定時に一度きりのご請求が発生します。自動更新・自動課金はありません。'],
+  [
+    '商品の引渡し時期・役務の提供時期',
+    'お支払い完了後、ただちにレッスン2〜7をご利用いただけます。レッスン1は購入前から無料でご利用いただけます。アクセス方法はご注文確認メールをご確認ください。',
+  ],
+  ['動作環境', '最新のブラウザ（Safari、Chrome、Edge）。音声を再生できる端末。'],
+  ['返品・キャンセル', COPY02_TOKUSHOHO_REFUND_SECTION],
+];
+
+function TokushohoBody({ rows, previewBanner }: { rows: [string, ReactNode][]; previewBanner?: boolean }) {
   return (
     <main className="legal">
       <p className="legal__draft-banner">
         このページは草案です。公開前に必ず内容をご確認ください。
       </p>
+      {previewBanner && (
+        <p className="legal__draft-banner">
+          これはプレビューです。BEGINNER_LAUNCH が有効になると、このページがそのまま公開されます。
+        </p>
+      )}
       <h1>特定商取引法に基づく表記</h1>
       <dl className="legal__table">
-        {ROWS.map(([label, value]) => (
+        {rows.map(([label, value]) => (
           <div className="legal__row" key={label}>
             <dt>{label}</dt>
             <dd>{value}</dd>
@@ -68,4 +88,19 @@ export function TokushohoPage() {
       </dl>
     </main>
   );
+}
+
+/**
+ * 特定商取引法に基づく表記 — DRAFT. Real company data (see src/legal/company.ts), but this
+ * session is not a substitute for the founder's own legal review before publishing.
+ */
+export function TokushohoPage() {
+  return <TokushohoBody rows={BEGINNER_LAUNCH ? V3_ROWS : LEGACY_ROWS} />;
+}
+
+/** WO-C7 item 9 (Founder, 3 Oct 2026): reviewer-only preview — always the v3 rows, regardless of
+ *  BEGINNER_LAUNCH, the same way /lp-new/ always renders the new landing page. Mounted only at the
+ *  noindexed /legal/tokushoho-preview/ route (src/legal/tokushoho/previewMain.tsx), never here. */
+export function TokushohoPreviewPage() {
+  return <TokushohoBody rows={V3_ROWS} previewBanner />;
 }

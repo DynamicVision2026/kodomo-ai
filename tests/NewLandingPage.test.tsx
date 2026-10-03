@@ -69,7 +69,7 @@ describe('NewLandingPage (COPY-01)', () => {
     }
   });
 
-  it('renders all 17 FAQ questions (COPY-02, 2 Oct 2026), the refund question never starred (Founder, 3 Oct 2026: the ★ was an internal marker only), using the exact approved COPY-02 sentence plus the consent-decline bullet', () => {
+  it('WO-C7 item 5(a) (Founder, 3 Oct 2026): the refund FAQ is never starred (an internal marker only) and answers with the short sentence plus a working link to the 特商法 page, plus the consent-decline bullet', () => {
     render(<NewLandingPage />);
     const dts = document.querySelectorAll('.nz-faq-card dt');
     expect(dts).toHaveLength(17);
@@ -79,41 +79,42 @@ describe('NewLandingPage (COPY-01)', () => {
     const refundDd = refundDt?.nextElementSibling;
     const text = (refundDd?.textContent ?? '').replace(/\s+/g, '');
     expect(text).toContain(
-      (
-        'ご購入後3日以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合に限り、info@domo-ai.com までご連絡いただければ、購入代金を返金いたします。' +
-        '無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。'
-      ).replace(/\s+/g, ''),
+      'ご購入後3日以内で、かつ有料レッスン（レッスン2〜7）を一度も開いていない場合に返金いたします。'.replace(/\s+/g, ''),
     );
+    expect(refundDd?.querySelector('a')).toHaveAttribute('href', '/legal/tokushoho/');
+    expect(refundDd?.querySelector('a')?.textContent).toBe('特定商取引法に基づく表記');
     // COPY-02's own updated consent-decline refund bullet (ties the promise to "paid content",
     // now that Lesson 1 is an explicit free/unpaid surface).
     expect(text).toContain('ログイン時の同意をいただけないためにご利用になれない場合は'.replace(/\s+/g, ''));
     expect(text).toContain('有料コンテンツの利用開始前であれば'.replace(/\s+/g, ''));
   });
 
-  it('Founder, 3 Oct 2026 (cosmetic): the email address in the refund answer is glued to the preceding text with a non-breaking space, not a plain concatenation, so it never starts its own line', () => {
+  it('Founder, 3 Oct 2026 (cosmetic): the email address in the consent-decline bullet is glued to the preceding text with a non-breaking space, not a plain concatenation, so it never starts its own line', () => {
     render(<NewLandingPage />);
     const dts = document.querySelectorAll('.nz-faq-card dt');
     const refundDt = Array.from(dts).find((dt) => dt.textContent?.includes('返金はできますか？'));
     const refundDd = refundDt?.nextElementSibling;
     const rawText = refundDd?.textContent ?? '';
-    expect(rawText).toContain('限り、 info@domo-ai.com');
+    expect(rawText).toContain('かかわらず、\u00A0info@domo-ai.com');
   });
 
-  it('the price section shows the ¥4,980 amount, household-licence facts, and the prior-Module-1-buyer line', () => {
+  it('the price section shows the ¥4,980 amount and household-licence facts', () => {
     render(<NewLandingPage />);
     const price = document.querySelector('.nz-price-card')!;
     expect(price.textContent).toContain('¥4,980');
     expect(price.textContent).toContain('買い切り・月額料金なし');
     expect(price.textContent).toContain('子どものプロフィール3人まで・端末5台まで');
     expect(price.textContent).toContain('レッスン1は無料でご利用いただけます。レッスン2〜7とさいごのページは、購入するとひらきます。');
-    expect(price.textContent).toContain('以前「モジュール1」をご購入のご家族は、追加料金なしで入門コースをお使いいただけます。');
   });
 
-  it('COPY-02 (2 Oct 2026): the price section shows the short refund note as its own paragraph under Notice D', () => {
+  it('WO-C7 item 4 (Founder, 3 Oct 2026): the price section shows the buy-button notice as its own paragraph under Notice D, linking to the 特商法 page', () => {
     render(<NewLandingPage />);
     const price = document.querySelector('.nz-price-card')!;
     expect(price.textContent).toContain('ご購入後、レッスン2〜7が利用できるようになります。');
     expect(price.textContent).toContain('ご購入後3日以内で、かつ、有料レッスンを一度も開いていない場合に限り、返金を承ります。');
+    expect(price.textContent).toContain('有料レッスンを一度でも開いた場合（お子さまが誤って開いた場合を含みます）は、原則として返金対象外となります。');
+    const noticeLinks = Array.from(price.querySelectorAll('a')).filter((a) => a.getAttribute('href') === '/legal/tokushoho/');
+    expect(noticeLinks.length).toBeGreaterThan(0);
   });
 
   it('final report follow-up (1 Oct 2026): the price section shows the consent-refund sentence exactly once (inside Notice D), with no separate duplicate paragraph', () => {
