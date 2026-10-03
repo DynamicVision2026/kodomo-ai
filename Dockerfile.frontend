@@ -51,6 +51,15 @@ COPY print ./print
 COPY legal ./legal
 COPY design ./design
 COPY public ./public
+# scripts/prerender-legal.ts runs as the last step of `npm run build` (package.json) — it is
+# executed directly by `tsx`, not bundled by vite, so it must be copied into this stage like any
+# other source the build step needs, same as src/, shared/, etc. above. Only this ONE file, never
+# the whole scripts/ directory: tsconfig.json's `include` covers all of scripts/, and several of
+# its other files (gate-course-review-approved.ts, lib/courseContentGate.ts, etc.) import from
+# pipeline/ — a large content-authoring tree this stage deliberately never copies (see
+# .dockerignore) — so copying the full directory would make `tsc -b` fail here with unresolvable
+# imports that have nothing to do with this build.
+COPY scripts/prerender-legal.ts ./scripts/prerender-legal.ts
 # Architect decision: same-origin API via reverse proxy — the browser now only ever calls this
 # SAME origin's own `/api/*` (backend/server/frontendIndex.ts proxies it server-side), so this is
 # a FIXED relative path, never a cross-origin backend URL baked into the client bundle. No build
