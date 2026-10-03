@@ -77,9 +77,11 @@ const LESSONS = ENTRANCES.map((entrance, i) => ({
   icon: TOOL_ICONS[i],
 }));
 
-/** COPY-01 §3 (identical to §2 ⑩). The ★ refund answer's sentence is exact, legally-approved
+/** COPY-01 §3 (identical to §2 ⑩). The refund answer's sentence is exact, legally-approved
  *  wording — never paraphrased, and identical everywhere it appears (landing page, FAQ, Shopify
- *  description, 特定商取引法に基づく表記, Shopify refund policy). Both sourced from
+ *  description, 特定商取引法に基づく表記, Shopify refund policy). Founder, 3 Oct 2026: the ★ marker
+ *  that used to prefix this FAQ question was an internal "legally approved" annotation only —
+ *  never meant to show to customers, so it's removed from the rendered `<dt>`. Both sourced from
  *  src/legal/consentText.ts's `FAQ_REFUND_BULLETS` — the same two bullets the old LandingPage.tsx's
  *  FAQ now shows (item A2, flip-prep 1 Oct 2026) — so the two pages never drift. The second bullet
  *  (declined-login-consent refund) is an A6 gap-fill: item 10's spec requires it on every
@@ -318,7 +320,7 @@ export function NewLandingPage() {
         <dl className="nz-faq-list">
           {FAQ_ITEMS.map((item) => (
             <div key={item.q} className="nz-card nz-faq-card">
-              <dt>{item.q.startsWith('返金') ? '★ ' : ''}{item.q}</dt>
+              <dt>{item.q}</dt>
               <dd>
                 {item.a}
                 {item.extra && <> {item.extra}</>}

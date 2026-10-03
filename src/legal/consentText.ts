@@ -101,8 +101,12 @@ export const FAQ_REFUND_BULLETS: readonly string[] = [
  */
 export const COPY02_REFUND_WINDOW_DAYS = 3;
 
+// Founder, 3 Oct 2026 (cosmetic): a non-breaking space (U+00A0) right before the email address,
+// not a plain space — CJK/Latin mixed text otherwise lets the browser break the line exactly at
+// that boundary, dropping "info@domo-ai.com" onto its own line and making the sentence read as
+// broken. Same fix applied everywhere this address appears in COPY-02's own refund text below.
 const COPY02_REFUND_CONDITION_SENTENCE =
-  `ご購入後${COPY02_REFUND_WINDOW_DAYS}日以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合に限り、` +
+  `ご購入後${COPY02_REFUND_WINDOW_DAYS}日以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合に限り、 ` +
   'info@domo-ai.com までご連絡いただければ、購入代金を返金いたします。';
 const COPY02_LESSON1_EXCLUDED_SENTENCE =
   '無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。';
@@ -123,7 +127,7 @@ export const COPY02_REFUND_FULL_TEXT =
  *  every page, both flag states) — only by the FAQ's own second bullet and the 特商法 page's own
  *  返品・キャンセル section, both already flag-gated at their call sites. */
 export const COPY02_CONSENT_DECLINE_REFUND_NOTE =
-  'ログイン時の同意をいただけないためにご利用になれない場合は、有料コンテンツの利用開始前であれば、ご購入からの日数にかかわらず、' +
+  'ログイン時の同意をいただけないためにご利用になれない場合は、有料コンテンツの利用開始前であれば、ご購入からの日数にかかわらず、 ' +
   'info@domo-ai.com までご連絡いただければ全額返金いたします。';
 
 export const COPY02_FAQ_REFUND_BULLETS: readonly [string, string] = [COPY02_REFUND_FULL_TEXT, COPY02_CONSENT_DECLINE_REFUND_NOTE];
@@ -148,4 +152,4 @@ export const COPY02_TOKUSHOHO_REFUND_SECTION =
   `有料レッスン（レッスン2〜7）のいずれかを一度でも開いた場合、またはご購入後${COPY02_REFUND_WINDOW_DAYS}日を経過した場合は、` +
   '上の2つ目の場合を除き、原則として返金対象外となります。' +
   '「有料コンテンツの利用開始」とは、ご購入後にレッスン2〜7のいずれかを初めて開いた時点をいいます。' +
-  '返金をご希望の場合は、info@domo-ai.com までご連絡ください。内容を確認のうえ、ご購入時の決済方法で返金いたします。';
+  '返金をご希望の場合は、 info@domo-ai.com までご連絡ください。内容を確認のうえ、ご購入時の決済方法で返金いたします。';
