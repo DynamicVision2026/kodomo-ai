@@ -69,13 +69,13 @@ describe('NewLandingPage (COPY-01)', () => {
     }
   });
 
-  it('renders all 17 FAQ questions (COPY-02, 2 Oct 2026), with the refund answer starred, using the exact approved COPY-02 sentence plus the consent-decline bullet', () => {
+  it('renders all 17 FAQ questions (COPY-02, 2 Oct 2026), the refund question never starred (Founder, 3 Oct 2026: the ★ was an internal marker only), using the exact approved COPY-02 sentence plus the consent-decline bullet', () => {
     render(<NewLandingPage />);
     const dts = document.querySelectorAll('.nz-faq-card dt');
     expect(dts).toHaveLength(17);
     expect(Array.from(dts).some((dt) => dt.textContent?.includes('何歳'))).toBe(false);
     const refundDt = Array.from(dts).find((dt) => dt.textContent?.includes('返金はできますか？'));
-    expect(refundDt?.textContent).toBe('★ 返金はできますか？');
+    expect(refundDt?.textContent).toBe('返金はできますか？');
     const refundDd = refundDt?.nextElementSibling;
     const text = (refundDd?.textContent ?? '').replace(/\s+/g, '');
     expect(text).toContain(
@@ -88,6 +88,15 @@ describe('NewLandingPage (COPY-01)', () => {
     // now that Lesson 1 is an explicit free/unpaid surface).
     expect(text).toContain('ログイン時の同意をいただけないためにご利用になれない場合は'.replace(/\s+/g, ''));
     expect(text).toContain('有料コンテンツの利用開始前であれば'.replace(/\s+/g, ''));
+  });
+
+  it('Founder, 3 Oct 2026 (cosmetic): the email address in the refund answer is glued to the preceding text with a non-breaking space, not a plain concatenation, so it never starts its own line', () => {
+    render(<NewLandingPage />);
+    const dts = document.querySelectorAll('.nz-faq-card dt');
+    const refundDt = Array.from(dts).find((dt) => dt.textContent?.includes('返金はできますか？'));
+    const refundDd = refundDt?.nextElementSibling;
+    const rawText = refundDd?.textContent ?? '';
+    expect(rawText).toContain('限り、 info@domo-ai.com');
   });
 
   it('the price section shows the ¥4,980 amount, household-licence facts, and the prior-Module-1-buyer line', () => {
