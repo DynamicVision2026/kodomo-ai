@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && tsx scripts/prerender-legal.ts",
     "preview": "vite preview",
     "test": "vitest run",
     "test:visual": "playwright test",
