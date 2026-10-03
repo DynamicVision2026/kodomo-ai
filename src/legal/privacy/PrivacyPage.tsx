@@ -2,13 +2,11 @@ import { COMPANY, PRODUCT } from '../company';
 import '../legal.css';
 
 /**
- * Privacy policy — DRAFT. Describes what this codebase actually does (verified across this
- * repo): no free-text input anywhere in the child flow, no child PII fields ever (gate:no-
- * free-text, src/engine/storage.ts), and — since AD-13's Family Account — a purchasing family's
- * parent email and profile/progress records ARE stored server-side (Firestore, Tokyo region).
- * Real content, still pending the founder's own legal review before publishing (same caveat as
- * the 特商法 page) — the APPI overseas-transfer disclosure below needs the founder's final
- * sign-off on wording.
+ * Privacy policy — Founder-approved for launch (3 Oct 2026, the BEGINNER_LAUNCH flip). Describes
+ * what this codebase actually does (verified across this repo): no free-text input anywhere in
+ * the child flow, no child PII fields ever (gate:no-free-text, src/engine/storage.ts), and —
+ * since AD-13's Family Account — a purchasing family's parent email and profile/progress records
+ * ARE stored server-side (Firestore, Tokyo region).
  *
  * COPY-01 §8 (Coordinator, prepared 28 Sep 2026): sections 2-4's first paragraphs rewritten —
  * true both before and after BEGINNER_LAUNCH, so NOT flag-gated (unlike src/legal/tokushoho/
@@ -51,9 +49,6 @@ import '../legal.css';
 export function PrivacyPage() {
   return (
     <main className="legal">
-      <p className="legal__draft-banner">
-        このページは草案です。公開前に必ず内容をご確認ください。
-      </p>
       <h1>プライバシーポリシー</h1>
       <p className="legal__revision-date">制定日：2026年9月18日／最終改定日：2026年10月1日</p>
 
