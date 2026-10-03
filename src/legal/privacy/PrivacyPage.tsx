@@ -60,7 +60,7 @@ export function PrivacyPage() {
       <section>
         <h2>1. 事業者情報</h2>
         <p>
-          {COMPANY.name}（以下「当社」）は、{PRODUCT.workingTitle}（以下「本サービス」）における
+          {COMPANY.name}（以下「当社」）は、{PRODUCT.brand}（以下「本サービス」）における
           お客様の情報の取り扱いについて、以下のとおりプライバシーポリシーを定めます。
         </p>
         <dl className="legal__table">

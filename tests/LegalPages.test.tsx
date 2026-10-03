@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
-import { TokushohoPage } from '../src/legal/tokushoho/TokushohoPage';
+import { TokushohoPage, TokushohoPreviewPage } from '../src/legal/tokushoho/TokushohoPage';
 import { PrivacyPage } from '../src/legal/privacy/PrivacyPage';
-import { COMPANY } from '../src/legal/company';
+import { COMPANY, PRODUCT } from '../src/legal/company';
 
 afterEach(() => {
   cleanup();
@@ -44,25 +44,72 @@ describe('TokushohoPage', () => {
     expect(screen.getByText(/返金ポリシーは近日公開予定です/)).toBeInTheDocument();
   });
 
-  it('COPY-02: once BEGINNER_LAUNCH is on, 商品名 says 入門コース and the refund row carries the exact approved COPY-02 section', async () => {
-    vi.resetModules();
-    vi.stubEnv('VITE_BEGINNER_LAUNCH', '1');
-    const { TokushohoPage: LaunchedTokushohoPage } = await import('../src/legal/tokushoho/TokushohoPage');
-    render(<LaunchedTokushohoPage />);
-    expect(screen.getAllByText(/入門コース/).length).toBeGreaterThan(0);
-    expect(screen.getByText('ナゼホリ（仮）（入門コース）')).toBeInTheDocument();
-    expect(screen.queryByText(/モジュール1/)).not.toBeInTheDocument();
-    const text = (document.body.textContent ?? '').replace(/\s+/g, '');
-    expect(text).toContain(
-      (
-        '次の場合は、返金いたします。' +
-        '・ご購入後3日以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合。' +
-        '無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。'
-      ).replace(/\s+/g, ''),
-    );
-    // The login-consent refund guarantee is this section's own second bullet (COPY-02).
-    expect(text).toContain('ログイン時の同意をいただけないためにご利用になれない場合で'.replace(/\s+/g, ''));
-    expect(text).toContain('返金をご希望の場合は、info@domo-ai.com までご連絡ください。'.replace(/\s+/g, ''));
+  describe('WO-C7 item 3 (Founder, 3 Oct 2026): once BEGINNER_LAUNCH is on, the v3 field list replaces every legacy row', () => {
+    async function renderLaunched() {
+      vi.resetModules();
+      vi.stubEnv('VITE_BEGINNER_LAUNCH', '1');
+      const { TokushohoPage: LaunchedTokushohoPage } = await import('../src/legal/tokushoho/TokushohoPage');
+      return render(<LaunchedTokushohoPage />);
+    }
+
+    it('names the full product and never shows "（仮）" or "モジュール1" anywhere', async () => {
+      await renderLaunched();
+      const text = document.body.textContent ?? '';
+      expect(text).toContain(PRODUCT.fullName);
+      expect(text).not.toContain('（仮）');
+      expect(text).not.toContain('モジュール1');
+    });
+
+    it('names the corporate site (beyondculture.ai) as a working link, and the real phone number', async () => {
+      await renderLaunched();
+      expect(screen.getByText(COMPANY.corporateSiteUrl, { exact: false })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: COMPANY.corporateSiteUrl })).toHaveAttribute('href', COMPANY.corporateSiteUrl);
+      expect(screen.getByText(new RegExp(COMPANY.phone))).toBeInTheDocument();
+    });
+
+    it('shows every v3 field label, including the new 動作環境 row', async () => {
+      await renderLaunched();
+      for (const label of ['販売業者', '運営責任者', '所在地', '電話番号', 'メールアドレス', '販売価格', '商品代金以外の必要料金', 'お支払方法', 'お支払時期', '商品の引渡し時期・役務の提供時期', '動作環境', '返品・キャンセル']) {
+        expect(screen.getByText(label)).toBeInTheDocument();
+      }
+    });
+
+    it('shows the v3 payment-methods sentence, with PayPay marked pending — never as a live option', async () => {
+      await renderLaunched();
+      const text = (document.body.textContent ?? '').replace(/\s+/g, '');
+      expect(text).toContain('PayPay（審査完了後に対応予定）'.replace(/\s+/g, ''));
+      expect(text).not.toContain('メルペイ');
+    });
+
+    it('carries the exact v3 返品・キャンセル text — the child-accident clause and the exceptional-cases carve-out', async () => {
+      await renderLaunched();
+      const text = (document.body.textContent ?? '').replace(/\s+/g, '');
+      expect(text).toContain(
+        (
+          '次の場合は、返金いたします。' +
+          '・ご購入後3日以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合。' +
+          '無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。'
+        ).replace(/\s+/g, ''),
+      );
+      expect(text).toContain('一度でも開いた場合（お子さまが誤って開いた場合を含みます）'.replace(/\s+/g, ''));
+      expect(text).toContain(
+        '重複請求、決済エラー、当社の責任による重大な不具合でご利用いただけない場合は、上記にかかわらず個別に対応のうえ返金いたします。'.replace(/\s+/g, ''),
+      );
+      expect(text).toContain('ログイン時の同意をいただけないためにご利用になれない場合で'.replace(/\s+/g, ''));
+      expect(text).toContain('返金をご希望の場合は'.replace(/\s+/g, ''));
+      expect(text).toContain('info@domo-ai.com');
+    });
+  });
+});
+
+describe('WO-C7 item 9: TokushohoPreviewPage (reviewer-only /legal/tokushoho-preview/)', () => {
+  it('always shows the v3 field list, regardless of VITE_BEGINNER_LAUNCH — never flag-gated like the real page', () => {
+    render(<TokushohoPreviewPage />);
+    const text = document.body.textContent ?? '';
+    expect(text).toContain(PRODUCT.fullName);
+    expect(text).not.toContain('モジュール1');
+    expect(screen.getByText('動作環境')).toBeInTheDocument();
+    expect(screen.getByText(/プレビュー/)).toBeInTheDocument();
   });
 });
 

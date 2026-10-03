@@ -110,11 +110,18 @@ const COPY02_REFUND_CONDITION_SENTENCE =
   'info@domo-ai.com までご連絡いただければ、購入代金を返金いたします。';
 const COPY02_LESSON1_EXCLUDED_SENTENCE =
   '無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。';
+// WO-C7 item 3 (Founder, 3 Oct 2026, v3): adds the parenthetical — a child opening a paid lesson
+// by accident still counts as "opened", same as any other open.
 const COPY02_INELIGIBLE_SENTENCE =
-  `有料レッスン（レッスン2〜7）のいずれかを一度でも開いた場合、またはご購入後${COPY02_REFUND_WINDOW_DAYS}日を経過した場合は、` +
-  '原則として返金対象外となります。';
+  `有料レッスン（レッスン2〜7）のいずれかを一度でも開いた場合（お子さまが誤って開いた場合を含みます）、` +
+  `またはご購入後${COPY02_REFUND_WINDOW_DAYS}日を経過した場合は、原則として返金対象外となります。`;
 const COPY02_PAID_USE_DEFINITION_SENTENCE =
   '「有料コンテンツの利用開始」とは、ご購入後にレッスン2〜7のいずれかを初めて開いた時点をいいます。';
+// WO-C7 item 3 (v3): new carve-out sentence — duplicate charges, payment errors, or a serious
+// fault on the company's own side are handled individually, regardless of the window/usage rules
+// above.
+const COPY02_EXCEPTIONAL_CASES_SENTENCE =
+  '重複請求、決済エラー、当社の責任による重大な不具合でご利用いただけない場合は、上記にかかわらず個別に対応のうえ返金いたします。';
 
 /** The one refund-condition paragraph (特商法/FAQ full text) — all four sentences, verbatim,
  *  concatenated in COPY-02's own given order. */
@@ -132,16 +139,28 @@ export const COPY02_CONSENT_DECLINE_REFUND_NOTE =
 
 export const COPY02_FAQ_REFUND_BULLETS: readonly [string, string] = [COPY02_REFUND_FULL_TEXT, COPY02_CONSENT_DECLINE_REFUND_NOTE];
 
-/** Short form — landing ⑨ price section and "the note above the buy buttons" (under Notice D,
- *  a separate paragraph, never a replacement for Notice D's own consent disclosure). */
-export const COPY02_SHORT_REFUND_NOTE =
+/** WO-C7 item 5(a): the FAQ's own 「返金はできますか？」 answer no longer repeats the full legal
+ *  text — a short sentence, then a link to the 特商法 page for the details. The consuming
+ *  component supplies the actual `<a>` around `TOKUSHOHO_LINK_LABEL`. */
+export const COPY02_FAQ_REFUND_SHORT_SENTENCE =
+  `ご購入後${COPY02_REFUND_WINDOW_DAYS}日以内で、かつ有料レッスン（レッスン2〜7）を一度も開いていない場合に返金いたします。`;
+
+/** The 特商法 page's own title, reused everywhere this policy links out to it instead of
+ *  repeating itself (WO-C7 items 4, 5a) — never paraphrased. */
+export const TOKUSHOHO_LINK_LABEL = '特定商取引法に基づく表記';
+export const TOKUSHOHO_LINK_HREF = '/legal/tokushoho/';
+
+/** WO-C7 item 4 (v3) — the notice shown above every buy button, replacing the old
+ *  `COPY02_SHORT_REFUND_NOTE`. Ends with a link to the 特商法 page (rendered by the consuming
+ *  component) instead of repeating its full text. */
+export const COPY02_BUY_NOTICE_LEAD =
   '本商品は買い切り型のデジタルコンテンツです。ご購入後、レッスン2〜7が利用できるようになります。' +
   `ご購入後${COPY02_REFUND_WINDOW_DAYS}日以内で、かつ、有料レッスンを一度も開いていない場合に限り、返金を承ります。` +
-  '有料レッスンを一度でも開いた場合は、原則として返金対象外となります。';
+  '有料レッスンを一度でも開いた場合（お子さまが誤って開いた場合を含みます）は、原則として返金対象外となります。';
 
-/** 特商法ページ「返品・キャンセルについて」— COPY-02's own bespoke paragraph for this page
- *  specifically (a lead-in + two bulleted conditions + the shared consequence/definition
- *  sentences + a closing contact instruction), not a reuse of `COPY02_REFUND_FULL_TEXT`'s exact
+/** 特商法ページ「返品・キャンセル」— WO-C7 item 3's own verbatim v3 text (a lead-in + two
+ *  bulleted conditions + the shared consequence/definition sentences + the new exceptional-cases
+ *  carve-out + a closing contact instruction), not a reuse of `COPY02_REFUND_FULL_TEXT`'s exact
  *  sentence boundaries since this page frames the same two conditions as an explicit list. */
 export const COPY02_TOKUSHOHO_REFUND_SECTION =
   '次の場合は、返金いたします。' +
@@ -149,7 +168,8 @@ export const COPY02_TOKUSHOHO_REFUND_SECTION =
   '無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。' +
   '・ログイン時の同意をいただけないためにご利用になれない場合で、有料コンテンツの利用開始前であるとき' +
   '（ご購入からの日数にかかわらず、全額返金）。' +
-  `有料レッスン（レッスン2〜7）のいずれかを一度でも開いた場合、またはご購入後${COPY02_REFUND_WINDOW_DAYS}日を経過した場合は、` +
-  '上の2つ目の場合を除き、原則として返金対象外となります。' +
-  '「有料コンテンツの利用開始」とは、ご購入後にレッスン2〜7のいずれかを初めて開いた時点をいいます。' +
+  `有料レッスン（レッスン2〜7）のいずれかを一度でも開いた場合（お子さまが誤って開いた場合を含みます）、` +
+  `またはご購入後${COPY02_REFUND_WINDOW_DAYS}日を経過した場合は、上の2つ目の場合を除き、原則として返金対象外となります。` +
+  COPY02_PAID_USE_DEFINITION_SENTENCE +
+  COPY02_EXCEPTIONAL_CASES_SENTENCE +
   '返金をご希望の場合は、 info@domo-ai.com までご連絡ください。内容を確認のうえ、ご購入時の決済方法で返金いたします。';

@@ -338,14 +338,9 @@ export function LandingPage() {
         </dl>
       </section>
 
-      <footer className="nz-footer">
-        <div className="nz-footer-inner">
-          {/* src/legal — real company data confirmed from soul-id.jp, still drafts pending the
-              founder's own legal review (Task 9, docs/work-order-w1.md). */}
-          <a href="/legal/tokushoho/">特定商取引法に基づく表記</a>
-          <a href="/legal/privacy/">プライバシーポリシー</a>
-        </div>
-      </footer>
+      {/* WO-C7 item 2 (Founder, 3 Oct 2026): the legal footer moved to static HTML in this
+          route's own index.html (outside the React root), so it reads as plain HTML before any
+          JS runs. Removed here to avoid showing it twice. */}
     </main>
   );
 }

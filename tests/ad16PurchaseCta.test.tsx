@@ -152,10 +152,11 @@ describe('AD-16 §1 — the account page purchase CTA', () => {
     await waitFor(() => expect(screen.getByText('使用中の端末')).toBeInTheDocument());
     expect(screen.queryByText('購入手続きへ進む')).not.toBeInTheDocument();
     // ME_ENTITLED's grantedAt is 2026-09-20T03:00:00.000Z.
-    expect(screen.getByText('ご購入済み：ナゼホリ Module 1（購入日：9月20日）')).toBeInTheDocument();
+    // WO-C7 item 11 (Founder, 3 Oct 2026): "Module 1" is retired here too, regardless of the flag.
+    expect(screen.getByText('ご購入済み：ナゼホリ 入門コース（購入日：9月20日）')).toBeInTheDocument();
   });
 
-  it('post-launch-check (Founder): behind VITE_BEGINNER_LAUNCH, the same purchase line says 入門コース instead of Module 1 — same m1 entitlement either way', async () => {
+  it('post-launch-check (Founder): behind VITE_BEGINNER_LAUNCH, the same purchase line still says 入門コース — same m1 entitlement either way', async () => {
     vi.stubEnv('VITE_BEGINNER_LAUNCH', '1');
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input instanceof Request ? input.url : input);

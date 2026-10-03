@@ -37,6 +37,10 @@ export default defineConfig({
         // src/ad12/ component library — not a product route, never linked from the live app.
         designAd12: resolve(__dirname, 'design/ad12/index.html'),
         tokushoho: resolve(__dirname, 'legal/tokushoho/index.html'),
+        // WO-C7 item 9 (Founder, 3 Oct 2026): reviewer-only preview of the v3 特商法 text, hidden
+        // and noindexed, always showing the new rows regardless of BEGINNER_LAUNCH — same
+        // "lpNew" precedent above, so a reviewer can see it before the flip.
+        tokushohoPreview: resolve(__dirname, 'legal/tokushoho-preview/index.html'),
         privacy: resolve(__dirname, 'legal/privacy/index.html'),
       },
     },

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ナゼホリ（仮）</title>
+    <title>ナゼホリ</title>
     <!-- WO-28: the warm, rounded Japanese children's-book voice tokens.css's --font-child
          already names (visual-kit.html's own reference direction) — without this, most
          platforms other than macOS/iOS silently fall back to a plain system sans-serif. -->
@@ -13,9 +13,19 @@
       href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap"
       rel="stylesheet"
     />
+    <style>
+      .legal-footer { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: center; padding: 16px; font-size: 13px; color: #666; border-top: 1px solid #e5e5e5; }
+      .legal-footer a { color: #666; text-decoration: underline; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <footer class="legal-footer">
+      <a href="/legal/tokushoho/">特定商取引法に基づく表記</a>
+      <a href="/legal/privacy/">プライバシーポリシー</a>
+      <a href="mailto:info@domo-ai.com">お問い合わせ</a>
+      <a href="https://beyondculture.ai" target="_blank" rel="noopener noreferrer">運営会社</a>
+    </footer>
   </body>
 </html>

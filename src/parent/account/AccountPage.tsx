@@ -25,15 +25,12 @@ type DeleteStep = { kind: 'idle' } | { kind: 'code-sent' } | { kind: 'confirming
 const PURCHASE_MODULE_ID = moduleJson.id;
 const PURCHASE_MODULE_TITLE = moduleJson.title;
 
-// COPY-01 naming table, same "モジュール1 is retired as a public name once BEGINNER_LAUNCH is on"
-// rule TokushohoPage.tsx already applies to 商品名 — same underlying m1 entitlement either way,
-// only the public label changes. Same `VITE_BEGINNER_LAUNCH === '1' || me.courseAllowed` fallback
-// LoginPage.tsx's own `courseVisible` and BeginnerCourseApp.tsx already use — a COURSE_PREVIEW_EMAILS
-// family already sees the real post-flip course before the global flag is on, so this label
-// shouldn't lag behind and still say "Module 1" to them.
-const BEGINNER_LAUNCH_BUILD_FLAG = import.meta.env.VITE_BEGINNER_LAUNCH === '1';
-function purchasedModuleLabel(me: MeResponse): string {
-  return BEGINNER_LAUNCH_BUILD_FLAG || me.courseAllowed ? '入門コース' : 'Module 1';
+// WO-C7 item 11 (Founder, 3 Oct 2026): "Module 1" is retired as a public name everywhere except
+// the landing-page FAQ's own old-buyer question — this account-page confirmation line isn't that
+// FAQ, so it always reads 「入門コース」 now, regardless of BEGINNER_LAUNCH (a purely cosmetic label
+// for a family that has already purchased; no policy or pricing claim depends on it).
+function purchasedModuleLabel(_me: MeResponse): string {
+  return '入門コース';
 }
 
 /** usePurchaseFlow (src/family, not exempt from gate:no-hardcoded-copy) stays copy-free — this

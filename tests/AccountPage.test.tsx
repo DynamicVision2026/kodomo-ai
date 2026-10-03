@@ -1,9 +1,9 @@
 /**
- * WO-C6 B2 #12 item 2: the account page's purchase-status line reads 「ナゼホリ Module 1」 with the
- * flag off (today's real deploy state) and 「ナゼホリ 入門コース」 once BEGINNER_LAUNCH is on — same
- * COPY-01 naming-table mechanism tests/LegalPages.test.tsx already proves for TokushohoPage's own
- * 商品名. Uses the same vi.resetModules()/vi.stubEnv()/vi.stubGlobal('fetch', ...) pattern
- * tests/ad16PurchaseCta.test.tsx established for this exact page.
+ * WO-C7 item 11 (Founder, 3 Oct 2026): "Module 1" is retired everywhere except the landing-page
+ * FAQ's own old-buyer question — this account-page purchase-status line now always reads
+ * 「ナゼホリ 入門コース」, regardless of BEGINNER_LAUNCH (supersedes WO-C6 B2 #12 item 2's flag-gated
+ * "Module 1"/"入門コース" split). Uses the same vi.resetModules()/vi.stubEnv()/
+ * vi.stubGlobal('fetch', ...) pattern tests/ad16PurchaseCta.test.tsx established for this page.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
@@ -35,16 +35,16 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe('AccountPage purchase-status label (COPY-01)', () => {
-  it('flag off (today\'s real deploy state): reads 「ナゼホリ Module 1」', async () => {
+describe('AccountPage purchase-status label (WO-C7 item 11)', () => {
+  it('flag off: reads 「ナゼホリ 入門コース」, never "Module 1"', async () => {
     vi.resetModules();
     vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
     stubFetchEntitled();
     const { AccountPage } = await import('../src/parent/account/AccountPage');
     render(<AccountPage />);
     await waitFor(() => expect(screen.getByText(/ご購入済み/)).toBeInTheDocument());
-    expect(screen.getByText(/ナゼホリ Module 1/)).toBeInTheDocument();
-    expect(screen.queryByText(/入門コース/)).not.toBeInTheDocument();
+    expect(screen.getByText(/ナゼホリ 入門コース/)).toBeInTheDocument();
+    expect(screen.queryByText(/Module 1/)).not.toBeInTheDocument();
   });
 
   it('flag on: reads 「ナゼホリ 入門コース」, never the retired "Module 1" name', async () => {

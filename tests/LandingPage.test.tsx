@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, waitFor, within } from '@testing-library/react';
+import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LandingPage } from '../src/lp/LandingPage';
 
@@ -216,17 +216,10 @@ describe('LandingPage', () => {
     expect(text).not.toMatch(/次の学習指導要領では.*決定/);
   });
 
-  it('links to this app\'s own legal pages, built from the company\'s real confirmed data', () => {
-    const { container } = render(<LandingPage />);
-    // WO-21 Phase 8: trailing slash matters — vite's multi-page build serves each page at its
-    // own directory path (e.g. /legal/tokushoho/index.html -> /legal/tokushoho/); a link missing
-    // the trailing slash fell through to the LP's own index.html instead, a real bug this
-    // playwright-verified fix closes (see the WO-21 Phase 8 commit for the reproduction).
-    // Scoped to the footer: Notice D (item 5) also links to /legal/privacy/ with the same label.
-    const footer = within(container.querySelector('.nz-footer')!);
-    expect(footer.getByText('特定商取引法に基づく表記').closest('a')).toHaveAttribute('href', '/legal/tokushoho/');
-    expect(footer.getByText('プライバシーポリシー').closest('a')).toHaveAttribute('href', '/legal/privacy/');
-  });
+  // WO-C7 item 2 (3 Oct 2026): the legal footer moved out of this component into static HTML in
+  // index.html (see tests/staticFooter.test.ts) so it reads as plain HTML before any JS runs —
+  // it's no longer part of this component's own rendered output. Notice D (item 5) still links
+  // to /legal/privacy/ from within the component itself, unaffected by that move.
 
   it('AD-15 §4 (Architect decision): the primary CTA routes a new visitor through login first, returning them to /play/ once signed in', () => {
     render(<LandingPage />);
