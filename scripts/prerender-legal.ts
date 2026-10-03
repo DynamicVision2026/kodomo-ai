@@ -53,10 +53,11 @@ interface Target {
    *  refactor that silently breaks prerendering (e.g. renaming an export) is caught at build
    *  time, not discovered later by a human curling the live page. */
   mustContain: string;
-  /** A substring the rendered markup must NOT contain — catches the specific regression of a
-   *  flag-on build still rendering retired/flag-off copy (e.g. the prerender step silently
-   *  running against an undefined flag). Checked only when present. */
-  mustNotContain?: string;
+  /** Substrings the rendered markup must NOT contain — catches the specific regression of a
+   *  flag-on build still rendering retired/flag-off/draft copy (e.g. the prerender step silently
+   *  running against an undefined flag, or the draft banner leaking onto a live route). Checked
+   *  only when present. */
+  mustNotContain?: string[];
 }
 
 const TARGETS: Target[] = [
@@ -66,12 +67,12 @@ const TARGETS: Target[] = [
     distHtmlPath: 'legal/tokushoho/index.html',
     // WO-C7 flip-regression gate (Founder, 3 Oct 2026): once BEGINNER_LAUNCH is on, this page
     // MUST carry the real v4 72-hour wording and MUST NOT still show the pre-launch "coming
-    // soon" refund placeholder — the exact pair of symptoms a prerender step silently running
-    // against an unset flag would produce. Off-flag builds keep the original, weaker heading-only
-    // check (this page's off-flag content is the current production default, not a regression
-    // target).
+    // soon" refund placeholder, nor the internal draft/review banner (Founder-approved for
+    // launch — that banner now lives only on TokushohoPreviewPage, never this real public route).
+    // Off-flag builds keep the original, weaker heading-only check (this page's off-flag content
+    // is the current production default, not a regression target).
     mustContain: BEGINNER_LAUNCH ? 'ご購入日時から72時間以内' : '特定商取引法に基づく表記',
-    mustNotContain: BEGINNER_LAUNCH ? '返金ポリシーは近日公開予定です' : undefined,
+    mustNotContain: BEGINNER_LAUNCH ? ['返金ポリシーは近日公開予定です', '草案'] : undefined,
   },
   {
     modulePath: '/src/legal/tokushoho/TokushohoPage.tsx',
@@ -79,7 +80,8 @@ const TARGETS: Target[] = [
     distHtmlPath: 'legal/tokushoho-preview/index.html',
     // The preview always renders the v3 text regardless of VITE_BEGINNER_LAUNCH — this is the
     // one place a stray regression (reverting to the old row set, or losing the v4 72h wording)
-    // would be caught at build time.
+    // would be caught at build time. The draft banner is expected and fine here (reviewer-only,
+    // noindexed route) — never asserted absent.
     mustContain: 'ご購入日時から72時間以内',
   },
   {
@@ -87,6 +89,9 @@ const TARGETS: Target[] = [
     exportName: 'PrivacyPage',
     distHtmlPath: 'legal/privacy/index.html',
     mustContain: 'プライバシーポリシー',
+    // Same flip-regression gate as tokushoho above — this page has no preview variant at all, so
+    // the draft banner is removed unconditionally in source; this just confirms it stays gone.
+    mustNotContain: BEGINNER_LAUNCH ? ['草案'] : undefined,
   },
 ];
 
@@ -112,9 +117,10 @@ async function main() {
         failed = true;
         continue;
       }
-      if (target.mustNotContain && markup.includes(target.mustNotContain)) {
+      const foundForbidden = target.mustNotContain?.find((s) => markup.includes(s));
+      if (foundForbidden) {
         console.error(
-          `prerender-legal — ${target.distHtmlPath}: rendered markup still contains the retired text "${target.mustNotContain}" (VITE_BEGINNER_LAUNCH=${BEGINNER_LAUNCH ? '1' : 'unset'})`,
+          `prerender-legal — ${target.distHtmlPath}: rendered markup still contains the retired/draft text "${foundForbidden}" (VITE_BEGINNER_LAUNCH=${BEGINNER_LAUNCH ? '1' : 'unset'})`,
         );
         failed = true;
         continue;
@@ -161,6 +167,35 @@ async function main() {
       } else {
         writeFileSync(rootHtmlPath, original.replace(titleTag, `<title>${BEGINNER_LAUNCH_TITLE}</title>`));
         console.log('prerender-legal — OK: dist/index.html <title> patched to the post-launch title');
+      }
+    }
+
+    // WO-C7 flip follow-up (Founder, 3 Oct 2026): "/lp-new/" is the reviewer-only pre-launch
+    // preview of the new landing page (src/lp/newMain.tsx already does `window.location.
+    // replace('/')` there once the flag is on) — but that's a client-side-only redirect, so a
+    // no-JS fetch of "/lp-new/" still saw the "（プレビュー）"-titled preview page even after
+    // launch. Patches dist/lp-new/index.html the same way: a static <meta http-equiv="refresh">
+    // redirect (honoured by real browsers without JS) plus the same post-launch title, so a no-JS
+    // client is told to go to "/" immediately instead of seeing stale preview copy. The existing
+    // client script tag is untouched — JS-enabled browsers still redirect instantly via it too.
+    const lpNewHtmlPath = resolve(DIST, 'lp-new/index.html');
+    if (!existsSync(lpNewHtmlPath)) {
+      console.error(`prerender-legal — ${lpNewHtmlPath} not found (check vite.config.ts's rollupOptions.input)`);
+      failed = true;
+    } else {
+      const original = readFileSync(lpNewHtmlPath, 'utf-8');
+      const titleTag = /<title>.*?<\/title>/s;
+      if (!titleTag.test(original) || !original.includes('</head>')) {
+        console.error(`prerender-legal — ${lpNewHtmlPath}: no <title> tag or </head> found to patch`);
+        failed = true;
+      } else {
+        const withTitle = original.replace(titleTag, `<title>${BEGINNER_LAUNCH_TITLE}</title>`);
+        const withRedirect = withTitle.replace(
+          '</head>',
+          `    <meta http-equiv="refresh" content="0; url=/" />\n  </head>`,
+        );
+        writeFileSync(lpNewHtmlPath, withRedirect);
+        console.log('prerender-legal — OK: dist/lp-new/index.html patched with a static redirect to /');
       }
     }
   }

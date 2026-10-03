@@ -69,13 +69,15 @@ const V3_ROWS: [string, ReactNode][] = [
 function TokushohoBody({ rows, previewBanner }: { rows: [string, ReactNode][]; previewBanner?: boolean }) {
   return (
     <main className="legal">
-      <p className="legal__draft-banner">
-        このページは草案です。公開前に必ず内容をご確認ください。
-      </p>
       {previewBanner && (
-        <p className="legal__draft-banner">
-          これはプレビューです。BEGINNER_LAUNCH が有効になると、このページがそのまま公開されます。
-        </p>
+        <>
+          <p className="legal__draft-banner">
+            このページは草案です。公開前に必ず内容をご確認ください。
+          </p>
+          <p className="legal__draft-banner">
+            これはプレビューです。BEGINNER_LAUNCH が有効になると、このページがそのまま公開されます。
+          </p>
+        </>
       )}
       <h1>特定商取引法に基づく表記</h1>
       <dl className="legal__table">
@@ -91,8 +93,9 @@ function TokushohoBody({ rows, previewBanner }: { rows: [string, ReactNode][]; p
 }
 
 /**
- * 特定商取引法に基づく表記 — DRAFT. Real company data (see src/legal/company.ts), but this
- * session is not a substitute for the founder's own legal review before publishing.
+ * 特定商取引法に基づく表記 — Founder-approved for launch (3 Oct 2026, the BEGINNER_LAUNCH flip).
+ * Real company data (see src/legal/company.ts). The draft/review banner now lives only on
+ * TokushohoPreviewPage below, never on this, the real public route.
  */
 export function TokushohoPage() {
   return <TokushohoBody rows={BEGINNER_LAUNCH ? V3_ROWS : LEGACY_ROWS} />;

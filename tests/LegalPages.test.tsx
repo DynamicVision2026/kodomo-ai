@@ -10,9 +10,9 @@ afterEach(() => {
 });
 
 describe('TokushohoPage', () => {
-  it('shows a draft banner (this has not had the founder\'s legal review yet)', () => {
+  it('WO-C7 flip (Founder, 3 Oct 2026): never shows the internal draft/review banner on the real public route — that now lives only on TokushohoPreviewPage', () => {
     render(<TokushohoPage />);
-    expect(screen.getByText(/草案/)).toBeInTheDocument();
+    expect(screen.queryByText(/草案/)).not.toBeInTheDocument();
   });
 
   it('discloses every field required by 特定商取引法, with the real confirmed company data', () => {
@@ -111,12 +111,17 @@ describe('WO-C7 item 9: TokushohoPreviewPage (reviewer-only /legal/tokushoho-pre
     expect(screen.getByText('動作環境')).toBeInTheDocument();
     expect(screen.getByText(/プレビュー/)).toBeInTheDocument();
   });
+
+  it('WO-C7 flip (Founder, 3 Oct 2026): keeps the internal draft/review banner — this route is reviewer-only and noindexed, never the real public page', () => {
+    render(<TokushohoPreviewPage />);
+    expect(screen.getByText(/草案/)).toBeInTheDocument();
+  });
 });
 
 describe('PrivacyPage', () => {
-  it('shows a draft banner', () => {
+  it('WO-C7 flip (Founder, 3 Oct 2026): never shows the internal draft/review banner — this page has no preview variant, so it is removed unconditionally', () => {
     render(<PrivacyPage />);
-    expect(screen.getByText(/草案/)).toBeInTheDocument();
+    expect(screen.queryByText(/草案/)).not.toBeInTheDocument();
   });
 
   it('accurately states there is no PII input in the app itself', () => {
