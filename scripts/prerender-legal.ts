@@ -26,6 +26,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { BEGINNER_LAUNCH_TITLE } from '../src/lp/meta';
 
 const DIST = resolve(process.cwd(), 'dist');
 
@@ -33,6 +34,13 @@ if (!existsSync(DIST)) {
   console.error('prerender-legal — dist/ not found. Run `vite build` first.');
   process.exit(1);
 }
+
+// Read directly from process.env, not import.meta.env — this file runs as a plain `tsx` process
+// (no Vite transform of its own top-level code), and matching the exact same raw env var
+// Dockerfile.frontend's ARG/ENV pair sets means this check never depends on Vite's own
+// import.meta.env substitution working correctly inside ssrLoadModule below — it's an
+// independent, second verification of the same flag.
+const BEGINNER_LAUNCH = process.env.VITE_BEGINNER_LAUNCH === '1';
 
 interface Target {
   /** Module path Vite's ssrLoadModule resolves, same as a browser import specifier. */
@@ -45,6 +53,10 @@ interface Target {
    *  refactor that silently breaks prerendering (e.g. renaming an export) is caught at build
    *  time, not discovered later by a human curling the live page. */
   mustContain: string;
+  /** A substring the rendered markup must NOT contain — catches the specific regression of a
+   *  flag-on build still rendering retired/flag-off copy (e.g. the prerender step silently
+   *  running against an undefined flag). Checked only when present. */
+  mustNotContain?: string;
 }
 
 const TARGETS: Target[] = [
@@ -52,7 +64,14 @@ const TARGETS: Target[] = [
     modulePath: '/src/legal/tokushoho/TokushohoPage.tsx',
     exportName: 'TokushohoPage',
     distHtmlPath: 'legal/tokushoho/index.html',
-    mustContain: '特定商取引法に基づく表記',
+    // WO-C7 flip-regression gate (Founder, 3 Oct 2026): once BEGINNER_LAUNCH is on, this page
+    // MUST carry the real v4 72-hour wording and MUST NOT still show the pre-launch "coming
+    // soon" refund placeholder — the exact pair of symptoms a prerender step silently running
+    // against an unset flag would produce. Off-flag builds keep the original, weaker heading-only
+    // check (this page's off-flag content is the current production default, not a regression
+    // target).
+    mustContain: BEGINNER_LAUNCH ? 'ご購入日時から72時間以内' : '特定商取引法に基づく表記',
+    mustNotContain: BEGINNER_LAUNCH ? '返金ポリシーは近日公開予定です' : undefined,
   },
   {
     modulePath: '/src/legal/tokushoho/TokushohoPage.tsx',
@@ -88,7 +107,14 @@ async function main() {
       const markup = renderToStaticMarkup(createElement(Component));
       if (!markup.includes(target.mustContain)) {
         console.error(
-          `prerender-legal — ${target.distHtmlPath}: rendered markup is missing the expected text "${target.mustContain}"`,
+          `prerender-legal — ${target.distHtmlPath}: rendered markup is missing the expected text "${target.mustContain}" (VITE_BEGINNER_LAUNCH=${BEGINNER_LAUNCH ? '1' : 'unset'})`,
+        );
+        failed = true;
+        continue;
+      }
+      if (target.mustNotContain && markup.includes(target.mustNotContain)) {
+        console.error(
+          `prerender-legal — ${target.distHtmlPath}: rendered markup still contains the retired text "${target.mustNotContain}" (VITE_BEGINNER_LAUNCH=${BEGINNER_LAUNCH ? '1' : 'unset'})`,
         );
         failed = true;
         continue;
@@ -113,6 +139,30 @@ async function main() {
     }
   } finally {
     await server.close();
+  }
+
+  // WO-C7 flip follow-up (Founder, 3 Oct 2026): dist/index.html's static <title> is baked at
+  // vite-build time and was never flag-gated (src/lp/main.tsx's own client-side document.title
+  // override only reaches a browser that runs the JS — a no-JS fetch of "/" saw the pre-launch
+  // title even with the flag on). Patches it here, in the same build step that already makes the
+  // legal pages' body text real static HTML, from the SAME shared string src/lp/main.tsx imports
+  // — never a second hand-kept copy to drift from it.
+  if (BEGINNER_LAUNCH) {
+    const rootHtmlPath = resolve(DIST, 'index.html');
+    if (!existsSync(rootHtmlPath)) {
+      console.error(`prerender-legal — ${rootHtmlPath} not found (check vite.config.ts's rollupOptions.input)`);
+      failed = true;
+    } else {
+      const original = readFileSync(rootHtmlPath, 'utf-8');
+      const titleTag = /<title>.*?<\/title>/s;
+      if (!titleTag.test(original)) {
+        console.error(`prerender-legal — ${rootHtmlPath}: no <title> tag found to patch`);
+        failed = true;
+      } else {
+        writeFileSync(rootHtmlPath, original.replace(titleTag, `<title>${BEGINNER_LAUNCH_TITLE}</title>`));
+        console.log('prerender-legal — OK: dist/index.html <title> patched to the post-launch title');
+      }
+    }
   }
 
   if (failed) {
