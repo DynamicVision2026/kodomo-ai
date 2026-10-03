@@ -94,19 +94,20 @@ export const FAQ_REFUND_BULLETS: readonly string[] = [
  * COPY-02 (Founder, 2 Oct 2026, approved) — the "Lesson 1 free sample / Lessons 2-7 paid" refund
  * policy, replacing COPY-01's Playground-era wording above. Shown today only behind
  * `VITE_BEGINNER_LAUNCH` (`NewLandingPage.tsx`, `TokushohoPage.tsx`) and unconditionally at the
- * noindexed `/lp-new/` preview — never on the currently-live `/` page. `COPY02_REFUND_WINDOW_DAYS`
- * mirrors `backend/src/refund.ts`'s own `DEFAULT_POLICY.windowDays` (both changed together, same
- * source of truth in spirit — the backend's own number is the enforced one; this is the text a
- * family actually reads).
+ * noindexed `/lp-new/` preview — never on the currently-live `/` page. `COPY02_REFUND_WINDOW_HOURS`
+ * mirrors `backend/src/refund.ts`'s own `DEFAULT_POLICY.windowDays * 24` (both changed together,
+ * same source of truth in spirit — the backend's own number is the enforced one; this is the text
+ * a family actually reads). WO-C7 follow-up (Founder, 3 Oct 2026): the wording switched from
+ * "3日" to the equivalent "72時間" — same window, worded in hours everywhere it's read aloud.
  */
-export const COPY02_REFUND_WINDOW_DAYS = 3;
+export const COPY02_REFUND_WINDOW_HOURS = 72;
 
 // Founder, 3 Oct 2026 (cosmetic): a non-breaking space (U+00A0) right before the email address,
 // not a plain space — CJK/Latin mixed text otherwise lets the browser break the line exactly at
 // that boundary, dropping "info@domo-ai.com" onto its own line and making the sentence read as
 // broken. Same fix applied everywhere this address appears in COPY-02's own refund text below.
 const COPY02_REFUND_CONDITION_SENTENCE =
-  `ご購入後${COPY02_REFUND_WINDOW_DAYS}日以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合に限り、 ` +
+  `ご購入日時から${COPY02_REFUND_WINDOW_HOURS}時間以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合に限り、 ` +
   'info@domo-ai.com までご連絡いただければ、購入代金を返金いたします。';
 const COPY02_LESSON1_EXCLUDED_SENTENCE =
   '無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。';
@@ -114,7 +115,7 @@ const COPY02_LESSON1_EXCLUDED_SENTENCE =
 // by accident still counts as "opened", same as any other open.
 const COPY02_INELIGIBLE_SENTENCE =
   `有料レッスン（レッスン2〜7）のいずれかを一度でも開いた場合（お子さまが誤って開いた場合を含みます）、` +
-  `またはご購入後${COPY02_REFUND_WINDOW_DAYS}日を経過した場合は、原則として返金対象外となります。`;
+  `またはご購入日時から${COPY02_REFUND_WINDOW_HOURS}時間を経過した場合は、原則として返金対象外となります。`;
 const COPY02_PAID_USE_DEFINITION_SENTENCE =
   '「有料コンテンツの利用開始」とは、ご購入後にレッスン2〜7のいずれかを初めて開いた時点をいいます。';
 // WO-C7 item 3 (v3): new carve-out sentence — duplicate charges, payment errors, or a serious
@@ -143,7 +144,7 @@ export const COPY02_FAQ_REFUND_BULLETS: readonly [string, string] = [COPY02_REFU
  *  text — a short sentence, then a link to the 特商法 page for the details. The consuming
  *  component supplies the actual `<a>` around `TOKUSHOHO_LINK_LABEL`. */
 export const COPY02_FAQ_REFUND_SHORT_SENTENCE =
-  `ご購入後${COPY02_REFUND_WINDOW_DAYS}日以内で、かつ有料レッスン（レッスン2〜7）を一度も開いていない場合に返金いたします。`;
+  `ご購入日時から${COPY02_REFUND_WINDOW_HOURS}時間以内で、かつ有料レッスン（レッスン2〜7）を一度も開いていない場合に返金いたします。`;
 
 /** The 特商法 page's own title, reused everywhere this policy links out to it instead of
  *  repeating itself (WO-C7 items 4, 5a) — never paraphrased. */
@@ -155,7 +156,7 @@ export const TOKUSHOHO_LINK_HREF = '/legal/tokushoho/';
  *  component) instead of repeating its full text. */
 export const COPY02_BUY_NOTICE_LEAD =
   '本商品は買い切り型のデジタルコンテンツです。ご購入後、レッスン2〜7が利用できるようになります。' +
-  `ご購入後${COPY02_REFUND_WINDOW_DAYS}日以内で、かつ、有料レッスンを一度も開いていない場合に限り、返金を承ります。` +
+  `ご購入日時から${COPY02_REFUND_WINDOW_HOURS}時間以内で、かつ、有料レッスンを一度も開いていない場合に限り、返金を承ります。` +
   '有料レッスンを一度でも開いた場合（お子さまが誤って開いた場合を含みます）は、原則として返金対象外となります。';
 
 /** 特商法ページ「返品・キャンセル」— WO-C7 item 3's own verbatim v3 text (a lead-in + two
@@ -164,12 +165,12 @@ export const COPY02_BUY_NOTICE_LEAD =
  *  sentence boundaries since this page frames the same two conditions as an explicit list. */
 export const COPY02_TOKUSHOHO_REFUND_SECTION =
   '次の場合は、返金いたします。' +
-  `・ご購入後${COPY02_REFUND_WINDOW_DAYS}日以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合。` +
+  `・ご購入日時から${COPY02_REFUND_WINDOW_HOURS}時間以内で、かつ、ご購入後に有料レッスン（レッスン2〜7）を一度も開いていない場合。` +
   '無料のレッスン1のご利用は、有料コンテンツの利用には含まれません。' +
   '・ログイン時の同意をいただけないためにご利用になれない場合で、有料コンテンツの利用開始前であるとき' +
   '（ご購入からの日数にかかわらず、全額返金）。' +
   `有料レッスン（レッスン2〜7）のいずれかを一度でも開いた場合（お子さまが誤って開いた場合を含みます）、` +
-  `またはご購入後${COPY02_REFUND_WINDOW_DAYS}日を経過した場合は、上の2つ目の場合を除き、原則として返金対象外となります。` +
+  `またはご購入日時から${COPY02_REFUND_WINDOW_HOURS}時間を経過した場合は、上の2つ目の場合を除き、原則として返金対象外となります。` +
   COPY02_PAID_USE_DEFINITION_SENTENCE +
   COPY02_EXCEPTIONAL_CASES_SENTENCE +
   '返金をご希望の場合は、 info@domo-ai.com までご連絡ください。内容を確認のうえ、ご購入時の決済方法で返金いたします。';

@@ -79,7 +79,7 @@ describe('NewLandingPage (COPY-01)', () => {
     const refundDd = refundDt?.nextElementSibling;
     const text = (refundDd?.textContent ?? '').replace(/\s+/g, '');
     expect(text).toContain(
-      'ご購入後3日以内で、かつ有料レッスン（レッスン2〜7）を一度も開いていない場合に返金いたします。'.replace(/\s+/g, ''),
+      'ご購入日時から72時間以内で、かつ有料レッスン（レッスン2〜7）を一度も開いていない場合に返金いたします。'.replace(/\s+/g, ''),
     );
     expect(refundDd?.querySelector('a')).toHaveAttribute('href', '/legal/tokushoho/');
     expect(refundDd?.querySelector('a')?.textContent).toBe('特定商取引法に基づく表記');
@@ -111,7 +111,7 @@ describe('NewLandingPage (COPY-01)', () => {
     render(<NewLandingPage />);
     const price = document.querySelector('.nz-price-card')!;
     expect(price.textContent).toContain('ご購入後、レッスン2〜7が利用できるようになります。');
-    expect(price.textContent).toContain('ご購入後3日以内で、かつ、有料レッスンを一度も開いていない場合に限り、返金を承ります。');
+    expect(price.textContent).toContain('ご購入日時から72時間以内で、かつ、有料レッスンを一度も開いていない場合に限り、返金を承ります。');
     expect(price.textContent).toContain('有料レッスンを一度でも開いた場合（お子さまが誤って開いた場合を含みます）は、原則として返金対象外となります。');
     const noticeLinks = Array.from(price.querySelectorAll('a')).filter((a) => a.getAttribute('href') === '/legal/tokushoho/');
     expect(noticeLinks.length).toBeGreaterThan(0);
@@ -151,7 +151,7 @@ describe('NewLandingPage (COPY-01)', () => {
     }
   });
 
-  it('"72時間"/"無料体験" appear exactly once — the FAQ question that explicitly says the trial is gone — never as a live offer elsewhere', () => {
+  it('"無料体験" appears exactly once — the FAQ question that explicitly says the trial is gone — never as a live offer elsewhere (WO-C7 v4: "72時間" itself now also names the refund window, so it legitimately repeats)', () => {
     render(<NewLandingPage />);
     const dts = Array.from(document.querySelectorAll('.nz-faq-card dt'));
     const trialFaqIndex = dts.findIndex((dt) => dt.textContent?.includes('72時間の無料体験は？'));
@@ -160,7 +160,6 @@ describe('NewLandingPage (COPY-01)', () => {
     expect(dds[trialFaqIndex]!.textContent).toContain('終了いたしました');
 
     const text = document.body.textContent ?? '';
-    expect(text.split('72時間').length - 1).toBe(1);
     expect(text.split('無料体験').length - 1).toBe(1);
   });
 
