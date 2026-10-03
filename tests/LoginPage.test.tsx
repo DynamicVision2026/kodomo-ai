@@ -135,7 +135,7 @@ describe('LoginPage', () => {
     await waitFor(() => expect(window.location.href).toBe('/account/'));
   });
 
-  it('Founder, 3 Oct 2026 (spam-folder report): the code-entry screen shows the spam-folder note', async () => {
+  it('Founder, 3 Oct 2026 (spam-folder report, placement follow-up): the spam-folder note sits right under the code field, before the submit button — not after the form, so it shows without scrolling on a phone', async () => {
     vi.resetModules();
     stubLocation();
     vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
@@ -153,7 +153,15 @@ describe('LoginPage', () => {
     await user.type(screen.getByLabelText('メールアドレス'), 'parent@example.com');
     await user.click(screen.getByRole('button', { name: /コードを送る/ }));
 
-    await waitFor(() => expect(screen.getByLabelText('ログインコード')).toBeInTheDocument());
-    expect(screen.getByText('メールが届かないときは、迷惑メールフォルダをご確認ください。')).toBeInTheDocument();
+    const codeInput = await screen.findByLabelText('ログインコード');
+    const note = screen.getByText('コードを送りました。届かないときは、迷惑メールフォルダもご確認ください。');
+    const submitButton = screen.getByRole('button', { name: 'ログイン' });
+
+    // Same <form>, and in document order: code field -> note -> submit button.
+    const form = codeInput.closest('form')!;
+    expect(form).toContainElement(note);
+    const position = note.compareDocumentPosition(submitButton);
+    // eslint-disable-next-line no-bitwise
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
