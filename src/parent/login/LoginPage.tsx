@@ -211,6 +211,8 @@ export function LoginPage() {
               {step.kind === 'code-loading' ? '確認中…' : 'ログイン'}
             </button>
           </form>
+          {/* Founder, 3 Oct 2026: a fresh address received the login code in the spam folder. */}
+          <p className="login__consent-note">メールが届かないときは、迷惑メールフォルダをご確認ください。</p>
           {step.kind === 'code-error' && (
             <p className="login__message login__message--error">{CODE_ERROR_MESSAGE[step.reason] ?? CODE_ERROR_MESSAGE.server}</p>
           )}

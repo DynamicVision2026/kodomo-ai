@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 let originalLocation: Location;
 
@@ -132,5 +133,27 @@ describe('LoginPage', () => {
     render(<LoginPage />);
 
     await waitFor(() => expect(window.location.href).toBe('/account/'));
+  });
+
+  it('Founder, 3 Oct 2026 (spam-folder report): the code-entry screen shows the spam-folder note', async () => {
+    vi.resetModules();
+    stubLocation();
+    vi.stubEnv('VITE_FAMILY_API_URL', 'https://backend.example');
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input instanceof Request ? input.url : input);
+      if (url.endsWith('/me')) return jsonResponse({ error: 'not_authenticated' }, 401);
+      if (url.endsWith('/auth/request')) return jsonResponse({ ok: true });
+      return new Response('not found', { status: 404 });
+    }));
+    const { LoginPage } = await import('../src/parent/login/LoginPage');
+    const user = userEvent.setup();
+
+    render(<LoginPage />);
+    await waitFor(() => expect(screen.getByLabelText('メールアドレス')).toBeInTheDocument());
+    await user.type(screen.getByLabelText('メールアドレス'), 'parent@example.com');
+    await user.click(screen.getByRole('button', { name: /コードを送る/ }));
+
+    await waitFor(() => expect(screen.getByLabelText('ログインコード')).toBeInTheDocument());
+    expect(screen.getByText('メールが届かないときは、迷惑メールフォルダをご確認ください。')).toBeInTheDocument();
   });
 });
