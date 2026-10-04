@@ -473,6 +473,15 @@ export interface CourseUiStrings {
   parentEarlyUnlockLabel: string;
   parentMonthLabel: string;
   parentDayLabel: string;
+  /** WO-C9 (Founder, 4 Oct 2026): the confirmation `parentEarlyUnlockLabel` now opens before
+   *  anything is saved — see `BeginnerParentScreen.tsx`'s own doc comment on why (a child could
+   *  otherwise unlock+open a paid lesson in two ordinary taps, ending the 72-hour refund right
+   *  with no warning). Stage2's own `ParentScreen.tsx` is unaffected — its early-unlock has no
+   *  refund-eligibility consequence at all, so this dialog is beginner-course-only. */
+  earlyUnlockConfirmTitle: string;
+  earlyUnlockConfirmBody: string;
+  earlyUnlockConfirmCancelLabel: string;
+  earlyUnlockConfirmOpenLabel: string;
   toolLabels: Record<CourseToolId, { object: string; label: string }>;
   /** WO-C5 §9 — new chrome for the beginner course's own screens; c01-c06 never read these. */
   beginnerCourseTitle: string;

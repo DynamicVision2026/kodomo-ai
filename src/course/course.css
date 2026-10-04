@@ -502,6 +502,45 @@
   border-bottom: 1px solid var(--ad12-field-1);
 }
 
+/* WO-C9 (Founder, 4 Oct 2026) — the 「はやく ひらく」 confirmation. Same `.ad12-plane` card shape
+   every other surface on this screen already uses (the progress table, the focus-lesson card)
+   rather than a new visual language; a scrim behind it is the only new idiom, needed here because
+   this is the one place on this screen an action must be stopped-and-confirmed rather than just
+   taken. */
+.course-parent__confirm-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(27, 31, 58, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 10;
+}
+
+.course-parent__confirm-dialog {
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.course-parent__confirm-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* 「ひらく」 is the risky action (it ends the refund window) — plain/outlined, never the ink-button
+   weight or the screen's own yellow, so it never outranks 「やめる」's own solid-ink default. */
+.course-parent__confirm-open {
+  background: none;
+  border: 2px solid var(--ad12-field-2);
+  border-radius: var(--ad12-radius-chip);
+  padding: 0.85rem 1.5rem;
+  color: var(--ad12-ink);
+  cursor: pointer;
+}
+
 /* WO-C2 §4 / course redesign (Founder, 1 Oct 2026) — course-only floor: every course screen's
    UI-weight text stays >= 20px (AD-12's own --ad12-ui-size token is 15px, shared with the
    Playground and every other AD-12 consumer — never overridden globally; this is a course-scoped
