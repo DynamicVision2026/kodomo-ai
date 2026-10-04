@@ -1,0 +1,45 @@
+name: Marketing video voices (branch-only, never touches production)
+
+# One-off for the marketing videos (MKT-05): synthesizes only the course characters' lines used in
+# the videos, with the locked course voices, and commits the mp3s back to THIS branch.
+# Runs only on pushes to marketing/video-voices that change lines.json. No deploy, no app audio.
+on:
+  push:
+    branches: [marketing/video-voices]
+    paths: [marketing/video-voices/lines.json, marketing/video-voices/generate.mjs]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  voices:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: kodomo-ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+      - id: token
+        run: |
+          TOKEN=$(gcloud auth print-access-token)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+      - env:
+          GCP_ACCESS_TOKEN: ${{ steps.token.outputs.token }}
+        run: node marketing/video-voices/generate.mjs
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add marketing/video-voices/out
+          git commit -m "Marketing video voices: generated course-voice lines (branch only)"
+          git push origin "HEAD:${{ github.ref_name }}"
