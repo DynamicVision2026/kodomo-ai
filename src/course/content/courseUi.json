@@ -61,6 +61,10 @@
   "parentEarlyUnlockLabel": "はやく ひらく",
   "parentMonthLabel": "月",
   "parentDayLabel": "日",
+  "earlyUnlockConfirmTitle": "おうちの人が 見てください",
+  "earlyUnlockConfirmBody": "このレッスンを ひらくと、返金の対象外になります（ご購入から72時間以内でも）。ひらいてよろしいですか？",
+  "earlyUnlockConfirmCancelLabel": "やめる",
+  "earlyUnlockConfirmOpenLabel": "ひらく",
   "toolLabels": {
     "A": { "object": "おべんとうばこ", "label": "ふたを あける" },
     "B": { "object": "ドミノ", "label": "まえの りゆうを 見る" },
