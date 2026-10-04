@@ -530,6 +530,13 @@ export interface CourseUiStrings {
   nextStepPrefix: string;
   profileAddLabel: string;
   profileAccountCaption: string;
+  /** New-profile creation panel the 「+ ふやす」 tile opens (launch-blocker fix, 4 Oct 2026: the
+   *  tile was shipped as a non-interactive dashed note — WO-C6 Push B's own "no flow change"
+   *  scope note above it — so a brand-new family with one profile had no way to add a second).
+   *  Mirrors `src/shell/ProfilePicker.tsx`'s own `profileConfirm`/avatar+nickname grid pattern;
+   *  `courseUi.back` (already defined above) is reused for this panel's own cancel action. */
+  profileCreateConfirmLabel: string;
+  profileCreateErrorLabel: string;
   lessonStepListenSubtitle: string;
   lessonStepExerciseSubtitle: string;
   lessonStepAuditSubtitle: string;

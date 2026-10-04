@@ -16,6 +16,7 @@
  */
 import { useEffect, useState } from 'react';
 import presets from '../../shared/presets.json';
+import { createProfile as createRemoteProfile } from '../family/api';
 import { fetchMe, getCourseProgress, putCourseProgress, recordCourseLessonOpen, type MeResponse } from './api';
 import { BEGINNER_COURSE_ID } from './beginnerCourseId';
 import { isBeginnerCourseLicensed, isLessonAccessible, freeSampleLessonIds, FREE_SAMPLE_LESSON_ID } from './beginnerLicence';
@@ -55,10 +56,43 @@ export function BeginnerCourseApp() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [progress, setProgress] = useState<CourseProgressState | 'loading'>('loading');
   const [screen, setScreen] = useState<Screen>({ kind: 'home' });
+  // Launch-blocker fix (4 Oct 2026): 「+ ふやす」's own creation panel — see the state's own
+  // doc comment just above the picker screen below for why this was missing entirely.
+  const [creatingProfile, setCreatingProfile] = useState(false);
+  const [draftAvatarId, setDraftAvatarId] = useState<string | null>(null);
+  const [draftNicknameId, setDraftNicknameId] = useState<string | null>(null);
+  const [createProfileFailed, setCreateProfileFailed] = useState(false);
 
   useEffect(() => {
     fetchMe().then(setMe);
   }, []);
+
+  /** Spec v0.5 §5 step 0 default (same convention `src/shell/ProfilePicker.tsx`'s own
+   *  `defaultStage` prop documents) — the beginner course's own gates (`isBeginnerCourseLicensed`/
+   *  `isLessonAccessible`) never read `stage`, so this default is never a per-family choice here
+   *  either, exactly as it isn't in the Playground. */
+  async function handleCreateProfile() {
+    if (!draftAvatarId || !draftNicknameId || me === 'loading' || me === null) return;
+    setCreateProfileFailed(false);
+    const result = await createRemoteProfile(draftAvatarId, draftNicknameId, 2);
+    if (!('id' in result)) {
+      setCreateProfileFailed(true);
+      return;
+    }
+    const profile = { id: result.id, avatarId: draftAvatarId, nicknameId: draftNicknameId, stage: 2 };
+    setMe({ ...me, profiles: [...me.profiles, profile] });
+    setCreatingProfile(false);
+    setDraftAvatarId(null);
+    setDraftNicknameId(null);
+    setProfileId(profile.id);
+  }
+
+  function cancelCreateProfile() {
+    setCreatingProfile(false);
+    setDraftAvatarId(null);
+    setDraftNicknameId(null);
+    setCreateProfileFailed(false);
+  }
 
   useEffect(() => {
     if (!profileId) return;
@@ -116,8 +150,15 @@ export function BeginnerCourseApp() {
     // tap from the sofa. A single profile gets the one-yellow ring — with no "last used" state
     // tracked anywhere today, ringing the single real choice is the one case this can say
     // "your turn" without inventing new cross-session state (out of this push's own "no flow
-    // change" scope). 「ふやす」 stays a dashed, non-interactive capacity note, matching the design's
-    // own build note ("dashed, not a button") — real profile creation isn't wired here.
+    // change" scope).
+    //
+    // Launch-blocker fix (4 Oct 2026): 「ふやす」 shipped as a dashed, `aria-hidden` div with no
+    // click handler at all — a build note read as "no flow change in this push" instead of "wire
+    // this later" — so a brand-new family (exactly one profile, nothing else to tap) hit a dead
+    // end. Real creation is unentitled/unlicensed-blind, same as the Playground's own
+    // `src/shell/ProfilePicker.tsx` + `createProfile` (AD-13 §3): any logged-in, consented family
+    // can add a profile regardless of the `m1` licence — only lesson CONTENT is licence-gated.
+    const canAddProfile = me.profiles.length < 3;
     return (
       <main className="ad12 course-loading course-profile-picker">
         <p className="ad12-ui-text course-profile-picker__brand">{courseUi.siteHeaderBrandLabel}</p>
@@ -138,13 +179,64 @@ export function BeginnerCourseApp() {
               </span>
             </button>
           ))}
-          {me.profiles.length < 3 && (
-            <div className="course-profile-picker__add" aria-hidden="true">
-              <span className="course-profile-picker__add-mark">＋</span>
+          {canAddProfile && (
+            <button
+              type="button"
+              className={`course-profile-picker__add ad12-tappable${creatingProfile ? ' ad12-accent-active' : ''}`}
+              aria-expanded={creatingProfile}
+              onClick={() => setCreatingProfile((v) => !v)}
+            >
+              <span className="course-profile-picker__add-mark" aria-hidden="true">＋</span>
               <span className="ad12-ui-text">{courseUi.profileAddLabel}</span>
-            </div>
+            </button>
           )}
         </div>
+        {canAddProfile && creatingProfile && (
+          <div className="course-profile-picker__create">
+            <div className="course-profile-picker__create-grid">
+              {presets.avatars.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  aria-pressed={draftAvatarId === a.id}
+                  className={`course-profile-picker__create-choice ad12-tappable${draftAvatarId === a.id ? ' ad12-accent-active' : ''}`}
+                  onClick={() => setDraftAvatarId(a.id)}
+                >
+                  {a.emoji}
+                </button>
+              ))}
+            </div>
+            <div className="course-profile-picker__create-grid">
+              {presets.nicknames.map((n) => (
+                <button
+                  key={n.id}
+                  type="button"
+                  aria-pressed={draftNicknameId === n.id}
+                  className={`course-profile-picker__create-choice ad12-ui-text ad12-tappable${draftNicknameId === n.id ? ' ad12-accent-active' : ''}`}
+                  onClick={() => setDraftNicknameId(n.id)}
+                >
+                  {n.label}
+                </button>
+              ))}
+            </div>
+            {createProfileFailed && (
+              <p className="ad12-ui-text course-profile-picker__create-error">{courseUi.profileCreateErrorLabel}</p>
+            )}
+            <div className="course-profile-picker__create-actions">
+              <button
+                type="button"
+                className="ad12-ink-button ad12-tappable"
+                disabled={!draftAvatarId || !draftNicknameId}
+                onClick={() => void handleCreateProfile()}
+              >
+                {courseUi.profileCreateConfirmLabel}
+              </button>
+              <button type="button" className="course-profile-picker__create-cancel ad12-tappable" onClick={cancelCreateProfile}>
+                {courseUi.back}
+              </button>
+            </div>
+          </div>
+        )}
         <p className="ad12-ui-text course-profile-picker__account">{courseUi.profileAccountCaption}</p>
       </main>
     );
