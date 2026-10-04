@@ -8,6 +8,9 @@ const VOICES = {
   'お母さん': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-A', pitch: -1.0, speakingRate: 0.98 },
   'おばあちゃん': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-B', pitch: -2.0, speakingRate: 0.88 },
   'お父さん': { languageCode: 'ja-JP', name: 'ja-JP-Neural2-D', pitch: -1.5, speakingRate: 0.96 },
+  // Marketing-only roles (Founder decision 4 Oct): narrator = the course's 先生 voice; AI = a flat voice no course role uses.
+  'ナレーター': { languageCode: 'ja-JP', name: 'ja-JP-Wavenet-C', pitch: 0, speakingRate: 1.0 },
+  'AI': { languageCode: 'ja-JP', name: 'ja-JP-Standard-D', pitch: -3.0, speakingRate: 1.08 },
 };
 const token = process.env.GCP_ACCESS_TOKEN;
 if (!token) throw new Error('GCP_ACCESS_TOKEN missing');
