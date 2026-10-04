@@ -549,11 +549,19 @@
   margin: 0.5rem 0;
 }
 
+/* WO-C8 (Founder report, domo-ai.com, 4 Oct 2026): browsers give <button> its own default text
+   colour (e.g. Chrome's UA stylesheet sets `color: ButtonText`), which does not inherit from an
+   ancestor the way a <p>/<span> would — so this button read near-black on the navy field (`.course-
+   screen.course-listen`/`.course-ending`'s own `color: var(--ad12-paper)` above never reached it),
+   invisible except for the current-line highlight strip. Same fix `.course-listen__tab` already
+   uses below. The nested speaker-name span (`.course-dialogue__speaker`) and line text need no fix
+   of their own — they're plain spans, which inherit normally, so this one rule covers both. */
 .course-listen__line {
   display: block;
   width: 100%;
   text-align: left;
   background: transparent;
+  color: inherit;
   border: none;
   padding: 0.4rem 0;
   min-height: var(--ad12-tap-min);
