@@ -112,6 +112,8 @@
   "nextStepPrefix": "つぎは：",
   "profileAddLabel": "ふやす",
   "profileAccountCaption": "おうちの人：アカウント",
+  "profileCreateConfirmLabel": "これにする",
+  "profileCreateErrorLabel": "うまく つくれませんでした。もう一度 ためしてね。",
   "lessonStepListenSubtitle": "おはなしを きこう（5分）",
   "lessonStepExerciseSubtitle": "5つの ばめんで、つかってみよう",
   "lessonStepAuditSubtitle": "つかえたか、見てみよう",

@@ -72,17 +72,73 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
+  background: none;
   border: 2.5px dashed var(--ad12-field-2);
   border-radius: var(--ad12-radius-plane);
   padding: 1.5rem 1rem;
   color: var(--ad12-ink);
   opacity: 0.6;
+  cursor: pointer;
 }
 
 .course-profile-picker__add-mark {
   font-size: 2rem;
   font-weight: 500;
   line-height: 1;
+}
+
+/* Launch-blocker fix (4 Oct 2026): the panel 「ふやす」 opens — a preset avatar + nickname chooser,
+   the same two-grid pattern as src/shell/ProfilePicker.tsx's own creation step, restyled onto the
+   AD-12 tokens this screen already uses rather than that component's own profile-picker.css. */
+.course-profile-picker__create {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: var(--ad12-paper);
+  border-radius: var(--ad12-radius-plane);
+  box-shadow: var(--ad12-shadow);
+}
+
+.course-profile-picker__create-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.course-profile-picker__create-choice {
+  background: var(--ad12-field-0);
+  border: none;
+  border-radius: var(--ad12-radius-chip);
+  padding: 0.6rem 1rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.course-profile-picker__create-error {
+  color: var(--ad12-ink);
+}
+
+.course-profile-picker__create-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.course-profile-picker__create-actions .ad12-ink-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.course-profile-picker__create-cancel {
+  background: none;
+  border: none;
+  color: var(--ad12-ink);
+  opacity: 0.7;
+  cursor: pointer;
 }
 
 .course-profile-picker__account {
