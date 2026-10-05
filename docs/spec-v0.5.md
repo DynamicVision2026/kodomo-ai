@@ -230,7 +230,7 @@ Rules:
 
 **Principle:** content-as-data. A module is a folder of JSON and assets. No plugin loader, CMS, backend, accounts or cross-device sync.
 
-**Stack:** Vite + React + TypeScript, static, Cloudflare Pages (or equivalent). `/` LP · `/play` app · `/print/deck` cards. Checkout via the existing Shopify store (Shopify Payments, KOMOJU for PayPay, PayPal). Cookieless analytics with custom events; no ad pixels under `/play`.
+**Stack:** Vite + React + TypeScript, static, Cloudflare Pages (or equivalent). `/` LP · `/play` app · `/print/deck` cards. Checkout via the existing Shopify store (Shopify Payments, including PayPal). Cookieless analytics with custom events; no ad pixels under `/play`.
 
 ```
 /src
@@ -403,7 +403,7 @@ Spec ambiguities are escalated, not resolved by the implementer.
 - Sampler prints correctly on A4, legible in black and white.
 - LP persists A/B variant and grade pick; every event carries the variant.
 - Every policy or curriculum statement on the LP matches an "Allowed" line in section 1A, links to its source, and has passed the legal wording check; no forbidden term appears anywhere.
-- Purchase completes via Shopify with card and PayPay; listing shows delivery date, household licence, founders' bonus and 30-day guarantee.
+- Purchase completes via Shopify with card; listing shows delivery date, household licence, founders' bonus and 30-day guarantee.
 
 ## 14. Open items (owner: founder)
 

@@ -811,7 +811,7 @@ as the deploy steps:
       especially — currently marked "draft, pending native and legal check").
 - [ ] Founder's own legal sign-off on `/legal/tokushoho` and `/legal/privacy` (real company
       data is already in, per `src/legal/company.ts` — the review itself hasn't happened).
-- [ ] A real ¥4,980 test purchase completes with both card and PayPay, and the module unlocks
+- [ ] A real ¥4,980 test purchase completes with card, and the module unlocks
       via the purchase-intent path AND the claim-email path (Part 3, step 6 above).
 - [ ] Products A-D's own order flow confirmed untouched (Part 3, step 7 above).
 - [ ] `docs/spec-v0.5.md` §1A's four "Allowed" alignment sentences get real, stable MEXT source

@@ -27,10 +27,10 @@ export const COMPANY = {
 
 // WO-C7 item 3 (Founder, 3 Oct 2026, v3 verbatim) — the one source of truth for the payment
 // methods sentence, shared by the 特商法 page and the landing-page FAQ so they never drift.
-// PayPay is listed as pending approval (item 13b): when it goes live, remove the parenthetical
-// here — the one place it needs editing.
+// Ticket (5 Oct 2026, KOMOJU contract terminated): the two KOMOJU-processed wallet methods are
+// dropped entirely — only what Shopify itself processes stays listed.
 export const PAYMENT_METHODS_LIST =
-  'クレジットカード（Visa・Mastercard・American Express・JCB）、Apple Pay、Google Pay、Shop Pay、PayPal、PayPay（審査完了後に対応予定）';
+  'クレジットカード（Visa・Mastercard・American Express・JCB）、Apple Pay、Google Pay、Shop Pay、PayPal';
 
 export const PRODUCT = {
   // WO-C7 item 1/11 (Founder, 3 Oct 2026): the brand name itself, finalized — no longer the

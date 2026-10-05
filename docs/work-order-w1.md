@@ -143,7 +143,7 @@ parent screen). Profile picker: preset avatars + preset nicknames + stage (defau
 ## Task 7 — Commerce + legal pages (13–16 Oct)
 
 Shopify listing: ¥4,980, household licence, 創設ファミリー特典, 30-day guarantee, delivery date.
-Card + PayPay (KOMOJU) verified with a real test order. 特商法 and privacy pages.
+Card verified with a real test order. 特商法 and privacy pages.
 **No pre-order logic in the codebase** — it is an ordinary listing.
 
 ## Task 8 — Landing page (15–18 Oct, last)
@@ -162,7 +162,7 @@ and attached to every event, section 7A alignment map with source links.
 - [ ] All four gates green, including `gate:claims` on **real approved** claims
 - [ ] Native-review stamp on 1-1 and all LP copy
 - [ ] Sampler prints on A4, legible in B&W
-- [ ] Test purchase completes with card and PayPay
+- [ ] Test purchase completes with card
 - [ ] Legal wording check done (price display + §1A claims)
 
 ## Escalate immediately if

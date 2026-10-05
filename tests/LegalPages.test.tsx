@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { TokushohoPage, TokushohoPreviewPage } from '../src/legal/tokushoho/TokushohoPage';
 import { PrivacyPage } from '../src/legal/privacy/PrivacyPage';
-import { COMPANY, PRODUCT } from '../src/legal/company';
+import { COMPANY, PAYMENT_METHODS_LIST, PRODUCT } from '../src/legal/company';
 
 afterEach(() => {
   cleanup();
@@ -74,11 +74,10 @@ describe('TokushohoPage', () => {
       }
     });
 
-    it('shows the v3 payment-methods sentence, with PayPay marked pending — never as a live option', async () => {
+    it('shows the exact v3 payment-methods sentence (ticket, 5 Oct 2026: the two KOMOJU-processed wallet methods dropped, KOMOJU contract terminated)', async () => {
       await renderLaunched();
       const text = (document.body.textContent ?? '').replace(/\s+/g, '');
-      expect(text).toContain('PayPay（審査完了後に対応予定）'.replace(/\s+/g, ''));
-      expect(text).not.toContain('メルペイ');
+      expect(text).toContain(`${PAYMENT_METHODS_LIST}（Shopify経由）`.replace(/\s+/g, ''));
     });
 
     it('carries the exact v3 返品・キャンセル text — the child-accident clause and the exceptional-cases carve-out', async () => {
@@ -129,11 +128,11 @@ describe('PrivacyPage', () => {
     expect(screen.getByText(/入力する項目は/)).toBeInTheDocument();
   });
 
-  it('names Shopify and KOMOJU as the checkout/payment platforms (COPY-01 §8 follow-up: KOMOJU stays named, only PayPal is dropped)', () => {
+  it('names Shopify alone as the checkout/payment platform (ticket, 5 Oct 2026: KOMOJU contract terminated — the two KOMOJU-processed wallet methods removed, PayPal now offered via Shopify)', () => {
     render(<PrivacyPage />);
     expect(screen.getAllByText(/Shopify/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/KOMOJU/)).toBeInTheDocument();
-    expect(screen.queryByText(/PayPal/)).not.toBeInTheDocument();
+    expect(screen.getByText(/PayPal/)).toBeInTheDocument();
+    expect(screen.queryByText(/KOMOJU/)).not.toBeInTheDocument();
   });
 
   it('AD-13/15/COPY-01 §8 follow-up, text C v3 4-2: discloses the Family Account server-side data (Firestore), names Postmark alone with its country, and names the /account deletion path', () => {
