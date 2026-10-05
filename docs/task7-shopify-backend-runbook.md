@@ -171,7 +171,7 @@ backend can't produce a confusing network-error message instead of an honest one
    (the sample SKU won't match the allowlist) — that only happens with a real or a manually
    crafted matching payload.
 3. A real ¥4,980 test purchase (spec v0.5's own DoD, work-order-w1.md's Sprint DoD: "test
-   purchase completes with card and PayPay") is the actual end-to-end proof: buy → webhook
+   purchase completes with card") is the actual end-to-end proof: buy → webhook
    fires → Firestore has a new code → Flow email arrives with it → `/play/unlock` accepts it
    and grants access. Refund it after via the existing 30-day guarantee.
 4. Confirm products A-D's own confirmation/shipping emails are byte-for-byte unchanged after

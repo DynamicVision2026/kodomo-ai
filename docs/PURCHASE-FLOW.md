@@ -12,7 +12,7 @@ v2, 28 Sep 2026: after the legal review, the Founder chose "consent at login" fo
    - inside the app (logged in, so consent is already given; 「入門コースで、ひらこう」) → Shopify checkout carries a purchase token for that family;
    - on the landing page (NEW: log in first, with consent) → then to Shopify with the purchase token;
    - straight in the Shopify store (rare) → no token.
-2. The parent pays in Shopify (cards Visa / Mastercard / AMEX / JCB; Shop Pay; Apple Pay; Google Pay; PayPay; メルペイ). Shopify sends its own order confirmation.
+2. The parent pays in Shopify (cards Visa / Mastercard / AMEX / JCB; Shop Pay; Apple Pay; Google Pay; PayPal). Shopify sends its own order confirmation.
 3. Shopify notifies our backend (orders/paid webhook). The backend saves the order and the buyer's email only, never payment details.
 
 ## Unlock
