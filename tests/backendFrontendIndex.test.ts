@@ -187,3 +187,25 @@ describe('proxyToBackend', () => {
     expect(res.statusCode).toBe(502);
   });
 });
+
+describe('legacyRootRedirect (WO-D1: ナゼホリ moved from / to /nazehori/)', () => {
+  it('302-redirects "/" with ?email= to /nazehori/, keeping the query', async () => {
+    const { legacyRootRedirect } = await import('../backend/server/frontendIndex');
+    const res = fakeRes();
+    const next = vi.fn();
+    legacyRootRedirect(fakeReq({ originalUrl: '/?email=a%40b.jp&order=1001' }), res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.redirected).toEqual({ code: 302, url: '/nazehori/?email=a%40b.jp&order=1001' });
+  });
+
+  it('serves the cover page for a plain "/" or unrelated query', async () => {
+    const { legacyRootRedirect } = await import('../backend/server/frontendIndex');
+    for (const originalUrl of ['/', '/?utm_source=x']) {
+      const res = fakeRes();
+      const next = vi.fn();
+      legacyRootRedirect(fakeReq({ originalUrl }), res, next);
+      expect(next).toHaveBeenCalled();
+      expect(res.redirected).toBeNull();
+    }
+  });
+});

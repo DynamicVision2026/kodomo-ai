@@ -10,7 +10,7 @@ import { NewLandingPage } from './NewLandingPage';
 const BEGINNER_LAUNCH = import.meta.env.VITE_BEGINNER_LAUNCH === '1';
 
 if (BEGINNER_LAUNCH) {
-  window.location.replace('/');
+  window.location.replace('/nazehori/');
 } else {
   createRoot(document.getElementById('root')!).render(<NewLandingPage />);
 }

@@ -679,7 +679,7 @@ jobs:
         run: |
           CANDIDATE_URL="${{ steps.deploy.outputs.candidate_url }}"
           FAIL=0
-          for path in / /lp-new/ /play/ /course/ /course/beginner/ /login/ /account/ /claim/ /legal/privacy/ /legal/tokushoho/; do
+          for path in / /nazehori/ /lp-new/ /play/ /course/ /course/beginner/ /login/ /account/ /claim/ /legal/privacy/ /legal/tokushoho/; do
             STATUS=$(curl -s -o /dev/null -w '%{http_code}' "${CANDIDATE_URL}${path}")
             if [ "$STATUS" != "200" ]; then
               echo "::error::${path} returned ${STATUS} on the candidate revision"

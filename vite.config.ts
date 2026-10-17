@@ -13,7 +13,10 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        lp: resolve(__dirname, 'index.html'),
+        // WO-D1 (Founder, 16 Oct 2026): domo-ai.com/ is now the two-course cover page (static, no JS);
+        // the ナゼホリ landing page moved to /nazehori/.
+        cover: resolve(__dirname, 'index.html'),
+        lp: resolve(__dirname, 'nazehori/index.html'),
         play: resolve(__dirname, 'play/index.html'),
         // WO-C1: the formal course's own shell — a separate entry, deliberately not routed
         // through src/main.tsx/MissionShell (Coordinator: "build a separate course shell with
