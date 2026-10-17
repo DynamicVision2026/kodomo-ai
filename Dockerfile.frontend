@@ -43,6 +43,7 @@ COPY shared ./shared
 COPY backend ./backend
 COPY play ./play
 COPY course ./course
+COPY nazehori ./nazehori
 COPY lp-new ./lp-new
 COPY login ./login
 COPY account ./account
