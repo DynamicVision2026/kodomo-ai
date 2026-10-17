@@ -18,6 +18,7 @@ const ROOT = resolve(__dirname, '..');
 // family or a legal reviewer ever lands on.
 const PAGES = [
   'index.html',
+  'nazehori/index.html',
   'login/index.html',
   'account/index.html',
   'claim/index.html',

@@ -154,7 +154,7 @@ async function main() {
   // legal pages' body text real static HTML, from the SAME shared string src/lp/main.tsx imports
   // — never a second hand-kept copy to drift from it.
   if (BEGINNER_LAUNCH) {
-    const rootHtmlPath = resolve(DIST, 'index.html');
+    const rootHtmlPath = resolve(DIST, 'nazehori/index.html'); // WO-D1: the ナゼホリ LP moved from / to /nazehori/
     if (!existsSync(rootHtmlPath)) {
       console.error(`prerender-legal — ${rootHtmlPath} not found (check vite.config.ts's rollupOptions.input)`);
       failed = true;
@@ -166,7 +166,7 @@ async function main() {
         failed = true;
       } else {
         writeFileSync(rootHtmlPath, original.replace(titleTag, `<title>${BEGINNER_LAUNCH_TITLE}</title>`));
-        console.log('prerender-legal — OK: dist/index.html <title> patched to the post-launch title');
+        console.log('prerender-legal — OK: dist/nazehori/index.html <title> patched to the post-launch title');
       }
     }
 
@@ -192,7 +192,7 @@ async function main() {
         const withTitle = original.replace(titleTag, `<title>${BEGINNER_LAUNCH_TITLE}</title>`);
         const withRedirect = withTitle.replace(
           '</head>',
-          `    <meta http-equiv="refresh" content="0; url=/" />\n  </head>`,
+          `    <meta http-equiv="refresh" content="0; url=/nazehori/" />\n  </head>`,
         );
         writeFileSync(lpNewHtmlPath, withRedirect);
         console.log('prerender-legal — OK: dist/lp-new/index.html patched with a static redirect to /');

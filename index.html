@@ -3,20 +3,152 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ナゼホリ — 小学3・4年生と保護者のための思考トレーニング</title>
+    <!-- WO-D1 (Founder, 16 Oct 2026): domo-ai.com/ is the cover page for both courses. Plain static
+         HTML, no JS. ナゼホリ lives at /nazehori/ (this app); 視点レンズ at lens.domo-ai.com. -->
+    <title>domo-ai — ナゼホリ・視点レンズ｜親子で育てる、AI時代の考える力</title>
+    <meta name="description" content="AIのすぐ出る答えのあとに、問い直す力と見方を変える力を。問う力のナゼホリ、算数・数学の視点レンズ。2つのトレーニングコースから選べます。" />
+    <link rel="canonical" href="https://domo-ai.com/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet" />
     <style>
-      .legal-footer { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: center; padding: 16px; font-size: 13px; color: #666; border-top: 1px solid #e5e5e5; }
+      :root { --bg: #EEF0F4; --ink: #1B1F3A; --ink2: #3A4170; --muted: #5B628F; --line: #D9DCE6; --naze: #FFD23F; --lens: #A9D8F2; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; }
+      a { color: var(--ink); }
+      .wrap { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+      .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 24px; }
+      .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 20px; font-weight: 900; letter-spacing: .02em; }
+      .top nav a { font-size: 15px; font-weight: 700; text-decoration: none; background: #fff; border-radius: 999px; padding: 12px 20px; box-shadow: 0 1px 0 rgba(27,31,58,.08); }
+      .hero { text-align: center; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+      .chars { display: flex; align-items: flex-end; justify-content: center; gap: 12px; }
+      .chars img { width: 120px; height: 137px; object-fit: contain; }
+      .chars svg { margin-bottom: 60px; }
+      .eyebrow { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: .16em; color: var(--muted); }
+      h1 { margin: 0; font-size: clamp(32px, 5.2vw, 60px); line-height: 1.25; font-weight: 900; }
+      h1 mark { white-space: nowrap; background: linear-gradient(transparent 62%, var(--naze) 62%); color: inherit; padding: 0 4px; }
+      .lead { margin: 0; max-width: 640px; font-size: 17px; line-height: 1.9; color: var(--ink2); }
+      .courses { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 28px; padding-top: 8px; padding-bottom: 56px; }
+      .card { background: #fff; border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 0 rgba(27,31,58,.06), 0 18px 40px -24px rgba(27,31,58,.25); }
+      .band { padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 18px; }
+      .band.naze { background: var(--naze); } .band.lens { background: var(--lens); }
+      .band-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 700; letter-spacing: .12em; }
+      .badge { letter-spacing: 0; background: var(--ink); color: #fff; border-radius: 999px; padding: 6px 12px; }
+      .chips { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .chip { font-size: 18px; font-weight: 900; background: #fff; border-radius: 16px; padding: 10px 14px; }
+      .body { padding: 28px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
+      h2 { margin: 0; font-size: 30px; font-weight: 900; line-height: 1.3; }
+      h2 small { display: block; font-size: 17px; font-weight: 700; color: var(--muted); margin-top: 4px; }
+      .tag { margin: 0; font-size: 20px; font-weight: 700; line-height: 1.6; }
+      .desc { margin: 0; font-size: 15px; line-height: 1.9; color: var(--ink2); }
+      .facts { margin: 0; display: grid; grid-template-columns: 5.5em 1fr; gap: 8px 10px; font-size: 14px; line-height: 1.6; }
+      .facts dt { font-weight: 700; } .facts dd { margin: 0; }
+      .ctas { margin-top: auto; padding-top: 8px; display: flex; flex-wrap: wrap; gap: 12px; }
+      .btn { flex: 1 1 200px; text-align: center; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 999px; padding: 15px 20px; }
+      .btn.yellow { background: var(--naze); } .btn.dark { background: var(--ink); color: #fff; }
+      .btn.ghost { background: #fff; border: 2px solid var(--ink); padding: 13px 20px; }
+      .small-link { font-size: 13px; color: var(--muted); }
+      .points { background: #fff; border-radius: 24px; padding: 24px 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 20px; margin-bottom: 56px; }
+      .points b { display: block; font-size: 15px; margin-bottom: 6px; }
+      .points span { font-size: 13px; line-height: 1.7; color: var(--ink2); }
+      .legal-footer { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: center; padding: 16px; font-size: 13px; color: #666; border-top: 1px solid var(--line); }
       .legal-footer a { color: #666; text-decoration: underline; }
+      .legal-footer .op { width: 100%; text-align: center; }
+      @media (max-width: 480px) { .chars img { width: 92px; height: 105px; } .chars svg { margin-bottom: 44px; } .band, .body { padding: 22px; } }
     </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/lp/main.tsx"></script>
+    <header class="wrap top">
+      <a class="brand" href="/">
+        <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="none" stroke="#1B1F3A" stroke-width="2.5"/><path d="M12.5 13.5a4.5 4.5 0 1 1 6.2 4.2c-1.2.5-1.7 1.3-1.7 2.6v.7" fill="none" stroke="#1B1F3A" stroke-width="2.5" stroke-linecap="round"/><circle cx="17" cy="25" r="1.6" fill="#1B1F3A"/></svg>
+        domo-ai
+      </a>
+      <nav><a href="#courses">コースを選ぶ</a></nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="chars">
+          <img src="/cover/hatena-question.png" alt="ハテナ（はてなの顔）" width="120" height="137" />
+          <svg width="44" height="20" viewBox="0 0 44 20" aria-hidden="true"><path d="M2 10h36M31 3l7 7-7 7" fill="none" stroke="#9AA0C4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 5"/></svg>
+          <img src="/cover/hatena-discovery.png" alt="ハテナ（ひらめいた顔）" width="120" height="137" />
+        </div>
+        <p class="eyebrow">親子で育てる、AI時代の考える力</p>
+        <h1>答えのあとに、<mark>もう一歩</mark>。</h1>
+        <p class="lead">AIは、すぐに答えをくれます。だからこそ、答えのあとに「問い直す力」と「見方を変える力」を。2つのトレーニングコースから、お子さんに合うものを選べます。</p>
+      </section>
+
+      <section id="courses" class="wrap courses">
+        <article class="card">
+          <div class="band naze">
+            <div class="band-top"><span>問う力 ・ 思考トレーニング</span><span class="badge">公開中</span></div>
+            <div class="chips" aria-hidden="true">
+              <span class="chip">なぜ？</span>
+              <svg width="22" height="14" viewBox="0 0 22 14"><path d="M1 7h18M14 2l5 5-5 5" fill="none" stroke="#1B1F3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="chip">たとえば？</span>
+              <svg width="22" height="14" viewBox="0 0 22 14"><path d="M1 7h18M14 2l5 5-5 5" fill="none" stroke="#1B1F3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="chip">ほんとうに？</span>
+            </div>
+          </div>
+          <div class="body">
+            <h2>ナゼホリ<small>入門コース</small></h2>
+            <p class="tag">AIが答えたら、もう一問。</p>
+            <p class="desc">答えのあとの「もう一問」の入り口を7つ、1回に1つずつ身につけます。音声ドラマと練習で、家族の会話から問いが生まれます。</p>
+            <dl class="facts">
+              <dt>対象</dt><dd>小学3・4年生と保護者（家族みんなで）</dd>
+              <dt>料金</dt><dd>¥4,980（税込）買い切り・家族ライセンス</dd>
+              <dt>おためし</dt><dd>レッスン1は無料</dd>
+            </dl>
+            <div class="ctas">
+              <a class="btn yellow" href="/nazehori/">コースを見る</a>
+              <a class="btn ghost" href="/login/?next=/course/beginner/">レッスン1を無料で試す</a>
+            </div>
+            <a class="small-link" href="/login/">購入済みの方はこちら（ログイン）</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="band lens">
+            <div class="band-top"><span>見る力 ・ 算数／数学トレーニング</span><span class="badge">公開中</span></div>
+            <div class="chips" aria-hidden="true">
+              <svg width="132" height="56" viewBox="0 0 132 56"><rect x="1" y="1" width="130" height="54" rx="14" fill="#FFFFFF"/><path d="M14 44 L44 14 L58 44 Z" fill="none" stroke="#9AA0C4" stroke-width="2"/><path d="M14 44 L58 44" stroke="#9AA0C4" stroke-width="2" stroke-dasharray="3 4"/><circle cx="92" cy="28" r="16" fill="none" stroke="#1B1F3A" stroke-width="3"/><path d="M104 40 L117 51" stroke="#1B1F3A" stroke-width="4" stroke-linecap="round"/><path d="M84 34 L92 20 L100 34" fill="none" stroke="#1B1F3A" stroke-width="2.5" stroke-linejoin="round"/></svg>
+              <span class="chip">罠の道 → レンズの道</span>
+            </div>
+          </div>
+          <div class="body">
+            <h2>視点レンズ<small>The Lens</small></h2>
+            <p class="tag">解き方の前に、見方を変える。</p>
+            <p class="desc">むずかしい問題で手が止まるのは、「どこから見るか」が決まっていないから。遠回りの「罠の道」と、見方を変える「レンズの道」を並べて、最初の一手を選ぶ力を30日で。</p>
+            <dl class="facts">
+              <dt>対象</dt><dd>中学受験・高校受験・大学受験の算数／数学</dd>
+              <dt>料金</dt><dd>¥6,800（税込）創設メンバー30席・通常 ¥9,800／12か月・自動更新なし</dd>
+              <dt>おためし</dt><dd>最初のレンズを3日間無料（登録・カード不要）</dd>
+            </dl>
+            <div class="ctas">
+              <a class="btn dark" href="https://lens.domo-ai.com/">コースを見る</a>
+              <a class="btn ghost" href="https://lens.domo-ai.com/#courses">3日間、無料でためす</a>
+            </div>
+            <a class="small-link" href="https://lens.domo-ai.com/#access">購入済みの方はこちら</a>
+          </div>
+        </article>
+      </section>
+
+      <section class="wrap">
+        <div class="points">
+          <div><b>ブラウザだけで使える</b><span>iPad・スマートフォン・パソコンで。アプリのダウンロードは不要です。</span></div>
+          <div><b>広告・ランキングなし</b><span>点数や順位で競わせず、考える過程を大切にします。</span></div>
+          <div><b>安心のお支払い</b><span>クレジットカード・Apple Pay・Google Pay・PayPal（Shopify経由）。</span></div>
+        </div>
+      </section>
+    </main>
+
     <footer class="legal-footer">
-      <a href="/legal/tokushoho/">特定商取引法に基づく表記</a>
+      <a href="/legal/tokushoho/">特定商取引法に基づく表記（ナゼホリ）</a>
+      <a href="https://soul-id-2.myshopify.com/policies/legal-notice">特定商取引法に基づく表記（視点レンズ）</a>
       <a href="/legal/privacy/">プライバシーポリシー</a>
       <a href="mailto:info@domo-ai.com">お問い合わせ</a>
       <a href="https://beyondculture.ai" target="_blank" rel="noopener noreferrer">運営会社</a>
+      <span class="op">運営：Beyond Culture 獨歩文化株式会社</span>
     </footer>
   </body>
 </html>

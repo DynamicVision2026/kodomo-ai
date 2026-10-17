@@ -89,6 +89,19 @@ export async function proxyToBackend(req: ExpressRequest, res: ExpressResponse):
   }
 }
 
+/** WO-D1: a "/" request carrying ナゼホリ purchase context goes to /nazehori/ (302, query kept). */
+export function legacyRootRedirect(req: ExpressRequest, res: ExpressResponse, next: () => void): void {
+  const q = req.originalUrl.indexOf('?');
+  if (q !== -1) {
+    const params = new URLSearchParams(req.originalUrl.slice(q + 1));
+    if (params.has('email') || params.has('order')) {
+      res.redirect(302, `/nazehori/${req.originalUrl.slice(q)}`);
+      return;
+    }
+  }
+  next();
+}
+
 /** Builds the app without starting it listening — the part tests exercise directly (via
  *  supertest-style requests against the returned app) without opening a real port. */
 export function createApp(): express.Express {
@@ -110,6 +123,11 @@ export function createApp(): express.Express {
   // Static build — every real route's own index.html (multi-page, no SPA rewrite; see this
   // file's own header comment and Dockerfile.frontend's matching one for why that flag must
   // never be added here).
+  // WO-D1 (Founder, 16 Oct 2026): "/" is now the two-course cover page and the ナゼホリ landing
+  // page lives at /nazehori/. Older links that carried purchase context to "/" (?email= / ?order=,
+  // e.g. from Shopify order emails sent before the move) still land on ナゼホリ, query preserved.
+  app.get('/', legacyRootRedirect);
+
   app.use(express.static(DIST_DIR, { extensions: ['html'] }));
 
   return app;
