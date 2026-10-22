@@ -3,16 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- WO-D1 (Founder, 16 Oct 2026): domo-ai.com/ is the cover page for both courses. Plain static
-         HTML, no JS. ナゼホリ lives at /nazehori/ (this app); 視点レンズ at lens.domo-ai.com. -->
-    <title>domo-ai — ナゼホリ・視点レンズ｜親子で育てる、AI時代の考える力</title>
-    <meta name="description" content="AIのすぐ出る答えのあとに、問い直す力と見方を変える力を。問う力のナゼホリ、算数・数学の視点レンズ。2つのトレーニングコースから選べます。" />
+    <!-- WO-D1 (Founder, 16 Oct 2026): domo-ai.com/ is the cover page for the courses. Plain static
+         HTML, no JS. ナゼホリ lives at /nazehori/ (this app); 視点レンズ at lens.domo-ai.com;
+         つまずきマップ at tsumazuki.domo-ai.com (added 22 Oct 2026 — the Shorts end card says domo-ai.com). -->
+    <title>domo-ai — つまずきマップ・ナゼホリ・視点レンズ｜親子で育てる、AI時代の考える力</title>
+    <meta name="description" content="宿題やテストを撮るだけで復習が決まる「つまずきマップ」、問う力のナゼホリ、算数・数学の視点レンズ。AIのすぐ出る答えのあとに、考える力を育てる3つのツール。" />
     <link rel="canonical" href="https://domo-ai.com/" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet" />
     <style>
-      :root { --bg: #EEF0F4; --ink: #1B1F3A; --ink2: #3A4170; --muted: #5B628F; --line: #D9DCE6; --naze: #FFD23F; --lens: #A9D8F2; }
+      :root { --bg: #EEF0F4; --ink: #1B1F3A; --ink2: #3A4170; --muted: #5B628F; --line: #D9DCE6; --naze: #FFD23F; --lens: #A9D8F2; --map: #BFE8CF; }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; }
       a { color: var(--ink); }
@@ -28,10 +29,13 @@
       h1 { margin: 0; font-size: clamp(32px, 5.2vw, 60px); line-height: 1.25; font-weight: 900; }
       h1 mark { white-space: nowrap; background: linear-gradient(transparent 62%, var(--naze) 62%); color: inherit; padding: 0 4px; }
       .lead { margin: 0; max-width: 640px; font-size: 17px; line-height: 1.9; color: var(--ink2); }
-      .courses { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 28px; padding-top: 8px; padding-bottom: 56px; }
+      .courses { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 28px; padding-top: 8px; padding-bottom: 56px; }
       .card { background: #fff; border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 0 rgba(27,31,58,.06), 0 18px 40px -24px rgba(27,31,58,.25); }
       .band { padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 18px; }
-      .band.naze { background: var(--naze); } .band.lens { background: var(--lens); }
+      .band.naze { background: var(--naze); } .band.lens { background: var(--lens); } .band.map { background: var(--map); }
+      .from-video { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 18px; margin: 0 auto 28px; padding: 14px 20px; background: var(--ink); color: #fff; border-radius: 20px; font-size: 15px; font-weight: 700; }
+      .from-video a { color: var(--ink); background: var(--naze); text-decoration: none; border-radius: 999px; padding: 10px 18px; white-space: nowrap; }
+      .btn.green { background: var(--map); }
       .band-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 700; letter-spacing: .12em; }
       .badge { letter-spacing: 0; background: var(--ink); color: #fff; border-radius: 999px; padding: 6px 12px; }
       .chips { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -76,10 +80,42 @@
         </div>
         <p class="eyebrow">親子で育てる、AI時代の考える力</p>
         <h1>答えのあとに、<mark>もう一歩</mark>。</h1>
-        <p class="lead">AIは、すぐに答えをくれます。だからこそ、答えのあとに「問い直す力」と「見方を変える力」を。2つのトレーニングコースから、お子さんに合うものを選べます。</p>
+        <p class="lead">AIは、すぐに答えをくれます。だからこそ、答えのあとに「問い直す力」と「見方を変える力」を。毎日の復習から受験まで、お子さんに合うものを選べます。</p>
       </section>
 
+      <div class="wrap">
+        <p class="from-video"><span>動画を見て来た方へ：撮るだけで復習リストができる「つまずきマップ」はこちら</span><a href="https://tsumazuki.domo-ai.com/?src=yt">無料で30枚まで試す →</a></p>
+      </div>
+
       <section id="courses" class="wrap courses">
+        <article class="card">
+          <div class="band map">
+            <div class="band-top"><span>毎日の復習 ・ 算数／数学</span><span class="badge">公開中</span></div>
+            <div class="chips" aria-hidden="true">
+              <span class="chip">撮る</span>
+              <svg width="22" height="14" viewBox="0 0 22 14"><path d="M1 7h18M14 2l5 5-5 5" fill="none" stroke="#1B1F3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="chip">地図に並ぶ</span>
+              <svg width="22" height="14" viewBox="0 0 22 14"><path d="M1 7h18M14 2l5 5-5 5" fill="none" stroke="#1B1F3A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="chip">今夜の1問</span>
+            </div>
+          </div>
+          <div class="body">
+            <h2>つまずきマップ<small>撮るだけで、復習することがわかる</small></h2>
+            <p class="tag">書き写さなくていい、毎日の復習。</p>
+            <p class="desc">宿題・ドリル・テストを1枚まるごと撮ると、AIが問題ごとに単元を見分けて○×を記録。間違えた単元が地図に並び、テスト前は日付と範囲を選ぶだけで、今夜やる問題だけが一覧になります。<br /><b>点数は約束しません。でも、今夜何をやるかで、迷わなくなります。</b></p>
+            <dl class="facts">
+              <dt>対象</dt><dd>小1〜高3の算数・数学（110単元）</dd>
+              <dt>料金</dt><dd>¥5,800（税込）／12か月・端末3台・毎月200枚まで・自動更新なし</dd>
+              <dt>おためし</dt><dd>30枚まで無料（登録不要）</dd>
+            </dl>
+            <div class="ctas">
+              <a class="btn dark" href="https://tsumazuki.domo-ai.com/?src=home">30枚まで無料で試す</a>
+              <a class="btn ghost" href="https://tsumazuki.domo-ai.com/?src=home#price">料金を見る</a>
+            </div>
+            <a class="small-link" href="https://tsumazuki.domo-ai.com/?src=home">購入済みの方は、アプリの「プラン」→「購入済みの方」へ</a>
+          </div>
+        </article>
+
         <article class="card">
           <div class="band naze">
             <div class="band-top"><span>問う力 ・ 思考トレーニング</span><span class="badge">公開中</span></div>
@@ -145,7 +181,7 @@
 
     <footer class="legal-footer">
       <a href="/legal/tokushoho/">特定商取引法に基づく表記（ナゼホリ）</a>
-      <a href="https://soul-id-2.myshopify.com/policies/legal-notice">特定商取引法に基づく表記（視点レンズ）</a>
+      <a href="https://soul-id-2.myshopify.com/policies/legal-notice">特定商取引法に基づく表記（視点レンズ・つまずきマップ）</a>
       <a href="/legal/privacy/">プライバシーポリシー</a>
       <a href="mailto:info@domo-ai.com">お問い合わせ</a>
       <a href="https://beyondculture.ai" target="_blank" rel="noopener noreferrer">運営会社</a>
