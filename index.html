@@ -60,6 +60,12 @@
       .legal-footer a { color: #666; text-decoration: underline; }
       .legal-footer .op { width: 100%; text-align: center; }
       @media (max-width: 480px) { .chars img { width: 92px; height: 105px; } .chars svg { margin-bottom: 44px; } .band, .body { padding: 22px; } }
+      .top { flex-wrap: wrap; }
+      .top nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+      .langs { display: flex; flex-wrap: wrap; gap: 2px; background: #fff; border-radius: 999px; padding: 4px; box-shadow: 0 1px 0 rgba(27,31,58,.08); }
+      .langs button { font: inherit; font-size: 13px; font-weight: 700; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 8px 11px; cursor: pointer; }
+      .langs button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+      .langs button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
     </style>
   </head>
   <body>
@@ -68,7 +74,15 @@
         <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="15" fill="none" stroke="#1B1F3A" stroke-width="2.5"/><path d="M12.5 13.5a4.5 4.5 0 1 1 6.2 4.2c-1.2.5-1.7 1.3-1.7 2.6v.7" fill="none" stroke="#1B1F3A" stroke-width="2.5" stroke-linecap="round"/><circle cx="17" cy="25" r="1.6" fill="#1B1F3A"/></svg>
         domo-ai
       </a>
-      <nav><a href="#courses">コースを選ぶ</a></nav>
+      <nav>
+        <div class="langs" role="group" aria-label="Language / 言語">
+          <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+          <button type="button" data-lang="en" aria-pressed="false">English</button>
+          <button type="button" data-lang="zh-Hant" aria-pressed="false">繁體中文</button>
+          <button type="button" data-lang="zh-Hans" aria-pressed="false">简体中文</button>
+        </div>
+        <a href="#courses">コースを選ぶ</a>
+      </nav>
     </header>
 
     <main>
@@ -189,5 +203,52 @@
       <a href="https://beyondculture.ai" target="_blank" rel="noopener noreferrer">運営会社</a>
       <span class="op">運営：Beyond Culture 獨歩文化株式会社</span>
     </footer>
+    <script>
+      // Cover page language switch (日本語 / English / 繁體中文 / 简体中文). Japanese stays in the HTML; the other
+      // languages are swapped in here. ?lang= → saved choice → browser language → Japanese browsers get 日本語,
+      // others English. Product links carry ?lang= so 視点レンズ and つまずきマップ open in the same language.
+      (function () {
+        var T = {"en": {"domo-ai — つまずきマップ・ナゼホリ・視点レンズ｜親子で育てる、AI時代の考える力": "domo-ai — Stumble Map, Nazehori and The Lens | Thinking skills for the AI age, built together by parent and child", "コースを選ぶ": "Choose a course", "親子で育てる、AI時代の考える力": "Thinking skills for the AI age, built together by parent and child", "答えのあとに、<mark>もう一歩</mark>。": "After the answer, <mark>one more step</mark>.", "AIは、すぐに答えをくれます。だからこそ、答えのあとに「問い直す力」と「見方を変える力」を。毎日の復習から受験まで、お子さんに合うものを選べます。": "AI gives answers instantly. That's why children need the power to ask again and to see a problem differently, after the answer. From daily review to entrance exams, choose what fits your child.", "動画を見て来た方へ：撮るだけで復習リストができる「つまずきマップ」はこちら": "Came from our videos? Stumble Map turns a photo of homework into a review list.", "無料で30枚まで試す →": "Try 30 photos free →", "毎日の復習 ・ 算数／数学": "Daily review · Math", "公開中": "Available now", "撮る": "Snap", "地図に並ぶ": "See it on the map", "今夜の1問": "Tonight's problem", "つまずきマップ<small>撮るだけで、復習することがわかる</small>": "Stumble Map<small>Snap a photo, know what to review</small>", "書き写さなくていい、毎日の復習。": "Daily review, with no copying out.", "宿題・ドリル・テストを1枚まるごと撮ると、AIが問題ごとに単元を見分けて○×を記録。間違えた単元が地図に並び、テスト前は日付と範囲を選ぶだけで、今夜やる問題だけが一覧になります。<br><b>点数は約束しません。でも、今夜何をやるかで、迷わなくなります。</b>": "Photograph a whole page of homework, a drill or a test. AI finds the unit of each problem and records right and wrong. Units with mistakes appear on the map, and before a test you just pick the date and range to get a list of only tonight's problems.<br><b>We don't promise higher scores. But you won't be stuck wondering what to do tonight.</b>", "対象": "For", "小1〜高3の算数・数学（110単元）": "Math, grade 1 to grade 12 (110 units)", "料金": "Price", "¥5,800（税込）／12か月・端末3台・毎月200枚まで・自動更新なし": "¥5,800 (tax incl.) for 12 months · 3 devices · up to 200 photos a month · no auto-renewal", "おためし": "Free trial", "30枚まで無料（登録不要）": "First 30 photos free (no sign-up)", "セット": "Bundle", "視点レンズご購入で1年間無料": "Free for 1 year with The Lens", "30枚まで無料で試す": "Try 30 photos free", "料金を見る": "See pricing", "購入済みの方は、アプリの「プラン」→「購入済みの方」へ": "Already bought? In the app, go to Plan → Already purchased", "問う力 ・ 思考トレーニング": "Asking questions · Thinking skills", "なぜ？": "Why?", "たとえば？": "For example?", "ほんとうに？": "Really?", "ナゼホリ<small>入門コース</small>": "Nazehori<small>Beginner course · in Japanese</small>", "AIが答えたら、もう一問。": "When AI answers, ask one more question.", "答えのあとの「もう一問」の入り口を7つ、1回に1つずつ身につけます。音声ドラマと練習で、家族の会話から問いが生まれます。": "Learn seven ways into \"one more question\", one per lesson. Audio dramas and practice turn family conversations into questions. The course content is in Japanese.", "小学3・4年生と保護者（家族みんなで）": "Grades 3–4 and their parents (the whole family)", "¥4,980（税込）買い切り・家族ライセンス": "¥4,980 (tax incl.) one-time · family licence", "レッスン1は無料": "Lesson 1 is free", "コースを見る": "See the course", "レッスン1を無料で試す": "Try lesson 1 free", "購入済みの方はこちら（ログイン）": "Already bought? Log in", "見る力 ・ 算数／数学トレーニング": "Seeing differently · Math training", "罠の道 → レンズの道": "Trap route → Lens route", "視点レンズ<small>The Lens</small>": "The Lens<small>視点レンズ</small>", "解き方の前に、見方を変える。": "Before solving, change how you look.", "<b>問題の見方を変える8つの道具で、解き方が見えてくる。</b><br>むずかしい問題で手が止まるのは、計算力が足りないからではなく、問題を見る角度が決まっていないから。視点レンズは、問題を別の角度から見るための8つの道具（レンズ）です。使い方を身につければ、初めて見る問題でも「このレンズで見ればいい」と分かり、効率のよい道筋で解いていけます。": "<b>Eight tools for seeing a problem differently, so the solution comes into view.</b><br>Children get stuck on hard problems not because their arithmetic is weak, but because they haven't decided where to look from. The Lens is eight tools (lenses) for seeing a problem from another angle. Once they know how to use them, even on a new problem they can tell which lens to use and take the efficient route.", "中学受験・高校受験・大学受験の算数／数学": "Math for junior high, high school and university entrance exams", "¥6,800（税込）買い切り・期限なし": "¥6,800 (tax incl.) one-time · no expiry", "特典": "Includes", "つまずきマップ 年間プラン1年分つき": "1 year of the Stumble Map annual plan", "最初のレンズを3日間無料（登録・カード不要）": "First lens free for 3 days (no sign-up or card)", "3日間、無料でためす": "Try free for 3 days", "購入済みの方はこちら": "Already bought?", "ブラウザだけで使える": "Works in your browser", "iPad・スマートフォン・パソコンで。アプリのダウンロードは不要です。": "On iPad, phone or computer. Nothing to download.", "広告・ランキングなし": "No ads, no rankings", "点数や順位で競わせず、考える過程を大切にします。": "No competing on scores or ranks; we value the thinking process.", "安心のお支払い": "Secure payment", "クレジットカード・Apple Pay・Google Pay・PayPal（Shopify経由）。": "Credit card, Apple Pay, Google Pay, PayPal (via Shopify). Prices are in Japanese yen.", "特定商取引法に基づく表記（ナゼホリ）": "Legal notice (Nazehori, Japanese)", "特定商取引法に基づく表記（視点レンズ・つまずきマップ）": "Legal notice (The Lens, Stumble Map, Japanese)", "プライバシーポリシー": "Privacy policy", "お問い合わせ": "Contact", "運営会社": "Company", "運営：Beyond Culture 獨歩文化株式会社": "Operated by Beyond Culture 獨歩文化株式会社 (Tokyo)"}, "zh-Hant": {"domo-ai — つまずきマップ・ナゼホリ・視点レンズ｜親子で育てる、AI時代の考える力": "domo-ai — 卡點地圖・ナゼホリ・視角透鏡｜親子一起培養 AI 時代的思考力", "コースを選ぶ": "選擇課程", "親子で育てる、AI時代の考える力": "親子一起培養 AI 時代的思考力", "答えのあとに、<mark>もう一歩</mark>。": "得到答案之後，<mark>再多走一步</mark>。", "AIは、すぐに答えをくれます。だからこそ、答えのあとに「問い直す力」と「見方を変える力」を。毎日の復習から受験まで、お子さんに合うものを選べます。": "AI 很快就能給出答案。正因如此，孩子更需要在答案之後「再問一次」與「換個角度看」的能力。從每天的複習到升學考試，選擇最適合孩子的內容。", "動画を見て来た方へ：撮るだけで復習リストができる「つまずきマップ」はこちら": "看了影片來的朋友：拍一張照就能做出複習清單的「卡點地圖」在這裡", "無料で30枚まで試す →": "免費試用 30 張 →", "毎日の復習 ・ 算数／数学": "每天的複習 ・ 數學", "公開中": "上線中", "撮る": "拍照", "地図に並ぶ": "標在地圖上", "今夜の1問": "今晚的一題", "つまずきマップ<small>撮るだけで、復習することがわかる</small>": "卡點地圖<small>拍一張照，就知道要複習什麼</small>", "書き写さなくていい、毎日の復習。": "不用抄寫的每日複習。", "宿題・ドリル・テストを1枚まるごと撮ると、AIが問題ごとに単元を見分けて○×を記録。間違えた単元が地図に並び、テスト前は日付と範囲を選ぶだけで、今夜やる問題だけが一覧になります。<br><b>点数は約束しません。でも、今夜何をやるかで、迷わなくなります。</b>": "把作業、練習本或考卷整頁拍下來，AI 會逐題判斷所屬單元並記錄對錯。錯的單元會標在地圖上；考試前只要選擇日期和範圍，今晚要做的題目就會列成清單。<br><b>我們不保證分數。但今晚該做什麼，不會再猶豫。</b>", "対象": "對象", "小1〜高3の算数・数学（110単元）": "國小一年級到高中三年級的數學（110個單元）", "料金": "價格", "¥5,800（税込）／12か月・端末3台・毎月200枚まで・自動更新なし": "¥5,800（含稅）／12個月・3台裝置・每月最多200張・不自動續約", "おためし": "免費試用", "30枚まで無料（登録不要）": "前30張免費（免註冊）", "セット": "組合優惠", "視点レンズご購入で1年間無料": "購買視角透鏡，可免費使用1年", "30枚まで無料で試す": "免費試用30張", "料金を見る": "查看價格", "購入済みの方は、アプリの「プラン」→「購入済みの方」へ": "已購買的用戶，請在應用程式中前往「方案」→「已購買」", "問う力 ・ 思考トレーニング": "提問力 ・ 思考訓練", "なぜ？": "為什麼？", "たとえば？": "比如說？", "ほんとうに？": "真的嗎？", "ナゼホリ<small>入門コース</small>": "ナゼホリ<small>入門課程・日語內容</small>", "AIが答えたら、もう一問。": "AI 回答之後，再問一題。", "答えのあとの「もう一問」の入り口を7つ、1回に1つずつ身につけます。音声ドラマと練習で、家族の会話から問いが生まれます。": "一次學一個，學會答案之後「再問一題」的7種切入點。透過有聲劇與練習，讓提問從家人的對話中自然產生。課程內容為日語。", "小学3・4年生と保護者（家族みんなで）": "國小三、四年級學生與家長（全家一起）", "¥4,980（税込）買い切り・家族ライセンス": "¥4,980（含稅）一次買斷・家庭授權", "レッスン1は無料": "第1課免費", "コースを見る": "查看課程", "レッスン1を無料で試す": "免費試上第1課", "購入済みの方はこちら（ログイン）": "已購買的用戶（登入）", "見る力 ・ 算数／数学トレーニング": "觀察力 ・ 數學訓練", "罠の道 → レンズの道": "陷阱之路 → 透鏡之路", "視点レンズ<small>The Lens</small>": "視角透鏡<small>The Lens</small>", "解き方の前に、見方を変える。": "解題之前，先換個角度看。", "<b>問題の見方を変える8つの道具で、解き方が見えてくる。</b><br>むずかしい問題で手が止まるのは、計算力が足りないからではなく、問題を見る角度が決まっていないから。視点レンズは、問題を別の角度から見るための8つの道具（レンズ）です。使い方を身につければ、初めて見る問題でも「このレンズで見ればいい」と分かり、効率のよい道筋で解いていけます。": "<b>用8種改變觀點的工具，看見解題的方法。</b><br>遇到難題卡住，不是因為計算能力不足，而是還沒決定從哪個角度看。視角透鏡就是從不同角度看題目的8種工具（透鏡）。學會使用之後，即使是第一次看到的題目，也知道「用這個透鏡來看」，走上有效率的解題路線。", "中学受験・高校受験・大学受験の算数／数学": "國中、高中、大學入學考試的數學", "¥6,800（税込）買い切り・期限なし": "¥6,800（含稅）一次買斷・無使用期限", "特典": "附贈", "つまずきマップ 年間プラン1年分つき": "卡點地圖年度方案1年", "最初のレンズを3日間無料（登録・カード不要）": "第一個透鏡免費試用3天（免註冊、免信用卡）", "3日間、無料でためす": "免費試用3天", "購入済みの方はこちら": "已購買的用戶", "ブラウザだけで使える": "用瀏覽器就能使用", "iPad・スマートフォン・パソコンで。アプリのダウンロードは不要です。": "iPad、手機、電腦皆可使用，不需下載應用程式。", "広告・ランキングなし": "沒有廣告與排名", "点数や順位で競わせず、考える過程を大切にします。": "不以分數或名次競爭，重視思考的過程。", "安心のお支払い": "安心付款", "クレジットカード・Apple Pay・Google Pay・PayPal（Shopify経由）。": "信用卡、Apple Pay、Google Pay、PayPal（透過 Shopify）。價格以日圓計價。", "特定商取引法に基づく表記（ナゼホリ）": "特定商業交易法標示（ナゼホリ，日文）", "特定商取引法に基づく表記（視点レンズ・つまずきマップ）": "特定商業交易法標示（視角透鏡・卡點地圖，日文）", "プライバシーポリシー": "隱私權政策", "お問い合わせ": "聯絡我們", "運営会社": "營運公司", "運営：Beyond Culture 獨歩文化株式会社": "營運：Beyond Culture 獨歩文化株式会社（東京）"}, "zh-Hans": {"domo-ai — つまずきマップ・ナゼホリ・視点レンズ｜親子で育てる、AI時代の考える力": "domo-ai — 卡点地图・ナゼホリ・视角透镜｜亲子一起培养 AI 时代的思考力", "コースを選ぶ": "选择课程", "親子で育てる、AI時代の考える力": "亲子一起培养 AI 时代的思考力", "答えのあとに、<mark>もう一歩</mark>。": "得到答案之后，<mark>再多走一步</mark>。", "AIは、すぐに答えをくれます。だからこそ、答えのあとに「問い直す力」と「見方を変える力」を。毎日の復習から受験まで、お子さんに合うものを選べます。": "AI 很快就能给出答案。正因如此，孩子更需要在答案之后“再问一次”和“换个角度看”的能力。从每天的复习到升学考试，选择最适合孩子的内容。", "動画を見て来た方へ：撮るだけで復習リストができる「つまずきマップ」はこちら": "看了视频来的朋友：拍一张照就能做出复习清单的“卡点地图”在这里", "無料で30枚まで試す →": "免费试用 30 张 →", "毎日の復習 ・ 算数／数学": "每天的复习 ・ 数学", "公開中": "上线中", "撮る": "拍照", "地図に並ぶ": "标在地图上", "今夜の1問": "今晚的一题", "つまずきマップ<small>撮るだけで、復習することがわかる</small>": "卡点地图<small>拍一张照，就知道要复习什么</small>", "書き写さなくていい、毎日の復習。": "不用抄写的每日复习。", "宿題・ドリル・テストを1枚まるごと撮ると、AIが問題ごとに単元を見分けて○×を記録。間違えた単元が地図に並び、テスト前は日付と範囲を選ぶだけで、今夜やる問題だけが一覧になります。<br><b>点数は約束しません。でも、今夜何をやるかで、迷わなくなります。</b>": "把作业、练习册或试卷整页拍下来，AI 会逐题判断所属单元并记录对错。错的单元会标在地图上；考试前只要选择日期和范围，今晚要做的题目就会列成清单。<br><b>我们不保证分数。但今晚该做什么，不会再犹豫。</b>", "対象": "对象", "小1〜高3の算数・数学（110単元）": "小学一年级到高中三年级的数学（110个单元）", "料金": "价格", "¥5,800（税込）／12か月・端末3台・毎月200枚まで・自動更新なし": "¥5,800（含税）／12个月・3台设备・每月最多200张・不自动续费", "おためし": "免费试用", "30枚まで無料（登録不要）": "前30张免费（免注册）", "セット": "组合优惠", "視点レンズご購入で1年間無料": "购买视角透镜，可免费使用1年", "30枚まで無料で試す": "免费试用30张", "料金を見る": "查看价格", "購入済みの方は、アプリの「プラン」→「購入済みの方」へ": "已购买的用户，请在应用中前往“方案”→“已购买”", "問う力 ・ 思考トレーニング": "提问力 ・ 思考训练", "なぜ？": "为什么？", "たとえば？": "比如说？", "ほんとうに？": "真的吗？", "ナゼホリ<small>入門コース</small>": "ナゼホリ<small>入门课程・日语内容</small>", "AIが答えたら、もう一問。": "AI 回答之后，再问一题。", "答えのあとの「もう一問」の入り口を7つ、1回に1つずつ身につけます。音声ドラマと練習で、家族の会話から問いが生まれます。": "一次学一个，学会答案之后“再问一题”的7种切入点。通过有声剧和练习，让提问从家人的对话中自然产生。课程内容为日语。", "小学3・4年生と保護者（家族みんなで）": "小学三、四年级学生与家长（全家一起）", "¥4,980（税込）買い切り・家族ライセンス": "¥4,980（含税）一次买断・家庭授权", "レッスン1は無料": "第1课免费", "コースを見る": "查看课程", "レッスン1を無料で試す": "免费试上第1课", "購入済みの方はこちら（ログイン）": "已购买的用户（登录）", "見る力 ・ 算数／数学トレーニング": "观察力 ・ 数学训练", "罠の道 → レンズの道": "陷阱之路 → 透镜之路", "視点レンズ<small>The Lens</small>": "视角透镜<small>The Lens</small>", "解き方の前に、見方を変える。": "解题之前，先换个角度看。", "<b>問題の見方を変える8つの道具で、解き方が見えてくる。</b><br>むずかしい問題で手が止まるのは、計算力が足りないからではなく、問題を見る角度が決まっていないから。視点レンズは、問題を別の角度から見るための8つの道具（レンズ）です。使い方を身につければ、初めて見る問題でも「このレンズで見ればいい」と分かり、効率のよい道筋で解いていけます。": "<b>用8种改变视角的工具，看见解题的方法。</b><br>遇到难题卡住，不是因为计算能力不够，而是还没决定从哪个角度看。视角透镜就是从不同角度看题目的8种工具（透镜）。学会使用之后，即使是第一次看到的题目，也知道“用这个透镜来看”，走上有效率的解题路线。", "中学受験・高校受験・大学受験の算数／数学": "初中、高中、大学入学考试的数学", "¥6,800（税込）買い切り・期限なし": "¥6,800（含税）一次买断・无使用期限", "特典": "附赠", "つまずきマップ 年間プラン1年分つき": "卡点地图年度方案1年", "最初のレンズを3日間無料（登録・カード不要）": "第一个透镜免费试用3天（免注册、免信用卡）", "3日間、無料でためす": "免费试用3天", "購入済みの方はこちら": "已购买的用户", "ブラウザだけで使える": "用浏览器就能使用", "iPad・スマートフォン・パソコンで。アプリのダウンロードは不要です。": "iPad、手机、电脑都能使用，无需下载应用。", "広告・ランキングなし": "没有广告和排名", "点数や順位で競わせず、考える過程を大切にします。": "不以分数或名次竞争，重视思考的过程。", "安心のお支払い": "安心付款", "クレジットカード・Apple Pay・Google Pay・PayPal（Shopify経由）。": "信用卡、Apple Pay、Google Pay、PayPal（通过 Shopify）。价格以日元计价。", "特定商取引法に基づく表記（ナゼホリ）": "特定商业交易法标示（ナゼホリ，日文）", "特定商取引法に基づく表記（視点レンズ・つまずきマップ）": "特定商业交易法标示（视角透镜・卡点地图，日文）", "プライバシーポリシー": "隐私政策", "お問い合わせ": "联系我们", "運営会社": "运营公司", "運営：Beyond Culture 獨歩文化株式会社": "运营：Beyond Culture 獨歩文化株式会社（东京）"}};
+        var KEY = 'domo:lang';
+        var SEL = 'title, header nav > a, .eyebrow, h1, .lead, .from-video span, .from-video a, .band-top span, .chip, h2, .tag, .desc, dt, dd, .btn, .small-link, .points b, .points span, footer a, footer .op';
+        function norm(h) { return h.replace(/<br\s*\/?>/gi, '<br>').replace(/\s+/g, ' ').trim(); }
+        function fromTag(t) {
+          if (!t) return null; t = String(t).toLowerCase();
+          if (t.indexOf('ja') === 0) return 'ja';
+          if (t.indexOf('zh') === 0) return /hant|-tw|-hk|-mo/.test(t) ? 'zh-Hant' : 'zh-Hans';
+          if (t.indexOf('en') === 0) return 'en';
+          return null;
+        }
+        function save(l) { try { localStorage.setItem(KEY, l); } catch (e) {} }
+        function detect() {
+          var q = fromTag(new URLSearchParams(location.search).get('lang'));
+          if (q) { save(q); return q; }
+          var s = null; try { s = fromTag(localStorage.getItem(KEY)); } catch (e) {}
+          if (s) return s;
+          var ls = navigator.languages || [navigator.language];
+          for (var i = 0; i < ls.length; i++) { var l = fromTag(ls[i]); if (l) return l; }
+          return 'en';
+        }
+        var els = Array.prototype.slice.call(document.querySelectorAll(SEL)).map(function (el) {
+          return { el: el, orig: el.innerHTML, key: norm(el.innerHTML) };
+        });
+        var links = document.querySelectorAll('a[href*="lens.domo-ai.com"], a[href*="tsumazuki.domo-ai.com"]');
+        function apply(l) {
+          var d = T[l] || {};
+          els.forEach(function (x) { x.el.innerHTML = l === 'ja' ? x.orig : (d[x.key] || x.orig); });
+          document.documentElement.lang = l;
+          Array.prototype.forEach.call(links, function (a) {
+            var u = new URL(a.href); u.searchParams.set('lang', l); a.href = u.toString();
+          });
+          Array.prototype.forEach.call(document.querySelectorAll('.langs button'), function (b) {
+            b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === l));
+          });
+        }
+        Array.prototype.forEach.call(document.querySelectorAll('.langs button'), function (b) {
+          b.addEventListener('click', function () { var l = b.getAttribute('data-lang'); save(l); apply(l); });
+        });
+        apply(detect());
+      })();
+    </script>
   </body>
 </html>
